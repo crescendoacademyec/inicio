@@ -12,7 +12,7 @@ Todavía no la consideraría una formación autónoma completa ni equivalente a 
 
 | Solicitud | Implementación | Límite pedagógico o técnico |
 | --- | --- | --- |
-| Gain staging desde el kick | Estudio, lección 3: referencia de pico −12 dBFS y tabla de roles/instrumentos, diferenciando grabación, clip gain, fader y suma. | Ejemplo original de una maqueta, no norma de mezcla ni posición de fader; no prescribe niveles idénticos para géneros distintos. |
+| Gain staging desde el kick | Estudio, lección 3: tabla comparativa de picos con kick a −12 y −6 dBFS y rangos por rol/instrumento, diferenciando grabación, clip gain, fader y suma. | Ejemplo original de una maqueta, no norma de mezcla ni posición de fader; no prescribe niveles idénticos para géneros distintos. |
 | Fotos y patrones | Grabación, lección 1: siete fotos locales con atribución/licencia y siete diagramas polares con usos y rechazo. | Familias habituales de estudio/diálogo, no catálogo de todos los micrófonos existentes; patrones ideales, no mediciones de los productos. |
 | Voz y proximidad | Grabación, lección 4: distancia inicial de prueba, tomas, ruta seca/monitor, previo, plugins y gráfico interactivo de distancia/graves. | Modelo ilustrativo normalizado a 20 cm, separado de la variación global de nivel; no simulación calibrada de una voz o micrófono. |
 | Fenómenos digitales/acústicos | Sonido 3: aliasing interactivo; Grabación 4: inverso del cuadrado; Profundidad 2: precedencia y filtro peine. Se conectan con fase, sala y enmascaramiento del currículo. | El aliasing se demuestra sin filtro antialias; la ley de distancia es una aproximación en campo libre. |
