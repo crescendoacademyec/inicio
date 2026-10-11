@@ -8,6 +8,7 @@ Aplicación estática, sin dependencias externas, con 12 materias, 48 lecciones,
 
 - `curriculum.js`: contenido original, dependencias, preguntas y proyectos.
 - `resources.js`: biblioteca de fuentes oficiales y herramientas.
+- `illustrations.js`: 48 gráficos originales con títulos, descripción accesible y explicación.
 - `models.js`: cálculos, generación de demo/patrones, edición y exportación PCM16.
 - `audio-lab.js`: procesamiento Web Audio, controles y visualizadores.
 - `app.js`: rutas por hash, interfaz de estudio y progreso local.

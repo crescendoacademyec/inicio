@@ -6,7 +6,7 @@ Crescendo Academy · revisión de fuentes: 10 de octubre de 2026.
 
 Esta plataforma propone una ruta propia para aprender a escuchar, preparar, grabar, editar, producir, mezclar y finalizar una obra. Se apoya en programas oficiales de Berklee y Full Sail, contrastados con documentación de fabricantes, estándares y herramientas. Los textos, preguntas y prácticas son originales de Crescendo. La selección no reproduce una carrera universitaria, sus créditos ni una acreditación, y no implica afiliación con esas instituciones.
 
-La ruta contiene 12 materias, 48 lecciones, 48 preguntas contextualizadas, 12 proyectos con criterios de autoevaluación y 9 laboratorios. Cada lección presenta objetivo, explicación, ejemplo, práctica, error frecuente, comprobación y apuntes. El aprendizaje práctico requiere trabajar también en un DAW y revisar evidencias con el docente.
+La ruta contiene 12 materias, 48 lecciones, 48 preguntas contextualizadas, 12 proyectos con criterios de autoevaluación y 9 laboratorios. Cada lección presenta objetivo, explicación, gráfico original con descripción accesible, ejemplo, práctica, error frecuente, comprobación y apuntes. Los 48 gráficos incluyen curvas, diagramas de señal, líneas de tiempo y esquemas de decisión; sus leyendas distinguen modelos ideales de mediciones. El aprendizaje práctico requiere trabajar también en un DAW y revisar evidencias con el docente.
 
 ## Qué se investigó y qué aporta cada programa
 
