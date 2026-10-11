@@ -33,17 +33,19 @@ Se conservan las 12 materias, 48 lecciones y 48 preguntas contextualizadas, los 
 
 ## Qué falta, por prioridad
 
-### 1. Banco de práctica con grabaciones reales y permisos claros
+### 1. Materiales y revisión fuera de la plataforma (decisión de la escuela)
 
-Preparar multitracks descargables y una sesión vocal con tres tomas: ruido, plosivas, errores de timing y variaciones de interpretación controladas. Incluir versión inicial, consigna, stems de referencia y ejemplo comentado. El alumnado debe poder comparar decisiones sobre fuentes reales, además de las demos sintetizadas y sus propios archivos.
+Los multitracks se comparten directamente con el estudiante y la revisión docente se realiza por los canales de clase. No se requiere alojar sesiones, subir evidencias ni construir un sistema de calificación docente dentro de esta web. La formación combina plataforma, materiales entregados por la escuela y acompañamiento del profesor.
 
-Criterio de aceptación: cada paquete abre en dos DAW, incluye licencia, BPM/compás cuando aplica, resolución, archivos alineados y una guía de autoevaluación. No usar sesiones de alumnos o clientes sin autorización.
+Al preparar los paquetes externos conviene indicar permisos de uso, BPM/compás cuando aplica, resolución, alineación de archivos, consigna y criterios de revisión. Esto forma parte de la organización docente; no es una función pendiente del sitio.
 
-### 2. Evaluación auditiva y revisión de evidencias
+### 2. Práctica auditiva incorporada
 
-Añadir ejercicios ciegos de frecuencia, dinámica, balance, fase y artefactos, con variaciones de dificultad y nivel comparable. Ampliar el banco de situaciones: cuatro preguntas por materia sirven de repaso, pero son insuficientes para medir dominio. Las nuevas tablas y Suno necesitan más situaciones de transferencia a casos reales.
+La nueva sección **Práctica auditiva** ofrece comparaciones ciegas sobre demos originales: realce de graves/medios/agudos, ataque rápido/lento o ausencia de compresión, protagonismo de bajo/armonía/ritmo, suma/cancelación parcial/total y señal limpia/saturación suave/recorte. Se reutiliza la demo sintetizada del laboratorio; filtros y compresor se renderizan con Web Audio. Las opciones se alternan y los ajustes se revelan después de contestar, con explicación y contador de intentos de la visita.
 
-Criterio de aceptación: tareas de identificación con feedback razonado y un proyecto revisado por el docente. La rúbrica debería distinguir comprensión, ejecución, escucha y justificación; incluir ejemplos de logro inicial, adecuado y avanzado.
+EQ y balance incluyen cambios marcados o sutiles. Se iguala aproximadamente el RMS y se conserva margen de pico, excepto el silencio esperado de una cancelación completa. RMS equivalente no garantiza sonoridad percibida idéntica. Estos ejercicios entrenan discriminación inicial: no reemplazan escucha de grabaciones reales ni son una prueba de competencia profesional. Los resultados auditivos son temporales y no forman parte del archivo de progreso exportado.
+
+Como ampliación futura: más fuentes y contextos, reconocimiento de cortes de EQ, frecuencias exactas, ruido/clics, reverberación y pruebas de transferencia sobre las sesiones que entregue el docente. La revisión de evidencias sigue siendo externa por decisión de la escuela.
 
 ### 3. Itinerario docente, duración y requisitos
 
@@ -57,13 +59,15 @@ Grabar sesiones breves de captura, comping, ruteo, automatización, preparación
 
 ### 5. Seguimiento y accesibilidad más allá del navegador local
 
-El progreso y las notas continúan guardándose localmente, con exportación/importación. Integrar evidencias y revisión docente con Mi Crescendo si se necesita seguimiento entre dispositivos. Realizar auditoría manual con teclado y lector de pantalla, contraste y pruebas en Safari, Firefox, Windows y móviles reales. Los gráficos tienen descripción textual; las tablas permiten desplazamiento horizontal en pantallas pequeñas.
+El progreso y las notas continúan guardándose localmente, con exportación/importación. El intercambio de evidencias y la revisión docente se gestionan directamente con el estudiante, fuera de esta plataforma. Realizar auditoría manual con teclado y lector de pantalla, contraste y pruebas en Safari, Firefox, Windows y móviles reales. Los gráficos tienen descripción textual; las tablas permiten desplazamiento horizontal en pantallas pequeñas.
 
 ### 6. Ampliaciones avanzadas opcionales
 
 Profundizar en tratamiento acústico y medición real, calibración, reparación espectral, grabación de batería/ensemble, entrega de álbum y DDP, audio inmersivo, sonido en directo, middleware para videojuegos y planificación económica de una producción. Elegir especialidades según la oferta docente; no añadirlas todas como requisito inicial.
 
 ## Verificación de esta versión
+
+La práctica auditiva añade pruebas de igualación RMS, margen de pico, silencio y curvas de distorsión, además de revisión de reproducción, respuestas y cambio de tema en navegador.
 
 - Pruebas automatizadas de DSP existente, currículo y rutas locales; nuevas pruebas de ADSR, plegado de aliasing, distancia/proximidad y asociación de ampliaciones a lecciones reales.
 - Revisión en navegador del note-on/note-off y controles ADSR, cambios de muestreo, distancia/patrón, presets completos del EQ y buscador, escenarios Suno, fotografías y disposición móvil.

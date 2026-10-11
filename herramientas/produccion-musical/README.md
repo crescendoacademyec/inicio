@@ -35,3 +35,7 @@ Las rutas `#curso/mezcla/mezcla-2`, `#laboratorio/eq`, `#proyectos/mastering` y 
 ## Verificaciones manuales de esta entrega
 
 Navegación, respuestas incorrectas/correctas, evaluación 4/4, guardado tras recarga, bitácora de proyecto, exportación e importación de progreso, escucha EQ/compresión, pendientes de paso, cancelación de fase, cálculos, referencias de entrega, secuenciador y descarga WAV. Comprobados escritorio de 1280 px y móvil de 390 px sin desbordamiento horizontal general. Los proyectos de DAW necesitan revisión docente de las evidencias.
+
+## Práctica auditiva
+
+Ruta `#escucha`: cinco temas, comparaciones ciegas con feedback y resultados de la visita. EQ y balance tienen dos intensidades. Usa demos originales del laboratorio y Web Audio, sin subir archivos. Multitracks y revisión docente se comparten directamente con el estudiante fuera de la plataforma. Los intentos auditivos no se exportan con el progreso del curso.
