@@ -9,6 +9,11 @@ Aplicación estática, sin dependencias externas, con 12 materias, 48 lecciones,
 - `curriculum.js`: contenido original, dependencias, preguntas y proyectos.
 - `resources.js`: biblioteca de fuentes oficiales y herramientas.
 - `illustrations.js`: 48 gráficos originales con títulos, descripción accesible y explicación.
+- `lesson-extensions.js` y `extensions.css`: ampliaciones de 21 lecciones, fotos, patrones, plugins, Ecuador y Suno.
+- `teaching-labs.js`: ADSR audible y modelos interactivos de aliasing/proximidad.
+- `instrument-eq.html` y `embedded-eq.js`: anfitrión del EQ original de Tabla de frecuencias con altura adaptable.
+- `assets/photos.json`: créditos, procedencia y licencias de siete fotografías locales.
+- `AUDITORIA.md`: cobertura, límites y prioridades pedagógicas.
 - `models.js`: cálculos, generación de demo/patrones, edición y exportación PCM16.
 - `audio-lab.js`: procesamiento Web Audio, controles y visualizadores.
 - `app.js`: rutas por hash, interfaz de estudio y progreso local.
@@ -20,7 +25,7 @@ Desde la raíz del repositorio:
 
 ```sh
 python3 -m http.server 8767
-node --test herramientas/produccion-musical/tests/models.test.cjs shared/tool-routes.test.cjs
+node --test herramientas/produccion-musical/tests/*.test.cjs shared/tool-routes.test.cjs
 ```
 
 Abrir `/herramientas/produccion-musical/`. El audio requiere una interacción del usuario. La aplicación no solicita micrófono, no sube archivos y detiene la escucha al abandonar la sección o pasar a segundo plano.

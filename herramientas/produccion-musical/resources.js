@@ -1,6 +1,19 @@
 (function(root){
 'use strict';
 const sources = [
+{"id": "suno-terms", "type": "IA", "title": "Suno · Condiciones vigentes", "url": "https://suno.com/terms-of-service", "note": "Condiciones efectivas desde septiembre de 2026: planes, descargas, Remixes y modelos de voz."},
+{"id": "suno-policy", "type": "IA", "title": "Suno · Política de descargas", "url": "https://suno.com/blog/suno-updates-tos", "note": "Anuncio oficial de agosto de 2026; se contrasta con las condiciones y no solo con FAQ antiguas."},
+{"id": "senadi-2026", "type": "Industria", "title": "SENADI · Registro de obras, instructivo 2026", "url": "https://www.derechosintelectuales.gob.ec/wp-content/uploads/2026/02/INSTRUCTIVO-PROCESO-PARA-REGISTRO-DE-OBRAS_2026.pdf", "note": "Requisitos de obras musicales y fonogramas; la solicitud en línea no elimina la entrega física indicada."},
+{"id": "senadi-sgc", "type": "Industria", "title": "SENADI · Gestión colectiva", "url": "https://www.derechosintelectuales.gob.ec/sociedades-de-gestion-colectiva/", "note": "Funciones de SAYCE, SOPROFON y SARIME."},
+{"id": "sayce-works", "type": "Industria", "title": "SAYCE · Declaración de repertorio", "url": "https://sayce.com.ec/registro-de-nuevas-obras-musicales-para-socios/", "note": "Trámite de repertorio para socios; distinto del registro estatal y de distribución."},
+{"id": "cc", "type": "Industria", "title": "Creative Commons · Preguntas frecuentes", "url": "https://creativecommons.org/faq/index.html", "note": "Licencias, atribución, restricciones y adaptaciones."},
+{"id": "ifpi-isrc", "type": "Industria", "title": "IFPI · Manual ISRC", "url": "https://www.ifpi.org/wp-content/uploads/2021/02/ISRC_Handbook.pdf", "note": "Identifica grabaciones; no sustituye el registro de derechos."},
+{"id": "proximity", "type": "Grabación", "title": "DPA · Efecto de proximidad", "url": "https://www.dpamicrophones.com/mic-university/background-knowledge/proximity-effect-in-microphones-explained/", "note": "Distancia, tipo de fuente y respuesta grave."},
+{"id": "inverse-square", "type": "Acústica", "title": "DPA · Ley del inverso del cuadrado", "url": "https://www.dpamicrophones.com/dictionary/i/inverse-square-law/", "note": "Aproximación en campo libre y caída de nivel con distancia."},
+{"id": "haas", "type": "Mezcla", "title": "DPA · Efecto Haas", "url": "https://www.dpamicrophones.com/dictionary/h/haas-effect/", "note": "Precedencia y primera llegada."},
+{"id": "aliasing", "type": "Audio digital", "title": "FabFilter · Oversampling", "url": "https://www.fabfilter.com/help/pro-mb/using/oversampling", "note": "Aliasing, muestreo interno y recursos de procesamiento."},
+{"id": "apple-delivery", "type": "Entrega", "title": "Apple · Audio Asset Guide", "url": "https://help.apple.com/itc/videoaudioassetguide/en.lproj/static.html", "note": "Resoluciones admitidas y requisitos adicionales de Apple Digital Masters."},
+{"id": "youtube-delivery", "type": "Entrega", "title": "YouTube · Codificación recomendada", "url": "https://support.google.com/youtube/answer/1722171?hl=es", "note": "Configuración de carga audiovisual y audio a 48 kHz."},
 {id:'monitor-placement',type:'Acústica',title:'Genelec · Colocación de monitores',url:'https://www.genelec.com/monitor-placement',note:'Triángulo equilátero, orientación hacia el punto de escucha y simetría de colocación.'},
 {id:'berklee-grid',type:'Mallas',title:'Berklee · Music Production and Engineering, 2026F',url:'https://www.berklee.edu/sites/default/files/2026-05/2026f-music-production-and-engineering-degree-grid.pdf',note:'Malla vigente consultada: escucha, tecnología, MIDI, grabación multipista, mezcla, negocio y proyectos.'},
 {id:'berklee-online',type:'Mallas',title:'Berklee Online · Music Production',url:'https://online.berklee.edu/music-degrees/undergraduate/music-production',note:'Programa de producción que incorpora acústica, técnica de micrófonos, voz, mastering y proyecto final.'},

@@ -1,6 +1,6 @@
 # Producción musical · investigación y diseño curricular
 
-Crescendo Academy · revisión de fuentes: 10 de octubre de 2026.
+Crescendo Academy · revisión de fuentes: 10 y 11 de octubre de 2026.
 
 ## Propósito y alcance
 
@@ -77,7 +77,7 @@ Web Audio procesa la escucha localmente. Los archivos cargados no se suben a Cre
 
 Para las primeras prácticas: navegador actualizado y escucha disponible a volumen moderado. Para proyectos: DAW, recursos propios o autorizados y espacio para guardar sesiones con medios. Para captura: instrumento o fuente, micrófono y accesorios compatibles, interfaz cuando corresponda y escucha adecuada. La elección de equipo se vincula al objetivo del proyecto.
 
-La biblioteca incluye 29 referencias primarias enlazadas y ocho herramientas de Crescendo: tabla de frecuencias, piano, metrónomo, oído, armonía funcional, teoría/lectura, velocidad/tono y editor. Las fuentes pueden cambiar y varias están en inglés; se conserva la fecha de revisión.
+La biblioteca incluye 42 referencias primarias enlazadas y ocho herramientas de Crescendo: tabla de frecuencias, piano, metrónomo, oído, armonía funcional, teoría/lectura, velocidad/tono y editor. Las fuentes pueden cambiar y varias están en inglés; se conserva la fecha de revisión.
 
 ## Progreso y evaluación
 
@@ -88,3 +88,17 @@ Los tres planos se mantienen separados: lectura completada, comprensión concept
 ## Continuidad docente
 
 Cada materia termina con una evidencia. El proyecto integral reutiliza las anteriores y exige recuperar la sesión desde una copia, escuchar la exportación y justificar decisiones. Para ampliar la profundidad se pueden incorporar demostraciones grabadas propias, sesiones multipista autorizadas y tutorías con rúbricas compartidas. Esa ampliación debe partir de evidencias reales de los alumnos; no de sumar parámetros sin un objetivo auditivo.
+
+## Ampliación del 11 de octubre de 2026
+
+Se añadieron ampliaciones en 21 lecciones, siete fotografías de micrófonos con licencias documentadas en `assets/photos.json`, siete patrones polares y tres widgets de enseñanza: distancia/proximidad, aliasing y síntesis ADSR audible. El curso mantiene 48 lecciones y nueve laboratorios principales. El EQ por instrumento comparte los scripts de Tabla de frecuencias mediante `instrument-eq.html`; la herramienta pública original permanece independiente.
+
+La referencia de kick −12 dBFS y los rangos de balance son un ejercicio original, no una norma de grabación ni de entrega. El gráfico de proximidad utiliza una curva didáctica normalizada a 20 cm: no equivale a una medición de los micrófonos fotografiados. La caída global con distancia se presenta por separado, con la aproximación de campo libre de DPA.
+
+Para Ecuador se contrastaron el [instructivo SENADI 2026](https://www.derechosintelectuales.gob.ec/wp-content/uploads/2026/02/INSTRUCTIVO-PROCESO-PARA-REGISTRO-DE-OBRAS_2026.pdf), la [gestión colectiva](https://www.derechosintelectuales.gob.ec/sociedades-de-gestion-colectiva/) y la declaración de repertorio SAYCE. El instructivo indica solicitud en línea y entrega física de ejemplares/documentos. No se fijan tasas copiadas de páginas antiguas.
+
+Se consultó *De artista a empresario musical* de Alexiomar Rodríguez (2022), entregado por el usuario, como marco de funciones y acuerdos. No se trasladan las reglas de “work for hire” estadounidenses a Ecuador ni se publica el libro.
+
+Suno se contrasta con las [condiciones efectivas el 3 de septiembre de 2026](https://suno.com/terms-of-service) y su [anuncio de política de descargas](https://suno.com/blog/suno-updates-tos). Algunas FAQ previas hablan de la fecha de generación; el curso muestra esa discrepancia y evita asegurar derechos retroactivos para una pieza concreta. Diferencia uso comercial permitido, copyright, permisos de materiales y reglas del distribuidor.
+
+La [auditoría pedagógica](AUDITORIA.md) distingue la cobertura implementada de los recursos pendientes para una formación autónoma: grabaciones reales licenciadas, entrenamiento auditivo, evaluación de proyectos, acompañamiento docente y pruebas más amplias de accesibilidad/dispositivos.
