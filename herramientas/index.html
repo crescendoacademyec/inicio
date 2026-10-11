@@ -425,19 +425,18 @@
             box-shadow: 0 0 0 2px var(--card-color, var(--brass)), 0 24px 54px rgba(0,0,0,.46);
         }
 
-        .grid .card:nth-child(1) { --tool-image: url("../mi-crescendo/assets/tools/piano.webp"); }
-        .grid .card:nth-child(2) { --tool-image: url("../mi-crescendo/assets/tools/guitarra.webp"); }
-        .grid .card:nth-child(3) { --tool-image: url("../mi-crescendo/assets/tools/cuerdas.webp"); }
-        .grid .card:nth-child(4) { --tool-image: url("../mi-crescendo/assets/tools/folk.webp"); }
-        .grid .card:nth-child(5) { --tool-image: url("../mi-crescendo/assets/tools/bajo.webp"); }
-        .grid .card:nth-child(6) { --tool-image: url("../mi-crescendo/assets/tools/metronomo.webp"); }
-        .grid .card:nth-child(7) { --tool-image: url("../mi-crescendo/assets/tools/afinador.webp"); }
-        .grid .card:nth-child(8) { --tool-image: url("../mi-crescendo/assets/tools/ear-training.webp"); }
-        .grid .card:nth-child(9) { --tool-image: url("../mi-crescendo/assets/tools/velocidad-tono.webp"); }
-        .grid .card:nth-child(10) { --tool-image: url("../mi-crescendo/assets/tools/frecuencias.webp"); }
-        .grid .card:nth-child(11) { --tool-image: url("../mi-crescendo/assets/tools/chordsync.webp"); }
-        .grid .card:nth-child(12) { --tool-image: url("../mi-crescendo/assets/tools/editor.webp"); }
-        .grid .card:nth-child(13) { --tool-image: url("../mi-crescendo/assets/tools/guitarra.webp"); }
+        .grid .card[href="piano-virtual/"] { --tool-image: url("../mi-crescendo/assets/tools/piano.webp"); }
+        .grid .card[href="diapason-virtual/"] { --tool-image: url("../mi-crescendo/assets/tools/guitarra.webp"); }
+        .grid .card[href="cuerdas-frotadas/"] { --tool-image: url("../mi-crescendo/assets/tools/cuerdas.webp"); }
+        .grid .card[href="folk-virtual/"] { --tool-image: url("../mi-crescendo/assets/tools/folk.webp"); }
+        .grid .card[href="bass-virtual/"] { --tool-image: url("../mi-crescendo/assets/tools/bajo.webp"); }
+        .grid .card[href="metronomo/"] { --tool-image: url("../mi-crescendo/assets/tools/metronomo.webp"); }
+        .grid .card[href="afinador/"] { --tool-image: url("../mi-crescendo/assets/tools/afinador.webp"); }
+        .grid .card[href="ear-training/"] { --tool-image: url("../mi-crescendo/assets/tools/ear-training.webp"); }
+        .grid .card[href="speed/"] { --tool-image: url("../mi-crescendo/assets/tools/velocidad-tono.webp"); }
+        .grid .card[href="tabla-frecuencias/"] { --tool-image: url("../mi-crescendo/assets/tools/frecuencias.webp"); }
+        .grid .card[href="chordsyncpro/"] { --tool-image: url("../mi-crescendo/assets/tools/chordsync.webp"); }
+        .grid .card[href="editor-crescendo/"] { --tool-image: url("../mi-crescendo/assets/tools/editor.webp"); }
 
         .card--blue {
             --card-color: var(--c-blue);
@@ -710,7 +709,7 @@
     <section class="tools" id="herramientas">
         <div class="tools-head">
             <h2>Herramientas disponibles</h2>
-            <span>14 herramientas</span>
+            <span>12 herramientas</span>
         </div>
 
         <div class="grid">
@@ -874,15 +873,6 @@
                 <span class="cta">Abrir herramienta
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
                 </span>
-            </a>
-
-            <!-- Producción musical -->
-            <a class="card card--gold" href="produccion-musical/">
-                <span class="tag-pill">Curso y laboratorio</span>
-                <div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 3v18M12 3v18M19 3v18"/><rect x="2" y="6" width="6" height="4" rx="1"/><rect x="9" y="14" width="6" height="4" rx="1"/><rect x="16" y="9" width="6" height="4" rx="1"/></svg></div>
-                <h3>Producción musical</h3>
-                <p>12 materias y 48 lecciones de grabación, edición, mezcla y mastering. Escucha cambios reales en el laboratorio y construye tu portafolio con proyectos guiados.</p>
-                <span class="cta">Explorar la plataforma <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
             </a>
 
             <!-- Tabla de Frecuencias Interactiva -->
