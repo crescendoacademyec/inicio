@@ -1,6 +1,7 @@
 (function(root){
 'use strict';
 const sources = [
+{id:'monitor-placement',type:'Acústica',title:'Genelec · Colocación de monitores',url:'https://www.genelec.com/monitor-placement',note:'Triángulo equilátero, orientación hacia el punto de escucha y simetría de colocación.'},
 {id:'berklee-grid',type:'Mallas',title:'Berklee · Music Production and Engineering, 2026F',url:'https://www.berklee.edu/sites/default/files/2026-05/2026f-music-production-and-engineering-degree-grid.pdf',note:'Malla vigente consultada: escucha, tecnología, MIDI, grabación multipista, mezcla, negocio y proyectos.'},
 {id:'berklee-online',type:'Mallas',title:'Berklee Online · Music Production',url:'https://online.berklee.edu/music-degrees/undergraduate/music-production',note:'Programa de producción que incorpora acústica, técnica de micrófonos, voz, mastering y proyecto final.'},
 {id:'fullsail-music',type:'Mallas',title:'Full Sail · Music Production',url:'https://www.fullsail.edu/degree-course-listing/music-production-bachelor-of-science-online',note:'Creación, estructura, arreglos, producción para medios y proyectos de portafolio.'},

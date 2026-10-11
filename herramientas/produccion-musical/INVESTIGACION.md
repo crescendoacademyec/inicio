@@ -64,6 +64,7 @@ Web Audio procesa la escucha localmente. Los archivos cargados no se suben a Cre
 ## Criterios técnicos contrastados
 
 - **Micrófonos y captura:** [Shure](https://www.shure.com/en-US/docs/education/Microphone-Techniques-for-Recording) sustenta pruebas de posición y selección. [DPA](https://www.dpamicrophones.com/mic-university/technology/polarity-phase-and-delay/) ayuda a distinguir fase, retardo y polaridad, y sus [técnicas estéreo](https://www.dpamicrophones.com/mic-university/audio-production/stereo-recording-techniques-and-setups/) conectan diferencias temporales y de nivel.
+- **Colocación de monitores:** la [guía de Genelec](https://www.genelec.com/monitor-placement) recomienda un triángulo equilátero, orientación hacia el oyente y simetría. El gráfico representa tres lados iguales y un ángulo de 60° desde el punto de escucha.
 - **Acústica:** el [modelo de sala de REW](https://www.roomeqwizard.com/help/help_en-GB/html/modalsim.html) apoya tratar los cálculos como aproximaciones. Cambiar una posición, medir y escuchar precede a intentar corregir todo con EQ.
 - **DAW y audio digital:** los manuales de Ableton sobre [ruteo](https://www.ableton.com/es/live-manual/12/routing-and-i-o/), [procesamiento digital](https://www.ableton.com/en/live-manual/12/audio-fact-sheet/) y [edición temporal](https://www.ableton.com/en/live-manual/12/audio-clips-tempo-and-warping/) sirven para contrastar operaciones. La [guía de REAPER](https://www.reaper.fm/userguide.php) aporta otra implementación; el curso no exige una marca.
 - **Mezcla:** las referencias de [EQ](https://www.izotope.com/community/blog/7-tips-for-using-subtractive-eq-when-mixing-audio), [enmascaramiento](https://www.izotope.com/en/learn/unmasking-your-mix-with-neutron) y [compresión](https://www.izotope.com/community/blog/tips-for-more-transparent-compression) de iZotope se usan para promover diagnóstico y escucha en contexto, sin convertir frecuencias orientativas en recetas.
@@ -76,7 +77,7 @@ Web Audio procesa la escucha localmente. Los archivos cargados no se suben a Cre
 
 Para las primeras prácticas: navegador actualizado y escucha disponible a volumen moderado. Para proyectos: DAW, recursos propios o autorizados y espacio para guardar sesiones con medios. Para captura: instrumento o fuente, micrófono y accesorios compatibles, interfaz cuando corresponda y escucha adecuada. La elección de equipo se vincula al objetivo del proyecto.
 
-La biblioteca incluye 28 referencias primarias enlazadas y ocho herramientas de Crescendo: tabla de frecuencias, piano, metrónomo, oído, armonía funcional, teoría/lectura, velocidad/tono y editor. Las fuentes pueden cambiar y varias están en inglés; se conserva la fecha de revisión.
+La biblioteca incluye 29 referencias primarias enlazadas y ocho herramientas de Crescendo: tabla de frecuencias, piano, metrónomo, oído, armonía funcional, teoría/lectura, velocidad/tono y editor. Las fuentes pueden cambiar y varias están en inglés; se conserva la fecha de revisión.
 
 ## Progreso y evaluación
 
