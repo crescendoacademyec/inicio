@@ -37,9 +37,9 @@ svg.onpointerdown=e=>{const node=e.target.closest('[data-band]');if(!node)return
 svg.onpointermove=e=>{if(drag!==e.pointerId){const node=e.target.closest('[data-band]');if(node)showTooltip(+node.dataset.band);else $('eqTooltip').hidden=true;return;}const r=svg.getBoundingClientRect(),b=bands[selected];b.frequency=hz((e.clientX-r.left)/r.width*960);if(gainType(b))b.gain=db((e.clientY-r.top)/r.height*360);sync();};
 svg.onpointerup=svg.onpointercancel=()=>{drag=null;};
 function loadExample(example,name){
- const instrument=INSTRUMENTS.find(i=>i.name===name);$('eqGuidance').innerHTML=instrument?window.InstrumentEQGuidance?.html(instrument)||'':'';
- bands=example.bands.length?example.bands:[makeBand()];selected=0;bypass=false;
- $('eqContext').textContent=`Ejemplo completo: ${name} · ${example.bands.length} bandas sugeridas. Cortes y realces reunidos para explorar; no son una cadena recomendada. Desactiva las bandas que no correspondan al problema. Ganancia y Q ilustrativos.${example.unspecified.length?' Sin frecuencia definida (no se dibuja): '+example.unspecified.join('; '):''}`;sync();
+ const instrument=INSTRUMENTS.find(i=>i.name===name);$('eqGuidance').innerHTML=instrument?window.InstrumentEQGuidance?.html(instrument,example.presetIndex)||'':'';
+ bands=example.bands.length?example.bands.map(b=>({...b})):[makeBand()];selected=0;bypass=false;
+ $('eqContext').textContent=example.presetTitle?`EQ ${example.presetIndex+1}: ${name} · ${example.presetTitle} · ${bands.length} bandas. Propuesta editable de Crescendo; adapta estos valores a tu grabación.`:`Ejemplo completo: ${name} · ${example.bands.length} bandas sugeridas. Cortes y realces reunidos para explorar; no son una cadena recomendada. Desactiva las bandas que no correspondan al problema. Ganancia y Q ilustrativos.${example.unspecified.length?' Sin frecuencia definida (no se dibuja): '+example.unspecified.join('; '):''}`;sync();
 }
 const normalize=value=>value.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
 function filterInstruments(preferred){
@@ -50,13 +50,22 @@ function filterInstruments(preferred){
  $('eqInstrumentCount').textContent=list.length?`${list.length} instrumentos`:'No se encontraron instrumentos.';
 }
 $('eqInstrumentSearch').oninput=()=>filterInstruments();
-function loadSelected(){const inst=INSTRUMENTS.find(i=>i.id===$('eqInstrumentSelect').value);if(inst)loadExample(EQResponse.instrumentExample(inst),inst.name);}
+function loadSelected(){const inst=INSTRUMENTS.find(i=>i.id===$('eqInstrumentSelect').value);if(inst)loadExample(window.InstrumentEQGuidance.example(inst,0),inst.name);}
 $('eqInstrumentSelect').onchange=loadSelected;$('eqLoadInstrument').onclick=loadSelected;
 svg.onpointerleave=()=>{$('eqTooltip').hidden=true;};
 svg.onfocusin=e=>{const node=e.target.closest('[data-band]');if(node)showTooltip(+node.dataset.band);};
 svg.onfocusout=()=>{$('eqTooltip').hidden=true;};
 svg.onkeydown=e=>{const node=e.target.closest('[data-band]');if(node&&(e.key==='Enter'||e.key===' ')){e.preventDefault();selected=+node.dataset.band;sync();$('eqType').focus();}if(e.key==='Escape')$('eqTooltip').hidden=true;};
-document.addEventListener('click',e=>{const btn=e.target.closest('.eq-example-btn');if(!btn)return;loadExample(JSON.parse(btn.dataset.example),btn.dataset.context);$('eqInstrumentSearch').value='';const inst=INSTRUMENTS.find(i=>i.name===btn.dataset.context);filterInstruments(inst?.id);document.querySelector('[data-view="eq"]').click();document.getElementById('detailClose').click();host.scrollIntoView({behavior:'smooth',block:'start'});});
+document.addEventListener('click',e=>{
+ const presetButton=e.target.closest('[data-eq-preset]'),btn=e.target.closest('.eq-example-btn');
+ if(!presetButton&&!btn)return;
+ const inst=INSTRUMENTS.find(i=>presetButton?i.id===presetButton.dataset.eqInstrument:i.name===btn.dataset.context);
+ if(!inst)return;
+ const example=presetButton?window.InstrumentEQGuidance.example(inst,+presetButton.dataset.eqPreset):JSON.parse(btn.dataset.example);
+ loadExample(example,inst.name);$('eqInstrumentSearch').value='';filterInstruments(inst.id);
+ const fromDetail=!!e.target.closest('#detailPanel');
+ if(fromDetail){document.querySelector('[data-view="eq"]').click();document.getElementById('detailClose').click();host.scrollIntoView({behavior:'smooth',block:'start'});}
+});
 filterInstruments();
 reset();
 })();

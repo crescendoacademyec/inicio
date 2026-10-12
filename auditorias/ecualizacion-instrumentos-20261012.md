@@ -86,3 +86,9 @@ Producción cargaba solo data.js (15 instrumentos). Ahora carga también instrum
 ## Validación
 
 37 pruebas aprobadas: catálogo, respuesta de filtros, revisión completa, fuentes, coincidencia entre Tabla y Producción, currículo y rutas locales. Verificación manual: ficha de guitarra, paso al visualizador, alternativas desplegables, búsqueda de instrumentos y selector de 57 referencias en Producción.
+
+## Presets gráficos · ampliación
+
+Las 114 alternativas ahora cuentan con curvas numéricas propias (EQ 1 / EQ 2). Cada una carga de dos a tres bandas con frecuencia, ganancia, Q y tipo de filtro; los pasa-altos/bajos comienzan en 12 dB/octava. Los valores concretos son propuestas editoriales de Crescendo, no ajustes publicados por las marcas citadas. Los botones están visibles en las fichas y en el EQ compartido. Cambiar de propuesta reemplaza la curva actual; editarla no modifica la definición original. La comparación plana y todos los controles permanecen disponibles.
+
+No son procesos dinámicos: si una alternativa menciona EQ dinámica o duración de la nota, su curva estática solo ilustra un cambio de color, no emula esos procesos. Las clasificaciones vocales no determinan un preset individual. El ajuste definitivo depende de la toma, notas y arreglo.
