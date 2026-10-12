@@ -51,10 +51,10 @@ const TECHNIQUES = {
 };
 
 const GLOSSARY = [
-  { t: 'Attack (Ataque)', d: 'Tiempo que tarda un compresor o gate en empezar a actuar una vez que la señal supera el umbral.' },
+  { t: 'Attack (Ataque)', d: 'Rapidez con que evoluciona la reducción o apertura al detectar un cambio de nivel. En un compresor no es una espera antes de empezar a actuar; la definición temporal varía entre modelos.' },
   { t: 'Threshold (Umbral)', d: 'Nivel a partir del cual el procesador dinámico comienza a afectar la señal.' },
-  { t: 'Ratio', d: 'Relación de reducción de ganancia aplicada por cada dB que excede el umbral. Ej: 4:1 deja pasar 1 dB por cada 4 que sobran.' },
-  { t: 'Release', d: 'Tiempo que tarda el procesador en dejar de actuar una vez que la señal cae por debajo del umbral.' },
+  { t: 'Ratio', d: 'Relación entrada/salida en régimen estable por encima del umbral y fuera del knee. A 4:1, 4 dB adicionales de entrada producen 1 dB adicional de salida.' },
+  { t: 'Release', d: 'Rapidez de recuperación de la ganancia cuando disminuye la reducción requerida. Depende del detector, la señal y el modelo; no exige que toda la señal caiga bajo el umbral.' },
   { t: 'Knee (Rodilla)', d: 'Forma en que la compresión se aplica alrededor del umbral: "duro" (abrupto) o "suave" (gradual).' },
   { t: 'Makeup gain', d: 'Ganancia de salida para compensar la reducción de nivel del compresor.' },
   { t: 'Gain reduction', d: 'Atenuación que aplica el compresor, expresada en dB; no es la ganancia de compensación.' },

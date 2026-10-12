@@ -247,10 +247,13 @@
     `;
   }
 
+  document.addEventListener('click',e=>{const b=e.target.closest('[data-compression-instrument]');if(!b)return;document.querySelector('[data-view="dynamics"]').click();closeDetail();window.dispatchEvent(new CustomEvent('crescendo:compression-instrument',{detail:{id:b.dataset.compressionInstrument}}));document.getElementById('viewDynamics').scrollIntoView({behavior:'smooth',block:'start'});});
+
   function compHtml(inst) {
-    if (!inst.comp) return '<p class="detail-tips">Sin guía de compresión específica para este instrumento.</p>';
+    const explore=`<button class="eq-example-btn" data-compression-instrument="${inst.id}">Explorar propuestas de compresión y gráficos →</button>`;
+    if (!inst.comp) return explore+'<p class="detail-tips">Compara propuestas de su familia instrumental en el explorador.</p>';
     const c = inst.comp;
-    return `
+    return `${explore}
       <div class="detail-section">
         <ul class="detail-list comp">
           <li><span class="freq-tag">Tipo</span>${c.tipo}</li>
@@ -288,8 +291,8 @@
       <h3 class="detail-title">${inst.name}</h3>
       <div class="detail-range">${fmtHz(displayRange(inst)[0])} – ${fmtHz(displayRange(inst)[1])} · ${rangeDescriptor(inst)}</div>
       ${inst.rangeNote && (rangeMode === 'registro' || inst.rangeKind === 'energy' || inst.rangeKind === 'window') ? `<div class="detail-tips" style="margin:-8px 0 16px;font-size:.74rem;">${inst.rangeNote}</div>` : ''}
-      ${tabButtons(!!inst.comp)}
-      <div id="tabContent">${activeTab === 'comp' && inst.comp ? compHtml(inst) : eqHtml(inst)}</div>
+      ${tabButtons(true)}
+      <div id="tabContent">${activeTab === 'comp' ? compHtml(inst) : eqHtml(inst)}</div>
       ${sourceHtml(inst)}
       <button class="mode-btn" id="measureInstrument">Contrastar con una grabación</button><p class="detail-tips">Compara notas, dinámicas y técnicas en el analizador usando tu audio o micrófono. Las franjas son orientativas; el espectro de esa toma muestra la distribución real.</p>
       ${notesHtml(inst.id)}
