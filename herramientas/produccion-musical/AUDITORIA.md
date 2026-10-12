@@ -41,11 +41,11 @@ Al preparar los paquetes externos conviene indicar permisos de uso, BPM/compás 
 
 ### 2. Práctica auditiva incorporada
 
-La nueva sección **Práctica auditiva** ofrece comparaciones ciegas sobre demos originales: realce de graves/medios/agudos, ataque rápido/lento o ausencia de compresión, protagonismo de bajo/armonía/ritmo, suma/cancelación parcial/total y señal limpia/saturación suave/recorte. Se reutiliza la demo sintetizada del laboratorio; filtros y compresor se renderizan con Web Audio. Las opciones se alternan y los ajustes se revelan después de contestar, con explicación y contador de intentos de la visita.
+La sección **Práctica auditiva** reúne 20 habilidades: localizar frecuencias en un EQ, corregir resonancias, reconocer Q/filtros/pendientes, ataque/release/cantidad de compresión, balance/enmascaramiento/fase, diferencias de dB, paneo/anchura/mono, efectos/profundidad, distorsión/clics/fades, ondas y ADSR. Sesiones de 5/10 rondas, explicación al contestar, repaso ponderado de dificultades y dificultad adaptativa donde el contraste lo permite.
 
-EQ y balance incluyen cambios marcados o sutiles. Se iguala aproximadamente el RMS y se conserva margen de pico, excepto el silencio esperado de una cancelación completa. RMS equivalente no garantiza sonoridad percibida idéntica. Estos ejercicios entrenan discriminación inicial: no reemplazan escucha de grabaciones reales ni son una prueba de competencia profesional. Los resultados auditivos son temporales y no forman parte del archivo de progreso exportado.
+El motor compartido usa demos originales sintetizadas. RMS aproximadamente igualado salvo diferencias de dB; se conserva el silencio de cancelación. El progreso se guarda en el navegador y se exporta por separado del curso. No evalúa dominio profesional ni sustituye las grabaciones reales entregadas por el docente. El gráfico de respuesta del entrenamiento es una guía ilustrativa, la corrección usa Q fijo 1 y las reflexiones sintéticas no representan una sala medida. Detalles en [ENTRENAMIENTO-AUDITIVO.md](../../shared/ENTRENAMIENTO-AUDITIVO.md).
 
-Como ampliación futura: más fuentes y contextos, reconocimiento de cortes de EQ, frecuencias exactas, ruido/clics, reverberación y pruebas de transferencia sobre las sesiones que entregue el docente. La revisión de evidencias sigue siendo externa por decisión de la escuela.
+Las pruebas de transferencia sobre las sesiones reales y la revisión de evidencias continúan fuera de la plataforma, por decisión de la escuela.
 
 ### 3. Itinerario docente, duración y requisitos
 

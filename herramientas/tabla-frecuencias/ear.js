@@ -952,7 +952,7 @@
 
   window.addEventListener('crescendo:export-progress',()=>{
     const data={date:new Date().toISOString(),currentSession:PracticeSession.snapshot(),saved:{}};
-    for(const key of [STATS_NOISE_KEY,STATS_TONE_KEY,STATS_DIR_KEY,HISTORY_NOISE_KEY,HISTORY_TONE_KEY,HISTORY_DIR_KEY,SESSION_HISTORY_KEY,'crescendo-processing-practice-v1']){
+    for(const key of [STATS_NOISE_KEY,STATS_TONE_KEY,STATS_DIR_KEY,HISTORY_NOISE_KEY,HISTORY_TONE_KEY,HISTORY_DIR_KEY,SESSION_HISTORY_KEY,'crescendo-processing-practice-v1','crescendo-listening-v1']){
       try{data.saved[key]=JSON.parse(localStorage.getItem(key)||'null');}catch(_){data.saved[key]=null;}
     }
     const url=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));

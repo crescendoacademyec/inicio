@@ -38,4 +38,4 @@ Navegación, respuestas incorrectas/correctas, evaluación 4/4, guardado tras re
 
 ## Práctica auditiva
 
-Ruta `#escucha`: cinco temas, comparaciones ciegas con feedback y resultados de la visita. EQ y balance tienen dos intensidades. Usa demos originales del laboratorio y Web Audio, sin subir archivos. Multitracks y revisión docente se comparten directamente con el estudiante fuera de la plataforma. Los intentos auditivos no se exportan con el progreso del curso.
+Ruta `#escucha`: 20 habilidades de EQ, dinámica, mezcla, espacio estéreo, edición y síntesis. Motor compartido con Tabla de frecuencias, sesiones de 5/10 rondas, dificultad adaptativa, repaso y progreso local exportable. Demos originales sintetizadas; multitracks y revisión docente siguen fuera de la plataforma. Véase [documentación del entrenamiento](../../shared/ENTRENAMIENTO-AUDITIVO.md).
