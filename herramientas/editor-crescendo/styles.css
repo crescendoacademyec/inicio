@@ -18,7 +18,7 @@
 
 @font-face {
   font-family: "MTF Improviso Text";
-  src: url("../../assets/fonts/MTF-ImprovisoText.otf") format("opentype");
+  src: local("MTF Improviso Text");
   font-display: swap;
 }
 
@@ -33,7 +33,7 @@
 
 @font-face {
   font-family: "Ink Free";
-  src: url("../../assets/fonts/Inkfree.ttf") format("truetype");
+  src: local("Ink Free");
   font-display: swap;
 }
 
@@ -73,7 +73,7 @@ a {
   background:
     linear-gradient(90deg, rgba(22, 21, 20, 0.94), rgba(22, 21, 20, 0.72), rgba(22, 21, 20, 0.88)),
     linear-gradient(0deg, rgba(22, 21, 20, 0.94), rgba(22, 21, 20, 0.18) 52%, rgba(22, 21, 20, 0.82)),
-    url("../../assets/social-preview-home.png") center / cover;
+    url("../../mi-crescendo/assets/tools/editor.webp") center / cover;
   filter: saturate(0.75);
   inset: 0;
   position: fixed;
