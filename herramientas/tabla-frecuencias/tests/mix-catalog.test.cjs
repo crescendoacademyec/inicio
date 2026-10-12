@@ -47,3 +47,19 @@ test('instrument labels use English and retain distinct traditional instruments'
 });
 
 test("artist studies remain editorial and searchable with real references",()=>{for(const id of ["parker-study", "fkj-study", "anomalie-study", "despacito-study", "nigro-study", "martin-study", "tainy-study", "ovy-study", "billie-study"]){const p=presets[id];assert.ok(p.note.includes("Crescendo"));assert.ok(p.note.includes("no son presets oficiales"));assert.equal(p.sources.length,2);assert.ok(search(presets,p.title.split(" · ")[0]).some(([key])=>key===id));}});
+
+test('every style offers distinct, independent alternatives with bounded coordinates',()=>{
+ const {alternatives,evolution}=require('../mix-presets.js');
+ for(const p of Object.values(presets)){
+  const before=JSON.stringify(p),variants=alternatives(p);
+  assert.ok(variants.length>=4,p.title);assert.equal(variants[0].id,'base');
+  const signatures=new Set();
+  for(const v of variants){assert.equal(v.tracks.length,p.tracks.length);assert.ok(v.note.length>30);assert.ok(!signatures.has(JSON.stringify(v.tracks)),p.title+' '+v.id);signatures.add(JSON.stringify(v.tracks));for(const t of v.tracks)for(const k of ['pan','register','width','depth','level'])assert.ok(Number.isFinite(t[k])&&t[k]>=(k==='pan'?-100:0)&&t[k]<=100,p.title+' '+k);}
+  assert.match(evolution(p),/no mediciones/);variants[0].tracks[0].pan=77;assert.equal(JSON.stringify(p),before);
+ }
+});
+test('acoustic alternatives preserve the ensemble side and LCR has only cardinal points',()=>{
+ const {alternatives}=require('../mix-presets.js');
+ for(const id of ['jazz','orchestra','hindustani']){const vs=alternatives(presets[id]);assert.ok(!vs.some(v=>v.id==='lcr'));for(const v of vs)for(let i=0;i<v.tracks.length;i++)assert.equal(Math.sign(v.tracks[i].pan),Math.sign(presets[id].tracks[i].pan));}
+ const lcr=alternatives(presets.rock).find(v=>v.id==='lcr');assert.ok(lcr);assert.ok(lcr.tracks.every(t=>[-100,0,100].includes(t.pan)&&t.width===0));
+});

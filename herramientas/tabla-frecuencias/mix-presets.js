@@ -276,5 +276,34 @@ kpop-dance|pop|K-pop · dance / drop|Ejemplo de sección de baile: voz o hook co
       return rank(ai,a)-rank(bi,b)||a.title.localeCompare(b.title,'es');
     });
   }
-  const api={presets,families,sources,search};if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.MixCatalog=api;
+
+  sources.panEvolution={title:'iZotope · Historia de la imagen sonora',url:'https://www.izotope.com/community/blog/sonic-imaging-a-brief-history'};
+  sources.panLCR={title:'iZotope · Paneo continuo y LCR',url:'https://www.izotope.com/community/blog/what-is-panning-in-music'};
+  sources.remixHistory={title:'Abbey Road · Revolver: mono original y nuevas mezclas',url:'https://www.abbeyroad.com/news/the-beatles-revolver-special-edition-out-now-3240'};
+  const context={
+    pop:'En pop conviven centros vocales cercanos, estribillos abiertos y producciones íntimas. Una misma canción puede cambiar de escena entre verso y estribillo.',
+    rock:'En rock conviven imágenes estrechas, separación LCR y panoramas continuos. El número de tomas y la captura de batería condicionan las opciones; LCR también se usa hoy.',
+    metal:'En metal contrasta la apertura de tomas rítmicas distintas con la claridad del centro. Más ancho no implica más potencia; controla la suma mono y la articulación.',
+    jazz:'En jazz acústico compara una escena de conjunto con una mezcla más cercana por micrófonos. Respeta la imagen de los micrófonos principales y evita mover cada instrumento sin considerar la toma.',
+    classical:'En clásica, la disposición escénica y el par principal suelen guiar la imagen. Estas alternativas comparan perspectiva y sala: no sustituyen otra colocación de micrófonos ni representan épocas universales.',
+    electronic:'En electrónica conviven centro compacto, detalles extremos y fondos envolventes. Conserva la función del grave y comprueba mono, especialmente si el destino es un club.',
+    ambient:'En ambient la profundidad puede ser protagonista. Una escena cercana y otra difusa son decisiones estéticas; ningún grado de anchura define una época por sí solo.',
+    hiphop:'En hip-hop y urbano compara voz frontal y base centrada con apoyos más abiertos o fondos profundos. Ad-libs y automatización pueden cambiar la escena en cada frase.',
+    latin:'En música latina no hay un único panorama: conjunto acústico, percusión multicanal y producción urbana requieren decisiones distintas. Compara acompañamiento, centro vocal y planos de percusión.',
+    folk:'En folk y country compara intimidad con acompañamiento abierto y una sala más audible. La toma y el protagonismo de cada solo importan más que una regla fija.'
+  };
+  function evolution(p){return (context[p.family]||'Las tradiciones acústicas, sus grabaciones de conjunto y sus fusiones de estudio pueden tener imágenes distintas. Respeta la toma, el arreglo y la perspectiva elegida.')+' La evolución no es una línea de “estrecho antiguo” a “ancho moderno”: mono, LCR, paneo continuo, técnicas de sala y remixes coexisten. El ejemplo histórico enlazado es de pop/rock occidental; no demuestra la misma cronología para todos los estilos. Estas opciones son transformaciones didácticas del mismo arreglo, no mediciones de discos ni presets históricos.';}
+  const clamp=n=>Math.max(0,Math.min(100,Math.round(n)));
+  function alternatives(p){
+    const clone=()=>p.tracks.map(t=>({...t}));
+    const acoustic=['classical','jazz','africa','asia','europe','brazil','regional'].includes(p.family);
+    const out=[{id:'base',title:'Base',note:'Distribución original del escenario. Compara las otras versiones manteniendo los mismos instrumentos.',tracks:clone()}];
+    out.push({id:'compact',title:'Cercana',note:acoustic?'Perspectiva más recogida y menos sala: se comprime el panorama de forma simétrica, manteniendo el orden escénico. En audio requiere ajustar la captación y el balance directo/ambiente.':'Escena íntima: panorama más estrecho y planos más cercanos. Reduce la separación lateral, sin convertirla automáticamente en mono.',tracks:clone().map(t=>({...t,pan:Math.round(t.pan*.55),width:clamp(t.width*.6),depth:clamp(t.depth*.65)}))});
+    out.push({id:'open',title:'Abierta',note:acoustic?'Mayor apertura conservando lados y orden del conjunto; no se recolocan instrumentos de manera arbitraria. Comprueba fase y coherencia con el par principal.':'Mayor contraste lateral en acompañamientos; el centro original permanece estable. Necesita tomas o capas adecuadas: duplicar la misma señal no crea dos interpretaciones.',tracks:clone().map(t=>({...t,pan:Math.max(-100,Math.min(100,Math.round(t.pan*(acoustic?1.2:1.4)))),width:clamp(t.width*(acoustic?1.15:1.3)),depth:clamp(t.depth*.85)}))});
+    const highest=Math.max(...p.tracks.map(t=>t.level));
+    out.push({id:'layers',title:'Más planos',note:acoustic?'Más contraste entre fuente principal y sala: conserva paneo, aleja visualmente el acompañamiento y acentúa el foco. No implica aumentar todos los tiempos de reverb.':'Protagonista cercano y apoyos más profundos, conservando el paneo. En audio combina balance relativo, señal directa, reflexiones y timbre; el mapa no procesa reverberación.',tracks:clone().map(t=>{const focus=t.level>=highest-5;return {...t,depth:clamp(focus?t.depth*.45:t.depth+18),level:clamp(focus?t.level:t.level-8)};})});
+    if(['pop','rock','metal','blues','soul','folk'].includes(p.family)&&p.tracks.some(t=>t.pan!==0))out.push({id:'lcr',title:'LCR',note:'Comparación L/C/R: cada fuente mono se ubica en un extremo o centro. Las capas estéreo se representan estrechas para aislar el ejercicio. No es una reconstrucción de una consola antigua ni significa que toda mezcla histórica fuera LCR.',tracks:clone().map(t=>({...t,pan:Math.abs(t.pan)<15?0:Math.sign(t.pan)*100,width:0}))});
+    return out;
+  }
+  const api={presets,families,sources,search,alternatives,evolution};if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.MixCatalog=api;
 })(typeof window==='undefined'?{}:window);

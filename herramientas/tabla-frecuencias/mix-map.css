@@ -16,3 +16,6 @@
 @media(max-width:1000px){.mix-layout{grid-template-columns:minmax(0,1fr) 230px}.mix-layout>details{grid-column:auto}}
 @media(max-width:600px){.mix-layout{grid-template-columns:minmax(0,1fr)}}
 #mixPlacement{margin:18px 0 26px}#mixPlacement table{width:100%;border-collapse:collapse;font-size:.88rem}#mixPlacement caption{text-align:left;color:#e4b951;padding:8px 0}#mixPlacement th,#mixPlacement td{text-align:left;padding:7px 12px;border-bottom:1px solid #ffffff18;white-space:nowrap}#mixPlacement th{color:#eee4cd}#mixPlacement tbody tr:nth-child(even){background:#ffffff04}
+
+/* Alternatives always stay on one row, with horizontal scrolling if necessary. */
+.mix-variants{display:flex;flex-wrap:nowrap;gap:6px;overflow-x:auto;max-width:100%;padding:5px 2px 9px;margin-top:12px}.mix-variants button{flex:0 0 auto;white-space:nowrap;padding:7px 12px;min-height:32px;border:1px solid #a38240;border-radius:7px;background:#28251d;color:#f6ecd6;font-family:inherit;font-size:12px;line-height:1.3;cursor:pointer}.mix-variants button[aria-pressed=true]{background:#d4aa50;color:#17140d}.mix-variants button:focus-visible{outline:3px solid #e9c775;outline-offset:2px}.mix-evolution{padding:12px 0;border-bottom:1px solid #ffffff20}.mix-evolution summary{color:#e4b951;cursor:pointer}#mixVariantNote{font-size:.9rem}
