@@ -2,6 +2,15 @@
 (function () {
   'use strict';
   Object.assign(FREQUENCY_SOURCES, {
+    "eqParker": {"label": "Kevin Parker · Tame Impala", "url": "https://mixwiththemasters.com/videos/kevin-parker-tame-impala-the-less-i-know-the-better/part/5"},
+    "eqFKJ": {"label": "FKJ · entrevista sobre interpretación y producción", "url": "https://www.musicradar.com/news/fkj-interview"},
+    "eqAnomalie": {"label": "Anomalie · entrevista Pianote", "url": "https://www.pianote.com/blog/anomalie-interview/"},
+    "eqTorres": {"label": "Andrés Torres y Mauricio Rengifo · Despacito", "url": "https://mixwiththemasters.com/videos/andres-torres-mauricio-rengifo-luis-fonsi-despacito/part"},
+    "eqNigro": {"label": "Dan Nigro · producción con Olivia Rodrigo", "url": "https://mixwiththemasters.com/masters/dan-nigro"},
+    "eqMartin": {"label": "Max Martin · Polar Music Prize", "url": "https://www.polarmusicprize.org/laureates/max-martin/"},
+    "eqTainy": {"label": "Tainy · entrevista sobre Bad Bunny y fusiones", "url": "https://splice.com/blog/tainy-q-and-a/"},
+    "eqOvy": {"label": "Ovy On The Drums · producción para Karol G", "url": "https://splice.com/blog/ovy-on-the-drums-in-the-studio/"},
+    "eqKinelski": {"label": "Rob Kinelski · mezcla para Billie Eilish", "url": "https://www.uaudio.com/blogs/ua/helping-billie-eilish-craft-hits"},
     eqCLA:{label:'Waves · entrevista con Chris Lord-Alge: Signature Series',url:'https://www.waves.com/behind-the-chris-lord-alge-signature-series'},
     eqScheps:{label:'Waves · Scheps Omni Channel: ejemplos del manual, pp. 23–25',url:'https://www.waves.com/1lib/pdf/plugins/scheps-omni-channel.pdf'},
     eqJaycen:{label:'Mix with the Masters · Jaycen Joshua y Dave Pensado: temario público',url:'https://mixwiththemasters.com/videos/jaycen-joshua-advanced-mix-techniques/part/2'},

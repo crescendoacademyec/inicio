@@ -68,9 +68,9 @@ test('loading and editing a preset does not mutate its stored proposal',()=>{
 
 test('additional artist studies disclose their origin and keep a source on every proposal',()=>{
  const {instruments,sources,render}=catalog();
- assert.equal(instruments.reduce((n,i)=>n+i.eqPresets.length,0),132);
+ assert.equal(instruments.reduce((n,i)=>n+i.eqPresets.length,0),142);
  const voice=instruments.find(i=>i.id==='voz');
- assert.equal(voice.eqPresets.length,6);
+ assert.equal(voice.eqPresets.length,9);
  for(const i of instruments)for(let index=2;index<i.eqPresets.length;index++){
   const p=i.eqPresets[index],a=i.eqReview.alternatives[index];
   assert.equal(p.title,a.title);assert.equal(p.source,a.source);assert.ok(sources[p.source]);

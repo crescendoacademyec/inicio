@@ -3,7 +3,7 @@ const {presets,families,sources,search}=require('../mix-presets.js');
 test('all 13 book styles are represented and every family has original scenarios',()=>{
  const book=['electronic','blues','rap','reggae','heavy-metal','new-age','alternative-rock','jazz','folk','bluegrass','big-band','orchestra','orchestra-balanced'];
  for(const id of book)assert.equal(presets[id].basis,'book',id);
- assert.equal(Object.keys(presets).length,184);
+ assert.equal(Object.keys(presets).length,193);
  for(const family of Object.keys(families))assert.ok(Object.values(presets).some(p=>p.family===family),family);
 });
 test('all scenarios have finite editable coordinates, unique names and resolvable references',()=>{
@@ -45,3 +45,5 @@ test('instrument labels use English and retain distinct traditional instruments'
  assert.ok(presets.norteno.tracks.some(t=>t.name==='Bajo sexto'));
  for(const p of Object.values(presets))for(const t of p.tracks)assert.ok(!['Voz','Bajo','Bombo','Guitarra','Cuerdas','Platos','Coros'].includes(t.name),p.title+' '+t.name);
 });
+
+test("artist studies remain editorial and searchable with real references",()=>{for(const id of ["parker-study", "fkj-study", "anomalie-study", "despacito-study", "nigro-study", "martin-study", "tainy-study", "ovy-study", "billie-study"]){const p=presets[id];assert.ok(p.note.includes("Crescendo"));assert.ok(p.note.includes("no son presets oficiales"));assert.equal(p.sources.length,2);assert.ok(search(presets,p.title.split(" · ")[0]).some(([key])=>key===id));}});
