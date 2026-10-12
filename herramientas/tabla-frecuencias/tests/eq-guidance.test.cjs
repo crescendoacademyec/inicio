@@ -81,3 +81,14 @@ test('additional artist studies disclose their origin and keep a source on every
  assert.equal(kick.bands[0].slope,18);
  const html=render(voice,5);assert.ok(html.includes('no es un preset del autor'));assert.ok(html.includes('Finneas'));
 });
+
+test('selected proposal renders only its explanation while all compact selectors remain available',()=>{
+ const {instruments,render}=catalog();const voice=instruments.find(i=>i.id==='voz');
+ for(let index=0;index<voice.eqPresets.length;index++){
+  const html=render(voice,index),aside=html.split('<aside')[1];
+  assert.ok(aside);assert.ok(aside.includes(voice.eqReview.alternatives[index].body.replace(/&/g,'&amp;')));
+  for(let other=0;other<voice.eqPresets.length;other++)if(other!==index)assert.ok(!aside.includes(voice.eqReview.alternatives[other].body));
+  assert.equal((html.match(/data-eq-preset=/g)||[]).length,voice.eqPresets.length);
+  assert.ok(!html.includes('Ver objetivos, ajustes y referencias'));
+ }
+});
