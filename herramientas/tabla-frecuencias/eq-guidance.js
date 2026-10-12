@@ -2,6 +2,11 @@
 (function () {
   'use strict';
   Object.assign(FREQUENCY_SOURCES, {
+    eqCLA:{label:'Waves · entrevista con Chris Lord-Alge: Signature Series',url:'https://www.waves.com/behind-the-chris-lord-alge-signature-series'},
+    eqScheps:{label:'Waves · Scheps Omni Channel: ejemplos del manual, pp. 23–25',url:'https://www.waves.com/1lib/pdf/plugins/scheps-omni-channel.pdf'},
+    eqJaycen:{label:'Mix with the Masters · Jaycen Joshua y Dave Pensado: temario público',url:'https://mixwiththemasters.com/videos/jaycen-joshua-advanced-mix-techniques/part/2'},
+    eqFinneas:{label:'Mix with the Masters · Finneas: Therefore I Am, presentación pública',url:'https://mixwiththemasters.com/videos/finneas-billie-eilish-therefore-i-am'},
+    eqKickBass:{label:'Sound On Sound · Mix Tips: Kick & Bass',url:'https://www.soundonsound.com/techniques/mix-tips-kick-bass'},
     eqDrums: {label:'iZotope · How to EQ Drums',url:'https://www.izotope.com/community/blog/how-to-eq-drums'},
     eqChart: {label:'iZotope · EQ Cheat Sheet',url:'https://www.izotope.com/community/blog/eq-cheat-sheet'},
     eqPiano: {label:'iZotope · How to mix piano',url:'https://www.izotope.com/community/blog/how-to-mix-piano'},
@@ -194,7 +199,12 @@
     const row = entries[instrument.id];
     if (!row) throw new Error('Falta revisión EQ: '+instrument.id);
     instrument.eqReview = {date:'2026-10-12',scope:row[1],sources:[row[0]],alternatives:row.slice(2).map(s=>{const [title,body]=s.split('|');return {title,body};})};
-    instrument.sources = [...new Set([...(instrument.sources||[]),row[0]])];
+    for(const preset of instrument.eqPresets.slice(2)){
+      instrument.eqReview.alternatives.push({title:preset.title,body:preset.body,attribution:preset.attribution,source:preset.source});
+      instrument.eqReview.sources.push(preset.source);
+    }
+    instrument.eqReview.sources=[...new Set(instrument.eqReview.sources)];
+    instrument.sources = [...new Set([...(instrument.sources||[]),...instrument.eqReview.sources])];
   }
   const escape = value => String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   window.InstrumentEQGuidance = {
@@ -205,6 +215,7 @@
     html(instrument,active=-1) {
     const review=instrument.eqReview;
     if (!review) return '';
-    return `<section class="eq-reference-notes"><h3>Propuestas de ecualización</h3><p>Elige una curva para cargar sus puntos en el gráfico. Puedes editar frecuencia, ganancia, Q y filtros. Cargar otra propuesta reemplaza los ajustes actuales.</p><div class="eq-preset-buttons">${review.alternatives.map((a,index)=>`<button type="button" data-eq-preset="${index}" data-eq-instrument="${escape(instrument.id)}" aria-pressed="${active===index}">Mostrar EQ ${index+1} · ${escape(a.title)}</button>`).join('')}</div><details class="eq-preset-info"><summary>Ver objetivos, ajustes y referencias</summary>${review.alternatives.map((a,index)=>`<details><summary>EQ ${index+1} · ${escape(a.title)}: ajustes y objetivo</summary><p>${escape(a.body)}</p><ul>${instrument.eqPresets[index].bands.map(b=>`<li>${escape(({peaking:'Campana',highpass:'Pasa altos',lowpass:'Pasa bajos',lowshelf:'Shelf grave',highshelf:'Shelf agudo'})[b.type])} · ${b.frequency} Hz · ${['highpass','lowpass'].includes(b.type)?b.slope+' dB/octava':(b.gain>0?'+':'')+b.gain+' dB'+(b.type==='peaking'?' · Q '+b.q:'')}</li>`).join('')}</ul></details>`).join('')}<details><summary>Referencias y criterio de uso</summary><p>${escape(review.scope)} Estos presets son propuestas didácticas de Crescendo, no presets oficiales del fabricante. Frecuencias, ganancias y Q son puntos de partida; deben adaptarse a la grabación. Si no hay un problema audible, conserva la señal.</p><ul>${review.sources.map(id=>{const s=FREQUENCY_SOURCES[id];return `<li><a href="${escape(s.url)}" target="_blank" rel="noopener noreferrer">${escape(s.label)}</a></li>`;}).join('')}</ul><p>Compara bypass a nivel parecido. Una resonancia intermitente puede requerir EQ dinámica; este visualizador muestra una respuesta estática y no procesa audio. Revisión: ${review.date}.</p></details></details></section>`;
+    const attribution=a=>a?.attribution?`<p class="eq-attribution">${escape(a.attribution)} <a href="${escape(FREQUENCY_SOURCES[a.source].url)}" target="_blank" rel="noopener noreferrer">Consultar fuente</a></p>`:'';
+    return `<section class="eq-reference-notes"><h3>Propuestas de ecualización</h3><p>Elige una curva para cargar sus puntos en el gráfico. Puedes editar frecuencia, ganancia, Q y filtros. Cargar otra propuesta reemplaza los ajustes actuales.</p><div class="eq-preset-buttons">${review.alternatives.map((a,index)=>`<button type="button" data-eq-preset="${index}" data-eq-instrument="${escape(instrument.id)}" aria-pressed="${active===index}">Mostrar EQ ${index+1} · ${escape(a.title)}</button>`).join('')}</div>${attribution(review.alternatives[active])}<details class="eq-preset-info"><summary>Ver objetivos, ajustes y referencias</summary>${review.alternatives.map((a,index)=>`<details><summary>EQ ${index+1} · ${escape(a.title)}: ajustes y objetivo</summary><p>${escape(a.body)}</p>${attribution(a)}<ul>${instrument.eqPresets[index].bands.map(b=>`<li>${escape(({peaking:'Campana',highpass:'Pasa altos',lowpass:'Pasa bajos',lowshelf:'Shelf grave',highshelf:'Shelf agudo'})[b.type])} · ${b.frequency} Hz · ${['highpass','lowpass'].includes(b.type)?b.slope+' dB/octava':(b.gain>0?'+':'')+b.gain+' dB'+(b.type==='peaking'?' · Q '+b.q:'')}</li>`).join('')}</ul></details>`).join('')}<details><summary>Referencias y criterio de uso</summary><p>${escape(review.scope)} Estos presets son propuestas didácticas de Crescendo, no presets oficiales del fabricante. Frecuencias, ganancias y Q son puntos de partida; deben adaptarse a la grabación. Si no hay un problema audible, conserva la señal.</p><ul>${review.sources.map(id=>{const s=FREQUENCY_SOURCES[id];return `<li><a href="${escape(s.url)}" target="_blank" rel="noopener noreferrer">${escape(s.label)}</a></li>`;}).join('')}</ul><p>Compara bypass a nivel parecido. Una resonancia intermitente puede requerir EQ dinámica; este visualizador muestra una respuesta estática y no procesa audio. Revisión: ${review.date}.</p></details></details></section>`;
   }};
 })();

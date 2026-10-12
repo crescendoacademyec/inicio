@@ -16,7 +16,7 @@ function response(b,f){
  if(!b.enabled)return 0;
  // Butterworth prototype with bilinear frequency warping. No resonant peak.
  if(b.type==='highpass'||b.type==='lowpass'){
-  const slope=[6,12,24,36,48].includes(b.slope)?b.slope:12;
+  const slope=[6,12,18,24,36,48].includes(b.slope)?b.slope:12;
   const ratio=Math.tan(Math.PI*f/96000)/Math.tan(Math.PI*b.frequency/96000);
   return -10*Math.log10(1+Math.pow(b.type==='lowpass'?ratio:1/ratio,2*slope/6));
  }

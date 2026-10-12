@@ -9,10 +9,11 @@ function catalog(files=['data.js','instrument-catalog.js','eq-presets.js','eq-gu
  for(const file of files)vm.runInContext(fs.readFileSync(path.join(root,file),'utf8'),context);
  return vm.runInContext('({instruments:INSTRUMENTS,sources:FREQUENCY_SOURCES,render:window.InstrumentEQGuidance.html})',context);
 }
-test('all 57 instruments have two distinct, referenced alternatives with explicit source scope',()=>{
+test('all 57 instruments have distinct, referenced alternatives with explicit source scope',()=>{
  const {instruments,sources,render}=catalog();assert.equal(instruments.length,57);
  for(const i of instruments){
-  assert.equal(i.eqReview.alternatives.length,2,i.id);
+  assert.ok(i.eqReview.alternatives.length>=2,i.id);
+  assert.equal(i.eqReview.alternatives.length,i.eqPresets.length,i.id);
   assert.notEqual(i.eqReview.alternatives[0].title,i.eqReview.alternatives[1].title,i.id);
   assert.ok(i.eqReview.scope.length>20,i.id);
   for(const a of i.eqReview.alternatives)assert.ok(a.title&&a.body.length>60,i.id);
@@ -36,12 +37,12 @@ test('review removes destructive universal cuts and merges duplicate advice',()=
  assert.ok(get('bajo').tip.includes('depende de la nota'));
  for(const i of instruments){assert.equal(new Set(i.cuts.map(x=>x.f)).size,i.cuts.length,i.id);assert.equal(new Set(i.boosts.map(x=>x.f)).size,i.boosts.length,i.id);}
 });
-test('all 114 presets contain valid editable filters and produce two distinct curves per instrument',()=>{
+test('all presets contain valid editable filters and produce distinct curves per instrument',()=>{
  const {response}=require('../eq-response.js');
  const {instruments}=catalog();
  const frequencies=Array.from({length:121},(_,i)=>20*1000**(i/120));
  for(const i of instruments){
-  assert.equal(i.eqPresets.length,2,i.id);
+  assert.ok(i.eqPresets.length>=2,i.id);
   for(const preset of i.eqPresets){
    assert.ok(preset.bands.length>=2&&preset.bands.length<=12,i.id);
    for(const b of preset.bands){
@@ -52,7 +53,7 @@ test('all 114 presets contain valid editable filters and produce two distinct cu
    }
   }
   const curves=i.eqPresets.map(p=>frequencies.map(f=>p.bands.reduce((sum,b)=>sum+response(b,f),0)));
-  assert.ok(Math.max(...curves[0].map((v,n)=>Math.abs(v-curves[1][n])))>.5,i.id);
+  for(let a=0;a<curves.length;a++)for(let b=a+1;b<curves.length;b++)assert.ok(Math.max(...curves[a].map((v,n)=>Math.abs(v-curves[b][n])))>.5,i.id+" "+a+"/"+b);
  }
 });
 test('loading and editing a preset does not mutate its stored proposal',()=>{
@@ -63,4 +64,20 @@ test('loading and editing a preset does not mutate its stored proposal',()=>{
  loaded.bands[0].frequency=17000;
  assert.equal(api.example(instrument,0).bands[0].frequency,original);
  assert.ok(api.html(instrument,1).includes('data-eq-preset="1" data-eq-instrument="guit-ac" aria-pressed="true"'));
+});
+
+test('additional artist studies disclose their origin and keep a source on every proposal',()=>{
+ const {instruments,sources,render}=catalog();
+ assert.equal(instruments.reduce((n,i)=>n+i.eqPresets.length,0),132);
+ const voice=instruments.find(i=>i.id==='voz');
+ assert.equal(voice.eqPresets.length,6);
+ for(const i of instruments)for(let index=2;index<i.eqPresets.length;index++){
+  const p=i.eqPresets[index],a=i.eqReview.alternatives[index];
+  assert.equal(p.title,a.title);assert.equal(p.source,a.source);assert.ok(sources[p.source]);
+  assert.ok(p.attribution.includes('Crescendo'));assert.ok(render(i,index).includes('Consultar fuente'));
+  assert.ok(render(i,index).includes('data-eq-preset="'+index+'"'));
+ }
+ const kick=instruments.find(i=>i.id==='kick').eqPresets.find(p=>p.title?.includes('Scheps'));
+ assert.equal(kick.bands[0].slope,18);
+ const html=render(voice,5);assert.ok(html.includes('no es un preset del autor'));assert.ok(html.includes('Finneas'));
 });

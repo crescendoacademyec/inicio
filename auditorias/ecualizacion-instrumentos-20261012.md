@@ -92,3 +92,19 @@ Producción cargaba solo data.js (15 instrumentos). Ahora carga también instrum
 Las 114 alternativas ahora cuentan con curvas numéricas propias (EQ 1 / EQ 2). Cada una carga de dos a tres bandas con frecuencia, ganancia, Q y tipo de filtro; los pasa-altos/bajos comienzan en 12 dB/octava. Los valores concretos son propuestas editoriales de Crescendo, no ajustes publicados por las marcas citadas. Los botones están visibles en las fichas y en el EQ compartido. Cambiar de propuesta reemplaza la curva actual; editarla no modifica la definición original. La comparación plana y todos los controles permanecen disponibles.
 
 No son procesos dinámicos: si una alternativa menciona EQ dinámica o duración de la nota, su curva estática solo ilustra un cambio de color, no emula esos procesos. Las clasificaciones vocales no determinan un preset individual. El ajuste definitivo depende de la toma, notas y arreglo.
+
+
+## Ampliación selectiva de presets y autores — 12 de octubre
+
+Se añaden 18 curvas: 132 propuestas en total. Voz tiene EQ 1–6; bombo EQ 1–5; piano, guitarra acústica y bajo EQ 1–4; cuerdas, overheads, sintetizador, caja y hi-hat EQ 1–3. Los demás instrumentos conservan sus dos propuestas: no se inventan atribuciones para completar un número fijo.
+
+Fuentes nuevas consultadas:
+- [Entrevista de Chris Lord-Alge en Waves](https://www.waves.com/behind-the-chris-lord-alge-signature-series): enfoques para voz, medios de bajo y shelves amplios de Unplugged. No publica todos los ajustes; las curvas se identifican como estudios originales inspirados.
+- [Manual Scheps Omni Channel, ejemplos pp. 23–25](https://www.waves.com/1lib/pdf/plugins/scheps-omni-channel.pdf): bombo, voz y overheads. Se conserva el HPF de 30 Hz / 18 dB/octava del ejemplo de bombo, shelves de 60 Hz y 12 kHz y maza a 6 kHz dentro del intervalo publicado. Ganancias/Q y otros valores elegidos editorialmente se distinguen de los documentados. No se emulan el shelf resonante, DS2, M/S, compresión o saturación.
+- [Jaycen Joshua y Dave Pensado: temario público](https://mixwiththemasters.com/videos/jaycen-joshua-advanced-mix-techniques/part/2): enmascaramiento, referencia de graves y espacio vocal. El temario no revela curvas numéricas completas; no se afirma haber transcrito el contenido de pago. Propuestas de práctica creadas por Crescendo.
+- [Finneas: Therefore I Am, presentación pública](https://mixwiththemasters.com/videos/finneas-billie-eilish-therefore-i-am): diseño sonoro y capas vocales. Los dos ejercicios de filtrado son originales, no ajustes de la sesión ni presets de Finneas. La presentación también identifica a Rob Kinelski como mezclador; no se le atribuye a Finneas la mezcla final.
+- [Sound On Sound: Kick & Bass](https://www.soundonsound.com/techniques/mix-tips-kick-bass): regiones de separación; ganancias y Q editoriales.
+
+La atribución y su enlace aparecen al cargar cada propuesta adicional, fuera del bloque colapsado. EQ 3/4/5/6 cargan bandas reales editables, compartidas entre Tabla y Producción. Se añade pendiente de 18 dB/octava al modelo Butterworth y al control.
+
+Validación: 18 pruebas pasan (todas las curvas válidas y distintas entre sí por instrumento, fuentes/atribución, catálogo compartido, no mutación de presets, respuesta de filtros y rutas). Verificación en navegador: EQ 6 vocal carga sus tres bandas y su atribución; EQ 3 de bombo carga HPF de 30 Hz con pendiente 18 dB/octava.
