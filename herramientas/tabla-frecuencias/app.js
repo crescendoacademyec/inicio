@@ -243,6 +243,7 @@
       <div class="detail-section"><h4>▴ Qué revisar si falta definición</h4>${boostsHtml}</div>
       ${inst.tip ? `<div class="detail-section"><h4>Nota</h4><div class="detail-tips">${inst.tip}</div></div>` : ''}
       ${deesserHtml}
+      ${window.InstrumentEQGuidance?.html(inst) || ''}
     `;
   }
 
