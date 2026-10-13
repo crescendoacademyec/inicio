@@ -540,6 +540,7 @@ a { color: inherit; text-decoration: none; }
 .frequency-touch-control{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:.8rem;margin:12px 0;color:var(--text-dim)}.frequency-touch-control input{flex:1 1 160px;min-width:100px}.frequency-touch-control output{min-width:72px;color:var(--gold)}
 
 .lab-tabs{display:flex;gap:8px;margin:16px 0 22px}.lab-tabs button{padding:10px 22px;border:1px solid var(--gold,#d5aa48);border-radius:9px;background:#181713;color:#f5f0e5;font:inherit;cursor:pointer}.lab-tabs button[aria-selected="true"]{background:#d5aa48;color:#17150f}.lab-tabs button:focus-visible{outline:2px solid #fff;outline-offset:3px}#viewLab [hidden]{display:none!important}
+.lab-selector{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:0 0 20px;font-weight:600}.lab-selector select{appearance:none;color:#f5f0e5;background:#23211b url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath d='m4 6 4 4 4-4' fill='none' stroke='%23d5aa48' stroke-width='2'/%3E%3C/svg%3E") no-repeat right 16px center;border:1px solid #8c743c;border-radius:999px;padding:11px 42px 11px 18px;font:inherit;max-width:100%;cursor:pointer}.lab-selector select:focus-visible{outline:2px solid #d5aa48;outline-offset:3px}.lab-selector option{background:#23211b;color:#fff}
 </style>
 <link rel="stylesheet" href="processing.css?v=20260926">
 <link rel="stylesheet" href="mix-map.css?v=20261012-9">
@@ -665,8 +666,8 @@ a { color: inherit; text-decoration: none; }
         <button id="labExplore" role="tab" aria-selected="true" aria-controls="viewProcessing" tabindex="0" data-lab-mode="processing">Explorar</button>
         <button id="labTrain" role="tab" aria-selected="false" aria-controls="viewEar" tabindex="-1" data-lab-mode="ear">Entrenar</button>
       </div>
-    <section class="view-section active" id="viewProcessing" role="tabpanel" aria-labelledby="labExplore"><label>Qué quieres explorar <select id="labProcess"><option value="processors">EQ, filtros y dinámica</option><option value="gate">Gate y expansor</option></select></label><div class="processing-module" id="processingLab"></div><section id="viewGate" hidden><iframe class="gate-frame" allow="autoplay" src="../produccion-musical/gate-lab.html?v=20261013-1" title="Simulador de gate y expansor con audio" loading="lazy" style="width:100%;height:1900px;border:0"></iframe></section></section>
-    <section class="view-section" id="viewEar" role="tabpanel" aria-labelledby="labTrain" hidden><p>Practica también cómo reducir ruido y conservar ataques y colas. <button type="button" id="trainGate">Ejercicios de gate y expansor →</button></p><div id="frequencyListening"></div>
+    <section class="view-section active" id="viewProcessing" role="tabpanel" aria-labelledby="labExplore"><label class="lab-selector">Qué quieres explorar <select id="labProcess"><option value="processors">EQ, filtros y dinámica</option><option value="gate">Gate y expansor</option></select></label><div class="processing-module" id="processingLab"></div><section id="viewGate" hidden><iframe class="gate-frame" allow="autoplay" src="../produccion-musical/gate-lab.html?v=20261013-3" title="Simulador de gate y expansor con audio" loading="lazy" style="width:100%;height:1900px;border:0"></iframe></section></section>
+    <section class="view-section" id="viewEar" role="tabpanel" aria-labelledby="labTrain" hidden><label class="lab-selector">Qué quieres entrenar <select id="labTraining"><option value="general">Frecuencias, EQ y dinámica</option><option value="gate">Gate y expansor</option></select></label><div id="trainGatePanel" hidden><iframe class="gate-frame" allow="autoplay" src="../produccion-musical/gate-lab.html?mode=practice&amp;v=20261013-3" title="Ejercicios guiados de gate y expansor" loading="lazy" style="width:100%;height:1900px;border:0"></iframe></div><div id="trainGeneral"><div id="frequencyListening"></div>
         <details class="processing-module"><summary>Entrenamiento de mezcla y dinámica · EQ, compresión y limitación</summary><div id="processingPractice"></div></details>
 
         <div class="practice-session-card" id="practiceSessionCard">
@@ -920,6 +921,7 @@ a { color: inherit; text-decoration: none; }
                 </div>
             </div>
         </div>
+    </div>
     </section>
 
     </section>
@@ -1062,9 +1064,10 @@ a { color: inherit; text-decoration: none; }
 <script src="frequency-cursor.js?v=20260926-audit"></script>
 <script>
 let labMode = 'processing';
+function stopGateFrames(){document.querySelectorAll('.gate-frame').forEach(f=>f.contentWindow?.postMessage({type:'crescendo-gate-stop'},location.origin));}
 function selectLabMode(mode){
   labMode=mode;
-  document.querySelector('.gate-frame').contentWindow?.postMessage({type:'crescendo-gate-stop'},location.origin);
+  stopGateFrames();
   document.querySelectorAll('[data-lab-mode]').forEach(t=>{const selected=t.dataset.labMode===mode;t.setAttribute('aria-selected',selected);t.tabIndex=selected?0:-1;});
   ['processing','ear'].forEach(v=>{const panel=document.getElementById(v==='ear'?'viewEar':'viewProcessing');panel.hidden=v!==mode;panel.classList.toggle('active',v===mode);});
   window.dispatchEvent(new CustomEvent('crescendo:view-change',{detail:{view:mode}}));
@@ -1072,9 +1075,9 @@ function selectLabMode(mode){
 document.getElementById('labProcess').addEventListener('change',e=>{
   const gate=e.target.value==='gate';document.getElementById('processingLab').hidden=gate;document.getElementById('viewGate').hidden=!gate;
   window.dispatchEvent(new CustomEvent('crescendo:view-change',{detail:{view:gate?'gate':'processing'}}));
-  document.querySelector('.gate-frame').contentWindow?.postMessage({type:'crescendo-gate-stop'},location.origin);
+  stopGateFrames();
 });
-document.getElementById('trainGate').onclick=()=>{selectLabMode('processing');document.getElementById('labProcess').value='gate';document.getElementById('labProcess').dispatchEvent(new Event('change'));document.getElementById('viewGate').scrollIntoView({behavior:'smooth',block:'start'});};
+document.getElementById('labTraining').onchange=e=>{const gate=e.target.value==='gate';document.getElementById('trainGatePanel').hidden=!gate;document.getElementById('trainGeneral').hidden=gate;window.dispatchEvent(new CustomEvent('crescendo:view-change',{detail:{view:'ear'}}));stopGateFrames();};
 document.querySelector('.lab-tabs').addEventListener('click' ,e=>{const b=e.target.closest('[data-lab-mode]');if(b)selectLabMode(b.dataset.labMode);});
 document.querySelector('.lab-tabs').addEventListener('keydown',e=>{if(!['ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;e.preventDefault();const mode=e.key==='Home'?'processing':e.key==='End'?'ear':labMode==='ear'?'processing':'ear';selectLabMode(mode);document.querySelector('[data-lab-mode="'+mode+'"]').focus();});
 for(const [id,process] of [['viewEQ','eq'],['viewDynamics','compression']]){
@@ -1091,7 +1094,7 @@ document.getElementById('modeTabs').addEventListener('click', (e) => {
   document.getElementById('viewDynamics').classList.toggle('active', view === 'dynamics');
 
   document.getElementById('viewMix').classList.toggle('active', view === 'mix');
-  if(view!=='lab'||labMode!=='processing'||document.getElementById('labProcess').value!=='gate')document.querySelector('.gate-frame').contentWindow?.postMessage({type:'crescendo-gate-stop'},location.origin);
+  if(view!=='lab'||labMode!=='processing'||document.getElementById('labProcess').value!=='gate')stopGateFrames();
   document.getElementById('viewConsult').classList.toggle('active', view === 'consult');
   document.getElementById('viewAnalyzer').classList.toggle('active', view === 'analyzer');
   window.dispatchEvent(new CustomEvent('crescendo:view-change', { detail: { view: view === 'lab' ? labMode : view } }));
@@ -1099,6 +1102,6 @@ document.getElementById('modeTabs').addEventListener('click', (e) => {
 </script>
 <script>document.getElementById('footerYear').textContent = '© ' + new Date().getFullYear();</script>
 <link rel="stylesheet" href="../../shared/music-compendium/styles.css?v=20261012-1"><script src="../../shared/music-compendium/data.js?v=20261012-3"></script><script src="../../shared/music-compendium/ui.js?v=20261013-1"></script>
-<script>addEventListener('message',e=>{const f=document.querySelector('.gate-frame');if(e.origin===location.origin&&e.source===f.contentWindow&&e.data?.type==='crescendo-gate-size'&&Number.isFinite(e.data.height))f.style.height=Math.max(600,Math.min(6000,e.data.height))+'px';});</script>
+<script>addEventListener('message',e=>{const f=[...document.querySelectorAll('.gate-frame')].find(f=>e.source===f.contentWindow);if(f&&e.origin===location.origin&&e.data?.type==='crescendo-gate-size'&&Number.isFinite(e.data.height))f.style.height=Math.max(600,Math.min(6000,e.data.height))+'px';});</script>
 </body>
 </html>
