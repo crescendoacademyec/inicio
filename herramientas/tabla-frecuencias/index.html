@@ -585,17 +585,13 @@ a { color: inherit; text-decoration: none; }
     </section>
 
     <link rel="stylesheet" href="eq-visual.css?v=20261012-11"><div class="mode-tabs" id="modeTabs">
-        <button class="mode-tab active" data-view="chart">
-            <b>Tabla de referencia</b>
-            <span>Rangos de frecuencia y recomendaciones de EQ por instrumento</span>
-        </button>
-        <button class="mode-tab" data-view="eq"><b>Ecualizador visual</b><span>Construye curvas con frecuencia, ganancia, Q y filtros</span></button><button class="mode-tab" data-view="lab"><b>Laboratorio de audio</b><span>Explora procesadores y entrena el oído con ejercicios y audio A/B</span></button>
-        <button class="mode-tab" data-view="dynamics"><b>Compresión y mastering</b><span>Propuestas de autores, controles y gráficos de dinámica</span></button>
+        <button class="mode-tab active" data-view="chart"><b>Tabla de referencia</b><span>Rangos y recomendaciones por instrumento</span></button>
+        <button class="mode-tab" data-view="eq"><b>Ecualizador visual</b><span>Curvas, filtros y propuestas de EQ</span></button>
+        <button class="mode-tab" data-view="dynamics"><b>Dinámica y mastering</b><span>Propuestas, controles y gráficos de dinámica</span></button>
         <button class="mode-tab" data-view="mix"><b>Mapa de mezcla</b><span>Paneo, registro y profundidad por estilo</span></button>
-        <button class="mode-tab" data-view="gate"><b>Gate y expansor</b><span>Audio, detector, presets y ejercicios de limpieza</span></button><button class="mode-tab" data-view="consult"><b>Diccionario y diagnóstico</b><span>Conceptos, procesos y soluciones por problemas</span></button><button class="mode-tab" data-view="analyzer">
-            <b>Analizador de espectro</b>
-            <span>Sube o graba audio y compáralo contra la tabla de instrumentos</span>
-        </button>
+        <button class="mode-tab" data-view="lab"><b>Laboratorio de audio</b><span>Explora y entrena EQ, dinámica, gate y expansión</span></button>
+        <button class="mode-tab" data-view="analyzer"><b>Analizador de espectro</b><span>Examina tus grabaciones y compara frecuencias</span></button>
+        <button class="mode-tab" data-view="consult"><b>Diccionario y diagnóstico</b><span>Conceptos y soluciones por problemas</span></button>
     </div>
 
     <section class="view-section active" id="viewChart">
@@ -661,7 +657,7 @@ a { color: inherit; text-decoration: none; }
     </section>
 
     <section class="view-section" id="viewMix"><div id="mixMap"></div></section>
-    <section class="view-section" id="viewGate"><iframe class="gate-frame" allow="autoplay" src="../produccion-musical/gate-lab.html?v=20261013-1" title="Simulador de gate y expansor con audio" loading="lazy" style="width:100%;height:1900px;border:0"></iframe></section><section class="view-section" id="viewConsult"><div data-music-compendium data-course-base="../produccion-musical/#curso/" data-tool-base="./"></div></section><section class="view-section" id="viewDynamics"><link rel="stylesheet" href="dynamics-reference.css?v=20261012-14"><div id="dynamicsReference"></div></section>
+    <section class="view-section" id="viewConsult"><div data-music-compendium data-course-base="../produccion-musical/#curso/" data-tool-base="./"></div></section><section class="view-section" id="viewDynamics"><link rel="stylesheet" href="dynamics-reference.css?v=20261012-14"><div id="dynamicsReference"></div></section>
     <section class="view-section" id="viewEQ" aria-label="Ecualizador visual"></section>
     <section class="view-section" id="viewLab" aria-label="Laboratorio de audio">
       <h2>Laboratorio de audio</h2><p>Experimenta con los controles en Explorar y comprueba lo que reconoces al escuchar en Entrenar.</p>
@@ -669,8 +665,8 @@ a { color: inherit; text-decoration: none; }
         <button id="labExplore" role="tab" aria-selected="true" aria-controls="viewProcessing" tabindex="0" data-lab-mode="processing">Explorar</button>
         <button id="labTrain" role="tab" aria-selected="false" aria-controls="viewEar" tabindex="-1" data-lab-mode="ear">Entrenar</button>
       </div>
-    <section class="view-section active" id="viewProcessing" role="tabpanel" aria-labelledby="labExplore"><div class="processing-module" id="processingLab"></div></section>
-    <section class="view-section" id="viewEar" role="tabpanel" aria-labelledby="labTrain" hidden><div id="frequencyListening"></div>
+    <section class="view-section active" id="viewProcessing" role="tabpanel" aria-labelledby="labExplore"><label>Qué quieres explorar <select id="labProcess"><option value="processors">EQ, filtros y dinámica</option><option value="gate">Gate y expansor</option></select></label><div class="processing-module" id="processingLab"></div><section id="viewGate" hidden><iframe class="gate-frame" allow="autoplay" src="../produccion-musical/gate-lab.html?v=20261013-1" title="Simulador de gate y expansor con audio" loading="lazy" style="width:100%;height:1900px;border:0"></iframe></section></section>
+    <section class="view-section" id="viewEar" role="tabpanel" aria-labelledby="labTrain" hidden><p>Practica también cómo reducir ruido y conservar ataques y colas. <button type="button" id="trainGate">Ejercicios de gate y expansor →</button></p><div id="frequencyListening"></div>
         <details class="processing-module"><summary>Entrenamiento de mezcla y dinámica · EQ, compresión y limitación</summary><div id="processingPractice"></div></details>
 
         <div class="practice-session-card" id="practiceSessionCard">
@@ -1053,7 +1049,7 @@ a { color: inherit; text-decoration: none; }
 <script src="instrument-catalog.js?v=20261012-15"></script>
 <script src="eq-presets.js?v=20261012-15"></script><script src="eq-guidance.js?v=20261012-15"></script>
 <script src="eq-response.js?v=20261012-4"></script><script src="app.js?v=20261012-19"></script><script src="eq-visual.js?v=20261012-16"></script>
-<script src="dynamics-model.js?v=20261012-1"></script><script src="dynamics-presets.js?v=20261012-15"></script><script src="dynamics-reference.js?v=20261012-15"></script>
+<script src="dynamics-model.js?v=20261012-1"></script><script src="dynamics-presets.js?v=20261012-15"></script><script src="dynamics-reference.js?v=20261013-2"></script>
 <script src="processing-dsp.js?v=20261012-1"></script>
 <script src="ear.js?v=20261012-1"></script>
 <script src="processing-exercises.js?v=20260926-audit"></script>
@@ -1068,12 +1064,22 @@ a { color: inherit; text-decoration: none; }
 let labMode = 'processing';
 function selectLabMode(mode){
   labMode=mode;
+  document.querySelector('.gate-frame').contentWindow?.postMessage({type:'crescendo-gate-stop'},location.origin);
   document.querySelectorAll('[data-lab-mode]').forEach(t=>{const selected=t.dataset.labMode===mode;t.setAttribute('aria-selected',selected);t.tabIndex=selected?0:-1;});
   ['processing','ear'].forEach(v=>{const panel=document.getElementById(v==='ear'?'viewEar':'viewProcessing');panel.hidden=v!==mode;panel.classList.toggle('active',v===mode);});
   window.dispatchEvent(new CustomEvent('crescendo:view-change',{detail:{view:mode}}));
 }
-document.querySelector('.lab-tabs').addEventListener('click',e=>{const b=e.target.closest('[data-lab-mode]');if(b)selectLabMode(b.dataset.labMode);});
+document.getElementById('labProcess').addEventListener('change',e=>{
+  const gate=e.target.value==='gate';document.getElementById('processingLab').hidden=gate;document.getElementById('viewGate').hidden=!gate;
+  window.dispatchEvent(new CustomEvent('crescendo:view-change',{detail:{view:gate?'gate':'processing'}}));
+  document.querySelector('.gate-frame').contentWindow?.postMessage({type:'crescendo-gate-stop'},location.origin);
+});
+document.getElementById('trainGate').onclick=()=>{selectLabMode('processing');document.getElementById('labProcess').value='gate';document.getElementById('labProcess').dispatchEvent(new Event('change'));document.getElementById('viewGate').scrollIntoView({behavior:'smooth',block:'start'});};
+document.querySelector('.lab-tabs').addEventListener('click' ,e=>{const b=e.target.closest('[data-lab-mode]');if(b)selectLabMode(b.dataset.labMode);});
 document.querySelector('.lab-tabs').addEventListener('keydown',e=>{if(!['ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;e.preventDefault();const mode=e.key==='Home'?'processing':e.key==='End'?'ear':labMode==='ear'?'processing':'ear';selectLabMode(mode);document.querySelector('[data-lab-mode="'+mode+'"]').focus();});
+for(const [id,process] of [['viewEQ','eq'],['viewDynamics','compression']]){
+  const button=document.createElement('button');button.type='button';button.textContent='Escuchar y practicar este proceso →';button.onclick=()=>{document.querySelector('[data-view="lab"]').click();selectLabMode('processing');document.getElementById('labProcess').value='processors';document.getElementById('labProcess').dispatchEvent(new Event('change'));document.getElementById('procMode').value=process;document.getElementById('procMode').dispatchEvent(new Event('change'));document.getElementById('viewLab').scrollIntoView({behavior:'smooth',block:'start'});};document.getElementById(id).prepend(button);
+}
 document.getElementById('modeTabs').addEventListener('click', (e) => {
   const btn = e.target.closest('.mode-tab');
   if (!btn) return;
@@ -1085,8 +1091,7 @@ document.getElementById('modeTabs').addEventListener('click', (e) => {
   document.getElementById('viewDynamics').classList.toggle('active', view === 'dynamics');
 
   document.getElementById('viewMix').classList.toggle('active', view === 'mix');
-  document.getElementById('viewGate').classList.toggle('active', view === 'gate');
-  if(view!=='gate')document.querySelector('.gate-frame').contentWindow?.postMessage({type:'crescendo-gate-stop'},location.origin);
+  if(view!=='lab'||labMode!=='processing'||document.getElementById('labProcess').value!=='gate')document.querySelector('.gate-frame').contentWindow?.postMessage({type:'crescendo-gate-stop'},location.origin);
   document.getElementById('viewConsult').classList.toggle('active', view === 'consult');
   document.getElementById('viewAnalyzer').classList.toggle('active', view === 'analyzer');
   window.dispatchEvent(new CustomEvent('crescendo:view-change', { detail: { view: view === 'lab' ? labMode : view } }));
