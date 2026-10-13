@@ -8,8 +8,14 @@ const $=id=>document.getElementById(id),svg=$('eqGraph'),clamp=(v,a,b)=>Math.max
 const escapeHTML=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function bandMessage(b,i){return `Banda ${i+1}: ${types[b.type]} · ${Math.round(b.frequency)} Hz · `+(gainType(b)?`${b.gain>0?'Realce':'Atenuación'} ${Math.abs(b.gain).toFixed(1)} dB · `:'')+(passType(b)?`Pendiente ${b.slope||12} dB/octava · `:!b.type.includes('shelf')?`Q ${b.q.toFixed(2)} · `:'')+(b.enabled?'Activa':'Apagada')+(b.label?` · Sugerencia original: ${b.label}`:' · Ajuste manual.');}
 function showTooltip(i){const b=bands[i],tip=$('eqTooltip');tip.textContent=bandMessage(b,i);tip.hidden=false;tip.style.left=clamp(x(b.frequency)/960*100,18,82)+'%';tip.style.top=clamp(y(gainType(b)?b.gain:0)/360*100,15,80)+'%';}
+function showCursorFrequency(e){
+ const r=svg.getBoundingClientRect(),px=(e.clientX-r.left)/r.width*960,py=(e.clientY-r.top)/r.height*360,tip=$('eqTooltip');
+ if(px<56||px>936||py<24||py>324){tip.hidden=true;return;}
+ tip.textContent=`Posición: ${hz(px).toLocaleString('es',{minimumFractionDigits:1,maximumFractionDigits:1})} Hz`;
+ tip.hidden=false;tip.style.left=clamp(px/960*100,10,90)+'%';tip.style.top=clamp(py/360*100,15,85)+'%';
+}
 function draw(){
- let out='';for(const d of [-24,-18,-12,-6,0,6,12,18])out+=`<path d="M56 ${y(d)}H936" stroke="${d===0?'#8c8b7c':'#34372f'}"/><text x="48" y="${y(d)+4}" text-anchor="end" fill="#d0c9bb" font-size="13">${d}</text>`;
+ let out='';for(const d of [-24,-18,-12,-6,-3,0,3,6,12,18])out+=`<path d="M56 ${y(d)}H936" stroke="${d===0?'#8c8b7c':'#34372f'}"/><text x="48" y="${y(d)+4}" text-anchor="end" fill="#d0c9bb" font-size="13">${d>0?'+':''}${d}</text>`;
  for(const f of [20,50,100,200,500,1000,2000,5000,10000,20000])out+=`<path d="M${x(f)} 24V324" stroke="#34372f"/><text x="${x(f)}" y="348" text-anchor="middle" fill="#d0c9bb" font-size="13">${f>=1000?f/1000+'k':f}</text>`;
  const path=fn=>Array.from({length:500},(_,i)=>{const f=20*1000**(i/499);return `${i?'L':'M'}${x(f).toFixed(2)} ${y(fn(f)).toFixed(2)}`;}).join(' ');
  out+=`<path d="${path(f=>bypass?0:EQResponse.response(bands[selected],f))}" fill="none" stroke="${colors[selected%colors.length]}" stroke-width="1.5" stroke-dasharray="5 4"/><path d="${path(f=>bypass?0:bands.reduce((sum,b)=>sum+EQResponse.response(b,f),0))}" fill="none" stroke="#edbf58" stroke-width="3"/>`;
@@ -34,7 +40,7 @@ for(const [id,key,min,max] of [['eqFrequency','frequency',20,20000],['eqGain','g
 $('eqFrequencyRange').oninput=e=>{bands[selected].frequency=20*1000**(+e.target.value/1000);sync();};
 $('eqAdd').onclick=()=>{if(bands.length<12){bands.push(makeBand());selected=bands.length-1;sync();}};$('eqReset').onclick=reset;$('eqRemove').onclick=()=>{if(bands.length>1){bands.splice(selected,1);selected=Math.min(selected,bands.length-1);sync();}};$('eqEnabled').onclick=()=>{bands[selected].enabled=!bands[selected].enabled;sync();};$('eqBypass').onclick=()=>{bypass=!bypass;sync();};
 svg.onpointerdown=e=>{const node=e.target.closest('[data-band]');if(!node)return;selected=+node.dataset.band;drag=e.pointerId;svg.setPointerCapture(drag);sync();showTooltip(selected);};
-svg.onpointermove=e=>{if(drag!==e.pointerId){const node=e.target.closest('[data-band]');if(node)showTooltip(+node.dataset.band);else $('eqTooltip').hidden=true;return;}const r=svg.getBoundingClientRect(),b=bands[selected];b.frequency=hz((e.clientX-r.left)/r.width*960);if(gainType(b))b.gain=db((e.clientY-r.top)/r.height*360);sync();};
+svg.onpointermove=e=>{if(drag!==e.pointerId){const node=e.target.closest('[data-band]');if(node)showTooltip(+node.dataset.band);else showCursorFrequency(e);return;}const r=svg.getBoundingClientRect(),b=bands[selected];b.frequency=hz((e.clientX-r.left)/r.width*960);if(gainType(b))b.gain=db((e.clientY-r.top)/r.height*360);sync();};
 svg.onpointerup=svg.onpointercancel=()=>{drag=null;};
 function loadExample(example,name){
  const instrument=INSTRUMENTS.find(i=>i.name===name);$('eqGuidance').innerHTML=instrument?window.InstrumentEQGuidance?.html(instrument,example.presetIndex)||'':'';
