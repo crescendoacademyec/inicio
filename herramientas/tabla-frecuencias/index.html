@@ -593,7 +593,7 @@ a { color: inherit; text-decoration: none; }
         </button>
         <button class="mode-tab" data-view="dynamics"><b>Compresión y mastering</b><span>Propuestas de autores, controles y gráficos de dinámica</span></button><button class="mode-tab" data-view="processing"><b>Procesamiento y dinámica</b><span>EQ, filtros, compresión y limitación con ejemplos A/B</span></button>
         <button class="mode-tab" data-view="mix"><b>Mapa de mezcla</b><span>Paneo, registro y profundidad por estilo</span></button>
-        <button class="mode-tab" data-view="consult"><b>Diccionario y diagnóstico</b><span>Conceptos, procesos y soluciones por problemas</span></button><button class="mode-tab" data-view="analyzer">
+        <button class="mode-tab" data-view="gate"><b>Gate y expansor</b><span>Audio, detector, presets y ejercicios de limpieza</span></button><button class="mode-tab" data-view="consult"><b>Diccionario y diagnóstico</b><span>Conceptos, procesos y soluciones por problemas</span></button><button class="mode-tab" data-view="analyzer">
             <b>Analizador de espectro</b>
             <span>Sube o graba audio y compáralo contra la tabla de instrumentos</span>
         </button>
@@ -662,7 +662,7 @@ a { color: inherit; text-decoration: none; }
     </section>
 
     <section class="view-section" id="viewMix"><div id="mixMap"></div></section>
-    <section class="view-section" id="viewConsult"><div data-music-compendium data-course-base="../produccion-musical/#curso/" data-tool-base="./"></div></section><section class="view-section" id="viewDynamics"><link rel="stylesheet" href="dynamics-reference.css?v=20261012-14"><div id="dynamicsReference"></div></section>
+    <section class="view-section" id="viewGate"><iframe class="gate-frame" allow="autoplay" src="../produccion-musical/gate-lab.html?v=20261013-1" title="Simulador de gate y expansor con audio" loading="lazy" style="width:100%;height:1900px;border:0"></iframe></section><section class="view-section" id="viewConsult"><div data-music-compendium data-course-base="../produccion-musical/#curso/" data-tool-base="./"></div></section><section class="view-section" id="viewDynamics"><link rel="stylesheet" href="dynamics-reference.css?v=20261012-14"><div id="dynamicsReference"></div></section>
     <section class="view-section" id="viewProcessing"><div class="processing-module" id="processingLab"></div></section>
     <section class="view-section" id="viewEQ" aria-label="Ecualizador visual"></section><section class="view-section" id="viewEar"><div id="frequencyListening"></div>
         <details class="processing-module"><summary>Entrenamiento de mezcla y dinámica · EQ, compresión y limitación</summary><div id="processingPractice"></div></details>
@@ -1069,12 +1069,15 @@ document.getElementById('modeTabs').addEventListener('click', (e) => {
   document.getElementById('viewDynamics').classList.toggle('active', view === 'dynamics');
   document.getElementById('viewProcessing').classList.toggle('active', view === 'processing');
   document.getElementById('viewMix').classList.toggle('active', view === 'mix');
+  document.getElementById('viewGate').classList.toggle('active', view === 'gate');
+  if(view!=='gate')document.querySelector('.gate-frame').contentWindow?.postMessage({type:'crescendo-gate-stop'},location.origin);
   document.getElementById('viewConsult').classList.toggle('active', view === 'consult');
   document.getElementById('viewAnalyzer').classList.toggle('active', view === 'analyzer');
   window.dispatchEvent(new CustomEvent('crescendo:view-change', { detail: { view } }));
 });
 </script>
 <script>document.getElementById('footerYear').textContent = '© ' + new Date().getFullYear();</script>
-<link rel="stylesheet" href="../../shared/music-compendium/styles.css?v=20261012-1"><script src="../../shared/music-compendium/data.js?v=20261012-3"></script><script src="../../shared/music-compendium/ui.js?v=20261012-3"></script>
+<link rel="stylesheet" href="../../shared/music-compendium/styles.css?v=20261012-1"><script src="../../shared/music-compendium/data.js?v=20261012-3"></script><script src="../../shared/music-compendium/ui.js?v=20261013-1"></script>
+<script>addEventListener('message',e=>{const f=document.querySelector('.gate-frame');if(e.origin===location.origin&&e.source===f.contentWindow&&e.data?.type==='crescendo-gate-size'&&Number.isFinite(e.data.height))f.style.height=Math.max(600,Math.min(6000,e.data.height))+'px';});</script>
 </body>
 </html>
