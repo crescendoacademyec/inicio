@@ -207,7 +207,8 @@
       'Patch de bajo|Ajusta oscilador, envolvente y filtro del sintetizador antes de la EQ externa; comprueba convivencia con bombo.',
       'Pad o lead|Un pad puede necesitar espacio para la voz; un lead, articulación. No apliques la misma curva por proceder ambos de un sintetizador.'],
   };
-  for (const instrument of INSTRUMENTS) {
+  for(const bus of MIX_BUSES)entries[bus.id]=['busMix','Subgrupo o mezcla completa; curvas originales de Crescendo, no presets publicados.', 'Balance suave|'+bus.tip+' Prueba pequeños cambios anchos y compara en contexto a igual volumen.', 'Alternativa de balance|'+bus.tip+' Esta curva persigue otro balance; desactiva lo que no mejore el arreglo.'];
+  for (const instrument of EQ_INSTRUMENTS) {
     const row = entries[instrument.id];
     if (!row) throw new Error('Falta revisión EQ: '+instrument.id);
     instrument.eqReview = {date:'2026-10-12',scope:row[1],sources:[row[0]],alternatives:row.slice(2).map(s=>{const [title,body]=s.split('|');return {title,body};})};

@@ -171,3 +171,17 @@ INSTRUMENTS.sort((a,b)=>instrumentCategoryOrder.indexOf(a.cat)-instrumentCategor
 function instrumentOptions(list,escape){
  return instrumentCategoryOrder.map(cat=>{const items=list.filter(i=>i.cat===cat).sort((a,b)=>a.name.localeCompare(b.name,'es',{sensitivity:'base'}));return items.length?`<optgroup label="${INSTRUMENT_CATEGORIES[cat]}">${items.map(i=>`<option value="${escape(i.id)}">${escape(i.name)}</option>`).join('')}</optgroup>`:'';}).join('');
 }
+
+// Buses are signal groups, not instruments with a pitched register.
+FREQUENCY_SOURCES.busMix={label:'Waves · Subgrupos y bus master',url:'https://www.waves.com/mixing-101'};
+FREQUENCY_SOURCES.stemMaster={label:'iZotope · Stem mastering',url:'https://www.izotope.com/community/blog/stem-mastering'};
+const MIX_BUSES=[
+ ['mix-bus','Bus de mezcla completa · mix bus / master','bus','Toda la mezcla. Puede alimentar una salida master separada o coincidir con ella según el DAW; comprimir aquí durante mezcla no equivale a masterizar.',[[250,-.8,.7],[10000,.7,.707,'highshelf']],[[80,-.7,.707,'lowshelf'],[3000,-.8,.9]]],
+ ['bus-drums','Bus de batería','drum-bus','Agrupa bombo, caja, toms y platos. Escucha si el bombo hace bombear el conjunto; no copies la EQ de un bombo al kit completo.',[[300,-1.5,.8],[7000,1,.707,'highshelf']],[[80,1,.707,'lowshelf'],[4000,-1.5,1.2]]],
+ ['bus-bass','Bus de bajos · bass','bass-bus','Agrupa bajo, sub y capas. Comprueba fase, cruce y balance antes de comprimir; conserva la nota grave útil.',[[60,1,.8],[220,-1.5,1]],[[100,-1,.8],[800,1.5,.9]]],
+ ['bus-vocals','Bus de voces','vocal-bus','Agrupa voz principal y coros solo si esa ruta sirve al arreglo. Un compresor común puede bajar los coros cuando entra la voz principal.',[[280,-1,.9],[10000,1,.707,'highshelf']],[[2500,1,.9],[6500,-1.5,1.4]]],
+ ['bus-guitars','Bus de guitarras','guitar-bus','El grupo puede mezclar acero, nylon y eléctricas; revisa el balance de capas antes de aplicar una curva común.',[[300,-1,.9],[6000,-1,.707,'highshelf']],[[180,-1.5,.8],[1800,1,.9]]],
+ ['bus-brass','Bus de metales · brass','brass-bus','Trompeta, trombón, trompa y tuba tienen funciones distintas. Conserva el registro grave si el grupo incluye tuba y evita apagar toda la sección por un ataque áspero.',[[400,-1,.8],[3500,-1.5,1.2]],[[200,1,.8],[8000,-1,.707,'highshelf']]],
+ ['bus-keys','Bus de teclas y sintetizadores','keys-bus','Piano, órgano y pads no comparten necesariamente una función. Automatiza las capas que enmascaran la voz antes de procesar todo el grupo.',[[300,-1.5,.8],[2500,-1,.9]],[[100,-1,.707,'lowshelf'],[6500,1,.707,'highshelf']]]
+].map(([id,name,dynamicsGroup,tip,...curves])=>({id,name,cat:'bus',dynamicsGroup,tip,curves,sources:['busMix'],cuts:[],boosts:[]}));
+const EQ_INSTRUMENTS=[...INSTRUMENTS,...MIX_BUSES];

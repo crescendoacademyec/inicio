@@ -258,3 +258,13 @@ Se separan guitarra acústica de acero (`guit-ac`, conserva el identificador) y 
 Fuente: [iZotope · How to EQ acoustic guitar in a mix](https://www.izotope.com/community/blog/acoustic-guitar-eq), que distingue acero/nylon y describe una toma DI de nylon con información por encima de 10 kHz.
 
 Catálogo compartido: categorías con nombres en orden alfabético español; selectores EQ y compresión agrupados por categoría. Los registros vocales incluyen «Voz».
+
+## Buses y mastering por stems · 2026-10-12
+
+Siete rutas separadas del catálogo de instrumentos: mezcla completa, batería, bajos, voces, guitarras, metales y teclas. Cada una tiene dos curvas EQ originales; los seis subgrupos tienen dos propuestas de compresión propias. Un bus no tiene registro tonal fijo. Mix bus puede coincidir con master o alimentarlo: depende del ruteo del DAW.
+
+- Waves, [Mixing 101](https://www.waves.com/mixing-101): grupos y salida master.
+- Waves, [Mix bus EQ y compresión](https://www.waves.com/8-mix-buss-compression-eq-saturation-tips): procesamiento del conjunto.
+- iZotope, [Stem mastering](https://www.izotope.com/community/blog/stem-mastering): alternativa al mastering estéreo y acuerdo de entregas.
+
+Las curvas, umbrales y tiempos aquí son didácticos, no parámetros atribuidos a estas fuentes. El simulador no suma stems ni simula limitación, true peak, sidechain filtrado o procesamiento M/S. El nuevo flujo de mastering describe esas verificaciones para realizarlas en el DAW.

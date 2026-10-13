@@ -92,3 +92,11 @@ test('selected proposal renders only its explanation while all compact selectors
   assert.ok(!html.includes('Ver objetivos, ajustes y referencias'));
  }
 });
+
+test('group buses have their own editable EQ and documented routing without fictitious registers',()=>{
+ const c=vm.createContext({window:{}});
+ for(const f of ['data.js','instrument-catalog.js','eq-presets.js','eq-guidance.js'])vm.runInContext(fs.readFileSync(path.join(root,f),'utf8'),c);
+ const buses=vm.runInContext('MIX_BUSES',c);
+ assert.equal(buses.length,7);
+ for(const b of buses){assert.equal(b.cat,'bus');assert.equal(b.realRange,undefined);assert.equal(b.eqPresets.length,2);assert.ok(b.eqReview.sources.includes('busMix'));assert.ok(b.tip.length>70);assert.notDeepEqual(b.eqPresets[0].bands,b.eqPresets[1].bands);}
+});

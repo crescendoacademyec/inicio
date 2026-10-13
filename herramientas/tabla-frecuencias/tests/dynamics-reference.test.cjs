@@ -21,7 +21,7 @@ test('attack preserves initial transients and release controls recovery',()=>{
  assert.ok(fast[155].gr>0); // attack is progressive, not a delay before compression
 });
 test('every proposal has provenance, valid controls and finite simulation',()=>{
- assert.equal(D.recipes.length,21);assert.equal(D.masters.length,5);
+ assert.equal(D.recipes.length,33);assert.equal(D.masters.length,6);
  for(const r of [...D.recipes,...D.masters]){
   assert.ok(r.body.length>80&&r.attribution.includes('Crescendo')&&D.sources[r.source]);assert.equal(new URL(D.sources[r.source][1]).protocol,'https:');
   assert.ok(r.settings.ratio>=1&&r.settings.ratio<=20&&r.settings.attack>=.02&&r.settings.release>=10);
@@ -36,4 +36,11 @@ test('all 58 instruments resolve to a supported family, shared by the production
  const html=fs.readFileSync(path.join(base,'../produccion-musical/dynamics-reference.html'),'utf8');
  for(const f of ['dynamics-model','dynamics-presets','dynamics-reference'])assert.ok(html.includes('../tabla-frecuencias/'+f+'.js'));
  const ext=fs.readFileSync(path.join(base,'../produccion-musical/lesson-extensions.js'),'utf8');assert.ok(ext.includes("dynamicsFrame('compression')"));assert.ok(ext.includes("dynamicsFrame('mastering')"));
+});
+
+test('each bus resolves to its intended compression family',()=>{
+ const c=vm.createContext({});
+ for(const f of ['data.js','instrument-catalog.js'])vm.runInContext(fs.readFileSync(path.join(__dirname,'..',f),'utf8'),c);
+ const buses=vm.runInContext('MIX_BUSES',c);
+ for(const b of buses){assert.equal(D.group(b),b.dynamicsGroup);assert.ok(D.recipes.filter(r=>r.groups.includes(D.group(b))).length>=2,b.id);}
 });

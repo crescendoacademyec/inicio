@@ -62,7 +62,8 @@
  triangulo:[[[400,0,.707,'highpass'],[11000,1,.707,'highshelf']],[[6500,-2,1.5],[12000,-1,.707,'highshelf']]],
  sintetizador:[[[35,0,.707,'highpass'],[90,1.5,.9],[300,-2,1]],[[160,0,.707,'highpass'],[1800,-2,1],[6500,1,.707,'highshelf']]],
  };
- for(const instrument of INSTRUMENTS){
+ for(const bus of MIX_BUSES)curves[bus.id]=bus.curves;
+ for(const instrument of EQ_INSTRUMENTS){
   if(!curves[instrument.id])throw Error('Faltan presets EQ: '+instrument.id);
   instrument.eqPresets=curves[instrument.id].map((curve,index)=>({id:instrument.id+'-'+(index+1),bands:curve.map(([frequency,gain,q,type='peaking'])=>({frequency,gain,q,type,slope:12,enabled:true,label:type==='highpass'?'Retirar extremo grave según la toma':type==='lowpass'?'Suavizar el extremo agudo':gain<0?'Reducir esta región si predomina':'Reforzar esta región si falta'}))}));
  }
