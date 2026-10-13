@@ -538,6 +538,8 @@ a { color: inherit; text-decoration: none; }
 .frequency-cursor-label { position:fixed; z-index:1000; pointer-events:none; padding:6px 10px; border:1px solid #d4a84f; border-radius:7px; color:#fff4d3; background:#17150f; font:600 13px/1.3 system-ui,sans-serif; box-shadow:0 3px 12px #0006; white-space:nowrap; }
 .frequency-cursor-line[hidden],.frequency-cursor-label[hidden] { display:none; }
 .frequency-touch-control{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:.8rem;margin:12px 0;color:var(--text-dim)}.frequency-touch-control input{flex:1 1 160px;min-width:100px}.frequency-touch-control output{min-width:72px;color:var(--gold)}
+
+.lab-tabs{display:flex;gap:8px;margin:16px 0 22px}.lab-tabs button{padding:10px 22px;border:1px solid var(--gold,#d5aa48);border-radius:9px;background:#181713;color:#f5f0e5;font:inherit;cursor:pointer}.lab-tabs button[aria-selected="true"]{background:#d5aa48;color:#17150f}.lab-tabs button:focus-visible{outline:2px solid #fff;outline-offset:3px}#viewLab [hidden]{display:none!important}
 </style>
 <link rel="stylesheet" href="processing.css?v=20260926">
 <link rel="stylesheet" href="mix-map.css?v=20261012-9">
@@ -587,11 +589,8 @@ a { color: inherit; text-decoration: none; }
             <b>Tabla de referencia</b>
             <span>Rangos de frecuencia y recomendaciones de EQ por instrumento</span>
         </button>
-        <button class="mode-tab" data-view="eq"><b>Ecualizador visual</b><span>Construye curvas con frecuencia, ganancia, Q y filtros</span></button><button class="mode-tab" data-view="ear">
-            <b>Entrenamiento auditivo</b>
-            <span>Entrena frecuencias, EQ, compresión y balance con comparaciones auditivas</span>
-        </button>
-        <button class="mode-tab" data-view="dynamics"><b>Compresión y mastering</b><span>Propuestas de autores, controles y gráficos de dinámica</span></button><button class="mode-tab" data-view="processing"><b>Procesamiento y dinámica</b><span>EQ, filtros, compresión y limitación con ejemplos A/B</span></button>
+        <button class="mode-tab" data-view="eq"><b>Ecualizador visual</b><span>Construye curvas con frecuencia, ganancia, Q y filtros</span></button><button class="mode-tab" data-view="lab"><b>Laboratorio de audio</b><span>Explora procesadores y entrena el oído con ejercicios y audio A/B</span></button>
+        <button class="mode-tab" data-view="dynamics"><b>Compresión y mastering</b><span>Propuestas de autores, controles y gráficos de dinámica</span></button>
         <button class="mode-tab" data-view="mix"><b>Mapa de mezcla</b><span>Paneo, registro y profundidad por estilo</span></button>
         <button class="mode-tab" data-view="gate"><b>Gate y expansor</b><span>Audio, detector, presets y ejercicios de limpieza</span></button><button class="mode-tab" data-view="consult"><b>Diccionario y diagnóstico</b><span>Conceptos, procesos y soluciones por problemas</span></button><button class="mode-tab" data-view="analyzer">
             <b>Analizador de espectro</b>
@@ -663,8 +662,15 @@ a { color: inherit; text-decoration: none; }
 
     <section class="view-section" id="viewMix"><div id="mixMap"></div></section>
     <section class="view-section" id="viewGate"><iframe class="gate-frame" allow="autoplay" src="../produccion-musical/gate-lab.html?v=20261013-1" title="Simulador de gate y expansor con audio" loading="lazy" style="width:100%;height:1900px;border:0"></iframe></section><section class="view-section" id="viewConsult"><div data-music-compendium data-course-base="../produccion-musical/#curso/" data-tool-base="./"></div></section><section class="view-section" id="viewDynamics"><link rel="stylesheet" href="dynamics-reference.css?v=20261012-14"><div id="dynamicsReference"></div></section>
-    <section class="view-section" id="viewProcessing"><div class="processing-module" id="processingLab"></div></section>
-    <section class="view-section" id="viewEQ" aria-label="Ecualizador visual"></section><section class="view-section" id="viewEar"><div id="frequencyListening"></div>
+    <section class="view-section" id="viewEQ" aria-label="Ecualizador visual"></section>
+    <section class="view-section" id="viewLab" aria-label="Laboratorio de audio">
+      <h2>Laboratorio de audio</h2><p>Experimenta con los controles en Explorar y comprueba lo que reconoces al escuchar en Entrenar.</p>
+      <div class="lab-tabs" role="tablist" aria-label="Modo del laboratorio">
+        <button id="labExplore" role="tab" aria-selected="true" aria-controls="viewProcessing" tabindex="0" data-lab-mode="processing">Explorar</button>
+        <button id="labTrain" role="tab" aria-selected="false" aria-controls="viewEar" tabindex="-1" data-lab-mode="ear">Entrenar</button>
+      </div>
+    <section class="view-section active" id="viewProcessing" role="tabpanel" aria-labelledby="labExplore"><div class="processing-module" id="processingLab"></div></section>
+    <section class="view-section" id="viewEar" role="tabpanel" aria-labelledby="labTrain" hidden><div id="frequencyListening"></div>
         <details class="processing-module"><summary>Entrenamiento de mezcla y dinámica · EQ, compresión y limitación</summary><div id="processingPractice"></div></details>
 
         <div class="practice-session-card" id="practiceSessionCard">
@@ -920,6 +926,7 @@ a { color: inherit; text-decoration: none; }
         </div>
     </section>
 
+    </section>
     <section class="view-section" id="viewAnalyzer">
         <div class="ear-card">
             <div class="analyzer-top-row">
@@ -1058,6 +1065,15 @@ a { color: inherit; text-decoration: none; }
 <script src="mix-map.js?v=20261012-9"></script>
 <script src="frequency-cursor.js?v=20260926-audit"></script>
 <script>
+let labMode = 'processing';
+function selectLabMode(mode){
+  labMode=mode;
+  document.querySelectorAll('[data-lab-mode]').forEach(t=>{const selected=t.dataset.labMode===mode;t.setAttribute('aria-selected',selected);t.tabIndex=selected?0:-1;});
+  ['processing','ear'].forEach(v=>{const panel=document.getElementById(v==='ear'?'viewEar':'viewProcessing');panel.hidden=v!==mode;panel.classList.toggle('active',v===mode);});
+  window.dispatchEvent(new CustomEvent('crescendo:view-change',{detail:{view:mode}}));
+}
+document.querySelector('.lab-tabs').addEventListener('click',e=>{const b=e.target.closest('[data-lab-mode]');if(b)selectLabMode(b.dataset.labMode);});
+document.querySelector('.lab-tabs').addEventListener('keydown',e=>{if(!['ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;e.preventDefault();const mode=e.key==='Home'?'processing':e.key==='End'?'ear':labMode==='ear'?'processing':'ear';selectLabMode(mode);document.querySelector('[data-lab-mode="'+mode+'"]').focus();});
 document.getElementById('modeTabs').addEventListener('click', (e) => {
   const btn = e.target.closest('.mode-tab');
   if (!btn) return;
@@ -1065,15 +1081,15 @@ document.getElementById('modeTabs').addEventListener('click', (e) => {
   document.querySelectorAll('.mode-tab').forEach((t) => t.classList.toggle('active', t === btn));
   document.getElementById('viewChart').classList.toggle('active', view === 'chart');
   document.getElementById('viewEQ').classList.toggle('active', view === 'eq');
-  document.getElementById('viewEar').classList.toggle('active', view === 'ear');
+  document.getElementById('viewLab').classList.toggle('active', view === 'lab');
   document.getElementById('viewDynamics').classList.toggle('active', view === 'dynamics');
-  document.getElementById('viewProcessing').classList.toggle('active', view === 'processing');
+
   document.getElementById('viewMix').classList.toggle('active', view === 'mix');
   document.getElementById('viewGate').classList.toggle('active', view === 'gate');
   if(view!=='gate')document.querySelector('.gate-frame').contentWindow?.postMessage({type:'crescendo-gate-stop'},location.origin);
   document.getElementById('viewConsult').classList.toggle('active', view === 'consult');
   document.getElementById('viewAnalyzer').classList.toggle('active', view === 'analyzer');
-  window.dispatchEvent(new CustomEvent('crescendo:view-change', { detail: { view } }));
+  window.dispatchEvent(new CustomEvent('crescendo:view-change', { detail: { view: view === 'lab' ? labMode : view } }));
 });
 </script>
 <script>document.getElementById('footerYear').textContent = '© ' + new Date().getFullYear();</script>
