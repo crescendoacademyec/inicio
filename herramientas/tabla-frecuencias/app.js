@@ -422,7 +422,7 @@
     glossaryPanel.querySelector('#glossaryContent').innerHTML = GLOSSARY.map(g =>
       `<div class="glossary-item"><b>${g.t}</b><p>${g.d}</p></div>`).join('');
   }
-  function openGlossary() { glossaryOverlay.classList.add('open'); glossaryPanel.classList.add('open'); }
+  function openGlossary() { const consultation=document.querySelector('[data-view="consult"]');if(consultation&&window.MusicCompendium){consultation.click();document.getElementById('viewConsult').scrollIntoView({behavior:'smooth',block:'start'});return;}glossaryOverlay.classList.add('open'); glossaryPanel.classList.add('open'); }
   function closeGlossary() { glossaryOverlay.classList.remove('open'); glossaryPanel.classList.remove('open'); }
   glossaryBtn.addEventListener('click', openGlossary);
   glossaryClose.addEventListener('click', closeGlossary);

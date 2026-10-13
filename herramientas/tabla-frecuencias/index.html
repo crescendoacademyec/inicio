@@ -593,7 +593,7 @@ a { color: inherit; text-decoration: none; }
         </button>
         <button class="mode-tab" data-view="dynamics"><b>Compresión y mastering</b><span>Propuestas de autores, controles y gráficos de dinámica</span></button><button class="mode-tab" data-view="processing"><b>Procesamiento y dinámica</b><span>EQ, filtros, compresión y limitación con ejemplos A/B</span></button>
         <button class="mode-tab" data-view="mix"><b>Mapa de mezcla</b><span>Paneo, registro y profundidad por estilo</span></button>
-        <button class="mode-tab" data-view="analyzer">
+        <button class="mode-tab" data-view="consult"><b>Diccionario y diagnóstico</b><span>Conceptos, procesos y soluciones por problemas</span></button><button class="mode-tab" data-view="analyzer">
             <b>Analizador de espectro</b>
             <span>Sube o graba audio y compáralo contra la tabla de instrumentos</span>
         </button>
@@ -662,7 +662,7 @@ a { color: inherit; text-decoration: none; }
     </section>
 
     <section class="view-section" id="viewMix"><div id="mixMap"></div></section>
-    <section class="view-section" id="viewDynamics"><link rel="stylesheet" href="dynamics-reference.css?v=20261012-14"><div id="dynamicsReference"></div></section>
+    <section class="view-section" id="viewConsult"><div data-music-compendium data-course-base="../produccion-musical/#curso/" data-tool-base="./"></div></section><section class="view-section" id="viewDynamics"><link rel="stylesheet" href="dynamics-reference.css?v=20261012-14"><div id="dynamicsReference"></div></section>
     <section class="view-section" id="viewProcessing"><div class="processing-module" id="processingLab"></div></section>
     <section class="view-section" id="viewEQ" aria-label="Ecualizador visual"></section><section class="view-section" id="viewEar"><div id="frequencyListening"></div>
         <details class="processing-module"><summary>Entrenamiento de mezcla y dinámica · EQ, compresión y limitación</summary><div id="processingPractice"></div></details>
@@ -1045,7 +1045,7 @@ a { color: inherit; text-decoration: none; }
 <script src="data.js?v=20261012-6"></script>
 <script src="instrument-catalog.js?v=20261012-15"></script>
 <script src="eq-presets.js?v=20261012-15"></script><script src="eq-guidance.js?v=20261012-15"></script>
-<script src="eq-response.js?v=20261012-4"></script><script src="app.js?v=20261012-5"></script><script src="eq-visual.js?v=20261012-15"></script>
+<script src="eq-response.js?v=20261012-4"></script><script src="app.js?v=20261012-19"></script><script src="eq-visual.js?v=20261012-16"></script>
 <script src="dynamics-model.js?v=20261012-1"></script><script src="dynamics-presets.js?v=20261012-15"></script><script src="dynamics-reference.js?v=20261012-15"></script>
 <script src="processing-dsp.js?v=20261012-1"></script>
 <script src="ear.js?v=20261012-1"></script>
@@ -1069,10 +1069,12 @@ document.getElementById('modeTabs').addEventListener('click', (e) => {
   document.getElementById('viewDynamics').classList.toggle('active', view === 'dynamics');
   document.getElementById('viewProcessing').classList.toggle('active', view === 'processing');
   document.getElementById('viewMix').classList.toggle('active', view === 'mix');
+  document.getElementById('viewConsult').classList.toggle('active', view === 'consult');
   document.getElementById('viewAnalyzer').classList.toggle('active', view === 'analyzer');
   window.dispatchEvent(new CustomEvent('crescendo:view-change', { detail: { view } }));
 });
 </script>
 <script>document.getElementById('footerYear').textContent = '© ' + new Date().getFullYear();</script>
+<link rel="stylesheet" href="../../shared/music-compendium/styles.css?v=20261012-1"><script src="../../shared/music-compendium/data.js?v=20261012-3"></script><script src="../../shared/music-compendium/ui.js?v=20261012-3"></script>
 </body>
 </html>

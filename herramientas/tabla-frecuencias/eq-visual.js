@@ -75,4 +75,5 @@ document.addEventListener('click',e=>{
 });
 filterInstruments();
 reset();
+const requestedInstrument=new URLSearchParams(location.search).get('instrument');if(requestedInstrument&&EQ_INSTRUMENTS.some(i=>i.id===requestedInstrument)){filterInstruments(requestedInstrument);loadSelected();}
 })();
