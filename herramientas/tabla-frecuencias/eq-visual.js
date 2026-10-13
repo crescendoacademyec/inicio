@@ -11,7 +11,7 @@ function showTooltip(i){const b=bands[i],tip=$('eqTooltip');tip.textContent=band
 function showCursorFrequency(e){
  const r=svg.getBoundingClientRect(),px=(e.clientX-r.left)/r.width*960,py=(e.clientY-r.top)/r.height*360,tip=$('eqTooltip');
  if(px<56||px>936||py<24||py>324){tip.hidden=true;return;}
- tip.textContent=`Posición: ${hz(px).toLocaleString('es',{minimumFractionDigits:1,maximumFractionDigits:1})} Hz`;
+ tip.textContent=`${Math.round(hz(px)).toLocaleString('es')} Hz, ${Number(db(py).toFixed(1)).toLocaleString('es')} dB`;
  tip.hidden=false;tip.style.left=clamp(px/960*100,10,90)+'%';tip.style.top=clamp(py/360*100,15,85)+'%';
 }
 function draw(){

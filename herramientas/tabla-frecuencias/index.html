@@ -1051,7 +1051,7 @@ a { color: inherit; text-decoration: none; }
 <script src="data.js?v=20261012-6"></script>
 <script src="instrument-catalog.js?v=20261012-15"></script>
 <script src="eq-presets.js?v=20261012-15"></script><script src="eq-guidance.js?v=20261012-15"></script>
-<script src="eq-response.js?v=20261012-4"></script><script src="app.js?v=20261012-19"></script><script src="eq-visual.js?v=20261012-16"></script>
+<script src="eq-response.js?v=20261012-4"></script><script src="app.js?v=20261012-19"></script><script src="eq-visual.js?v=20261013-5"></script>
 <script src="dynamics-model.js?v=20261012-1"></script><script src="dynamics-presets.js?v=20261012-15"></script><script src="dynamics-reference.js?v=20261013-2"></script>
 <script src="processing-dsp.js?v=20261012-1"></script>
 <script src="ear.js?v=20261012-1"></script>
@@ -1083,9 +1083,6 @@ document.getElementById('labProcess').addEventListener('change',e=>{
 document.getElementById('labTraining').onchange=e=>{const gate=e.target.value==='gate';document.getElementById('trainGatePanel').hidden=!gate;document.getElementById('trainGeneral').hidden=gate;window.dispatchEvent(new CustomEvent('crescendo:view-change',{detail:{view:'ear'}}));stopGateFrames();};
 document.querySelector('.lab-tabs').addEventListener('click' ,e=>{const b=e.target.closest('[data-lab-mode]');if(b)selectLabMode(b.dataset.labMode);});
 document.querySelector('.lab-tabs').addEventListener('keydown',e=>{if(!['ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;e.preventDefault();const mode=e.key==='Home'?'processing':e.key==='End'?'ear':labMode==='ear'?'processing':'ear';selectLabMode(mode);document.querySelector('[data-lab-mode="'+mode+'"]').focus();});
-for(const [id,process] of [['viewEQ','eq'],['viewDynamics','compression']]){
-  const button=document.createElement('button');button.type='button';button.textContent='Escuchar y practicar este proceso →';button.onclick=()=>{document.querySelector('[data-view="lab"]').click();selectLabMode('processing');document.getElementById('labProcess').value='processors';document.getElementById('labProcess').dispatchEvent(new Event('change'));document.getElementById('procMode').value=process;document.getElementById('procMode').dispatchEvent(new Event('change'));document.getElementById('viewLab').scrollIntoView({behavior:'smooth',block:'start'});};document.getElementById(id).prepend(button);
-}
 document.getElementById('modeTabs').addEventListener('click', (e) => {
   const btn = e.target.closest('.mode-tab');
   if (!btn) return;
