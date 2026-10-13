@@ -66,10 +66,10 @@ a { color: inherit; text-decoration: none; }
 
 /* ===== HERO ===== */
 .app-shell { margin: 0 auto; max-width: 1600px; padding: clamp(28px, 5vw, 56px) clamp(12px, 2vw, 32px) 70px; position: relative; z-index: 1; }
-.tool-hero { display: grid; gap: 12px; margin-bottom: 30px; max-width: 900px; }
+.tool-hero { display: grid; gap: 12px; margin-bottom: 30px; max-width: none; }
 .eyebrow { color: #9ab8aa; font-size: 0.78rem; font-weight: 1000; letter-spacing: 0.16em; margin: 0; text-transform: uppercase; }
 .tool-hero h1 { color: var(--text); font-family: Georgia, "Times New Roman", serif; font-size: clamp(2.3rem, 4.6vw, 3.7rem); line-height: 0.98; margin: 0; }
-.tool-hero p { color: var(--text-dim); font-size: 1rem; line-height: 1.7; margin: 0; max-width: 780px; }
+.tool-hero p { color: var(--text-dim); font-size: 1rem; line-height: 1.7; margin: 0; max-width: none; }
 
 /* ===== CONTROLES ===== */
 .controls-bar {
@@ -541,6 +541,7 @@ a { color: inherit; text-decoration: none; }
 
 .lab-tabs{display:flex;gap:8px;margin:16px 0 22px}.lab-tabs button{padding:10px 22px;border:1px solid var(--gold,#d5aa48);border-radius:9px;background:#181713;color:#f5f0e5;font:inherit;cursor:pointer}.lab-tabs button[aria-selected="true"]{background:#d5aa48;color:#17150f}.lab-tabs button:focus-visible{outline:2px solid #fff;outline-offset:3px}#viewLab [hidden]{display:none!important}
 .lab-selector{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:0 0 20px;font-weight:600}.lab-selector select{appearance:none;color:#f5f0e5;background:#23211b url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath d='m4 6 4 4 4-4' fill='none' stroke='%23d5aa48' stroke-width='2'/%3E%3C/svg%3E") no-repeat right 16px center;border:1px solid #8c743c;border-radius:999px;padding:11px 42px 11px 18px;font:inherit;max-width:100%;cursor:pointer}.lab-selector select:focus-visible{outline:2px solid #d5aa48;outline-offset:3px}.lab-selector option{background:#23211b;color:#fff}
+.lab-toolbar{display:flex;align-items:center;gap:24px;flex-wrap:wrap;margin:16px 0 22px}.lab-toolbar .lab-tabs{display:inline-flex;gap:3px;margin:0;padding:4px;border:1px solid #62583e;border-radius:999px;background:#23211b;flex-shrink:0}.lab-toolbar .lab-tabs button{border:0;border-radius:999px;background:transparent;padding:9px 22px}.lab-toolbar .lab-tabs button[aria-selected="true"]{background:#d5aa48;color:#17150f}.lab-toolbar .lab-selector{margin:0}
 </style>
 <link rel="stylesheet" href="processing.css?v=20260926">
 <link rel="stylesheet" href="mix-map.css?v=20261012-9">
@@ -662,12 +663,12 @@ a { color: inherit; text-decoration: none; }
     <section class="view-section" id="viewEQ" aria-label="Ecualizador visual"></section>
     <section class="view-section" id="viewLab" aria-label="Laboratorio de audio">
       <h2>Laboratorio de audio</h2><p>Experimenta con los controles en Explorar y comprueba lo que reconoces al escuchar en Entrenar.</p>
-      <div class="lab-tabs" role="tablist" aria-label="Modo del laboratorio">
+      <div class="lab-toolbar"><div class="lab-tabs" role="tablist" aria-label="Modo del laboratorio">
         <button id="labExplore" role="tab" aria-selected="true" aria-controls="viewProcessing" tabindex="0" data-lab-mode="processing">Explorar</button>
         <button id="labTrain" role="tab" aria-selected="false" aria-controls="viewEar" tabindex="-1" data-lab-mode="ear">Entrenar</button>
-      </div>
-    <section class="view-section active" id="viewProcessing" role="tabpanel" aria-labelledby="labExplore"><label class="lab-selector">Qué quieres explorar <select id="labProcess"><option value="processors">EQ, filtros y dinámica</option><option value="gate">Gate y expansor</option></select></label><div class="processing-module" id="processingLab"></div><section id="viewGate" hidden><iframe class="gate-frame" allow="autoplay" src="../produccion-musical/gate-lab.html?v=20261013-3" title="Simulador de gate y expansor con audio" loading="lazy" style="width:100%;height:1900px;border:0"></iframe></section></section>
-    <section class="view-section" id="viewEar" role="tabpanel" aria-labelledby="labTrain" hidden><label class="lab-selector">Qué quieres entrenar <select id="labTraining"><option value="general">Frecuencias, EQ y dinámica</option><option value="gate">Gate y expansor</option></select></label><div id="trainGatePanel" hidden><iframe class="gate-frame" allow="autoplay" src="../produccion-musical/gate-lab.html?mode=practice&amp;v=20261013-3" title="Ejercicios guiados de gate y expansor" loading="lazy" style="width:100%;height:1900px;border:0"></iframe></div><div id="trainGeneral"><div id="frequencyListening"></div>
+      </div><label class="lab-selector">Qué quieres explorar <select id="labProcess"><option value="processors">EQ, filtros y dinámica</option><option value="gate">Gate y expansor</option></select></label><label class="lab-selector" hidden>Qué quieres entrenar <select id="labTraining"><option value="general">Frecuencias, EQ y dinámica</option><option value="gate">Gate y expansor</option></select></label></div>
+    <section class="view-section active" id="viewProcessing" role="tabpanel" aria-labelledby="labExplore"><div class="processing-module" id="processingLab"></div><section id="viewGate" hidden><iframe class="gate-frame" allow="autoplay" src="../produccion-musical/gate-lab.html?v=20261013-3" title="Simulador de gate y expansor con audio" loading="lazy" style="width:100%;height:1900px;border:0"></iframe></section></section>
+    <section class="view-section" id="viewEar" role="tabpanel" aria-labelledby="labTrain" hidden><div id="trainGatePanel" hidden><iframe class="gate-frame" allow="autoplay" src="../produccion-musical/gate-lab.html?mode=practice&amp;v=20261013-3" title="Ejercicios guiados de gate y expansor" loading="lazy" style="width:100%;height:1900px;border:0"></iframe></div><div id="trainGeneral"><div id="frequencyListening"></div>
         <details class="processing-module"><summary>Entrenamiento de mezcla y dinámica · EQ, compresión y limitación</summary><div id="processingPractice"></div></details>
 
         <div class="practice-session-card" id="practiceSessionCard">
@@ -1067,6 +1068,8 @@ let labMode = 'processing';
 function stopGateFrames(){document.querySelectorAll('.gate-frame').forEach(f=>f.contentWindow?.postMessage({type:'crescendo-gate-stop'},location.origin));}
 function selectLabMode(mode){
   labMode=mode;
+  document.getElementById("labProcess").closest("label").hidden=mode!=="processing";
+  document.getElementById("labTraining").closest("label").hidden=mode!=="ear";
   stopGateFrames();
   document.querySelectorAll('[data-lab-mode]').forEach(t=>{const selected=t.dataset.labMode===mode;t.setAttribute('aria-selected',selected);t.tabIndex=selected?0:-1;});
   ['processing','ear'].forEach(v=>{const panel=document.getElementById(v==='ear'?'viewEar':'viewProcessing');panel.hidden=v!==mode;panel.classList.toggle('active',v===mode);});
