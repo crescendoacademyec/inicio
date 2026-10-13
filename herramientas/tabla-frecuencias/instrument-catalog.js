@@ -64,12 +64,12 @@ const INSTRUMENT_PROFILES = [
   ['trompa','Trompa en Fa','viento','B1','F5','brass','horn','Alturas sonoras de referencia; la escritura habitual está una quinta más alta.'],
   ['trombon','Trombón tenor','viento','E2','F5','brass','trombone','No incluye pedales E1–B♭1 ni la extensión grave con transpositor.'],
   ['tuba','Tuba baja','viento','D1','G4','brass','tuba','Referencia amplia; afinación, tamaño y capacidad del intérprete modifican los extremos.'],
-  ['soprano','Soprano','voz','C4','A5','vocal','yale','Referencia de catalogación de Yale/New Harvard Dictionary; no es un límite fisiológico ni la extensión operística máxima.'],
-  ['mezzo','Mezzosoprano','voz','A3','F5','vocal','yale','Referencia de catalogación; repertorio, tesitura e intérprete pueden ampliar este intervalo.'],
-  ['contralto','Contralto','voz','F3','D5','vocal','yale','Referencia de catalogación; la tesitura cómoda no equivale al registro completo.'],
-  ['tenor','Tenor','voz','B2','G4','vocal','yale','Referencia de catalogación en alturas sonoras, no límite máximo de una voz entrenada.'],
-  ['baritono','Barítono','voz','G2','E4','vocal','yale','Referencia de catalogación; no clasifica una voz individual por sus notas extremas.'],
-  ['bajo-vocal','Bajo vocal','voz','E2','C4','vocal','yale','Referencia de catalogación; no confundir con bajo eléctrico o contrabajo.'],
+  ['soprano','Voz · soprano','voz','C4','A5','vocal','yale','Referencia de catalogación de Yale/New Harvard Dictionary; no es un límite fisiológico ni la extensión operística máxima.'],
+  ['mezzo','Voz · mezzosoprano','voz','A3','F5','vocal','yale','Referencia de catalogación; repertorio, tesitura e intérprete pueden ampliar este intervalo.'],
+  ['contralto','Voz · contralto','voz','F3','D5','vocal','yale','Referencia de catalogación; la tesitura cómoda no equivale al registro completo.'],
+  ['tenor','Voz · tenor','voz','B2','G4','vocal','yale','Referencia de catalogación en alturas sonoras, no límite máximo de una voz entrenada.'],
+  ['baritono','Voz · barítono','voz','G2','E4','vocal','yale','Referencia de catalogación; no clasifica una voz individual por sus notas extremas.'],
+  ['bajo-vocal','Voz · bajo','voz','E2','C4','vocal','yale','Referencia de catalogación; no confundir con bajo eléctrico o contrabajo.'],
   ['marimba','Marimba · 5 octavas','percusion','C2','C7','mallet','marimba','Modelo de cinco octavas. Hay marimbas más pequeñas con otra nota grave.'],
   ['vibrafono','Vibráfono · 3 octavas','percusion','F3','F6','mallet','vibes','Modelo estándar de tres octavas; otros modelos amplían el registro.'],
   ['timbal-orquestal','Timbal orquestal grave','percusion','C2','C3','mallet','timpani','Un timbal grave grande, no el conjunto completo. La extensión útil depende del diámetro y la tensión del parche.'],
@@ -111,6 +111,18 @@ INSTRUMENTS.push({id:'sintetizador',name:'Sintetizador',cat:'teclas',detail:true
   boosts:[{f:'Según su función',r:'Decide si actúa como bajo, lead, pad o efecto; ajusta el propio sonido antes de aplicar EQ externa.'}],
   tip:'No existe una banda de fundamentales ni de armónicos única para todos los sintetizadores.',sources:['moog','berklee']});
 
+// Separate string materials; shared tuning does not imply the same timbre or EQ.
+FREQUENCY_SOURCES.eqAcousticMaterials={label:'iZotope · Acoustic guitar EQ: steel, nylon and recording context',url:'https://www.izotope.com/community/blog/acoustic-guitar-eq'};
+const steelGuitar=INSTRUMENTS.find(i=>i.id==='guit-ac');
+steelGuitar.name='Guitarra acústica · acero';
+steelGuitar.tip='Cuerdas de acero: escucha brillo, púa y ruido de deslizamiento antes de realzar agudos. Caja, técnica y micrófono pueden cambiar más el resultado que el material. Los cortes son opciones, no ajustes obligatorios.';
+steelGuitar.sources=[...(steelGuitar.sources||[]),'eqAcousticMaterials'];
+INSTRUMENTS.push({...steelGuitar,id:'guit-nylon',name:'Guitarra clásica · nylon',
+ cuts:[{f:'200–400 Hz',r:'Si la caja enturbia el arreglo, compara una reducción ancha y suave sin perder el cuerpo.'},{f:'2–5 kHz',r:'Solo si uñas o ataque resultan ásperos; conserva la definición de la interpretación.'}],
+ boosts:[{f:'1–3 kHz',r:'Prueba un realce pequeño si el punteo queda oculto; compara a igual volumen.'}],
+ tip:'Cuerdas de nylon: clásica o flamenca no tienen un timbre único. Escucha caja, uñas y ataque; no impongas un pasa-bajos por ser nylon: una toma puede conservar información por encima de 10 kHz. Compara posición del micrófono y función en el arreglo antes de EQ.',
+ sources:[...steelGuitar.sources],comp:undefined});
+
 // Display conventions, not measured upper limits of an instrument's spectrum.
 // For tonal profiles, show the envelope of harmonics 2–16 across the register.
 // For percussion, do not invent an integer harmonic series for inharmonic modes.
@@ -150,4 +162,12 @@ for(const instrument of INSTRUMENTS)if(!instrument.comp){
  instrument.sources.push('dynamics');
  instrument.comp={tipo:goal,ratio:'Empieza sin compresión; aumenta gradualmente solo si mejora el objetivo. El umbral depende de esta grabación.',attack,release,
  nota:`${instrument.name}: escucha a igual volumen y compara bypass. Para picos aislados considera automatización; para resonancias puntuales, EQ dinámica. No comprimas por el nombre del instrumento.`};
+}
+
+// Category order and Spanish alphabetical order shared by table and production.
+const INSTRUMENT_CATEGORIES={cuerdas:'Cuerdas',percusion:'Percusión',teclas:'Teclas',viento:'Viento',voz:'Voces',bus:'Buses'};
+const instrumentCategoryOrder=Object.keys(INSTRUMENT_CATEGORIES);
+INSTRUMENTS.sort((a,b)=>instrumentCategoryOrder.indexOf(a.cat)-instrumentCategoryOrder.indexOf(b.cat)||a.name.localeCompare(b.name,'es',{sensitivity:'base'}));
+function instrumentOptions(list,escape){
+ return instrumentCategoryOrder.map(cat=>{const items=list.filter(i=>i.cat===cat).sort((a,b)=>a.name.localeCompare(b.name,'es',{sensitivity:'base'}));return items.length?`<optgroup label="${INSTRUMENT_CATEGORIES[cat]}">${items.map(i=>`<option value="${escape(i.id)}">${escape(i.name)}</option>`).join('')}</optgroup>`:'';}).join('');
 }

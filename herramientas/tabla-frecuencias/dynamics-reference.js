@@ -10,7 +10,7 @@ let mode=new URLSearchParams(location.search).get('mode')==='mastering'?'masteri
 const instruments=[...INSTRUMENTS,{id:'mix-bus',name:'Bus de mezcla',cat:'bus'}];
 function available(){const i=instruments.find(i=>i.id===$('dynInstrument').value);return mode==='mastering'?masters:recipes.filter(r=>r.groups.includes(i?.id==='mix-bus'?'bus':group(i||instruments[0])));}
 function load(id){choice=available().find(p=>p.id===id)||available()[0];p={...choice.settings};ceiling=choice.ceiling??-1;bypass=false;render();}
-function filter(){const old=$('dynInstrument').value,q=normalize($('dynSearch').value),list=instruments.filter(i=>normalize(i.name).includes(q));$('dynInstrument').innerHTML=list.map(i=>`<option value="${i.id}">${esc(i.name)}</option>`).join('');if(list.some(i=>i.id===old))$('dynInstrument').value=old;$('dynInstrument').disabled=!list.length;if(list.length)load();else{$('dynScope').textContent='No se encontraron instrumentos. Cambia la búsqueda.';$('dynPresets').replaceChildren();}}
+function filter(){const old=$('dynInstrument').value,q=normalize($('dynSearch').value),list=instruments.filter(i=>normalize(i.name).includes(q));$('dynInstrument').innerHTML=instrumentOptions(list,esc);if(list.some(i=>i.id===old))$('dynInstrument').value=old;$('dynInstrument').disabled=!list.length;if(list.length)load();else{$('dynScope').textContent='No se encontraron instrumentos. Cambia la búsqueda.';$('dynPresets').replaceChildren();}}
 function render(){
  const selected=instruments.find(i=>i.id===$('dynInstrument').value),source=sources[choice.source];
  $('dynSelectors').hidden=mode==='mastering';$('dynMasterNotes').hidden=mode!=='mastering';$('dynCeilingLabel').hidden=mode!=='mastering';

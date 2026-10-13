@@ -9,8 +9,8 @@ function catalog(files=['data.js','instrument-catalog.js','eq-presets.js','eq-gu
  for(const file of files)vm.runInContext(fs.readFileSync(path.join(root,file),'utf8'),context);
  return vm.runInContext('({instruments:INSTRUMENTS,sources:FREQUENCY_SOURCES,render:window.InstrumentEQGuidance.html})',context);
 }
-test('all 57 instruments have distinct, referenced alternatives with explicit source scope',()=>{
- const {instruments,sources,render}=catalog();assert.equal(instruments.length,57);
+test('all 58 instruments have distinct, referenced alternatives with explicit source scope',()=>{
+ const {instruments,sources,render}=catalog();assert.equal(instruments.length,58);
  for(const i of instruments){
   assert.ok(i.eqReview.alternatives.length>=2,i.id);
   assert.equal(i.eqReview.alternatives.length,i.eqPresets.length,i.id);
@@ -68,7 +68,7 @@ test('loading and editing a preset does not mutate its stored proposal',()=>{
 
 test('additional artist studies disclose their origin and keep a source on every proposal',()=>{
  const {instruments,sources,render}=catalog();
- assert.equal(instruments.reduce((n,i)=>n+i.eqPresets.length,0),142);
+ assert.equal(instruments.reduce((n,i)=>n+i.eqPresets.length,0),144);
  const voice=instruments.find(i=>i.id==='voz');
  assert.equal(voice.eqPresets.length,9);
  for(const i of instruments)for(let index=2;index<i.eqPresets.length;index++){

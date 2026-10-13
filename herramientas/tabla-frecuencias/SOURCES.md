@@ -99,7 +99,7 @@ Las fichas explican su alcance y enlazan la fuente.
 ## Catálogo completo y nuevas referencias (26-09-2026)
 
 Se elimina el filtro de «Vista: General» que ocultaba los perfiles detallados al
-seleccionar «Todos». Se muestran las 57 referencias desde la carga inicial;
+seleccionar «Todos». Se muestran las 58 referencias desde la carga inicial;
 «Todos» también limpia la búsqueda, y las familias conservan todos sus miembros.
 La tabla crece con su contenido y se recorre con el desplazamiento de la página.
 
@@ -250,3 +250,11 @@ solicitadas, recuperación de un filtro incompatible y cápsula con clic/flechas
 - Los botones de las fichas toman la zona indicada en el catálogo; para rangos usan el centro geométrico. ±3 dB y Q=1 son ejemplos didácticos propios, no valores extraídos del libro ni recomendaciones obligatorias.
 
 HPF/LPF visuales: pendientes nominales de 6, 12, 24, 36 y 48 dB/octava, prototipo Butterworth de orden pendiente/6 con transformación bilineal a 96 kHz. Corte a −3.0103 dB; no se ofrece Q/resonancia ajustable en estos filtros. La pendiente asintótica nominal no implica una caída lineal en toda la transición.
+
+## Acero, nylon y navegación · 2026-10-12
+
+Se separan guitarra acústica de acero (`guit-ac`, conserva el identificador) y guitarra clásica de nylon (`guit-nylon`). Misma afinación estándar no implica la misma EQ. Las dos curvas de nylon son propuestas didácticas originales, no presets publicados por iZotope. No se presupone un corte de agudos a 10 kHz para nylon. La toma, caja, técnica y arreglo determinan qué bandas utilizar.
+
+Fuente: [iZotope · How to EQ acoustic guitar in a mix](https://www.izotope.com/community/blog/acoustic-guitar-eq), que distingue acero/nylon y describe una toma DI de nylon con información por encima de 10 kHz.
+
+Catálogo compartido: categorías con nombres en orden alfabético español; selectores EQ y compresión agrupados por categoría. Los registros vocales incluyen «Voz».

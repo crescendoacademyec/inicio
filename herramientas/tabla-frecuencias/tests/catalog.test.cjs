@@ -7,8 +7,8 @@ const ctx=vm.createContext({});
 for(const file of ['data.js','instrument-catalog.js'])vm.runInContext(fs.readFileSync(path.join(__dirname,'..',file),'utf8'),ctx);
 const data=vm.runInContext('({instruments:INSTRUMENTS,sources:FREQUENCY_SOURCES,frequencyForNote})',ctx);
 test('catalog has unique IDs, documented ranges and valid sources in every family',()=>{
- assert.equal(data.instruments.length,57);
- assert.equal(new Set(data.instruments.map(i=>i.id)).size,57);
+ assert.equal(data.instruments.length,58);
+ assert.equal(new Set(data.instruments.map(i=>i.id)).size,58);
  for(const i of data.instruments){
   for(const range of [i.range,i.realRange,i.harm].filter(Boolean))assert.ok(range.every(Number.isFinite)&&range[0]>0&&range[1]>range[0],i.id);
   if(i.detail){assert.ok(i.rangeNote);if(i.rangeKind==='register')assert.ok(i.registerOnly);assert.ok(i.harm);assert.ok(i.sources.length);for(const id of i.sources)assert.ok(data.sources[id],id);}
@@ -49,4 +49,18 @@ test('requested instruments and additional percussion have honest complete profi
 
 test('all instruments include objective-led compression guidance',()=>{
  for(const i of data.instruments)for(const field of ['tipo','ratio','attack','release','nota'])assert.ok(typeof i.comp?.[field]==='string' && i.comp[field].length>3,`${i.id}: ${field}`);
+});
+
+test('string materials, vocal names and category ordering are explicit in shared selectors',()=>{
+ const steel=data.instruments.find(i=>i.id==='guit-ac'),nylon=data.instruments.find(i=>i.id==='guit-nylon');
+ assert.match(steel.name,/acero/);assert.match(nylon.name,/nylon/);assert.notEqual(steel.tip,nylon.tip);
+ for(const id of ['soprano','mezzo','contralto','tenor','baritono','bajo-vocal'])assert.match(data.instruments.find(i=>i.id===id).name,/^Voz · /);
+ for(const cat of ['cuerdas','percusion','teclas','viento','voz']){
+  const names=Array.from(data.instruments.filter(i=>i.cat===cat),i=>i.name);
+  assert.deepEqual(names,[...names].sort((a,b)=>a.localeCompare(b,'es',{sensitivity:'base'})));
+ }
+ const options=vm.runInContext('instrumentOptions(INSTRUMENTS,s=>s)',ctx);
+ assert.equal((options.match(/<optgroup /g)||[]).length,5);
+ assert.equal((options.match(/<option /g)||[]).length,58);
+ assert.match(options,/<optgroup label="Voces">/);
 });

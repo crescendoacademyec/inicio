@@ -58,7 +58,7 @@ function group(i){
  if(['bajo','contrabajo'].includes(i.id))return 'bass';
  if(i.cat==='percusion')return 'drums';
  if(i.cat==='teclas')return 'keys';
- if(['guit-ac','guit-el','requinto','mandolina','ukelele','arpa'].includes(i.id))return 'acoustic';
+ if(['guit-ac','guit-nylon','guit-el','requinto','mandolina','ukelele','arpa'].includes(i.id))return 'acoustic';
  return 'sustain';
 }
 const api={sources,recipes,masters,group};root.DynamicsPresets=api;

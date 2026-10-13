@@ -51,7 +51,7 @@ function loadExample(example,name){
 const normalize=value=>value.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
 function filterInstruments(preferred){
  const select=$('eqInstrumentSelect'),previous=preferred||select.value,query=normalize($('eqInstrumentSearch').value),list=INSTRUMENTS.filter(i=>normalize(i.name).includes(query));
- select.innerHTML=list.map(i=>`<option value="${escapeHTML(i.id)}">${escapeHTML(i.name)}</option>`).join('');
+ select.innerHTML=instrumentOptions(list,escapeHTML);
  if(list.some(i=>i.id===previous))select.value=previous;
  select.disabled=!list.length;$('eqLoadInstrument').disabled=!list.length;
  $('eqInstrumentCount').textContent=list.length?`${list.length} instrumentos`:'No se encontraron instrumentos.';

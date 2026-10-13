@@ -29,9 +29,9 @@ test('every proposal has provenance, valid controls and finite simulation',()=>{
  }
  assert.equal(D.masters.find(p=>p.id==='lazar').settings.ratio,1);
 });
-test('all 57 instruments resolve to a supported family, shared by the production embed',()=>{
+test('all 58 instruments resolve to a supported family, shared by the production embed',()=>{
  const base=path.join(__dirname,'..'),ctx=vm.createContext({});for(const f of ['data.js','instrument-catalog.js'])vm.runInContext(fs.readFileSync(path.join(base,f),'utf8'),ctx);
- const instruments=vm.runInContext('INSTRUMENTS',ctx);assert.equal(instruments.length,57);
+ const instruments=vm.runInContext('INSTRUMENTS',ctx);assert.equal(instruments.length,58);
  for(const i of instruments)assert.ok(D.recipes.filter(r=>r.groups.includes(D.group(i))).length>=2,i.id);
  const html=fs.readFileSync(path.join(base,'../produccion-musical/dynamics-reference.html'),'utf8');
  for(const f of ['dynamics-model','dynamics-presets','dynamics-reference'])assert.ok(html.includes('../tabla-frecuencias/'+f+'.js'));
