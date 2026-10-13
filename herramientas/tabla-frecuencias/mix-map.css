@@ -30,3 +30,8 @@
 #mixEditor{min-width:0;padding:14px;background:#ffffff05;border:1px solid #ffffff15;border-radius:12px;font-size:.85rem;overflow-wrap:anywhere}#mixEditor h3{margin:0;color:#e4b951;font-size:.95rem;line-height:1.5}
 @media(max-width:1050px){.mix-layout{grid-template-columns:minmax(0,1.8fr) minmax(210px,1fr)}}
 @media(max-width:650px){.mix-layout{grid-template-columns:minmax(0,1fr)}}
+
+.mix-layout{grid-template-columns:minmax(0,2.6fr) minmax(190px,.88fr) minmax(250px,1.17fr)}
+.mix-stage>#mixNote{text-align:left;font-size:.95rem}.mix-stage>#mixTitle{margin-top:0}
+@media(max-width:1050px){.mix-layout{grid-template-columns:minmax(0,1.8fr) minmax(190px,.88fr)}}
+@media(max-width:650px){.mix-layout{grid-template-columns:minmax(0,1fr)}}
