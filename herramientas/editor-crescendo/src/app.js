@@ -4731,7 +4731,7 @@
     return [
       contextMenuButton("Sostenido", () => setAccidentalFromContext(location, "sharp"), { shortcut: "¡" }),
       contextMenuButton("Bemol", () => setAccidentalFromContext(location, "flat"), { shortcut: "'" }),
-      contextMenuButton("Becuadro", () => setAccidentalFromContext(location, "natural"), { shortcut: "0" }),
+      contextMenuButton("Becuadro", () => setAccidentalFromContext(location, "natural"), { shortcut: "Shift+0" }),
       contextMenuButton("Doble sostenido", () => setAccidentalFromContext(location, "double-sharp")),
       contextMenuButton("Doble bemol", () => setAccidentalFromContext(location, "double-flat")),
       contextMenuButton("Quitar alteración escrita", () => setAccidentalFromContext(location, null))

@@ -1,5 +1,5 @@
 (function(root){'use strict';
-const TICKS=13440,durations=[['one-twenty-eighth',.03125,'1','Garrapatea'],['sixty-fourth',.0625,'2','Semifusa'],['thirty-second',.125,'3','Fusa'],['sixteenth',.25,'4','Semicorchea'],['eighth',.5,'5','Corchea'],['quarter',1,'6','Negra'],['half',2,'7','Blanca'],['whole',4,'8','Redonda'],['breve',8,'9','Cuadrada']];
+const TICKS=13440,durations=[['one-twenty-eighth',.03125,'8','Garrapatea'],['sixty-fourth',.0625,'7','Semifusa'],['thirty-second',.125,'6','Fusa'],['sixteenth',.25,'5','Semicorchea'],['eighth',.5,'4','Corchea'],['quarter',1,'3','Negra'],['half',2,'2','Blanca'],['whole',4,'1','Redonda'],['breve',8,'0','Cuadrada']];
 const ticks=b=>Math.round(b*TICKS),factor=d=>[1,1.5,1.75][d||0];
 function create(){return {duration:'quarter',beats:1,rest:false,dots:0,actual:0,normal:0,groupIndex:0,groupId:0};}
 function select(state,action,value){if(action==='duration'){const d=durations.find(d=>d[0]===value);if(d){state.duration=d[0];state.beats=d[1];state.actual=0;state.groupIndex=0;}}else if(action==='rest')state.rest=!state.rest;else if(action==='dots')state.dots=state.dots===value?0:value;else if(action==='tuplet'){state.actual=state.actual===value?0:value;state.normal=value===3?2:4;state.groupIndex=0;state.dots=0;}}

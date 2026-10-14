@@ -73,27 +73,27 @@
 
   const ACCIDENTAL_KEYS = Object.freeze({
     en: Object.freeze([
-      { accidental: "natural", key: "0" },
+      { accidental: "natural", code: "Digit0", shift: true },
       { accidental: "flat", key: "-" },
       { accidental: "sharp", key: "=" }
     ]),
     es: Object.freeze([
-      { accidental: "natural", key: "0" },
+      { accidental: "natural", code: "Digit0", shift: true },
       { accidental: "flat", key: "'" },
       { accidental: "sharp", key: "¡" }
     ])
   });
 
   const DURATION_KEYS = Object.freeze({
-    Digit1: "one-twenty-eighth",
-    Digit2: "sixty-fourth",
-    Digit3: "thirty-second",
-    Digit4: "sixteenth",
-    Digit5: "eighth",
-    Digit6: "quarter",
-    Digit7: "half",
-    Digit8: "whole",
-    Digit9: "breve"
+    Digit0: "breve",
+    Digit1: "whole",
+    Digit2: "half",
+    Digit3: "quarter",
+    Digit4: "eighth",
+    Digit5: "sixteenth",
+    Digit6: "thirty-second",
+    Digit7: "sixty-fourth",
+    Digit8: "one-twenty-eighth"
   });
 
   function normalizeLayout(value) {
