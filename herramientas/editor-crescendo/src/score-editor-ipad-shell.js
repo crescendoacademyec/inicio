@@ -774,6 +774,7 @@
 
     function setKeyboardVisible(visible) {
       state.keyboardVisible = visible;
+      window.dispatchEvent(new CustomEvent("crescendo:keyboard-visibility", { detail: { visible } }));
       root.dataset.keyboardVisible = String(visible);
       keyboardToggle.setAttribute("aria-pressed", visible ? "true" : "false");
       saveLayoutPreferences(state);

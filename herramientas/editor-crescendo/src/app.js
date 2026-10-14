@@ -5711,7 +5711,9 @@
     const voice = activeVoice();
     const activeTuplet = normalizeTuplet(state.activeTuplet);
     const tupletUnit = activeTuplet ? durationById(activeTuplet.unitDurationId) : null;
-    const duration = tupletUnit || state.activeDuration;
+    const baseDuration = tupletUnit || state.activeDuration;
+    const inputDots = state.inputDots || 0;
+    const duration = { ...baseDuration, ticks: baseDuration.ticks * dotFactor(inputDots) };
 
     if (state.cursorTick >= measureTicksForIndex(state.cursorMeasure) - EPSILON) {
       const previousMeasureIndex = state.cursorMeasure;
@@ -5725,6 +5727,7 @@
     saveHistory();
     const tupletWrite = activeTuplet ? nextTupletWriteInfo() : null;
     const entry = makeEntry(state.mode, duration, staffStep, null);
+    entry.dots = inputDots;entry.dotted = inputDots > 0;
     setEntryVoice(entry, voice);
     if (state.forceDurationMode) entry.forceDuration = true;
     if (entry.type === "note") {
@@ -6725,6 +6728,7 @@
   }
 
   function addDotToPreviousFigure() {
+    if (isNoteInputMode()) { setPreparedDots(1);return true; }
     const location = findPreviousFigureLocation();
     if (!location?.entry) return false;
     if (dotCountForEntry(location.entry) === 0) return addDotsToPreviousFigure(1);
@@ -13352,6 +13356,13 @@
   }
 
   // Palette choices arm input; only a score gesture commits an event.
+  function setPreparedDots(count) {
+    const dots = Math.max(0, Math.min(2, Number(count) || 0));
+    state.inputDots = state.inputDots === dots ? 0 : dots;
+    if (!state.cursorActive) enterFigureWritingMode();
+    refreshDurationButtons();updateModeButtons();render();
+  }
+
   function selectFigureDuration(duration) {
     if (!duration) return;
     setMode(state.mode === "rest" ? "rest" : "note");
@@ -15588,13 +15599,17 @@
       }
       const symbolClass = item.symbolClass || (item.music ? "music-glyph" : "text-glyph");
       button.innerHTML = iconLayerHtml(iconLayersForItem(item, symbolClass), item.dotted);
+      if (item.ticks && menuShortcut) {
+        const badge = document.createElement("span");badge.className = "figure-shortcut";badge.textContent = menuShortcut;button.appendChild(badge);
+      }
+      if (item.dotCount) { button.dataset.dotCount = item.dotCount;button.classList.toggle("is-active", state.inputDots === item.dotCount);button.setAttribute("aria-pressed", String(state.inputDots === item.dotCount)); }
       applyIconTooltipToElement(button);
       if (item.ticks) {
         button.addEventListener("click", () => selectFigureDuration(item));
       } else if (item.restDurationId) {
         button.addEventListener("click", () => selectRestDuration(item));
       } else if (item.dotCount) {
-        button.addEventListener("click", () => addDotsToPreviousFigure(item.dotCount));
+        button.addEventListener("click", () => setPreparedDots(item.dotCount));
       } else if (item.tieAction === "prolongation") {
         button.addEventListener("click", toggleDurationTieFromCurrentNote);
       } else if (item.slurType) {
@@ -15602,7 +15617,9 @@
       } else if (item.markType) {
         button.addEventListener("click", () => insertNotationMark(item));
       } else if (item.tuplet) {
-        button.addEventListener("click", () => activateTuplet(item.tuplet));
+        button.addEventListener("click", () => activateTuplet({ ...item.tuplet, unitDurationId: state.activeDuration?.id || item.tuplet.unitDurationId }));
+      } else if (item.tupletPicker) {
+        button.addEventListener("click", () => openPaletteById("tuplets"));
       } else if (item.customTuplet) {
         button.addEventListener("click", requestCustomTuplet);
       } else if (item.stopTuplet) {
@@ -19228,7 +19245,7 @@
     const duration = state.activeDuration || durationById("quarter");
     const x = cursorVisualXForMeasureTick(layout, measureIndex, tick);
     const group = el("g", { class: "input-event-preview", "pointer-events": "none", "data-preview-type": state.mode, "data-preview-duration": duration.id, "data-preview-step": staffStep, "data-preview-tick": tick });
-    const entry = { id: "input-preview", type: state.mode, durationId: duration.id, ticks: duration.ticks, flags: duration.flags || 0, staffStep, voice: activeVoice(), tickStart: tick, accidental: null };
+    const entry = { id: "input-preview", type: state.mode, durationId: duration.id, ticks: duration.ticks * dotFactor(state.inputDots || 0), dots: state.inputDots || 0, dotted: (state.inputDots || 0) > 0, flags: duration.flags || 0, staffStep, voice: activeVoice(), tickStart: tick, accidental: null };
     if (!preview && state.pitchBeforeDurationMode && state.mode === "note") {
       const notes = uniqueMidiNotes(state.pendingMidiNotes || []);
       if (notes.length > 1) {
@@ -20321,7 +20338,9 @@
         if (entry.hiddenTupletReserve) return;
         if (entry.type === "rest" && !shouldRenderRestEntry(measure, entry)) return;
         const duration = entryDuration(entry);
-        const isWholeRest = entry.type === "rest" && duration.id === "whole";
+        const fullMeasureRest = entry.type === "rest" && Math.abs(entry.tickStart || 0) < EPSILON && Math.abs(entry.ticks - measureTicksForIndex(measureIndex)) < EPSILON && measureVoiceEntries(measure, entryVoice(entry)).every(item => item.type === "rest");
+        const displayEntry = fullMeasureRest ? { ...entry, durationId: "whole", dots: 0, dotted: false, flags: 0 } : entry;
+        const isWholeRest = fullMeasureRest || entry.type === "rest" && duration.id === "whole";
         const x = isWholeRest
           ? start + width / 2
           : positions.get(entry.id) ?? xForTick(start, width, entry.tickStart);
@@ -20418,7 +20437,7 @@
         });
         renderEntryHit(entryGroup, visualX, entry, measureIndex, entryIndex, systemIndex);
         if (entry.type === "rest") {
-          renderRest(entryGroup, visualX, pitchYForSystem(0, renderSystemIndex) + restVoiceOffsetY(measure, entry) + visualOffset(entry, "y"), entry);
+          renderRest(entryGroup, visualX, pitchYForSystem(0, renderSystemIndex) + restVoiceOffsetY(measure, entry) + visualOffset(entry, "y"), displayEntry);
         } else {
           const flagged = renderNote(entryGroup, entry, visualX);
           if (flagged) allFlagged.push({ ...flagged, measureIndex, entryIndex, measureEntries: measure.entries });
@@ -20577,6 +20596,14 @@
           normalizeTernaryTiedUnitPairs();
           verifyAllMeasureDurations();
         }
+        state.measures.forEach((measure, index) => {
+          for (const voice of [1, 2]) {
+            const entries = measureVoiceEntries(measure, voice);
+            if (entries.length === 1 && entries[0].type === "rest" && Math.abs(entries[0].ticks - measureTicksForIndex(index)) < EPSILON) {
+              entries[0].durationId = "whole";entries[0].dots = 0;entries[0].dotted = false;entries[0].flags = 0;entries[0].isMeasureRest = true;
+            }
+          }
+        });
         refreshAutomaticAccidentals();
       });
     });
@@ -22386,6 +22413,7 @@
   selectToolButton?.addEventListener("click", activateSelectTool);
   keySignatureButton?.addEventListener("click", requestKeySignature);
   dynamicsButton?.addEventListener("click", activateDynamicsTool);
+  window.addEventListener("crescendo:keyboard-visibility", event => { if (!event.detail.visible) openPaletteById("figures"); });
   function mountStaffViewControl() {
     document.getElementById("ipad-panel-write")?.append(document.getElementById("staffViewSelect").closest("label"));
   }

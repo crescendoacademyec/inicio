@@ -1,5 +1,6 @@
 (function () {
   function refreshDurationButtons(durationTools, state) {
+    refreshDotButtons(durationTools, state);
     [...(durationTools?.querySelectorAll("button[data-duration]") || [])].forEach((button) => {
       const matchesDuration = button.dataset.duration === state.activeDuration?.id;
       const entryKind = button.dataset.entryKind || "note";
@@ -7,6 +8,10 @@
       button.classList.toggle("is-active", active);
       if (entryKind === "rest") button.setAttribute("aria-pressed", String(active));
     });
+  }
+
+  function refreshDotButtons(durationTools, state) {
+    durationTools?.querySelectorAll("[data-dot-count]").forEach(button => { const active = Number(button.dataset.dotCount) === (state.inputDots || 0);button.classList.toggle("is-active", active);button.setAttribute("aria-pressed", String(active)); });
   }
 
   function setEntryMode(state, mode) {

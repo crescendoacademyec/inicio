@@ -162,6 +162,7 @@
       ...durations,
       ...restPalette,
       ...dotPalette,
+      { id: "tuplet-picker", label: "Grupos irregulares · 3, 5, 6, 7", symbol: "3:2", tupletPicker: true },
       ...inputModifierPalette
     ];
     const articulations = articulationPaletteItems(smufl);
@@ -187,6 +188,8 @@
         { id: "triplet-eighth", label: "Tresillo de corcheas", symbol: `3${completeDurationSymbols.eighth}`, iconLayers: tupletIconLayers(3, completeDurationSymbols.eighth), music: true, tuplet: { actual: 3, normal: 2, unitDurationId: "eighth" } },
         { id: "triplet-quarter", label: "Tresillo de negras", symbol: `3${completeDurationSymbols.quarter}`, iconLayers: tupletIconLayers(3, completeDurationSymbols.quarter), music: true, tuplet: { actual: 3, normal: 2, unitDurationId: "quarter" } },
         { id: "sextuplet-sixteenth", label: "Seisillo de semicorcheas", symbol: `6${completeDurationSymbols.sixteenth}`, iconLayers: tupletIconLayers(6, completeDurationSymbols.sixteenth), music: true, tuplet: { actual: 6, normal: 4, unitDurationId: "sixteenth" } },
+        { id: "quintuplet", label: "Quintillo · figura seleccionada", symbol: "5:4", tuplet: { actual: 5, normal: 4, unitDurationId: "eighth" } },
+        { id: "septuplet", label: "Septillo · figura seleccionada", symbol: "7:4", tuplet: { actual: 7, normal: 4, unitDurationId: "eighth" } },
         { id: "custom-tuplet", label: "Tuplet irregular x:y", symbol: "x:y", customTuplet: true },
         { id: "stop-tuplet", label: "Cerrar escritura de tuplet", symbol: "Fin", stopTuplet: true, shortcut: "Shift+Ñ" }
       ],
