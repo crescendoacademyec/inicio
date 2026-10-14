@@ -20434,6 +20434,23 @@
 
   function renderCursor(root, layout) {
     if (!isNoteInputMode()) return;
+    // Show rhythmic insertion slots above the active measure, aligned with hit testing.
+    const measures = new Set([state.cursorMeasure]);
+    if (pointerInputPreview?.systemIndex === activeSystemIndex()) measures.add(pointerInputPreview.measureIndex);
+    const ruler = el("g", { class: "input-rhythm-ruler", "pointer-events": "none", "aria-hidden": "true" });
+    for (const measureIndex of measures) {
+      if (measureIsHidden(measureIndex)) continue;
+      const length = measureTicksForIndex(measureIndex);
+      const step = Math.max(MIN_DURATION_TICKS, gridStepTicks());
+      const meter = meterForMeasureIndex(measureIndex);
+      const beatTicks = 16 / (meter.bottom || 4);
+      for (let tick = 0, count = 0; tick < length - EPSILON && count < 256; tick += step, count++) {
+        const major = Math.abs(tick / beatTicks - Math.round(tick / beatTicks)) < EPSILON;
+        const markX = cursorVisualXForMeasureTick(layout, measureIndex, tick);
+        ruler.appendChild(el("line", { class: major ? "rhythm-slot rhythm-slot-beat" : "rhythm-slot", "data-measure-index": measureIndex, "data-tick": tick, x1: markX, x2: markX, y1: staffTopY() - (major ? 37 : 33), y2: staffTopY() - 25 }));
+      }
+    }
+    root.appendChild(ruler);
     const x = cursorVisualX(layout) + appearanceValue("cursorOffsetX");
     const y = pitchY(state.cursorStaffStep) + appearanceValue("cursorOffsetY");
     root.appendChild(el("rect", {
