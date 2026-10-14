@@ -13354,17 +13354,14 @@
   // Palette choices arm input; only a score gesture commits an event.
   function selectFigureDuration(duration) {
     if (!duration) return;
-    setMode("note");
+    setMode(state.mode === "rest" ? "rest" : "note");
     chooseDuration(duration, { keepTuplet: Writing.keepTupletForDuration(normalizeTuplet(state.activeTuplet), duration) });
     if (!state.cursorActive) enterFigureWritingMode();
     render();
   }
 
-  function selectRestDuration(item) {
-    const duration = durationById(item?.restDurationId);
-    if (!duration) return;
-    setMode("rest");
-    chooseDuration(duration, { keepTuplet: Writing.keepTupletForDuration(normalizeTuplet(state.activeTuplet), duration) });
+  function selectRestDuration() {
+    setMode(state.mode === "rest" ? "note" : "rest");
     if (!state.cursorActive) enterFigureWritingMode();
     render();
   }
@@ -15559,6 +15556,8 @@
       }
       if (item.restDurationId) {
         button.dataset.duration = item.restDurationId;
+        button.setAttribute("aria-pressed", String(state.mode === "rest"));
+        button.classList.toggle("is-active", state.mode === "rest");
         button.dataset.entryKind = "rest";
       }
       if (item.customTuplet) button.dataset.customTuplet = "true";
@@ -22096,6 +22095,8 @@
       }
       if (item.restDurationId) {
         button.dataset.duration = item.restDurationId;
+        button.setAttribute("aria-pressed", String(state.mode === "rest"));
+        button.classList.toggle("is-active", state.mode === "rest");
         button.dataset.entryKind = "rest";
       }
       const symbolClass = item.symbolClass || (item.music ? "music-glyph" : "text-glyph");

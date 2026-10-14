@@ -48,7 +48,9 @@
     root.querySelectorAll("[data-midi-duration]").forEach((button) => {
       const matchesDuration = button.dataset.midiDuration === options.activeDurationId;
       const entryKind = button.dataset.midiEntryKind || "note";
-      button.classList.toggle("is-active", matchesDuration && entryKind === options.mode);
+      const active = entryKind === "rest" ? options.mode === "rest" : matchesDuration;
+      button.classList.toggle("is-active", active);
+      if (entryKind === "rest") button.setAttribute("aria-pressed", String(active));
     });
     root.querySelectorAll("[data-midi-tuplet-actual]").forEach((button) => {
       button.classList.toggle("is-active", options.sameTupletConfig?.(options.activeTuplet, {
@@ -183,7 +185,7 @@
       });
     });
 
-    const restsMenu = addMenu("rests", "Silencios");
+    const restsMenu = figuresMenu;
     (options.restPalette || []).forEach((rest) => {
       addButton(restsMenu, rest, {
         durationId: rest.restDurationId,
@@ -217,23 +219,9 @@
     const figuresSummary = root.querySelector('.midi-dropdown-menu[data-midi-menu="figures"] .midi-dropdown-summary');
     figuresSummary?.addEventListener("click", (event) => {
       event.preventDefault();
-      showInlinePalette("figures", options.durations || [], (duration) => ({
-        durationId: duration.id,
-        entryKind: "note",
-        label: duration.label,
-        shortcut: duration.key,
-        action: options.actions?.noteDuration
-      }));
-    });
-
-    const restsSummary = root.querySelector('.midi-dropdown-menu[data-midi-menu="rests"] .midi-dropdown-summary');
-    restsSummary?.addEventListener("click", (event) => {
-      event.preventDefault();
-      showInlinePalette("rests", options.restPalette || [], (rest) => ({
-        durationId: rest.restDurationId,
-        entryKind: "rest",
-        action: options.actions?.rest
-      }));
+      showInlinePalette("figures", [...(options.durations || []), ...(options.restPalette || [])], (item) => item.restDurationId ? ({
+        durationId: item.restDurationId, entryKind: "rest", action: options.actions?.rest
+      }) : ({ durationId: item.id, entryKind: "note", label: item.label, shortcut: item.key, action: options.actions?.noteDuration }));
     });
 
     const tupletsSummary = root.querySelector('.midi-dropdown-menu[data-midi-menu="tuplets"] .midi-dropdown-summary');

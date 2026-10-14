@@ -3,7 +3,9 @@
     [...(durationTools?.querySelectorAll("button[data-duration]") || [])].forEach((button) => {
       const matchesDuration = button.dataset.duration === state.activeDuration?.id;
       const entryKind = button.dataset.entryKind || "note";
-      button.classList.toggle("is-active", matchesDuration && entryKind === state.mode);
+      const active = entryKind === "rest" ? state.mode === "rest" : matchesDuration;
+      button.classList.toggle("is-active", active);
+      if (entryKind === "rest") button.setAttribute("aria-pressed", String(active));
     });
   }
 

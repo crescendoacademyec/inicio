@@ -145,15 +145,7 @@
       smufl = (name) => name
     } = options;
     const restPalette = [
-      { id: "rest-breve", label: "Silencio de cuadrada", symbol: smufl("restDoubleWhole"), music: true, restDurationId: "breve" },
-      { id: "rest-whole", label: "Silencio de redonda", symbol: smufl("restWhole"), music: true, restDurationId: "whole" },
-      { id: "rest-half", label: "Silencio de blanca", symbol: smufl("restHalf"), music: true, restDurationId: "half" },
-      { id: "rest-quarter", label: "Silencio de negra", symbol: smufl("restQuarter"), music: true, restDurationId: "quarter" },
-      { id: "rest-eighth", label: "Silencio de corchea", symbol: smufl("rest8th"), music: true, restDurationId: "eighth" },
-      { id: "rest-sixteenth", label: "Silencio de semicorchea", symbol: smufl("rest16th"), music: true, restDurationId: "sixteenth" },
-      { id: "rest-thirty-second", label: "Silencio de fusa", symbol: smufl("rest32nd"), music: true, restDurationId: "thirty-second" },
-      { id: "rest-sixty-fourth", label: "Silencio de semifusa", symbol: smufl("rest64th"), music: true, restDurationId: "sixty-fourth" },
-      { id: "rest-one-twenty-eighth", label: "Silencio de garrapatea", symbol: smufl("rest128th"), music: true, restDurationId: "one-twenty-eighth" }
+      { id: "rest-toggle", label: "Silencio · usar duración seleccionada", symbol: smufl("restQuarter"), music: true, restDurationId: "active" }
     ];
     const dotPalette = [
       { id: "dot", label: "Puntillo", symbol: "•", symbolClass: "dot-glyph", dotCount: 1 },
