@@ -45,7 +45,7 @@
     <link rel="stylesheet" href="../styles.css?v=20261012-rutas">
     <link rel="stylesheet" href="../ipad-shell.css?v=20260925-beat-tempo-v2">
     <link rel="stylesheet" href="../../../shared/crescendo-identity.css?v=20261004">
-</head>
+<style>.staff-view-control{display:flex;flex-direction:column;gap:4px;font-size:11px}.staff-view-control select{background:#26241f;color:#eee;border:1px solid #8e7741;border-radius:8px;padding:7px;font:inherit}</style></head>
   <body class="editor-page">
     <div class="page-bg" aria-hidden="true"></div>
     <main class="app-shell">
@@ -193,6 +193,7 @@
           <button class="icon-chip music-icon palette-trigger" data-palette="tuplets" type="button" aria-label="Tresillo 3:2" aria-expanded="false" aria-controls="durationDrawer"><span aria-hidden="true">Tuplets</span></button>
           <button class="icon-chip music-icon palette-trigger" data-palette="meters" type="button" aria-label="Signatura tres cuartos" aria-expanded="false" aria-controls="durationDrawer"><span aria-hidden="true">Compás</span></button>
           <button class="icon-chip music-icon palette-trigger" data-palette="tempo" type="button" aria-label="Tempo" aria-expanded="false" aria-controls="durationDrawer"><span aria-hidden="true">Tempo</span></button>
+          <label class="staff-view-control">Mostrar pentagramas<select id="staffViewSelect" title="Oculta pentagramas sin borrar su contenido"><option value="both">Sol y fa</option><option value="treble">Solo sol</option><option value="bass">Solo fa</option></select></label>
           <button class="icon-chip music-icon palette-trigger" data-palette="clefs" type="button" aria-label="Clave de sol" aria-expanded="false" aria-controls="durationDrawer"><span aria-hidden="true">Claves</span></button>
           <button class="icon-chip music-icon palette-trigger" data-palette="articulations" type="button" aria-label="Acento" aria-expanded="false" aria-controls="durationDrawer">
             <span aria-hidden="true">Articulaciones</span>
@@ -417,6 +418,6 @@
     <script src="score-editor-engraving.js?v=20260814"></script>
     <script src="https://cdn.jsdelivr.net/npm/soundfont-player@0.12.0/dist/soundfont-player.min.js"></script>
     <script src="score-editor-ipad-shell.js?v=20260925-beat-tempo-v2"></script>
-  <script src="app.js?v=20260925-beat-tempo-v2"></script>
+  <script src="app.js?v=20261013-input-3"></script>
   </body>
 </html>

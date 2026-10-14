@@ -699,9 +699,17 @@
     return SYSTEM_GAP_Y;
   }
 
-  function systemOffsetY(index = renderSystemIndex) {
-    return Math.max(0, Number(index) || 0) * systemGapY();
+  function visibleSystemIndices() {
+    const systems = scoreSystems();
+    const indices = systems.map((_, i) => i).filter(i => !state.staffView || state.staffView === "both" ||
+      (systems[i].initialClefId || defaultInitialClefForSystem(systems[i], i)) === (state.staffView === "bass" ? "clef-f" : "clef-g"));
+    return indices.length ? indices : systems.map((_, i) => i);
   }
+
+  function systemOffsetY(index = renderSystemIndex) {
+    return Math.max(0, visibleSystemIndices().indexOf(Number(index) || 0)) * systemGapY();
+  }
+
 
   function createMeasureForSystemIndex(measureIndex) {
     const reference = scoreSystems()[0]?.measures?.[measureIndex];
@@ -13340,37 +13348,22 @@
     instantTooltip.setup(scope);
   }
 
+  // Palette choices arm input; only a score gesture commits an event.
   function selectFigureDuration(duration) {
     if (!duration) return;
     setMode("note");
-    chooseDuration(duration, {
-      keepTuplet: Writing.keepTupletForDuration(normalizeTuplet(state.activeTuplet), duration)
-    });
-    const selection = selectedEntryLocation();
-    if (state.displacementMode && selection?.entry) return insertDisplacementFigureAtSelection(duration);
-    if (changeSelectedNoteDurations(duration)) return;
-    if (selection?.entry?.type === "rest" && cursorPitchReadyToWrite()) return replaceSelectedRestWithNoteDuration(duration);
-    if (selection?.entry?.type === "rest") return replaceSelectedEntryWithRestDuration(duration);
-    if (selection?.entry?.type === "note") return replaceSelectedEntryDuration(duration);
-    if (commitPendingPitchInput()) return;
-    if (cursorPitchReadyToWrite()) insertEntry(state.cursorStaffStep);
-    else render();
+    chooseDuration(duration, { keepTuplet: Writing.keepTupletForDuration(normalizeTuplet(state.activeTuplet), duration) });
+    if (!state.cursorActive) enterFigureWritingMode();
+    render();
   }
 
   function selectRestDuration(item) {
     const duration = durationById(item?.restDurationId);
     if (!duration) return;
     setMode("rest");
-    chooseDuration(duration, {
-      keepTuplet: Writing.keepTupletForDuration(normalizeTuplet(state.activeTuplet), duration)
-    });
+    chooseDuration(duration, { keepTuplet: Writing.keepTupletForDuration(normalizeTuplet(state.activeTuplet), duration) });
     if (!state.cursorActive) enterFigureWritingMode();
-    const selection = selectedEntryLocation();
-    if (selection?.entry) {
-      replaceSelectedEntryWithRestDuration(duration);
-    } else {
-      insertEntry(0, { explicitRest: true });
-    }
+    render();
   }
 
   function parseTupletRatio(value) {
@@ -16807,7 +16800,7 @@
   }
 
   function scoreStaffBottomY() {
-    return staffBottomYForSystem(systemCount() - 1);
+    return staffBottomYForSystem(visibleSystemIndices().at(-1));
   }
 
   function hitTopY() {
@@ -16826,7 +16819,7 @@
     const count = systemCount();
     let closest = 0;
     let closestDistance = Infinity;
-    for (let index = 0; index < count; index += 1) {
+    for (const index of visibleSystemIndices()) {
       const center = STAFF_CENTER_Y + appearanceValue("scoreOffsetY") + systemOffsetY(index);
       const distance = Math.abs(y - center);
       if (distance < closestDistance) {
@@ -17931,9 +17924,9 @@
     return Math.max(0, Math.min(ticks, Math.round(raw)));
   }
 
-  function positionCursorFromPoint(point) {
+  function positionCursorFromPoint(point, options = {}) {
     if (!point) return;
-    const pitchSnapshot = rememberFreeCursorPitch();
+    const pitchSnapshot = options.pointerPitch ? { visible: false } : rememberFreeCursorPitch();
     setActiveSystemIndex(systemIndexFromY(point.y));
     const previousMeasureIndex = state.cursorMeasure;
     deactivateTupletWriting();
@@ -17960,7 +17953,7 @@
 
   function positionCursorFromEntryPointer(measureIndex, entry, event) {
     if (!entry) return false;
-    const pitchSnapshot = rememberFreeCursorPitch();
+    const pitchSnapshot = { visible: false };
     const previousMeasureIndex = state.cursorMeasure;
     clearEntrySelection();
     clearMeasureSelection();
@@ -18280,7 +18273,7 @@
       }));
     });
 
-    if (renderSystemIndex === 0) {
+    if (renderSystemIndex === visibleSystemIndices()[0]) {
       visibleBarBoundaries(layout).forEach(({ boundaryIndex, x }) => {
         if (!barlineMarksAtBoundary(boundaryIndex).length) {
           renderBarlineAtBoundary(root, x, "single", null, { spanAllSystems: true, boundaryIndex });
@@ -18395,9 +18388,10 @@
         event.stopPropagation();
         event.preventDefault();
         activateVoiceForEntrySelection(entry);
+        const inputMode = state.mode === "rest" ? "rest" : "note";
         positionCursorFromEntryPointer(measureIndex, entry, event);
-        setMode("note");
-        insertEntry(state.cursorStaffStep);
+        setMode(inputMode);
+        insertEntry(state.cursorStaffStep, { explicitRest: inputMode === "rest" });
         return;
       }
       const point = svgPointFromEvent(event);
@@ -19132,9 +19126,11 @@
     if (isNoteInputMode() || autoStartNoteInput) {
       const onInputPointerUp = (upEvent) => {
         const point = svgPointFromEvent(upEvent) || start;
-        positionCursorFromPoint(point);
-        setMode("note");
-        insertEntry(state.cursorStaffStep);
+        if (!pointIsInStaffArea(point)) return;
+        const inputMode = state.mode === "rest" ? "rest" : "note";
+        positionCursorFromPoint(point, { pointerPitch: true });
+        setMode(inputMode);
+        insertEntry(state.cursorStaffStep, { explicitRest: inputMode === "rest" });
       };
       document.addEventListener("pointerup", onInputPointerUp, { once: true });
       return;
@@ -19167,7 +19163,6 @@
         } else if (selectNoteHeadAtPoint(clickPoint, event)) {
           return;
         } else if (pointIsInStaffArea(clickPoint)) {
-          completeCurrentMeasureWithRests();
           selectMeasureFromPoint(clickPoint);
         } else {
           deselectAll();
@@ -20612,6 +20607,7 @@
       root.addEventListener("pointerdown", beginDragSelection);
       renderHitZones(root, layout);
       scoreSystems().forEach((system, systemIndex) => {
+        if (!visibleSystemIndices().includes(systemIndex)) return;
         withSystemContext(systemIndex, () => {
           renderStaff(root, layout);
           renderEntries(root, layout);
@@ -20625,6 +20621,7 @@
       svg.appendChild(root);
       scheduleRestAlignment();
       updateCursorLabel();
+      if (document.getElementById("staffViewSelect")) document.getElementById("staffViewSelect").value = state.staffView || "both";
       updateModeButtons();
       syncTouchModeClass();
       updateTouchToolbar();
@@ -22372,6 +22369,18 @@
   selectToolButton?.addEventListener("click", activateSelectTool);
   keySignatureButton?.addEventListener("click", requestKeySignature);
   dynamicsButton?.addEventListener("click", activateDynamicsTool);
+  function mountStaffViewControl() {
+    document.getElementById("ipad-panel-write")?.append(document.getElementById("staffViewSelect").closest("label"));
+  }
+  mountStaffViewControl();
+  document.addEventListener("DOMContentLoaded", mountStaffViewControl, { once: true });
+  document.getElementById("staffViewSelect")?.addEventListener("change", event => {
+    saveHistory();
+    state.staffView = event.target.value;
+    const visible = visibleSystemIndices();
+    if (!visible.includes(activeSystemIndex())) setActiveSystemIndex(visible[0]);
+    clearEntrySelection();hideCursorPitch();invalidateLayoutCache();render();
+  });
   noteModeButton.addEventListener("click", () => setMode("note"));
   restModeButton.addEventListener("click", () => setMode("rest"));
   undoButton.addEventListener("click", undo);
