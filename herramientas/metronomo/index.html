@@ -1327,7 +1327,9 @@
       const cap=rhythmCapacity(currentRhythmMeter()),used=rhythmBeats(rhythmUsedTicks()),bar=Math.min(Math.floor(used/cap),Number(UI.rhythmBars.value)-1),system=Math.floor(bar/4),scroll=UI.rhythmScore.scrollTop;
       const top=unique[Math.max(0,system*(UI.rhythmClef.value==='grand'?10:5)+(UI.rhythmClef.value==='grand'?(activeRhythmStaff-1)*5:0)-Math.floor(scroll/(UI.rhythmClef.value==='grand'?240:126))*(UI.rhythmClef.value==='grand'?10:5))]||unique[0];if(!top)return;const spacing=(unique[4]?.top-unique[0].top)/4||10;
       const bounds=[...new Set(rects.filter(r=>r.width<4&&r.height>=spacing*3&&Math.abs(r.top-top.top)<spacing*2).map(r=>Math.round(r.left)))].sort((a,b)=>a-b);
-      const localBar=bar%4,first=top.left+65,last=top.right;const start=localBar===0?first:(bounds[localBar-1]||first+(last-first)*localBar/4),end=bounds[localBar]||first+(last-first)*(localBar+1)/4;
+      // Reserve the clef and time signature area before placing the input cursor.
+      const clefBounds=[...svg.querySelectorAll('.vf-clef')].map(el=>el.getBoundingClientRect()).filter(r=>r.bottom>=top.top-spacing&&r.top<=top.top+spacing*5);
+      const localBar=bar%4,first=Math.max(top.left+spacing*10,...clefBounds.map(r=>r.right+spacing*5)),last=top.right;const measureBounds=bounds.filter(x=>x>first+spacing);const start=localBar===0?first:(measureBounds[localBar-1]||first+(last-first)*localBar/4)+spacing,end=measureBounds[localBar]||first+(last-first)*(localBar+1)/4;
       const step=Math.max(.03125,activeRhythmTool.beats*(activeRhythmTool.actual?activeRhythmTool.normal/activeRhythmTool.actual:1));
       const mark=(x,y,h,cls)=>{const m=document.createElement('i');m.className=cls;m.style.cssText=`left:${x-wrap.left}px;top:${Math.max(0,y-wrap.top)}px;height:${h}px`;guideLayer.appendChild(m);};
       for(let beat=0,count=0;beat<cap-.00001&&count<128;beat+=step,count++)mark(start+(end-start-8)*beat/cap,top.top-11,7,'rhythm-guide-tick');
