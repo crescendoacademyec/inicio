@@ -20498,22 +20498,6 @@
       x2: x,
       y2: staffBottomY() + 14 + appearanceValue("cursorLineBottomOffsetY")
     }));
-    const activeModifiers = [
-      state.noteChordMode ? "Q" : "",
-      state.displacementMode ? "I" : "",
-      state.lockDurationMode ? "L" : "",
-      state.forceDurationMode ? "O" : "",
-      state.pitchBeforeDurationMode ? "K" : ""
-    ].filter(Boolean);
-    root.appendChild(textNode(
-      x + 12,
-      staffTopY() - 18,
-      `L${activeVoice()}${activeVoice() === 1 ? "↑" : "↓"} · ${state.mode === "rest" ? "Silencio" : "Nota"} · ${state.activeDuration?.name || state.activeDuration?.label || state.activeDuration?.id || ""}${activeModifiers.length ? ` · ${activeModifiers.join(" ")}` : ""}`,
-      {
-        class: "input-caret-status",
-        style: textFontStyle("scoreTextFont")
-      }
-    ));
     if (state.activeTuplet) {
       root.appendChild(textNode(x + 12, staffTopY() - 28, tupletDisplayLabel(state.activeTuplet, "cursor"), {
         class: "duration-label tuplet-cursor-label",
