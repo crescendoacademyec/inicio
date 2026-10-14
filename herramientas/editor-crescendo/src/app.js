@@ -3401,12 +3401,14 @@
 
   function closePaletteDrawer() {
     if (!durationDrawer) return;
-    durationDrawer.classList.add("is-hidden");
-    delete durationDrawer.dataset.activePalette;
-    delete document.documentElement.dataset.editorPalette;
-    paletteTriggers.forEach((button) => {
-      button.classList.remove("is-active");
-      button.setAttribute("aria-expanded", "false");
+    // Figures are the editor's persistent home palette, including after context actions.
+    if (durationDrawer.dataset.activePalette !== "figures" || durationDrawer.classList.contains("is-hidden")) renderPalette("figures");
+    durationDrawer.dataset.activePalette = "figures";
+    document.documentElement.dataset.editorPalette = "figures";
+    durationDrawer.classList.remove("is-hidden");
+    paletteTriggers.forEach(button => {
+      const active = button.dataset.palette === "figures";
+      button.classList.toggle("is-active", active);button.setAttribute("aria-expanded", String(active));
     });
   }
 
@@ -15701,11 +15703,12 @@
     if (paletteId === "figures") {
       const center = () => durationTools.querySelectorAll(".palette-note-duration .music-glyph,.palette-rest-duration .music-glyph").forEach(span => {
         const symbol = span.textContent;
+        const wide = ["whole", "breve"].includes(span.closest("button")?.dataset.duration);
         const icon = el("svg", { viewBox: "0 0 48 48", class: "centered-figure-icon", "aria-hidden": "true" });
-        const glyph = textNode(0, 0, symbol, { style: "font-family:Bravura,serif;font-size:32px;fill:currentColor" });icon.appendChild(glyph);span.replaceWith(icon);
-        try { const b=glyph.getBBox();if(b.height>0){const scale=Math.min(1,38/b.height,38/b.width);glyph.setAttribute("transform",`translate(${24-(b.x+b.width/2)*scale} ${24-(b.y+b.height/2)*scale}) scale(${scale})`);} } catch {}
+        const glyph = textNode(0, 0, symbol, { style: "font-family:MTF Improviso Light,serif;font-size:32px;fill:currentColor" });icon.appendChild(glyph);span.replaceWith(icon);
+        try { const b=glyph.getBBox();if(b.height>0){const scale=Math.min((wide ? 14 : 38)/b.height,(wide ? 30 : 34)/b.width);glyph.setAttribute("transform",`translate(${24-(b.x+b.width/2)*scale} ${24-(b.y+b.height/2)*scale}) scale(${scale})`);} } catch {}
       });
-      requestAnimationFrame(center);document.fonts?.ready.then(() => requestAnimationFrame(center));
+      if (document.fonts) document.fonts.load('32px "MTF Improviso Light"').then(() => requestAnimationFrame(center));else requestAnimationFrame(center);
     }
   }
 
@@ -15742,9 +15745,7 @@
     });
 
     if (wasOpen && wasSamePalette) {
-      durationDrawer.classList.add("is-hidden");
-      delete durationDrawer.dataset.activePalette;
-      delete document.documentElement.dataset.editorPalette;
+      closePaletteDrawer();
       updateModeButtons();
       return;
     }
