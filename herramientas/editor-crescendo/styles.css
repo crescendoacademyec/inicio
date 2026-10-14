@@ -5786,3 +5786,6 @@ body.editor-page .editor-workbench .score-shell {
   top: 2px;
   transform: none !important;
 }
+
+/* Full notation ghost is a preview, never a selectable score event. */
+.input-event-preview{opacity:.52;pointer-events:none;--note-color:#c68e25}.input-event-preview *{pointer-events:none!important;fill:#c68e25;stroke:#c68e25}.input-event-preview .stem-glyph,.input-event-preview .music-glyph{stroke:none}.input-event-preview .staff-line{fill:none}

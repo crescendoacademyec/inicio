@@ -633,6 +633,7 @@
   }
 
   let renderSystemIndex = 0;
+  let pointerInputPreview = null;
   let suppressSystemSync = false;
   let lastRenderedLayout = null;
   let cachedScoreLayout = null;
@@ -2328,6 +2329,8 @@
     canvasAutosaveDirty = true;
     invalidateLayoutCache();
     const data = JSON.parse(snapshot);
+    pointerInputPreview = null;
+    state.staffView = data.staffView || "both";
     state.cursorMeasure = data.cursorMeasure;
     state.cursorTick = data.cursorTick;
     state.cursorStaffStep = Number.isFinite(data.cursorStaffStep) ? data.cursorStaffStep : 0;
@@ -18384,13 +18387,14 @@
         addActiveTextLikeItemAtPoint(point);
         return;
       }
-      if (entry.type === "rest" && (isNoteInputMode() || shouldAutoStartNoteInputOnStaffClick())) {
+      if (isNoteInputMode() || (entry.type === "rest" && shouldAutoStartNoteInputOnStaffClick())) {
         event.stopPropagation();
         event.preventDefault();
         activateVoiceForEntrySelection(entry);
         const inputMode = state.mode === "rest" ? "rest" : "note";
         positionCursorFromEntryPointer(measureIndex, entry, event);
         setMode(inputMode);
+        pointerInputPreview = null;
         insertEntry(state.cursorStaffStep, { explicitRest: inputMode === "rest" });
         return;
       }
@@ -19130,6 +19134,7 @@
         const inputMode = state.mode === "rest" ? "rest" : "note";
         positionCursorFromPoint(point, { pointerPitch: true });
         setMode(inputMode);
+        pointerInputPreview = null;
         insertEntry(state.cursorStaffStep, { explicitRest: inputMode === "rest" });
       };
       document.addEventListener("pointerup", onInputPointerUp, { once: true });
@@ -19196,17 +19201,48 @@
   }
 
   function handleScoreHoverPreview(event) {
-    if (state.dragSelection) return;
-    if (state.textMode || state.chordMode || state.dynamicMode || state.editMode) return;
+    if (state.dragSelection || state.textMode || state.chordMode || state.dynamicMode || state.editMode || !isNoteInputMode()) return;
     const point = svgPointFromEvent(event);
-    if (!point || !pointIsInStaffArea(point)) return;
-    const targetSystemIndex = systemIndexFromY(point.y);
-    if (targetSystemIndex !== activeSystemIndex()) setActiveSystemIndex(targetSystemIndex);
-    const staffStep = staffStepForSystem(stepFromY(point.y, activeSystemIndex()));
-    if (staffStep === state.cursorStaffStep && state.cursorPitchVisible) return;
-    state.cursorStaffStep = staffStep;
-    showCursorPitchAtCursor();
+    if (!point || !pointIsInStaffArea(point)) {
+      if (pointerInputPreview) { pointerInputPreview = null; requestRender(); }
+      return;
+    }
+    const systemIndex = systemIndexFromY(point.y);
+    // Hover only previews; it never switches the active staff or edits the score.
+    const layout = lastRenderedLayout || buildLayout();
+    const measureIndex = measureIndexFromX(layout, point.x);
+    const tick = withSystemContext(systemIndex, () => tickFromMeasureX(layout, measureIndex, point.x));
+    const staffStep = staffStepForSystem(stepFromY(point.y, systemIndex), scoreSystems()[systemIndex]);
+    const next = { systemIndex, measureIndex, tick, staffStep };
+    if (pointerInputPreview && Object.keys(next).every(key => pointerInputPreview[key] === next[key])) return;
+    pointerInputPreview = next;
     requestRender();
+  }
+
+  function renderInputPreview(root, layout, systemIndex) {
+    if (!isNoteInputMode()) return;
+    const preview = pointerInputPreview;
+    if (preview ? preview.systemIndex !== systemIndex : systemIndex !== activeSystemIndex()) return;
+    const measureIndex = preview?.measureIndex ?? state.cursorMeasure;
+    const tick = preview?.tick ?? state.cursorTick;
+    const staffStep = preview?.staffStep ?? state.cursorStaffStep;
+    const duration = state.activeDuration || durationById("quarter");
+    const x = cursorVisualXForMeasureTick(layout, measureIndex, tick);
+    const group = el("g", { class: "input-event-preview", "pointer-events": "none", "data-preview-type": state.mode, "data-preview-duration": duration.id, "data-preview-step": staffStep, "data-preview-tick": tick });
+    const entry = { id: "input-preview", type: state.mode, durationId: duration.id, ticks: duration.ticks, flags: duration.flags || 0, staffStep, voice: activeVoice(), tickStart: tick, accidental: null };
+    if (!preview && state.pitchBeforeDurationMode && state.mode === "note") {
+      const notes = uniqueMidiNotes(state.pendingMidiNotes || []);
+      if (notes.length > 1) {
+        const steps = midiInfosAvoidingStaffCollisions(notes, state.cursorMeasure).map(info => midiStaffStep(info));
+        entry.staffStep = steps[0];entry.chordSteps = steps;
+      }
+    }
+    if (state.mode === "rest") renderRest(group, x, pitchY(0), entry);
+    else {
+      const flagged = renderNote(group, entry, x);
+      if (flagged) renderFlags(group, [flagged]);
+    }
+    root.appendChild(group);
   }
 
   function updateShiftDragCursor(event) {
@@ -20428,7 +20464,7 @@
     root.appendChild(textNode(
       x + 12,
       staffTopY() - 18,
-      `L${activeVoice()}${activeVoice() === 1 ? "↑" : "↓"}${activeModifiers.length ? ` · ${activeModifiers.join(" ")}` : ""}`,
+      `L${activeVoice()}${activeVoice() === 1 ? "↑" : "↓"} · ${state.mode === "rest" ? "Silencio" : "Nota"} · ${state.activeDuration?.name || state.activeDuration?.label || state.activeDuration?.id || ""}${activeModifiers.length ? ` · ${activeModifiers.join(" ")}` : ""}`,
       {
         class: "input-caret-status",
         style: textFontStyle("scoreTextFont")
@@ -20439,44 +20475,6 @@
         class: "duration-label tuplet-cursor-label",
         style: `font-size:14px;${textFontStyle("scoreTextFont")}`
       }));
-    }
-    if (state.cursorPitchVisible) {
-      const pendingMidiNotes = state.pitchBeforeDurationMode ? uniqueMidiNotes(state.pendingMidiNotes || []) : [];
-      const pendingInfos = pendingMidiNotes.length > 1
-        ? midiInfosAvoidingStaffCollisions(pendingMidiNotes, state.cursorMeasure)
-        : [];
-      const pendingSteps = pendingInfos.map((info) => midiStaffStep(info));
-      const previewSteps = pendingSteps.length ? pendingSteps : [state.cursorStaffStep];
-      const anchorLocation = !pendingSteps.length && state.cursorPitchAnchorEntryId
-        ? entryLocationById(state.cursorPitchAnchorEntryId)
-        : null;
-      const previewEntry = {
-        type: "note",
-        durationId: state.activeDuration?.id || "quarter",
-        ticks: state.activeDuration?.ticks || 4,
-        flags: state.activeDuration?.flags || 0,
-        staffStep: previewSteps[0],
-        chordSteps: previewSteps
-      };
-      const anchorBaseX = anchorLocation
-        ? (measureEntryPositions(
-          state.measures[anchorLocation.measureIndex],
-          layout.starts[anchorLocation.measureIndex],
-          layout.widths[anchorLocation.measureIndex]
-        ).get(anchorLocation.entry.id) ?? x)
-        : x;
-      previewSteps.forEach((staffStep) => {
-        const sourceEntry = anchorLocation?.entry || previewEntry;
-        const headX = anchorBaseX + noteHeadOffset(sourceEntry, staffStep);
-        const headY = pitchY(staffStep) + (anchorLocation ? 0 : appearanceValue("cursorOffsetY"));
-        renderCursorLedger(root, headX, staffStep);
-        root.appendChild(noteHead(
-          headX + appearanceValue("cursorHeadOffsetX"),
-          headY + appearanceValue("cursorHeadOffsetY"),
-          "quarter",
-          "cursor-note-head"
-        ));
-      });
     }
   }
 
@@ -20613,6 +20611,7 @@
           renderEntries(root, layout);
           renderNotationMarks(root, layout);
           if (systemIndex === activeIndex) renderCursor(root, layout);
+          renderInputPreview(root, layout, systemIndex);
         });
       });
       setActiveSystemIndex(activeIndex);
@@ -22535,6 +22534,7 @@
   svg.addEventListener("click", handleScoreClick, true);
   svg.addEventListener("dblclick", handleScoreDoubleClick, true);
   svg.addEventListener("pointermove", handleScoreHoverPreview);
+  svg.addEventListener("pointerleave", () => { if (pointerInputPreview) { pointerInputPreview = null; requestRender(); } });
   document.addEventListener("keydown", (event) => {
     if (event.ctrlKey && event.altKey && event.code === "KeyA") {
       event.preventDefault();
