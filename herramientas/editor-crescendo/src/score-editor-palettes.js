@@ -145,10 +145,10 @@
       smufl = (name) => name
     } = options;
     const restPalette = [
-      { id: "rest-toggle", label: "Silencio · usar duración seleccionada", symbol: smufl("restQuarter"), music: true, restDurationId: "active" }
+      { id: "rest-toggle", label: "Silencio · S · usar duración seleccionada", shortcut: "S", symbol: smufl("restQuarter"), music: true, restDurationId: "active" }
     ];
     const dotPalette = [
-      { id: "dot", label: "Puntillo", symbol: "•", symbolClass: "dot-glyph", dotCount: 1 },
+      { id: "dot", label: "Puntillo · P", shortcut: "P", symbol: "•", symbolClass: "dot-glyph", dotCount: 1 },
       { id: "double-dot", label: "Doble puntillo", symbol: "••", symbolClass: "dot-glyph", dotCount: 2 }
     ];
     const inputModifierPalette = [
@@ -162,7 +162,7 @@
       ...durations,
       ...restPalette,
       ...dotPalette,
-      { id: "tuplet-picker", label: "Grupos irregulares · 3, 5, 6, 7", symbol: "3:2", tupletPicker: true },
+      ...[ [3,2,"Tresillo"], [5,4,"Quintillo"], [6,4,"Seisillo"], [7,4,"Septillo"] ].map(([actual,normal,label]) => ({ id: `input-tuplet-${actual}`, label: `${label} · figura seleccionada`, symbol: String(actual), inputTuplet: { actual, normal } })),
       ...inputModifierPalette
     ];
     const articulations = articulationPaletteItems(smufl);

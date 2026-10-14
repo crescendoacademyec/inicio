@@ -14668,6 +14668,7 @@
 
   function initialItemsContextActions(measureIndex = 0) {
     return [
+      contextMenuGroup("Mostrar pentagramas", [["treble","Solo clave de sol"],["bass","Solo clave de fa"],["both","Claves de sol y fa"]].map(([value,label]) => contextMenuButton(label, () => { const select=document.getElementById("staffViewSelect");select.value=value;select.dispatchEvent(new Event("change")); }))),
       contextMenuGroup("Clave inicial", palettes.clefs.map((item) => (
         contextMenuButton(item.label, () => setInitialClef(item.clefId))
       ))),
@@ -15599,7 +15600,7 @@
       }
       const symbolClass = item.symbolClass || (item.music ? "music-glyph" : "text-glyph");
       button.innerHTML = iconLayerHtml(iconLayersForItem(item, symbolClass), item.dotted);
-      if (item.ticks && menuShortcut) {
+      if ((item.ticks || item.restDurationId || item.dotCount === 1) && menuShortcut) {
         const badge = document.createElement("span");badge.className = "figure-shortcut";badge.textContent = menuShortcut;button.appendChild(badge);
       }
       if (item.dotCount) { button.dataset.dotCount = item.dotCount;button.classList.toggle("is-active", state.inputDots === item.dotCount);button.setAttribute("aria-pressed", String(state.inputDots === item.dotCount)); }
@@ -15618,6 +15619,15 @@
         button.addEventListener("click", () => insertNotationMark(item));
       } else if (item.tuplet) {
         button.addEventListener("click", () => activateTuplet({ ...item.tuplet, unitDurationId: state.activeDuration?.id || item.tuplet.unitDurationId }));
+      } else if (item.inputTuplet) {
+        button.dataset.inputTupletActual = item.inputTuplet.actual;
+        button.classList.toggle("is-active", state.activeTuplet?.actual === item.inputTuplet.actual);
+        button.setAttribute("aria-pressed", String(state.activeTuplet?.actual === item.inputTuplet.actual));
+        button.addEventListener("click", () => {
+          if (state.activeTuplet?.actual === item.inputTuplet.actual) deactivateTupletWriting();
+          else activateTuplet({ ...item.inputTuplet, unitDurationId: state.activeDuration?.id || "eighth" });
+          renderPalette("figures");render();
+        });
       } else if (item.tupletPicker) {
         button.addEventListener("click", () => openPaletteById("tuplets"));
       } else if (item.customTuplet) {
@@ -15688,6 +15698,15 @@
     if (paletteId === "figures") setDuration(state.activeDuration, { keepTuplet: true });
     applyIconAppearance();
     scheduleIconFit();
+    if (paletteId === "figures") {
+      const center = () => durationTools.querySelectorAll(".palette-note-duration .music-glyph,.palette-rest-duration .music-glyph").forEach(span => {
+        const symbol = span.textContent;
+        const icon = el("svg", { viewBox: "0 0 48 48", class: "centered-figure-icon", "aria-hidden": "true" });
+        const glyph = textNode(0, 0, symbol, { style: "font-family:Bravura,serif;font-size:32px;fill:currentColor" });icon.appendChild(glyph);span.replaceWith(icon);
+        try { const b=glyph.getBBox();if(b.height>0){const scale=Math.min(1,38/b.height,38/b.width);glyph.setAttribute("transform",`translate(${24-(b.x+b.width/2)*scale} ${24-(b.y+b.height/2)*scale}) scale(${scale})`);} } catch {}
+      });
+      requestAnimationFrame(center);document.fonts?.ready.then(() => requestAnimationFrame(center));
+    }
   }
 
   function renderKeySignature(root, signature = state.keySignature, xOverride = null, options = {}) {
@@ -18523,9 +18542,10 @@
       "sixty-fourth": "rest64th",
       "one-twenty-eighth": "rest128th"
     }[duration.id] || "restQuarter";
-    const restNode = glyphTextCentered(glyphName, x + appearanceValue("restOffsetX"), y + appearanceValue("restOffsetY"), {
+    const restCenterY = y + appearanceValue("restOffsetY") + 14 + (duration.id === "whole" ? -2 * STEP_HEIGHT + 2 : duration.id === "half" ? -2 : 0);
+    const restNode = glyphTextCentered(glyphName, x + appearanceValue("restOffsetX"), restCenterY, {
       class: "music-glyph rest-symbol",
-      "data-center-y": y + appearanceValue("restOffsetY") + appearanceValue("restCenterShift"),
+      "data-center-y": restCenterY + appearanceValue("restCenterShift"),
       "data-optical-y": restOpticalOffset(duration.id),
       "font-size": restFontSize(duration)
     });
@@ -20663,6 +20683,8 @@
       svg.appendChild(root);
       scheduleRestAlignment();
       updateCursorLabel();
+      refreshDurationButtons();
+      durationTools.querySelectorAll("[data-input-tuplet-actual]").forEach(button => { const active = Number(button.dataset.inputTupletActual) === state.activeTuplet?.actual;button.classList.toggle("is-active", active);button.setAttribute("aria-pressed", String(active)); });
       if (document.getElementById("staffViewSelect")) document.getElementById("staffViewSelect").value = state.staffView || "both";
       updateModeButtons();
       syncTouchModeClass();
@@ -21279,6 +21301,10 @@
       }
       return;
     }
+    if (!event.metaKey && !event.ctrlKey && !event.altKey && !event.shiftKey) {
+      if (event.key.toUpperCase() === "S") { event.preventDefault();if (!event.repeat) selectRestDuration();return; }
+      if (event.key.toUpperCase() === "P") { event.preventDefault();if (!event.repeat) setPreparedDots(1);return; }
+    }
     if (handleDoricoPitchInput(event)) return;
     if ((event.metaKey || event.ctrlKey) && !event.shiftKey && event.key.toLowerCase() === "a") {
       event.preventDefault();
@@ -21392,37 +21418,7 @@
 
     const durationId = Keymap.durationIdForEvent(event);
     const duration = durationById(durationId);
-    if (duration) {
-      event.preventDefault();
-      const keepTuplet = normalizeTuplet(state.activeTuplet)?.unitDurationId === duration.id;
-      chooseDuration(duration, { keepTuplet });
-      const selection = selectedEntryLocation();
-      if (state.displacementMode && selection?.entry) {
-        insertDisplacementFigureAtSelection(duration);
-        return;
-      }
-      if (changeSelectedNoteDurations(duration)) return;
-      if (selection?.entry?.type === "rest" && cursorPitchReadyToWrite()) {
-        replaceSelectedRestWithNoteDuration(duration);
-        return;
-      }
-      if (selection?.entry?.type === "rest") {
-        replaceSelectedEntryWithRestDuration(duration);
-        return;
-      }
-      if (selection?.entry?.type === "note") {
-        replaceSelectedEntryDuration(duration);
-        return;
-      }
-      if (!state.cursorActive) {
-        render();
-        return;
-      }
-      if (commitPendingPitchInput()) return;
-      if (cursorPitchReadyToWrite()) insertEntry(state.cursorStaffStep);
-      else render();
-      return;
-    }
+    if (duration) { event.preventDefault();selectFigureDuration(duration);return; }
 
     if (event.key === "Backspace" || event.key === "Delete") {
       event.preventDefault();
@@ -22418,7 +22414,9 @@
     document.getElementById("ipad-panel-write")?.append(document.getElementById("staffViewSelect").closest("label"));
   }
   mountStaffViewControl();
-  document.addEventListener("DOMContentLoaded", mountStaffViewControl, { once: true });
+  const showInitialFigures = () => { mountStaffViewControl();if (durationDrawer.classList.contains("is-hidden")) openPaletteById("figures");else renderPalette("figures"); };
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", showInitialFigures, { once: true });
+  else requestAnimationFrame(showInitialFigures);
   document.getElementById("staffViewSelect")?.addEventListener("change", event => {
     saveHistory();
     state.staffView = event.target.value;
