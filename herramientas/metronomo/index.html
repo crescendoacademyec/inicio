@@ -13,7 +13,7 @@
 <style>
         @font-face {
             font-family: "Bravura Metronome";
-            src: local("Bravura"), url("../editor-crescendo/assets/fonts/Bravura.otf") format("opentype");
+            src: url("../editor-crescendo/assets/fonts/Bravura.otf") format("opentype");
             font-display: block;
         }
         /* ===== VARIABLES GLOBALES (unificadas) ===== */
@@ -294,7 +294,7 @@
         .rhythm-lab-status{margin-top:8px!important;color:#9bd1b5!important}
         .rhythm-lab-controls>#rhythmGenerate{background:rgba(0,0,0,.3);color:var(--text);box-shadow:none}.rhythm-lab-controls>#rhythmGenerate:hover{border-color:var(--accent);background:rgba(212,168,79,.14);color:var(--accent);box-shadow:0 5px 16px rgba(0,0,0,.2)}
         .rhythm-stepper button,.rhythm-stepper button:hover{border-color:rgba(255,255,255,.14)!important;background:rgba(255,255,255,.08)!important;color:var(--text)!important;box-shadow:none!important;transform:none!important}.rhythm-stepper button.is-hovered{border-color:var(--accent)!important;background:rgba(212,168,79,.18)!important;color:var(--accent)!important;box-shadow:0 3px 10px rgba(0,0,0,.18)!important}
-        .rhythm-score{max-height:264px;overflow:auto}.rhythm-stable-score{display:block;max-width:none}.rhythm-score.has-multiple-systems{height:264px}
+        .rhythm-score{max-height:264px;overflow:auto}.rhythm-stable-score{display:block;max-width:none}.rhythm-stable-score text{font-weight:400;font-style:normal}.rhythm-score.has-multiple-systems{height:264px}
         @media(max-width:860px){.rhythm-lab-controls{grid-template-columns:repeat(2,minmax(0,1fr))}.rhythm-lab-controls>button{grid-column:1/-1}.rhythm-score{overflow:auto}}
         @media(max-width:520px){.rhythm-lab-controls{grid-template-columns:1fr}.rhythm-tool{flex:0 0 36px}.rhythm-editor-actions button{font-size:.68rem;padding-inline:4px}}
         .beat-col { display: flex; flex-direction: column; align-items: center; gap: 5px; }
@@ -977,9 +977,9 @@
 </footer>
 
 <script src="../../shared/rhythm-engine.js?v=20260918-locking-in"></script>
-<script src="../../shared/music-practice.js?v=20261014-stable-1"></script>
+<script src="../../shared/music-practice.js?v=20261014-engraving-2"></script>
 <script src="../editor-crescendo/src/bravura-palette-paths.js?v=20261014-preview-1"></script>
-<script src="rhythm-writing.js?v=20261014-stable-1"></script>
+<script src="rhythm-writing.js?v=20261014-engraving-2"></script>
 <script>
     // --- Lógica de Acordeón ---
     function toggleDrawer(id) {
@@ -1324,7 +1324,7 @@
       guideLayer.replaceChildren();const wrap=UI.rhythmScoreOverlay.getBoundingClientRect(),cap=rhythmCapacity(currentRhythmMeter()),used=rhythmBeats(rhythmUsedTicks()),bar=rhythmPointerTarget?.bar??Math.min(Math.floor(used/cap),Number(UI.rhythmBars.value)-1);
       const box=UI.rhythmScore.querySelector(`.rhythm-measure-hit[data-bar="${bar}"][data-staff="${activeRhythmStaff}"]`);if(!box)return;
       const svg=box.ownerSVGElement.getBoundingClientRect(),start=Number(box.dataset.start)+svg.left-wrap.left,end=Number(box.dataset.end)+svg.left-wrap.left,top=Number(box.dataset.top)+svg.top-wrap.top;
-      const grid=activeRhythmTool.actual?activeRhythmTool.beats*activeRhythmTool.normal/activeRhythmTool.actual:Math.min(.5,activeRhythmTool.beats);
+      const grid=rhythmWriting.gridStep(activeRhythmTool);
       const mark=(x,y,h,cls)=>{const m=document.createElement('i');m.className=cls;m.style.cssText=`left:${x}px;top:${y}px;height:${h}px`;guideLayer.appendChild(m);};
       for(let beat=0;beat<cap-.00001;beat+=grid)mark(start+(end-start)*beat/cap,top-16,7,'rhythm-guide-tick');
       mark(start+(end-start)*(rhythmPointerTarget?.beat??Math.min(cap,used-bar*cap))/cap,top-20,80,'rhythm-guide-caret');
@@ -1342,7 +1342,7 @@
     function locateRhythmTime(event){
       const boxes=[...UI.rhythmScore.querySelectorAll('.rhythm-measure-hit')];if(!boxes.length)return;
       const box=boxes.sort((a,b)=>{const distance=el=>{const r=el.getBoundingClientRect();return Math.abs(event.clientY-(r.top+r.height/2))*10+Math.max(r.left-event.clientX,0,event.clientX-r.right);};return distance(a)-distance(b);})[0];
-      const svg=box.ownerSVGElement.getBoundingClientRect(),start=svg.left+Number(box.dataset.start),end=svg.left+Number(box.dataset.end),cap=rhythmCapacity(currentRhythmMeter()),grid=activeRhythmTool.actual?activeRhythmTool.beats*activeRhythmTool.normal/activeRhythmTool.actual:Math.min(.5,activeRhythmTool.beats),duration=activeRhythmTool.beats*rhythmWriting.factor(activeRhythmTool.dots)*(activeRhythmTool.actual?activeRhythmTool.normal/activeRhythmTool.actual:1);
+      const svg=box.ownerSVGElement.getBoundingClientRect(),start=svg.left+Number(box.dataset.start),end=svg.left+Number(box.dataset.end),cap=rhythmCapacity(currentRhythmMeter()),grid=rhythmWriting.gridStep(activeRhythmTool),duration=activeRhythmTool.beats*rhythmWriting.factor(activeRhythmTool.dots)*(activeRhythmTool.actual?activeRhythmTool.normal/activeRhythmTool.actual:1);
       activeRhythmStaff=Number(box.dataset.staff);rhythmPointerStaff={top:svg.top+Number(box.dataset.top),spacing:10};rhythmPointerTarget={bar:Number(box.dataset.bar),beat:Math.max(0,Math.min(cap-duration,Math.round((event.clientX-start)/(end-start)*cap/grid)*grid))};
     }
     function showRhythmPreview(event){

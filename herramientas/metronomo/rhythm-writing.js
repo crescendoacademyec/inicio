@@ -1,6 +1,7 @@
 (function(root){'use strict';
 const TICKS=13440,durations=[['one-twenty-eighth',.03125,'8','Garrapatea'],['sixty-fourth',.0625,'7','Semifusa'],['thirty-second',.125,'6','Fusa'],['sixteenth',.25,'5','Semicorchea'],['eighth',.5,'4','Corchea'],['quarter',1,'3','Negra'],['half',2,'2','Blanca'],['whole',4,'1','Redonda'],['breve',8,'0','Cuadrada']];
 const ticks=b=>Math.round(b*TICKS),factor=d=>[1,1.5,1.75][d||0];
+function gridStep(state){return state.beats*factor(state.dots)*(state.actual?state.normal/state.actual:1);}
 function create(){return {duration:'quarter',beats:1,rest:false,dots:0,actual:0,normal:0,groupIndex:0,groupId:0};}
 function select(state,action,value){if(action==='duration'){const d=durations.find(d=>d[0]===value);if(d){state.duration=d[0];state.beats=d[1];state.actual=0;state.groupIndex=0;}}else if(action==='rest')state.rest=!state.rest;else if(action==='dots')state.dots=state.dots===value?0:value;else if(action==='tuplet'){state.actual=state.actual===value?0:value;state.normal=value===3?2:4;state.groupIndex=0;state.dots=0;}}
 function append(state,events,note,capacity,bars,staff=1,position=null){const cap=ticks(capacity),used=position?position.bar*cap+ticks(position.beat):events.filter(e=>(e.staff||1)===staff).reduce((n,e)=>Math.max(n,(e.bar||0)*cap+ticks(e.offset||0)+ticks(e.beats)),0),bar=Math.floor(used/cap),remaining=cap-used%cap;if(bar>=bars)return 'El ejercicio ya está completo. Deshaz o limpia para modificarlo.';if(state.actual&&state.groupIndex&&state.groupStaff!==staff)return 'Termina el grupo en el pentagrama donde lo empezaste.';const base=state.beats*factor(state.dots),eventTicks=ticks(base*(state.actual?state.normal/state.actual:1));if(eventTicks>remaining)return 'Esa figura no cabe en el compás. Elige una menor o completa con silencios.';if(state.actual&&state.groupIndex===0&&eventTicks*state.actual>remaining)return 'El grupo completo no cabe en este compás. Elige una figura menor.';if(state.actual&&state.groupIndex===0){state.groupId++;state.groupStaff=staff;}
@@ -14,8 +15,8 @@ function render(events,{clef='treble',meter='4/4',bars=4,width=900,glyphs={}}={}
  for(let row=0;row<rows;row++)for(let si=0;si<staves.length;si++){
   const staff=staves[si],top=row*rowHeight+45+si*100,count=Math.min(4,bars-row*4),right=left+header+count*barWidth;
   for(let line=0;line<5;line++)drawing+=`<line x1="${left}" y1="${top+line*spacing}" x2="${right}" y2="${top+line*spacing}" stroke="#222"/>`;
-  drawing+=`<text x="${left+6}" y="${top+(staff===1?30:10)}" font-family="Bravura Metronome" font-size="40">${String.fromCodePoint(staff===1?0xE050:0xE062)}</text>`;
-  const [numerator,denominator]=meter.split('/');drawing+=`<text x="${left+55}" y="${top+17}" font-family="Bravura Metronome" font-size="30">${[...numerator].map(n=>String.fromCodePoint(0xE080+Number(n))).join('')}</text><text x="${left+55}" y="${top+37}" font-family="Bravura Metronome" font-size="30">${[...denominator].map(n=>String.fromCodePoint(0xE080+Number(n))).join('')}</text>`;
+  drawing+=`<text x="${left+6}" y="${top+(staff===1?30:10)}" font-family="Bravura Metronome" font-weight="normal" font-style="normal" font-size="40">${String.fromCodePoint(staff===1?0xE050:0xE062)}</text>`;
+  const [numerator,denominator]=meter.split('/');drawing+=`<text x="${left+55}" y="${top+10}" font-family="Bravura Metronome" font-weight="normal" font-style="normal" font-size="40">${[...numerator].map(n=>String.fromCodePoint(0xE080+Number(n))).join('')}</text><text x="${left+55}" y="${top+30}" font-family="Bravura Metronome" font-weight="normal" font-style="normal" font-size="40">${[...denominator].map(n=>String.fromCodePoint(0xE080+Number(n))).join('')}</text>`;
   for(let local=0;local<count;local++){
    const bar=row*4+local,start=left+header+local*barWidth,end=start+barWidth,inputStart=start+12,inputEnd=end-18;
    drawing+=`<rect class="rhythm-measure-hit" data-bar="${bar}" data-staff="${staff}" data-start="${inputStart}" data-end="${inputEnd}" data-top="${top}" x="${start}" y="${top-30}" width="${barWidth}" height="100" fill="transparent"/><line x1="${end}" x2="${end}" y1="${top}" y2="${top+40}" stroke="#222" stroke-width="1.5"/><text x="${start+3}" y="${top-16}" font-size="10" fill="#888">${bar+1}</text>`;
@@ -26,12 +27,12 @@ function render(events,{clef='treble',meter='4/4',bars=4,width=900,glyphs={}}={}
     let y=top+20;
     if(e.kind==='rest'){
      const codes={'breve':0xE4E2,'whole':0xE4E3,'half':0xE4E4,'quarter':0xE4E5,'eighth':0xE4E6,'sixteenth':0xE4E7,'thirty-second':0xE4E8,'sixty-fourth':0xE4E9,'one-twenty-eighth':0xE4EA};
-     drawing+=`<text x="${x-4}" y="${y}" font-family="Bravura Metronome" font-size="40">${String.fromCodePoint(codes[d[0]])}</text>`;
+     drawing+=`<text x="${x-4}" y="${y}" font-family="Bravura Metronome" font-weight="normal" font-style="normal" font-size="40">${String.fromCodePoint(codes[d[0]])}</text>`;
     }else{
      let note=e.note;if(!note&&e.midi!==undefined){const names=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];note=names[e.midi%12]+(Math.floor(e.midi/12)-1);}
      const index=pitches[staff].indexOf(String(note||'C5').replace('#','').replace('b',''));y=top+((index<0?6:index)-2)*spacing/2;
      const g=glyphs[d[0]],k=spacing/250;if(g)drawing+=`<path d="${esc(g.d)}" transform="translate(${x-160*k} ${y}) scale(${k})" fill="#222"/>`;
-     if(String(note).includes('#'))drawing+=`<text x="${x-15}" y="${y}" font-family="Bravura Metronome" font-size="40">&#xE262;</text>`;
+     if(String(note).includes('#'))drawing+=`<text x="${x-15}" y="${y}" font-family="Bravura Metronome" font-weight="normal" font-style="normal" font-size="40">&#xE262;</text>`;
      for(let line=-2;line>=(y-top)/(spacing/2);line-=2)drawing+=`<line x1="${x-9}" x2="${x+9}" y1="${top+line*spacing/2}" y2="${top+line*spacing/2}" stroke="#222"/>`;
      for(let line=10;line<=(y-top)/(spacing/2);line+=2)drawing+=`<line x1="${x-9}" x2="${x+9}" y1="${top+line*spacing/2}" y2="${top+line*spacing/2}" stroke="#222"/>`;
     }
@@ -43,5 +44,5 @@ function render(events,{clef='treble',meter='4/4',bars=4,width=900,glyphs={}}={}
  return `<svg xmlns="http://www.w3.org/2000/svg" class="rhythm-stable-score" width="${w}" height="${rows*rowHeight}" viewBox="0 0 ${w} ${rows*rowHeight}" role="img" aria-label="Partitura editable de ${bars} compases">${drawing}</svg>`;
 }
 
-const api={render,notation,TICKS,durations,ticks,factor,create,select,append};if(typeof module!=='undefined')module.exports=api;else root.CrescendoRhythmWriting=api;
+const api={gridStep,render,notation,TICKS,durations,ticks,factor,create,select,append};if(typeof module!=='undefined')module.exports=api;else root.CrescendoRhythmWriting=api;
 })(typeof window==='undefined'?globalThis:window);
