@@ -15702,11 +15702,13 @@
     scheduleIconFit();
     if (paletteId === "figures") {
       const center = () => durationTools.querySelectorAll(".palette-note-duration .music-glyph,.palette-rest-duration .music-glyph").forEach(span => {
-        const symbol = span.textContent;
+        const durationId = span.closest("button")?.dataset.duration;
+        const noteGlyphs = { breve:0xE1D0, whole:0xE1D2, half:0xE1D3, quarter:0xE1D5, eighth:0xE1D7, sixteenth:0xE1D9, "thirty-second":0xE1DB, "sixty-fourth":0xE1DD, "one-twenty-eighth":0xE1DF };
+        const symbol = noteGlyphs[durationId] ? String.fromCodePoint(noteGlyphs[durationId]) : span.textContent;
         const wide = ["whole", "breve"].includes(span.closest("button")?.dataset.duration);
         const icon = el("svg", { viewBox: "0 0 48 48", class: "centered-figure-icon", "aria-hidden": "true" });
-        const glyph = textNode(0, 0, symbol, { style: "font-family:MTF Improviso Light,serif;font-size:32px;fill:currentColor" });icon.appendChild(glyph);span.replaceWith(icon);
-        try { const b=glyph.getBBox();if(b.height>0){const scale=Math.min((wide ? 14 : 38)/b.height,(wide ? 30 : 34)/b.width);glyph.setAttribute("transform",`translate(${24-(b.x+b.width/2)*scale} ${24-(b.y+b.height/2)*scale}) scale(${scale})`);} } catch {}
+        const glyph = textNode(0, 0, symbol, { "font-family": "MTF Improviso Light", "font-size": "32", fill: "currentColor" });icon.appendChild(glyph);span.replaceWith(icon);
+        try { const names={breve:"noteDoubleWhole",whole:"noteWhole",half:"noteHalfUp",quarter:"noteQuarterUp",eighth:"note8thUp",sixteenth:"note16thUp","thirty-second":"note32ndUp","sixty-fourth":"note64thUp","one-twenty-eighth":"note128thUp"};const box=glyphBBox(names[durationId] || "restQuarter");const b=box?.sw&&box?.ne?{x:box.sw[0]*8,y:-box.ne[1]*8,width:(box.ne[0]-box.sw[0])*8,height:(box.ne[1]-box.sw[1])*8}:glyph.getBBox();if(b.height>0){const scale=Math.min((wide ? 18 : 42)/b.height,(wide ? 34 : 38)/b.width);glyph.setAttribute("transform",`translate(${24-(b.x+b.width/2)*scale} ${24-(b.y+b.height/2)*scale}) scale(${scale})`);} } catch {}
       });
       if (document.fonts) document.fonts.load('32px "MTF Improviso Light"').then(() => requestAnimationFrame(center));else requestAnimationFrame(center);
     }
