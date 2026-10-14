@@ -23,7 +23,7 @@
     { key: "7", id: "half", label: "Blanca", symbol: COMPLETE_DURATION_SYMBOLS.half, ticks: 8, flags: 0, music: true },
     { key: "8", id: "whole", label: "Redonda", symbol: COMPLETE_DURATION_SYMBOLS.whole, ticks: 16, flags: 0, music: true },
     { key: "9", id: "breve", label: "Cuadrada", symbol: COMPLETE_DURATION_SYMBOLS.breve, ticks: 32, flags: 0, music: true }
-  ]);
+  ].sort((a, b) => b.ticks - a.ticks));
 
   const DENOMINATORS = Object.freeze({
     breve: 0.5,
