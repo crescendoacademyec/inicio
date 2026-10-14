@@ -7450,38 +7450,18 @@
   }
 
   async function clearWrittenNotes() {
-    const targetMeasureIndex = Number.isFinite(state.selectedMeasureIndex) ? state.selectedMeasureIndex : null;
-    const measures = targetMeasureIndex !== null
-      ? [state.measures[targetMeasureIndex]].filter(Boolean)
-      : state.measures;
-    if (!measures.length) return false;
-    const hasNotes = measures.some((measure) => (measure.entries || []).some((entry) => entry.type === "note"));
-    if (!hasNotes) {
-      await showEditorMessage(targetMeasureIndex !== null ? "Este compás ya está vacío." : "No hay notas escritas en la partitura.");
-      return false;
-    }
-    if (targetMeasureIndex === null) {
-      const confirmed = await confirmEditorAction({
-        title: "Limpiar toda la partitura",
-        message: "Se borrarán todas las notas de todos los compases. Puedes deshacerlo con Ctrl/Cmd+Z.",
-        okLabel: "Limpiar todo"
-      });
-      if (!confirmed) return false;
-    }
+    syncActiveSystemMeasures();
+    if (!(await confirmEditorAction({ title:"Limpiar toda la partitura", message:"Se borrará la escritura de todos los pentagramas, visibles u ocultos. Puedes deshacerlo con Ctrl/Cmd+Z.", okLabel:"Limpiar todo" }))) return false;
     saveHistory();
-    measures.forEach((measure) => {
-      const measureIndex = state.measures.indexOf(measure);
-      for (let entryIndex = measure.entries.length - 1; entryIndex >= 0; entryIndex -= 1) {
-        const entry = measure.entries[entryIndex];
-        if (entry.type === "note") replaceEntryWithRests(measure, entryIndex, false);
-      }
-      normalizeMeasure(measure, measureIndex);
-    });
-    clearEntrySelection();
-    clearActiveNote();
-    hideCursorPitch();
-    render();
-    return true;
+    const activeIndex = activeSystemIndex();
+    scoreSystems().forEach((system, index) => withSystemContext(index, () => {
+      system.measures.forEach((measure, measureIndex) => { measure.entries = [makeMeasureRest(measureTicksForIndex(measureIndex))]; });
+    }));
+    state.marks = [];state.textItems = [];state.inputDots = 0;pointerInputPreview = null;
+    state.activeTuplet = null;state.activeTupletRun = null;state.pendingTupletRatio = null;
+    setActiveSystemIndex(activeIndex);state.cursorMeasure = 0;state.cursorTick = 0;
+    clearEntrySelection();clearMeasureSelection();clearActiveNote();hideCursorPitch();
+    invalidateLayoutCache();render();return true;
   }
 
   function deleteActiveNoteOrCursorEntry() {

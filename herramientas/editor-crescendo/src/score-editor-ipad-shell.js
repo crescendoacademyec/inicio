@@ -414,7 +414,7 @@
     headerLeft.append(toggleLeft, heading);
 
     const headerCenter = element("div", "ipad-header-center");
-    const clearButton = createIconButton({ icon: "eraser", label: "Limpiar compás seleccionado, o toda la partitura" });
+    const clearButton = createIconButton({ icon: "eraser", label: "Limpiar toda la escritura de ambos pentagramas" });
     const saveButton = createIconButton({ icon: "save", label: "Guardar ejercicio", text: "Guardar", className: "ipad-header-action ipad-save-action" });
     const undoProxy = createIconButton({ icon: "undo-2", label: "Deshacer" });
     const redoProxy = createIconButton({ icon: "redo-2", label: "Rehacer" });

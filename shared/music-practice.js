@@ -40,8 +40,8 @@
     return `<div class="cp-staff" data-cp-xml="${esc(musicXML(notes,options))}" role="img" aria-label="Pentagrama de práctica en clave de ${options.clef==='bass'?'fa':'sol'}"><span>Preparando pentagrama…</span></div>`;
   }
   function named(value){const m=/^([A-G])([#b]?)(-?\d+)$/.exec(value);if(!m)throw new Error('Nota no válida: '+value);return rootNote(m[1]+m[2],Number(m[3]));}
-  function sequence(events,{clef='treble',meter=null,labels=false,compact=false,key=0,bars=0,measuresPerSystem=0}={}){
-    const types=[[4,'whole'],[2,'half'],[1,'quarter'],[.5,'eighth'],[.25,'16th'],[.125,'32nd'],[.0625,'64th']];
+  function sequence(events,{clef='treble',meter=null,labels=false,compact=false,key=0,bars=0,measuresPerSystem=0,divisions=48}={}){
+    const types=[[8,'breve'],[4,'whole'],[2,'half'],[1,'quarter'],[.5,'eighth'],[.25,'16th'],[.125,'32nd'],[.0625,'64th'],[.03125,'128th']];
     const groups=new Map();events.forEach(e=>{const bar=e.bar||0;if(!groups.has(bar))groups.set(bar,[]);groups.get(bar).push(e);});
     if(!groups.size)groups.set(0,[]);
     for(let bar=0;bar<Math.max(0,Number(bars)||0);bar++){if(!groups.has(bar))groups.set(bar,[])}
@@ -53,20 +53,20 @@
         const beats=e.beats??1;
         // A forward advances the MusicXML cursor without drawing a symbol. It keeps
         // isolated short values centered in a full-width reference staff.
-        if(e.kind==='spacer')return `<forward><duration>${Math.round(beats*48)}</duration></forward>`;
+        if(e.kind==='spacer')return `<forward><duration>${Math.round(beats*divisions)}</duration></forward>`;
         const n=e.note?named(e.note):e.midi!==undefined?{...midiNote(e.midi),...e}:rootNote('G',4);
         const actual=e.tupletActual||(e.kind==='triplet'||Math.abs(beats-1/3)<.00001?3:0);
         const triplet=actual>0;
         const base=triplet?(Number(e.tupletUnitBeats)||(actual===6?.25:.5)):beats;
-        const type=types.find(([v])=>Math.abs(base-v)<.00001)||types.find(([v])=>Math.abs(base-v*1.5)<.00001)||types.find(([v])=>Math.abs(base-v*1.75)<.00001)||types[2];
+        const type=types.find(([v])=>Math.abs(base-v)<.00001)||types.find(([v])=>Math.abs(base-v*1.5)<.00001)||types.find(([v])=>Math.abs(base-v*1.75)<.00001)||types.find(([v])=>v===1);
         const dots=triplet?0:Math.abs(base-type[0]*1.75)<.00001?2:Math.abs(base-type[0]*1.5)<.00001?1:0;
         const tie=(e.tieStart?'<tie type="start"/>':'')+(e.tied?'<tie type="stop"/>':'');
         const notation=(e.tieStart?'<tied type="start"/>':'')+(e.tied?'<tied type="stop"/>':'')+(e.fermata?'<fermata/>':'')+(e.articulation?`<articulations><${e.articulation}/></articulations>`:'')+(e.slur?`<slur type="${e.slur}" number="1"/>`:'')+(triplet?(e.tuplet!==undefined?(e.tuplet?`<tuplet type="${e.tuplet}"/>`:''):(i%3!==1?`<tuplet type="${i%3===0?'start':'stop'}"/>`:'')):'');
         const accidental=e.accidental||({'-2':'flat-flat','-1':'flat',1:'sharp',2:'double-sharp'}[n.alter]);
-        return `<note${e.color?` color="${esc(e.color)}"`:''}>${e.chord?'<chord/>':''}${e.kind==='rest'?'<rest/>':`<pitch><step>${letters[((n.diatonic%7)+7)%7]}</step><alter>${n.alter}</alter><octave>${Math.floor(n.diatonic/7)}</octave></pitch>`}<duration>${Math.round(beats*48)}</duration>${tie}<type>${type[1]}</type>${'<dot/>'.repeat(dots)}${accidental&&e.kind!=='rest'?`<accidental>${accidental}</accidental>`:''}${triplet?`<time-modification><actual-notes>${actual}</actual-notes><normal-notes>${e.tupletNormal||(actual===6?4:2)}</normal-notes><normal-type>${type[1]}</normal-type></time-modification>`:''}${e.stem?`<stem>${e.stem}</stem>`:''}${e.beam?`<beam number="1">${e.beam}</beam>`:''}${notation?'<notations>'+notation+'</notations>':''}${labels&&e.kind!=='rest'?'<lyric><text>'+esc(e.label||name(n))+'</text></lyric>':''}</note>`;
+        return `<note${e.color?` color="${esc(e.color)}"`:''}>${e.chord?'<chord/>':''}${e.kind==='rest'?'<rest/>':`<pitch><step>${letters[((n.diatonic%7)+7)%7]}</step><alter>${n.alter}</alter><octave>${Math.floor(n.diatonic/7)}</octave></pitch>`}<duration>${Math.round(beats*divisions)}</duration>${tie}<type>${type[1]}</type>${'<dot/>'.repeat(dots)}${accidental&&e.kind!=='rest'?`<accidental>${accidental}</accidental>`:''}${triplet?`<time-modification><actual-notes>${actual}</actual-notes><normal-notes>${e.tupletNormal||(actual===6?4:2)}</normal-notes><normal-type>${type[1]}</normal-type></time-modification>`:''}${e.stem?`<stem>${e.stem}</stem>`:''}${e.beam?`<beam number="1">${e.beam}</beam>`:''}${notation?'<notations>'+notation+'</notations>':''}${labels&&e.kind!=='rest'?'<lyric><text>'+esc(e.label||name(n))+'</text></lyric>':''}</note>`;
       }).join('');
       const systemBreak=measuresPerSystem&&bar>0&&bar%measuresPerSystem===0?'<print new-system="yes"/>':'';
-      measures+=`<measure number="${bar+1}" implicit="yes">${systemBreak}${bar===orderedGroups[0][0]?`<attributes><divisions>48</divisions><key><fifths>${key}</fifths></key>${meter?`<time><beats>${Number(meter.split('/')[0])}</beats><beat-type>${Number(meter.split('/')[1])}</beat-type></time>`:'<time print-object="no"><beats>4</beats><beat-type>4</beat-type></time>'}<clef>${clefXML}</clef></attributes>`:''}${body}</measure>`;
+      measures+=`<measure number="${bar+1}" implicit="yes">${systemBreak}${bar===orderedGroups[0][0]?`<attributes><divisions>${divisions}</divisions><key><fifths>${key}</fifths></key>${meter?`<time><beats>${Number(meter.split('/')[0])}</beats><beat-type>${Number(meter.split('/')[1])}</beat-type></time>`:'<time print-object="no"><beats>4</beats><beat-type>4</beat-type></time>'}<clef>${clefXML}</clef></attributes>`:''}${body}</measure>`;
     }
     const xml=`<?xml version="1.0"?><score-partwise version="3.1"><part-list><score-part id="P1"><part-name></part-name></score-part></part-list><part id="P1">${measures}</part></score-partwise>`;
     return `<div class="cp-staff${compact?' cp-compact':''}" data-cp-xml="${esc(xml)}" data-cp-time="${!!meter}" role="img" aria-label="Ejemplo de notación musical">Preparando pentagrama…</div>`;
