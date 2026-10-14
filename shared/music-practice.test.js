@@ -44,3 +44,10 @@ assert.equal((builtChord.match(/<type>half<\/type>/g)||[]).length,2);
 const dottedFlat=decode(P.sequence([{midi:63,diatonic:30,alter:-1,beats:1.5}]));
 assert.ok(dottedFlat.includes('<step>E</step><alter>-1</alter>'));
 assert.ok(dottedFlat.includes('<dot/>'));
+
+const grand=decode(P.sequence([{note:'C5',beats:1,staff:1},{note:'C3',beats:2,staff:2}],{clef:'grand',meter:'3/4',bars:2}));
+assert.ok(grand.includes('<staves>2</staves>'));
+assert.ok(grand.includes('<clef number="2"><sign>F</sign><line>4</line></clef>'));
+assert.equal((grand.match(/<backup><duration>144<\/duration><\/backup>/g)||[]).length,2);
+assert.ok(grand.includes('<forward><duration>96</duration><voice>1</voice><staff>1</staff></forward>'));
+assert.equal((grand.match(/<rest measure="yes"\/>/g)||[]).length,2);
