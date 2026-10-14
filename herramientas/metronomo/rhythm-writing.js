@@ -6,5 +6,42 @@ function select(state,action,value){if(action==='duration'){const d=durations.fi
 function append(state,events,note,capacity,bars,staff=1,position=null){const cap=ticks(capacity),used=position?position.bar*cap+ticks(position.beat):events.filter(e=>(e.staff||1)===staff).reduce((n,e)=>Math.max(n,(e.bar||0)*cap+ticks(e.offset||0)+ticks(e.beats)),0),bar=Math.floor(used/cap),remaining=cap-used%cap;if(bar>=bars)return 'El ejercicio ya está completo. Deshaz o limpia para modificarlo.';if(state.actual&&state.groupIndex&&state.groupStaff!==staff)return 'Termina el grupo en el pentagrama donde lo empezaste.';const base=state.beats*factor(state.dots),eventTicks=ticks(base*(state.actual?state.normal/state.actual:1));if(eventTicks>remaining)return 'Esa figura no cabe en el compás. Elige una menor o completa con silencios.';if(state.actual&&state.groupIndex===0&&eventTicks*state.actual>remaining)return 'El grupo completo no cabe en este compás. Elige una figura menor.';if(state.actual&&state.groupIndex===0){state.groupId++;state.groupStaff=staff;}
 const e={staff,offset:(used%cap)/TICKS,note,beats:eventTicks/TICKS,bar,kind:state.rest?'rest':undefined};if(state.actual){Object.assign(e,{tupletActual:state.actual,tupletNormal:state.normal,tupletUnitBeats:base,tuplet:state.groupIndex===0?'start':state.groupIndex===state.actual-1?'stop':'',writingGroupId:state.groupId,writingGroupIndex:state.groupIndex});if(++state.groupIndex===state.actual){state.groupIndex=0;state.actual=0;}}if(position){for(let i=events.length-1;i>=0;i--){const old=events[i];if((old.staff||1)===staff&&old.bar===bar&&ticks(old.offset||0)<used%cap+eventTicks&&ticks(old.offset||0)+ticks(old.beats)>used%cap)events.splice(i,1);}}events.push(e);return '';}
 function notation(events,capacity,bars){const result=[];for(const staff of [1,2])for(let bar=0;bar<bars;bar++){let cursor=0;const selected=events.filter(e=>(e.staff||1)===staff&&(e.bar||0)===bar);let legacy=0;const ordered=selected.map(e=>{const offset=e.offset??legacy;legacy=offset+e.beats;return {...e,offset};}).sort((a,b)=>a.offset-b.offset);const rest=end=>{while(cursor<ticks(end)){const remaining=ticks(end)-cursor,beatRemaining=TICKS-cursor%TICKS;const length=Math.min(remaining,beatRemaining);const value=[4,2,1,.5,.25,.125,.0625,.03125].find(v=>ticks(v)<=length);const duration=value?ticks(value):length;result.push({staff,bar,kind:'rest',beats:duration/TICKS});cursor+=duration;}};if(!ordered.length){result.push({staff,bar,kind:'rest',measureRest:true,beats:capacity});continue;}for(const e of ordered){rest(e.offset);result.push(e);cursor=ticks(e.offset+e.beats);}rest(capacity);}return result;}
-const api={notation,TICKS,durations,ticks,factor,create,select,append};if(typeof module!=='undefined')module.exports=api;else root.CrescendoRhythmWriting=api;
+function render(events,{clef='treble',meter='4/4',bars=4,width=900,glyphs={}}={}){
+ const capacity=Number(meter.split('/')[0])*4/Number(meter.split('/')[1]),grand=clef==='grand',staves=grand?[1,2]:[clef==='bass'?2:1],rowHeight=grand?230:130,rows=Math.ceil(bars/4),w=Math.max(680,width),left=24,header=90,barWidth=(w-left*2-header)/4,spacing=10;
+ const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[c]));
+ const pitches={1:['A5','G5','F5','E5','D5','C5','B4','A4','G4','F4','E4','D4','C4'],2:['C4','B3','A3','G3','F3','E3','D3','C3','B2','A2','G2','F2','E2']};
+ let drawing='';const notationEvents=notation(events,capacity,bars);
+ for(let row=0;row<rows;row++)for(let si=0;si<staves.length;si++){
+  const staff=staves[si],top=row*rowHeight+45+si*100,count=Math.min(4,bars-row*4),right=left+header+count*barWidth;
+  for(let line=0;line<5;line++)drawing+=`<line x1="${left}" y1="${top+line*spacing}" x2="${right}" y2="${top+line*spacing}" stroke="#222"/>`;
+  drawing+=`<text x="${left+6}" y="${top+(staff===1?30:10)}" font-family="Bravura Metronome" font-size="40">${String.fromCodePoint(staff===1?0xE050:0xE062)}</text>`;
+  const [numerator,denominator]=meter.split('/');drawing+=`<text x="${left+55}" y="${top+17}" font-family="Bravura Metronome" font-size="30">${[...numerator].map(n=>String.fromCodePoint(0xE080+Number(n))).join('')}</text><text x="${left+55}" y="${top+37}" font-family="Bravura Metronome" font-size="30">${[...denominator].map(n=>String.fromCodePoint(0xE080+Number(n))).join('')}</text>`;
+  for(let local=0;local<count;local++){
+   const bar=row*4+local,start=left+header+local*barWidth,end=start+barWidth,inputStart=start+12,inputEnd=end-18;
+   drawing+=`<rect class="rhythm-measure-hit" data-bar="${bar}" data-staff="${staff}" data-start="${inputStart}" data-end="${inputEnd}" data-top="${top}" x="${start}" y="${top-30}" width="${barWidth}" height="100" fill="transparent"/><line x1="${end}" x2="${end}" y1="${top}" y2="${top+40}" stroke="#222" stroke-width="1.5"/><text x="${start+3}" y="${top-16}" font-size="10" fill="#888">${bar+1}</text>`;
+   let offset=0;for(const e of notationEvents.filter(e=>e.staff===staff&&e.bar===bar)){
+    const x=inputStart+(inputEnd-inputStart)*offset/capacity;offset+=e.beats;
+    if(e.measureRest){drawing+=`<rect x="${(start+end)/2-5}" y="${top+10}" width="10" height="4" fill="#222"/>`;continue;}
+    const base=e.tupletUnitBeats||e.beats,d=durations.find(d=>Math.abs(d[1]-base)<.00001)||durations.find(d=>Math.abs(d[1]*1.5-base)<.00001)||durations.find(d=>Math.abs(d[1]*1.75-base)<.00001)||durations.find(d=>d[0]==='quarter'),dots=e.tupletActual?0:Math.abs(base-d[1]*1.75)<.00001?2:Math.abs(base-d[1]*1.5)<.00001?1:0;
+    let y=top+20;
+    if(e.kind==='rest'){
+     const codes={'breve':0xE4E2,'whole':0xE4E3,'half':0xE4E4,'quarter':0xE4E5,'eighth':0xE4E6,'sixteenth':0xE4E7,'thirty-second':0xE4E8,'sixty-fourth':0xE4E9,'one-twenty-eighth':0xE4EA};
+     drawing+=`<text x="${x-4}" y="${y}" font-family="Bravura Metronome" font-size="40">${String.fromCodePoint(codes[d[0]])}</text>`;
+    }else{
+     let note=e.note;if(!note&&e.midi!==undefined){const names=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];note=names[e.midi%12]+(Math.floor(e.midi/12)-1);}
+     const index=pitches[staff].indexOf(String(note||'C5').replace('#','').replace('b',''));y=top+((index<0?6:index)-2)*spacing/2;
+     const g=glyphs[d[0]],k=spacing/250;if(g)drawing+=`<path d="${esc(g.d)}" transform="translate(${x-160*k} ${y}) scale(${k})" fill="#222"/>`;
+     if(String(note).includes('#'))drawing+=`<text x="${x-15}" y="${y}" font-family="Bravura Metronome" font-size="40">&#xE262;</text>`;
+     for(let line=-2;line>=(y-top)/(spacing/2);line-=2)drawing+=`<line x1="${x-9}" x2="${x+9}" y1="${top+line*spacing/2}" y2="${top+line*spacing/2}" stroke="#222"/>`;
+     for(let line=10;line<=(y-top)/(spacing/2);line+=2)drawing+=`<line x1="${x-9}" x2="${x+9}" y1="${top+line*spacing/2}" y2="${top+line*spacing/2}" stroke="#222"/>`;
+    }
+    for(let dot=0;dot<dots;dot++)drawing+=`<circle cx="${x+12+dot*5}" cy="${y-5}" r="1.5" fill="#222"/>`;
+    if(e.tuplet==='start')drawing+=`<text x="${x}" y="${top-8}" font-size="12" fill="#222">${e.tupletActual||3}</text>`;
+   }
+  }
+ }
+ return `<svg xmlns="http://www.w3.org/2000/svg" class="rhythm-stable-score" width="${w}" height="${rows*rowHeight}" viewBox="0 0 ${w} ${rows*rowHeight}" role="img" aria-label="Partitura editable de ${bars} compases">${drawing}</svg>`;
+}
+
+const api={render,notation,TICKS,durations,ticks,factor,create,select,append};if(typeof module!=='undefined')module.exports=api;else root.CrescendoRhythmWriting=api;
 })(typeof window==='undefined'?globalThis:window);

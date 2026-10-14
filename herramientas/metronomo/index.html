@@ -294,7 +294,7 @@
         .rhythm-lab-status{margin-top:8px!important;color:#9bd1b5!important}
         .rhythm-lab-controls>#rhythmGenerate{background:rgba(0,0,0,.3);color:var(--text);box-shadow:none}.rhythm-lab-controls>#rhythmGenerate:hover{border-color:var(--accent);background:rgba(212,168,79,.14);color:var(--accent);box-shadow:0 5px 16px rgba(0,0,0,.2)}
         .rhythm-stepper button,.rhythm-stepper button:hover{border-color:rgba(255,255,255,.14)!important;background:rgba(255,255,255,.08)!important;color:var(--text)!important;box-shadow:none!important;transform:none!important}.rhythm-stepper button.is-hovered{border-color:var(--accent)!important;background:rgba(212,168,79,.18)!important;color:var(--accent)!important;box-shadow:0 3px 10px rgba(0,0,0,.18)!important}
-        .rhythm-score{max-height:264px;overflow-x:hidden;overflow-y:auto}.rhythm-score.has-multiple-systems{height:264px}
+        .rhythm-score{max-height:264px;overflow:auto}.rhythm-stable-score{display:block;max-width:none}.rhythm-score.has-multiple-systems{height:264px}
         @media(max-width:860px){.rhythm-lab-controls{grid-template-columns:repeat(2,minmax(0,1fr))}.rhythm-lab-controls>button{grid-column:1/-1}.rhythm-score{overflow:auto}}
         @media(max-width:520px){.rhythm-lab-controls{grid-template-columns:1fr}.rhythm-tool{flex:0 0 36px}.rhythm-editor-actions button{font-size:.68rem;padding-inline:4px}}
         .beat-col { display: flex; flex-direction: column; align-items: center; gap: 5px; }
@@ -977,9 +977,9 @@
 </footer>
 
 <script src="../../shared/rhythm-engine.js?v=20260918-locking-in"></script>
-<script src="../../shared/music-practice.js?v=20261014-position-1"></script>
+<script src="../../shared/music-practice.js?v=20261014-stable-1"></script>
 <script src="../editor-crescendo/src/bravura-palette-paths.js?v=20261014-preview-1"></script>
-<script src="rhythm-writing.js?v=20261014-position-1"></script>
+<script src="rhythm-writing.js?v=20261014-stable-1"></script>
 <script>
     // --- Lógica de Acordeón ---
     function toggleDrawer(id) {
@@ -1311,7 +1311,7 @@
         const subValue=kind==='triplets'?'3':String(Math.max(.25,1/base));if([...UI.subSel.options].some(o=>o.value===subValue))UI.subSel.value=subValue;
         UI.subSel.dispatchEvent(new Event('change'));renderVisualizer();syncBasicLabels();
     }
-    function renderRhythmScore(message=''){if(!window.CrescendoPractice)return;const meter=currentRhythmMeter(),clef=UI.rhythmClef.value,bars=Math.max(1,Math.min(16,Number(UI.rhythmBars.value)||1)),systems=Math.ceil(bars/4),used=rhythmBeats(rhythmUsedTicks()),total=rhythmCapacity(meter)*bars;UI.rhythmScore.innerHTML=window.CrescendoPractice.sequence(rhythmWriting.notation(rhythmEditorEvents,rhythmCapacity(meter),bars).filter(e=>clef==='grand'||e.staff===activeRhythmStaff),{meter,clef,bars,measuresPerSystem:4,divisions:RHYTHM_TICKS_PER_BEAT});UI.rhythmScore.classList.toggle('has-multiple-systems',systems>1);const staff=UI.rhythmScore.querySelector('.cp-staff');if(staff){staff.style.width='100%';staff.style.height=`${Math.max(132,systems*(clef==='grand'?240:126))}px`;staff.style.minHeight=staff.style.height}UI.rhythmStatus.textContent=message||`${bars} ${bars===1?'compás':'compases'} en ${meter} · ${used.toFixed(2).replace(/\.00$/,'')} de ${total} tiempos · ${clef==='grand'?'sol y fa · escribiendo en '+(activeRhythmStaff===2?'fa':'sol'):'clave de '+(clef==='bass'?'fa':'sol')} · clic: ${UI.rhythmPlacement.options[UI.rhythmPlacement.selectedIndex].text}`}
+    function renderRhythmScore(message=''){if(!window.CrescendoPractice)return;const meter=currentRhythmMeter(),clef=UI.rhythmClef.value,bars=Math.max(1,Math.min(16,Number(UI.rhythmBars.value)||1)),systems=Math.ceil(bars/4),used=rhythmBeats(rhythmUsedTicks()),total=rhythmCapacity(meter)*bars;UI.rhythmScore.innerHTML=rhythmWriting.render(rhythmEditorEvents,{meter,clef,bars,width:UI.rhythmScore.clientWidth||900,glyphs:window.CrescendoBravuraPalette});UI.rhythmScore.classList.toggle('has-multiple-systems',systems>1);UI.rhythmStatus.textContent=message||`${bars} ${bars===1?'compás':'compases'} en ${meter} · ${used.toFixed(2).replace(/\.00$/,'')} de ${total} tiempos · ${clef==='grand'?'sol y fa · escribiendo en '+(activeRhythmStaff===2?'fa':'sol'):'clave de '+(clef==='bass'?'fa':'sol')} · clic: ${UI.rhythmPlacement.options[UI.rhythmPlacement.selectedIndex].text}`}
     function addRhythmEditorEvent(note){const before=JSON.stringify(rhythmEditorEvents);const message=rhythmWriting.append(activeRhythmTool,rhythmEditorEvents,note,rhythmCapacity(currentRhythmMeter()),Math.max(1,Math.min(16,Number(UI.rhythmBars.value)||1)),activeRhythmStaff,rhythmPointerTarget);if(!message)rhythmHistory.push(before);syncRhythmPalette();rhythmPreview.replaceChildren();renderRhythmScore(message);}
     function syncRhythmPalette(){UI.rhythmPalette.querySelectorAll('button').forEach(b=>{const a=b.dataset.action,v=b.dataset.value;const active=a==='duration'?v===activeRhythmTool.duration:a==='rest'?activeRhythmTool.rest:a==='dots'?Number(v)===activeRhythmTool.dots:Number(v)===activeRhythmTool.actual;b.classList.toggle('is-active',active);b.setAttribute('aria-pressed',String(active));});}
     function buildRhythmPalette(){
@@ -1321,44 +1321,29 @@
     }
     const guideLayer=document.createElement('div');guideLayer.className='rhythm-guide-layer';guideLayer.setAttribute('aria-hidden','true');UI.rhythmScoreOverlay.appendChild(guideLayer);
     function drawRhythmGuides(){
-      const svg=UI.rhythmScore.querySelector('svg');guideLayer.replaceChildren();if(!svg||UI.rhythmLab.hidden)return;
-      const wrap=UI.rhythmScoreOverlay.getBoundingClientRect(),rects=[...svg.querySelectorAll('line,path,rect')].map(e=>e.getBoundingClientRect());
-      const lines=rects.filter(r=>r.width>100&&r.height<3&&r.top>=wrap.top&&r.top<wrap.bottom).sort((a,b)=>a.top-b.top),unique=[];
-      for(const r of lines)if(!unique.length||Math.abs(r.top-unique.at(-1).top)>2)unique.push(r);
-      const cap=rhythmCapacity(currentRhythmMeter()),used=rhythmBeats(rhythmUsedTicks()),bar=rhythmPointerTarget?.bar??Math.min(Math.floor(used/cap),Number(UI.rhythmBars.value)-1),system=Math.floor(bar/4),scroll=UI.rhythmScore.scrollTop;
-      const top=unique[Math.max(0,system*(UI.rhythmClef.value==='grand'?10:5)+(UI.rhythmClef.value==='grand'?(activeRhythmStaff-1)*5:0)-Math.floor(scroll/(UI.rhythmClef.value==='grand'?240:126))*(UI.rhythmClef.value==='grand'?10:5))]||unique[0];if(!top)return;const spacing=(unique[4]?.top-unique[0].top)/4||10;
-      const bounds=[...new Set(rects.filter(r=>r.width<4&&r.height>=spacing*3&&Math.abs(r.top-top.top)<spacing*2).map(r=>Math.round(r.left)))].sort((a,b)=>a-b);
-      // Reserve the clef and time signature area before placing the input cursor.
-      const clefBounds=[...svg.querySelectorAll('.vf-clef')].map(el=>el.getBoundingClientRect()).filter(r=>r.bottom>=top.top-spacing&&r.top<=top.top+spacing*5);
-      const localBar=bar%4,first=Math.max(top.left+spacing*7.5,...clefBounds.map(r=>r.right+spacing*5)),last=top.right;const measureBounds=bounds.filter(x=>x>first+spacing);const start=localBar===0?first:(measureBounds[localBar-1]||first+(last-first)*localBar/4)+spacing,end=measureBounds[localBar]||first+(last-first)*(localBar+1)/4;
-      const step=Math.max(.03125,activeRhythmTool.beats*(activeRhythmTool.actual?activeRhythmTool.normal/activeRhythmTool.actual:1));
-      const mark=(x,y,h,cls)=>{const m=document.createElement('i');m.className=cls;m.style.cssText=`left:${x-wrap.left}px;top:${Math.max(0,y-wrap.top)}px;height:${h}px`;guideLayer.appendChild(m);};
-      for(let beat=0,count=0;beat<cap-.00001&&count<128;beat+=step,count++)mark(start+(end-start-8)*beat/cap,top.top-11,7,'rhythm-guide-tick');
-      mark(start+(end-start-8)*(rhythmPointerTarget?.beat??Math.min(cap,used-bar*cap))/cap,top.top-14,spacing*4+25,'rhythm-guide-caret');
+      guideLayer.replaceChildren();const wrap=UI.rhythmScoreOverlay.getBoundingClientRect(),cap=rhythmCapacity(currentRhythmMeter()),used=rhythmBeats(rhythmUsedTicks()),bar=rhythmPointerTarget?.bar??Math.min(Math.floor(used/cap),Number(UI.rhythmBars.value)-1);
+      const box=UI.rhythmScore.querySelector(`.rhythm-measure-hit[data-bar="${bar}"][data-staff="${activeRhythmStaff}"]`);if(!box)return;
+      const svg=box.ownerSVGElement.getBoundingClientRect(),start=Number(box.dataset.start)+svg.left-wrap.left,end=Number(box.dataset.end)+svg.left-wrap.left,top=Number(box.dataset.top)+svg.top-wrap.top;
+      const grid=activeRhythmTool.actual?activeRhythmTool.beats*activeRhythmTool.normal/activeRhythmTool.actual:Math.min(.5,activeRhythmTool.beats);
+      const mark=(x,y,h,cls)=>{const m=document.createElement('i');m.className=cls;m.style.cssText=`left:${x}px;top:${y}px;height:${h}px`;guideLayer.appendChild(m);};
+      for(let beat=0;beat<cap-.00001;beat+=grid)mark(start+(end-start)*beat/cap,top-16,7,'rhythm-guide-tick');
+      mark(start+(end-start)*(rhythmPointerTarget?.beat??Math.min(cap,used-bar*cap))/cap,top-20,80,'rhythm-guide-caret');
     }
-    new MutationObserver(()=>requestAnimationFrame(drawRhythmGuides)).observe(UI.rhythmScore,{childList:true,subtree:true});UI.rhythmScore.addEventListener('scroll',drawRhythmGuides);window.addEventListener('resize',drawRhythmGuides);
+    new MutationObserver(()=>requestAnimationFrame(drawRhythmGuides)).observe(UI.rhythmScore,{childList:true,subtree:true});UI.rhythmScore.addEventListener('scroll',drawRhythmGuides);window.addEventListener('resize',()=>{renderRhythmScore();drawRhythmGuides()});
     buildRhythmPalette();
 
     function fillEditorWithRests(){renderRhythmScore('Los espacios vacíos se completan automáticamente con silencios.');}
 
     UI.rhythmPalette.addEventListener('click',event=>{const b=event.target.closest('[data-action]');if(!b)return;rhythmWriting.select(activeRhythmTool,b.dataset.action,b.dataset.action==='duration'?b.dataset.value:Number(b.dataset.value));syncRhythmPalette();drawRhythmGuides();if(rhythmPointerEvent)showRhythmPreview(rhythmPointerEvent);});
     document.addEventListener('keydown',e=>{if(UI.rhythmLab.hidden||e.ctrlKey||e.metaKey||e.altKey||e.target.closest('input,select,textarea,[contenteditable="true"]'))return;const d=rhythmWriting.durations.find(d=>d[2]===e.key),k=e.key.toLowerCase();if(!d&&!['s','p'].includes(k))return;e.preventDefault();if(e.repeat)return;rhythmWriting.select(activeRhythmTool,d?'duration':k==='s'?'rest':'dots',d?d[0]:1);syncRhythmPalette();drawRhythmGuides();if(rhythmPointerEvent)showRhythmPreview(rhythmPointerEvent);});
-    function clickedStaffPosition(event){const svg=UI.rhythmScore.querySelector('svg'),fallback=UI.rhythmScoreOverlay.getBoundingClientRect();if(!svg)return Math.max(0,Math.min(12,Math.round(((event.clientY-fallback.top)/fallback.height)*12)));const svgRect=svg.getBoundingClientRect(),horizontal=[...svg.querySelectorAll('line,path,rect')].map(el=>{try{const box=el.getBoundingClientRect();return box.width>svgRect.width*.12&&box.height<3?box.top+box.height/2:null}catch(_){return null}}).filter(Number.isFinite).sort((a,b)=>a-b),unique=[];horizontal.forEach(y=>{if(!unique.length||Math.abs(y-unique[unique.length-1])>2)unique.push(y)});const candidates=unique.filter(y=>y>=svgRect.top&&y<=svgRect.bottom),systems=[];for(let index=0;index+4<candidates.length;index+=5)systems.push(candidates.slice(index,index+5));let lines=systems.sort((a,b)=>Math.abs((a[0]+a[4])/2-event.clientY)-Math.abs((b[0]+b[4])/2-event.clientY))[0];if(!lines){const top=svgRect.top+svgRect.height*.18,spacing=svgRect.height*.045;lines=Array.from({length:5},(_,i)=>top+i*spacing)}if(UI.rhythmClef.value==='grand'&&candidates.includes(lines[0]))activeRhythmStaff=Math.floor(candidates.indexOf(lines[0])/5)%2+1;const spacing=(lines[4]-lines[0])/4||8;rhythmPointerStaff={top:lines[0],spacing,system:Math.floor(candidates.indexOf(lines[0])/5/(UI.rhythmClef.value==='grand'?2:1))};return Math.max(0,Math.min(12,Math.round(2+(event.clientY-lines[0])/(spacing/2))))}
+    function clickedStaffPosition(event){locateRhythmTime(event);if(!rhythmPointerStaff)return 6;return Math.max(0,Math.min(12,Math.round(2+(event.clientY-rhythmPointerStaff.top)/5)));}
     let rhythmPointerStaff=null,rhythmPointerEvent=null;
     const rhythmPreview=document.createElement('div');rhythmPreview.className='rhythm-note-preview';rhythmPreview.setAttribute('aria-hidden','true');rhythmPreview.style.cssText='position:absolute;inset:0;pointer-events:none;overflow:hidden;color:#ba8424;opacity:.65';UI.rhythmScoreOverlay.appendChild(rhythmPreview);
     function locateRhythmTime(event){
-      if(!rhythmPointerStaff)return;
-      const {top,spacing,system}=rhythmPointerStaff,svg=UI.rhythmScore.querySelector('svg');if(!svg)return;
-      const rects=[...svg.querySelectorAll('line,path,rect')].map(el=>el.getBoundingClientRect());
-      const horizontals=rects.filter(r=>r.width>100&&r.height<3&&Math.abs(r.top-top)<spacing*5);if(!horizontals.length)return;
-      const left=Math.min(...horizontals.map(r=>r.left)),right=Math.max(...horizontals.map(r=>r.right));
-      const clefs=[...svg.querySelectorAll('.vf-clef')].map(el=>el.getBoundingClientRect()).filter(r=>r.bottom>=top-spacing&&r.top<=top+spacing*5);
-      const first=Math.max(left+spacing*7.5,...clefs.map(r=>r.right+spacing*5));
-      const edges=[...new Set(rects.filter(r=>r.width<4&&r.height>=spacing*3&&Math.abs(r.top-top)<spacing*2&&r.left>first+spacing).map(r=>Math.round(r.left)))].sort((a,b)=>a-b);
-      if(!edges.length)edges.push(...[1,2,3,4].map(n=>first+(right-first)*n/4));
-      const found=edges.findIndex(x=>event.clientX<x),local=found<0?edges.length-1:found,start=local===0?first:edges[local-1]+spacing,end=edges[local];
-      const cap=rhythmCapacity(currentRhythmMeter()),grid=activeRhythmTool.actual?activeRhythmTool.beats*activeRhythmTool.normal/activeRhythmTool.actual:Math.min(.5,activeRhythmTool.beats);
-      rhythmPointerTarget={bar:Math.min(Number(UI.rhythmBars.value)-1,system*4+local),beat:Math.max(0,Math.min(cap-activeRhythmTool.beats*rhythmWriting.factor(activeRhythmTool.dots)*(activeRhythmTool.actual?activeRhythmTool.normal/activeRhythmTool.actual:1),Math.round((event.clientX-start)/(end-start-8)*cap/grid)*grid))};
+      const boxes=[...UI.rhythmScore.querySelectorAll('.rhythm-measure-hit')];if(!boxes.length)return;
+      const box=boxes.sort((a,b)=>{const distance=el=>{const r=el.getBoundingClientRect();return Math.abs(event.clientY-(r.top+r.height/2))*10+Math.max(r.left-event.clientX,0,event.clientX-r.right);};return distance(a)-distance(b);})[0];
+      const svg=box.ownerSVGElement.getBoundingClientRect(),start=svg.left+Number(box.dataset.start),end=svg.left+Number(box.dataset.end),cap=rhythmCapacity(currentRhythmMeter()),grid=activeRhythmTool.actual?activeRhythmTool.beats*activeRhythmTool.normal/activeRhythmTool.actual:Math.min(.5,activeRhythmTool.beats),duration=activeRhythmTool.beats*rhythmWriting.factor(activeRhythmTool.dots)*(activeRhythmTool.actual?activeRhythmTool.normal/activeRhythmTool.actual:1);
+      activeRhythmStaff=Number(box.dataset.staff);rhythmPointerStaff={top:svg.top+Number(box.dataset.top),spacing:10};rhythmPointerTarget={bar:Number(box.dataset.bar),beat:Math.max(0,Math.min(cap-duration,Math.round((event.clientX-start)/(end-start)*cap/grid)*grid))};
     }
     function showRhythmPreview(event){
       rhythmPointerEvent=event;const index=clickedStaffPosition(event);locateRhythmTime(event);drawRhythmGuides();
