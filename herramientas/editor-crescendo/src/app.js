@@ -1219,7 +1219,7 @@
 
   function timeSignatureBaseSize(meter = state.meter || DEFAULT_METER) {
     const top = String(meter.top || "4");
-    return top.length > 3 ? 24 : 28;
+    return STAFF_GAP * (top.length > 3 ? 3 : 4);
   }
 
   function keySignatureAccidentalCount(signature = state.keySignature) {
@@ -18038,27 +18038,22 @@
   }
 
   function renderTimeSignature(root, meter = state.meter || { ...DEFAULT_METER }, xOverride = null) {
-    const top = String(meter.top || "4");
-    const bottom = String(meter.bottom || "4");
-    const baseSize = timeSignatureBaseSize(meter);
-    const timeSignatureStyle = `font-size:${baseSize * appearanceValue("timeSignatureScale")}px`;
+    const top = String(meter.top || "4"), bottom = String(meter.bottom || "4");
+    const scale = appearanceValue("timeSignatureScale");
+    const size = timeSignatureBaseSize(meter) * scale;
     const x = Number.isFinite(xOverride) ? xOverride : timeSignatureX();
-    const y = pitchYForSystem(0, renderSystemIndex) + appearanceValue("timeSignatureOffsetY");
+    const centerX = x + estimatedTimeSignatureWidth(meter) / 2;
+    const centerY = pitchYForSystem(0, renderSystemIndex) + appearanceValue("timeSignatureOffsetY");
+    const style = `font-size:${size}px;font-family:"MTF Improviso Light";font-weight:400;font-style:normal;`;
+    const attrs = { class: "music-glyph time-signature", "text-anchor": "middle", style };
     if (meter.cutTime) {
-      root.appendChild(textNode(x, y + 9, smufl("timeSigCutCommon"), {
-        class: "music-glyph time-signature",
-        style: `font-size:${32 * appearanceValue("timeSignatureScale")}px;${musicFontStyle("musicGlyphFont")}`
-      }));
+      root.appendChild(textNode(centerX, centerY, smufl("timeSigCutCommon"), attrs));
       return;
     }
-    root.appendChild(textNode(x, y - 4, top, {
-      class: "time-signature",
-      style: `${timeSignatureStyle};${textFontStyle("timeSignatureFont")}`
-    }));
-    root.appendChild(textNode(x, y + 20, bottom, {
-      class: "time-signature",
-      style: `${timeSignatureStyle};${textFontStyle("timeSignatureFont")}`
-    }));
+    // SMuFL time-signature digits are centered on their baseline, unlike text digits.
+    const digits = value => [...value].map(c => /[0-9]/.test(c) ? String.fromCodePoint(0xE080 + Number(c)) : c).join("");
+    root.appendChild(textNode(centerX, centerY - STAFF_GAP, digits(top), attrs));
+    root.appendChild(textNode(centerX, centerY + STAFF_GAP, digits(bottom), attrs));
   }
 
   function renderClefGlyph(root, clefId, x, y, options = {}) {
