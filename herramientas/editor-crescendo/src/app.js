@@ -17868,6 +17868,9 @@
     const start = layout.starts[normalizedMeasure] ?? layout.starts.at(-1);
     const width = layout.widths[normalizedMeasure] ?? layout.widths.at(-1);
     const normalizedTick = Math.max(0, Math.min(measureTicksForIndex(normalizedMeasure), Number(tick) || 0));
+    // Empty measure rests have a single optical anchor. Writing slots must span
+    // the measure instead of all inheriting that anchor's x position.
+    if (isNoteInputMode()) return xForTickWithInternalClefs(start, width, normalizedMeasure, normalizedTick, true);
     const indexed = rhythmicColumnIndex.get(0, normalizedMeasure, normalizedTick);
     if (Number.isFinite(indexed)) return indexed;
     if (!measure || !Number.isFinite(start) || !Number.isFinite(width)) {
@@ -17983,7 +17986,10 @@
     clearActiveNote();
     if (!pitchSnapshot.visible) hideCursorPitch();
     state.cursorMeasure = measureIndex;
-    state.cursorTick = Math.max(0, Math.min(measureTicksForIndex(measureIndex), Number(entry.tickStart) || 0));
+    const pointer = svgPointFromEvent(event);
+    state.cursorTick = pointer && isNoteInputMode()
+      ? tickFromMeasureX(lastRenderedLayout || buildLayout(), measureIndex, pointer.x)
+      : Math.max(0, Math.min(measureTicksForIndex(measureIndex), Number(entry.tickStart) || 0));
     state.cursorStaffStep = pitchSnapshot.visible
       ? staffStepForSystem(pitchSnapshot.staffStep)
       : staffStepForEntryPointer(entry, event);
