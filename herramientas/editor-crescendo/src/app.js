@@ -15701,30 +15701,16 @@
     applyIconAppearance();
     scheduleIconFit();
     if (paletteId === "figures") {
-      const center = () => durationTools.querySelectorAll(".palette-note-duration .music-glyph,.palette-rest-duration .music-glyph").forEach(span => {
-        const durationId = span.closest("button")?.dataset.duration;
-        const icon = el("svg", { viewBox: "0 0 48 48", class: "centered-figure-icon", "aria-hidden": "true" });
-        if (durationId !== "active") {
-          const long = ["whole", "breve"].includes(durationId);
-          const hollow = long || durationId === "half";
-          const cx = long ? 24 : 20, cy = long ? 24 : 34;
-          icon.appendChild(el("ellipse", { cx, cy, rx: long ? 9 : 7, ry: 4.8, transform: `rotate(-18 ${cx} ${cy})`, fill: hollow ? "none" : "currentColor", stroke: "currentColor", "stroke-width": hollow ? 2 : 0 }));
-          if (durationId === "breve") for (const x of [12,36]) icon.appendChild(el("path",{d:`M${x} 17V31`,stroke:"currentColor","stroke-width":2}));
-          if (!long) {
-            icon.appendChild(el("path", { d:"M26 33V8", fill:"none", stroke:"currentColor", "stroke-width":1.8 }));
-            const flags = { eighth:1, sixteenth:2, "thirty-second":3, "sixty-fourth":4, "one-twenty-eighth":5 }[durationId] || 0;
-            for (let i=0;i<flags;i++) { const y=8+i*4.5;icon.appendChild(el("path", { d:`M26 ${y} C27 ${y+6} 37 ${y+5} 32 ${y+15} C36 ${y+7} 27 ${y+8} 26 ${y+4}Z`, fill:"currentColor" })); }
-          }
-          span.replaceWith(icon);
-        } else {
-          const glyph = textNode(24, 31, span.textContent, { "font-family":"MTF Improviso Light", "font-size":"32", "text-anchor":"middle", fill:"currentColor" });
-          icon.appendChild(glyph);span.replaceWith(icon);
-          const box=glyphBBox("restQuarter"),b={x:box.sw[0]*8,y:-box.ne[1]*8,width:(box.ne[0]-box.sw[0])*8,height:(box.ne[1]-box.sw[1])*8};
-          const scale=Math.min(30/b.height,24/b.width);
-          glyph.setAttribute("x","0");glyph.setAttribute("y","0");glyph.removeAttribute("text-anchor");glyph.setAttribute("transform",`translate(${24-(b.x+b.width/2)*scale} ${24-(b.y+b.height/2)*scale}) scale(${scale})`);
-        }
+      durationTools.querySelectorAll(".palette-note-duration .music-glyph,.palette-rest-duration .music-glyph").forEach(span => {
+        const id = span.closest("button")?.dataset.duration;
+        const glyph = window.CrescendoBravuraPalette?.[id];
+        if (!glyph) return;
+        const wide = ["whole", "breve"].includes(id);
+        const scale = Math.min((wide ? 14 : 36) / glyph.height, 30 / glyph.width);
+        const icon = el("svg", { viewBox:"0 0 48 48", class:"centered-figure-icon", "aria-hidden":"true" });
+        icon.appendChild(el("path", { d:glyph.d, fill:"currentColor", transform:`translate(${24-(glyph.x+glyph.width/2)*scale} ${24-(glyph.y+glyph.height/2)*scale}) scale(${scale})` }));
+        span.replaceWith(icon);
       });
-      if (document.fonts) document.fonts.load('32px "MTF Improviso Light"').then(() => requestAnimationFrame(center));else requestAnimationFrame(center);
     }
   }
 
