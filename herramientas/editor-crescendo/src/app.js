@@ -3990,7 +3990,7 @@
     const tuplet = normalizeTuplet(state.activeTuplet);
     return Writing.activeGridDuration({
       activeTuplet: tuplet,
-      gridDurationId: state.gridDurationId,
+      gridDurationId: isNoteInputMode() ? state.activeDuration?.id : state.gridDurationId,
       durationById,
       defaultGridDurationId: DEFAULT_GRID_DURATION_ID,
       durations,
