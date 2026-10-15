@@ -3498,6 +3498,7 @@
   function copyEntryPitchData(source, target, includeAccidentals) {
     if (source.type === "rest" || target.type === "rest") return;
     target.staffStep = source.staffStep;
+    target.ottava = source.ottava === true;
     if (Array.isArray(source.chordSteps)) target.chordSteps = [...source.chordSteps];
     else delete target.chordSteps;
     if (Number.isFinite(source.diatonicStep)) target.diatonicStep = source.diatonicStep;
@@ -5730,6 +5731,7 @@
     saveHistory();
     const tupletWrite = activeTuplet ? nextTupletWriteInfo() : null;
     const entry = makeEntry(state.mode, duration, staffStep, null);
+    if(entry.type==="note")entry.ottava=state.ottavaInput===true;
     entry.dots = inputDots;entry.dotted = inputDots > 0;
     setEntryVoice(entry, voice);
     if (state.forceDurationMode) entry.forceDuration = true;
@@ -9080,7 +9082,7 @@
       const diatonicStep = entryDiatonicStepForStaffStep(entry, staffStep);
       const accidental = effectiveEntryAccidental(entry, staffStep) ||
         diatonicAccidentalForMeasure(diatonicStep, measureIndex);
-      return midiForDiatonicStep(diatonicStep, accidental);
+      return midiForDiatonicStep(diatonicStep, accidental)+(entry.ottava?12:0);
     }).filter(Number.isFinite).sort((a, b) => a - b);
   }
 
@@ -9607,6 +9609,7 @@
     if (!entry || ticks <= EPSILON) return [];
     const durationInfo = musicXmlDurationInfo(ticks, entry.durationId, dotCountForEntry(entry));
     const base = {
+      ottava: entry.ottava === true,
       duration: ticks,
       durationId: durationInfo.durationId,
       dots: durationInfo.dots,
@@ -9647,7 +9650,7 @@
         chord: index > 0,
         staffStep,
         diatonicStep,
-        pitch: musicXmlPitchForDiatonicStep(diatonicStep, accidental),
+        pitch: musicXmlPitchForDiatonicStep(diatonicStep+(entry.ottava?7:0), accidental),
         notations: musicXmlNotationsForEntryHead(entry, measureIndex, systemIndex, staffStep),
         tieStart: musicXmlTieStartsForEntry(entry, staffStep)
       };
@@ -13365,6 +13368,7 @@
 
   function selectWritingDecoration(tool) {
     if(tool!=="grace"){state.graceInput=false;renderPalette("figures");}
+    if (tool === "ottava") return toggleWritingOttava();
     if (tool === "tie") return toggleDurationTieFromCurrentNote();
     if (tool === "slur") return applyPhraseSlurType("slur");
     if (tool === "staccato") return insertNotationMark({ markType: "glyph", glyphName: "articStaccatoAbove" });
@@ -13373,6 +13377,18 @@
       if (!state.cursorActive) enterFigureWritingMode();
       setMode("note");renderPalette("figures");render();
     }
+  }
+
+  function toggleWritingOttava() {
+    const notes=selectedNoteheadLocationsForContext().map(location=>location.entry);
+    if(notes.length){saveHistory();const enabled=notes.some(entry=>!entry.ottava);notes.forEach(entry=>entry.ottava=enabled);}
+    else state.ottavaInput=!state.ottavaInput;
+    renderPalette("figures");render();
+  }
+
+  function renderOttavaRanges(root,layout){
+    let group=[];const flush=()=>{if(!group.length)return;const start=group[0].x-7,end=group.at(-1).x+22,y=Math.min(staffTopY()-48,...group.map(item=>(entryVisualRect(item.entry,item.x)?.top??staffTopY())-17));root.appendChild(textNode(start,y,"8va",{class:"ottava-label",style:"font:italic 14px Georgia,serif;fill:currentColor"}));root.appendChild(el("path",{class:"ottava-line",d:`M${start+27} ${y-4}H${Math.max(start+40,end)}v7`,fill:"none",stroke:"currentColor","stroke-dasharray":"4 3","stroke-width":1.2}));group=[];};
+    positionedEntries(layout).forEach(item=>{if(item.entry.type==="note"&&item.entry.ottava)group.push(item);else flush();});flush();
   }
 
   function insertGraceNote(staffStep) {
@@ -15628,7 +15644,7 @@
       applyIconTooltipToElement(button);
       if (item.writingTool) {
         button.dataset.writingTool = item.writingTool;
-        const active = item.writingTool === "grace" && state.graceInput === true;
+        const active = item.writingTool === "grace" ? state.graceInput === true : item.writingTool === "ottava" && state.ottavaInput === true;
         button.classList.toggle("is-active", active);button.setAttribute("aria-pressed", String(active));
         button.addEventListener("click", () => selectWritingDecoration(item.writingTool));
       } else if (item.ticks) {
@@ -16874,7 +16890,7 @@
 
   function pointIsInStaffArea(point) {
     if (!point) return false;
-    const verticalPadding = STEP_HEIGHT * 2;
+    const verticalPadding = HIT_PADDING;
     const systemIndex = systemIndexFromY(point.y);
     return point.y >= staffTopYForSystem(systemIndex) - verticalPadding &&
       point.y <= staffBottomYForSystem(systemIndex) + verticalPadding;
@@ -20497,6 +20513,7 @@
     renderBeams(root, allFlagged);
     renderTupletIndicators(root, layout);
     renderGraceNotes(root, layout);
+    renderOttavaRanges(root, layout);
     renderTies(root, layout);
   }
 

@@ -167,6 +167,7 @@
       { id: "writing-tie", label: "Ligadura de prolongación · notas de igual altura", symbol: "♩⌒♩", writingTool: "tie" },
       { id: "writing-staccato", label: "Nota picada · staccato", symbol: "♩·", writingTool: "staccato" },
       { id: "writing-grace", label: "Nota de adorno · sin consumir tiempos", symbol: String.fromCodePoint(0xE560), music: true, writingTool: "grace" },
+      { id: "writing-ottava", label: "8va · tocar una octava más arriba", symbol: "8va", writingTool: "ottava" },
       ...inputModifierPalette
     ];
     const articulations = articulationPaletteItems(smufl);

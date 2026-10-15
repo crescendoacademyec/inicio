@@ -564,9 +564,13 @@
       staff.voices.forEach((voice) => {
         if (wroteStream) rows.push(...backupRows(measure.ticks, model.divisions, level + 1));
         const voiceNumber = exportedVoiceNumber(staffNumber, voice.number);
+        let ottavaActive=false;
+        const octaveDirection=type=>[line(level+1,'<direction placement="above">'),line(level+2,`<direction-type><octave-shift type="${type}" size="8" number="1"/></direction-type>`),line(level+2,`<staff>${staffNumber}</staff>`),line(level+1,'</direction>')];
         (voice.events || []).forEach((event) => {
+          if(!event.chord&&!!event.ottava!==ottavaActive){rows.push(...octaveDirection(event.ottava?'down':'stop'));ottavaActive=!!event.ottava;}
           rows.push(...noteRows(event, staffNumber, voiceNumber, tieState, model.divisions, level + 1));
         });
+        if(ottavaActive)rows.push(...octaveDirection('stop'));
         wroteStream = true;
       });
     });
