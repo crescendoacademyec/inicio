@@ -655,7 +655,8 @@
         }
     .rhythm-tool{position:relative;display:flex;align-items:center;justify-content:center;flex:0 0 40px;max-width:none;padding:1px;font:700 17px/1 sans-serif}.rhythm-tool svg{width:34px;height:32px;pointer-events:none}.rhythm-tool small{position:absolute;bottom:2px;right:3px;font:600 8px/1 sans-serif;opacity:.7}.rhythm-guide-layer{position:absolute;inset:0;pointer-events:none;overflow:hidden}.rhythm-guide-tick{position:absolute;width:1px;background:#c68e25}.rhythm-guide-caret{position:absolute;width:2px;background:#c68e25;opacity:.8}
 
-    .rhythm-lab-controls{grid-template-columns:repeat(5,minmax(76px,1fr)) auto}
+    .rhythm-lab-controls{grid-template-columns:minmax(76px,1fr) minmax(66px,.7fr) minmax(76px,1fr) minmax(76px,1fr) minmax(138px,1.3fr) auto}
+    .rhythm-lab-controls label:has(#rhythmPlacement){white-space:nowrap}
     .rhythm-lab-controls .rhythm-editor-actions{display:flex;align-items:center;gap:5px;margin:0;white-space:nowrap}
     .rhythm-lab-controls .rhythm-editor-actions button{width:auto;min-height:38px;min-width:0;padding:6px 8px;font-size:.66rem;line-height:1.2;border:1px solid rgba(255,255,255,.14);border-radius:9px;background:rgba(0,0,0,.3);color:var(--text);cursor:pointer}
     .rhythm-lab-controls .rhythm-editor-actions .rhythm-icon-action{display:inline-flex;align-items:center;justify-content:center;width:34px;padding:6px;flex:0 0 34px}
@@ -772,7 +773,7 @@
             <div class="rhythm-lab-head"><div><h2 id="rhythmLabTitle">Laboratorio de ritmo y feel</h2><p>Genera un compás completo, palméalos primero y después practícalo con distintas ubicaciones del clic.</p></div></div>
             <div class="rhythm-lab-controls">
                 <label>Compases<span class="rhythm-stepper"><button type="button" id="rhythmBarsMinus" aria-label="Quitar un compás">−</button><input id="rhythmBars" type="number" min="1" max="16" value="4" inputmode="numeric"><button type="button" id="rhythmBarsPlus" aria-label="Añadir un compás">+</button></span></label>
-                <label>Clave<select id="rhythmClef"><option value="treble">Sol</option><option value="bass">Fa</option><option value="grand">Sol y fa · gran pentagrama</option></select></label>
+                <label>Clave<select id="rhythmClef"><option value="treble">Sol</option><option value="bass">Fa</option><option value="grand">Sol y fa</option></select></label>
                 <label>Figura base<select id="rhythmFigure"><option value="1">Negras</option><option value=".5">Corcheas</option><option value=".333333">Tresillos</option><option value=".25">Semicorcheas</option><option value="2">Blancas</option></select></label>
                 <label>Ejercicio<select id="rhythmExercise"><option value="steady">Pulso continuo</option><option value="syncopation">Síncopas</option><option value="rests">Notas y silencios</option><option value="mixed">Figuras mixtas</option><option value="triplets">Tresillos</option></select></label>
                 <label>Colocación del clic<select id="rhythmPlacement"><option value="all">Todos los pulsos</option><option value="oneThree">1 y 3</option><option value="twoFour">2 y 4</option><option value="beatOne">Solo 1</option><option value="beatFour">Solo 4</option><option value="upbeat">Contratiempo</option><option value="tripletEnd">3.er parcial del tresillo</option><option value="randomMute">Silencios aleatorios</option></select></label>
