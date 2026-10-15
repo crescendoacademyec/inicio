@@ -13347,8 +13347,14 @@
 
   function selectFigureDuration(duration) {
     if (!duration) return;
+    const tuplet = normalizeTuplet(state.activeTuplet);
+    if (tuplet && tuplet.unitDurationId !== duration.id) {
+      completeActiveTupletRun({ saveHistory: false });
+      state.activeTuplet = normalizeTuplet({ actual: tuplet.actual, normal: tuplet.normal, unitDurationId: duration.id });
+      state.activeTupletRun = null;
+    }
     setMode(state.mode === "rest" ? "rest" : "note");
-    chooseDuration(duration, { keepTuplet: Writing.keepTupletForDuration(normalizeTuplet(state.activeTuplet), duration) });
+    chooseDuration(duration, { keepTuplet: !!state.activeTuplet });
     if (!state.cursorActive) enterFigureWritingMode();
     render();
   }
@@ -17953,7 +17959,6 @@
     const pitchSnapshot = options.pointerPitch ? { visible: false } : rememberFreeCursorPitch();
     setActiveSystemIndex(systemIndexFromY(point.y));
     const previousMeasureIndex = state.cursorMeasure;
-    deactivateTupletWriting();
     const layout = buildLayout();
     const measureIndex = measureIndexFromX(layout, point.x);
     ensureMeasure(measureIndex);
@@ -17965,6 +17970,7 @@
     state.cursorStaffStep = pitchSnapshot.visible
       ? staffStepForSystem(pitchSnapshot.staffStep)
       : staffStepForSystem(stepFromY(point.y, activeSystemIndex()));
+    if (state.activeTuplet && (!state.activeTupletRun || state.activeTupletRun.index === 0)) startTupletRun(state.activeTuplet, measureStartAbsoluteTick(measureIndex) + state.cursorTick);
     state.cursorActive = true;
     state.entryCursorActive = false;
     state.selectMode = false;
@@ -17993,6 +17999,7 @@
     state.cursorStaffStep = pitchSnapshot.visible
       ? staffStepForSystem(pitchSnapshot.staffStep)
       : staffStepForEntryPointer(entry, event);
+    if (state.activeTuplet && (!state.activeTupletRun || state.activeTupletRun.index === 0)) startTupletRun(state.activeTuplet, measureStartAbsoluteTick(measureIndex) + state.cursorTick);
     state.cursorActive = true;
     state.entryCursorActive = false;
     state.selectMode = false;
