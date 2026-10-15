@@ -979,7 +979,7 @@
 <script src="../../shared/rhythm-engine.js?v=20260918-locking-in"></script>
 <script src="../../shared/music-practice.js?v=20261014-engraving-2"></script>
 <script src="../editor-crescendo/src/bravura-palette-paths.js?v=20261014-preview-1"></script>
-<script src="rhythm-writing.js?v=20261015-generator-1"></script>
+<script src="rhythm-writing.js?v=20261015-beams-1"></script>
 <script>
     // --- Lógica de Acordeón ---
     function toggleDrawer(id) {
@@ -1281,7 +1281,7 @@
         const subValue=kind==='triplets'||Math.abs(base-1/3)<.00001?'3':String(Math.max(.25,1/base));if([...UI.subSel.options].some(o=>o.value===subValue))UI.subSel.value=subValue;
         UI.subSel.dispatchEvent(new Event('change'));renderVisualizer();syncBasicLabels();
     }
-    function renderRhythmScore(message=''){if(!window.CrescendoPractice)return;const meter=currentRhythmMeter(),clef=UI.rhythmClef.value,bars=Math.max(1,Math.min(16,Number(UI.rhythmBars.value)||1)),systems=Math.ceil(bars/4),used=rhythmBeats(rhythmUsedTicks()),total=rhythmCapacity(meter)*bars;UI.rhythmScore.innerHTML=rhythmWriting.render(rhythmEditorEvents,{meter,clef,bars,width:UI.rhythmScore.clientWidth||900,glyphs:window.CrescendoBravuraPalette});UI.rhythmScore.classList.toggle('has-multiple-systems',systems>1);UI.rhythmStatus.textContent=message||`${bars} ${bars===1?'compás':'compases'} en ${meter} · ${used.toFixed(2).replace(/\.00$/,'')} de ${total} tiempos · ${clef==='grand'?'sol y fa · escribiendo en '+(activeRhythmStaff===2?'fa':'sol'):'clave de '+(clef==='bass'?'fa':'sol')} · clic: ${UI.rhythmPlacement.options[UI.rhythmPlacement.selectedIndex].text}`}
+    function renderRhythmScore(message=''){if(typeof message!=='string')message='';if(!window.CrescendoPractice)return;const meter=currentRhythmMeter(),clef=UI.rhythmClef.value,bars=Math.max(1,Math.min(16,Number(UI.rhythmBars.value)||1)),systems=Math.ceil(bars/4),used=rhythmBeats(rhythmUsedTicks()),total=rhythmCapacity(meter)*bars;UI.rhythmScore.innerHTML=rhythmWriting.render(rhythmEditorEvents,{meter,clef,bars,width:UI.rhythmScore.clientWidth||900,glyphs:window.CrescendoBravuraPalette});UI.rhythmScore.classList.toggle('has-multiple-systems',systems>1);UI.rhythmStatus.textContent=message||`${bars} ${bars===1?'compás':'compases'} en ${meter} · ${used.toFixed(2).replace(/\.00$/,'')} de ${total} tiempos · ${clef==='grand'?'sol y fa · escribiendo en '+(activeRhythmStaff===2?'fa':'sol'):'clave de '+(clef==='bass'?'fa':'sol')} · clic: ${UI.rhythmPlacement.options[UI.rhythmPlacement.selectedIndex].text}`}
     function addRhythmEditorEvent(note){const before=JSON.stringify(rhythmEditorEvents);const message=rhythmWriting.append(activeRhythmTool,rhythmEditorEvents,note,rhythmCapacity(currentRhythmMeter()),Math.max(1,Math.min(16,Number(UI.rhythmBars.value)||1)),activeRhythmStaff,rhythmPointerTarget);if(!message)rhythmHistory.push(before);syncRhythmPalette();rhythmPreview.replaceChildren();renderRhythmScore(message);}
     function syncRhythmPalette(){UI.rhythmPalette.querySelectorAll('button').forEach(b=>{const a=b.dataset.action,v=b.dataset.value;const active=a==='duration'?v===activeRhythmTool.duration:a==='rest'?activeRhythmTool.rest:a==='dots'?Number(v)===activeRhythmTool.dots:Number(v)===activeRhythmTool.actual;b.classList.toggle('is-active',active);b.setAttribute('aria-pressed',String(active));});}
     function buildRhythmPalette(){
