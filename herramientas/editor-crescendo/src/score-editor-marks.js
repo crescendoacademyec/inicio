@@ -1,5 +1,5 @@
 (function () {
-  const SYSTEM_LOCAL_MARK_TYPES = Object.freeze(["accent", "glyph", "fermata", "clef", "slur", "dotted-slur", "dynamic-mf", "crescendo", "diminuendo"]);
+  const SYSTEM_LOCAL_MARK_TYPES = Object.freeze(["grace-note", "accent", "glyph", "fermata", "clef", "slur", "dotted-slur", "dynamic-mf", "crescendo", "diminuendo"]);
   const TOP_SYSTEM_MARK_TYPES = Object.freeze(["ending", "tempo-quarter", "tempo", "tempo-text", "ritardando"]);
 
   function createId() {

@@ -163,6 +163,10 @@
       ...restPalette,
       ...dotPalette,
       ...[ [3,2,"Tresillo"], [5,4,"Quintillo"], [6,4,"Seisillo"], [7,4,"Septillo"] ].map(([actual,normal,label]) => ({ id: `input-tuplet-${actual}`, label: `${label} · figura seleccionada`, symbol: String(actual), inputTuplet: { actual, normal } })),
+      { id: "writing-slur", label: "Ligadura de frase · seleccionar notas", symbol: "⌒", writingTool: "slur" },
+      { id: "writing-tie", label: "Ligadura de prolongación · notas de igual altura", symbol: "♩⌒♩", writingTool: "tie" },
+      { id: "writing-staccato", label: "Nota picada · staccato", symbol: "♩·", writingTool: "staccato" },
+      { id: "writing-grace", label: "Nota de adorno · sin consumir tiempos", symbol: String.fromCodePoint(0xE560), music: true, writingTool: "grace" },
       ...inputModifierPalette
     ];
     const articulations = articulationPaletteItems(smufl);

@@ -5704,6 +5704,7 @@
     if (!state.cursorActive) return false;
     staffStep = staffStepForSystem(staffStep);
     state.cursorStaffStep = staffStepForSystem(state.cursorStaffStep);
+    if (state.graceInput) return insertGraceNote(staffStep);
     if (addChordPitchAtCursor(staffStep, options)) return true;
     clearEntrySelection();
     ensureMeasure(state.cursorMeasure);
@@ -9665,6 +9666,7 @@
       if (start > cursor + EPSILON) {
         events.push(musicXmlRestEvent(start - cursor));
       }
+      (state.marks||[]).filter(m=>m.type==="grace-note"&&markSystemIndex(m)===systemIndex&&m.measureIndex===measureIndex&&Math.abs(m.tick-start)<EPSILON&&(m.voice||1)===entryVoice(entry)).forEach(m=>events.push({type:"note",grace:true,duration:0,durationId:m.durationId,pitch:musicXmlPitchForDiatonicStep(m.diatonicStep,"natural")}));
       events.push(...musicXmlEventsForEntry(entry, measureIndex, systemIndex));
       cursor = Math.max(cursor, start + ticks);
     });
@@ -13361,6 +13363,35 @@
     render();
   }
 
+  function selectWritingDecoration(tool) {
+    if(tool!=="grace"){state.graceInput=false;renderPalette("figures");}
+    if (tool === "tie") return toggleDurationTieFromCurrentNote();
+    if (tool === "slur") return applyPhraseSlurType("slur");
+    if (tool === "staccato") return insertNotationMark({ markType: "glyph", glyphName: "articStaccatoAbove" });
+    if (tool === "grace") {
+      state.graceInput = !state.graceInput;
+      if (!state.cursorActive) enterFigureWritingMode();
+      setMode("note");renderPalette("figures");render();
+    }
+  }
+
+  function insertGraceNote(staffStep) {
+    saveHistory();
+    state.marks.push({ id: createMarkId(), type: "grace-note", systemIndex: activeSystemIndex(), voice: activeVoice(), measureIndex: state.cursorMeasure, tick: state.cursorTick, staffStep, durationId: ["eighth", "sixteenth", "thirty-second"].includes(state.activeDuration?.id) ? state.activeDuration.id : "eighth", diatonicStep: diatonicStepForStaffStep(staffStep, clefIdAtAbsoluteTick(cursorAbsoluteTick())) });
+    render();return true;
+  }
+
+  function renderGraceNotes(root, layout) {
+    const marks=(state.marks||[]).filter(m=>m.type==="grace-note"&&markSystemIndex(m)===renderSystemIndex);
+    marks.forEach((mark,index)=>{
+      const siblings=marks.filter(m=>m.measureIndex===mark.measureIndex&&Math.abs(m.tick-mark.tick)<EPSILON),position=siblings.indexOf(mark),anchor=cursorVisualXForMeasureTick(layout,mark.measureIndex,mark.tick),y=pitchY(0),x=anchor-(siblings.length-position)*22;
+      const group=el("g",{class:"grace-note-group",transform:`translate(${anchor*.4} ${y*.4}) scale(.6)`});
+      const entry=makeEntry("note",durationById(mark.durationId)||durationById("eighth"),mark.staffStep);entry.id=mark.id;entry.diatonicStep=mark.diatonicStep;
+      const flagged=renderNote(group,entry,x);if(flagged)renderFlags(group,[flagged]);
+      group.appendChild(el("line",{x1:x+2,x2:x+14,y1:pitchY(mark.staffStep)-19,y2:pitchY(mark.staffStep)-30,stroke:"currentColor","stroke-width":1.2}));root.appendChild(group);
+    });
+  }
+
   function selectRestDuration() {
     setMode(state.mode === "rest" ? "note" : "rest");
     if (!state.cursorActive) enterFigureWritingMode();
@@ -15595,7 +15626,12 @@
       }
       if (item.dotCount) { button.dataset.dotCount = item.dotCount;button.classList.toggle("is-active", state.inputDots === item.dotCount);button.setAttribute("aria-pressed", String(state.inputDots === item.dotCount)); }
       applyIconTooltipToElement(button);
-      if (item.ticks) {
+      if (item.writingTool) {
+        button.dataset.writingTool = item.writingTool;
+        const active = item.writingTool === "grace" && state.graceInput === true;
+        button.classList.toggle("is-active", active);button.setAttribute("aria-pressed", String(active));
+        button.addEventListener("click", () => selectWritingDecoration(item.writingTool));
+      } else if (item.ticks) {
         button.addEventListener("click", () => selectFigureDuration(item));
       } else if (item.restDurationId) {
         button.addEventListener("click", () => selectRestDuration(item));
@@ -19269,6 +19305,7 @@
       const flagged = renderNote(group, entry, x);
       if (flagged) renderFlags(group, [flagged]);
     }
+    if(state.graceInput)group.setAttribute("transform",`translate(${x*.4} ${pitchY(staffStep)*.4}) scale(.6)`);
     root.appendChild(group);
   }
 
@@ -19940,6 +19977,7 @@
   function renderNotationMarks(root, layout) {
     const markLayer = el("g", { class: "notation-marks" });
     state.marks.forEach((mark) => {
+      if (mark.type === "grace-note") return;
       if (!markBelongsToRenderSystem(mark)) return;
       if (
         Number.isFinite(mark.measureIndex) &&
@@ -20458,6 +20496,7 @@
     });
     renderBeams(root, allFlagged);
     renderTupletIndicators(root, layout);
+    renderGraceNotes(root, layout);
     renderTies(root, layout);
   }
 

@@ -482,6 +482,7 @@
   function noteRows(event, staffNumber, voiceNumber, tieState, divisions = DEFAULT_DIVISIONS, level = 3) {
     const duration = xmlDuration(event.duration, divisions);
     const rows = [line(level, "<note>")];
+    if (event.grace) rows.push(line(level + 1, '<grace slash="yes"/>'));
     if (event.chord) rows.push(line(level + 1, "<chord/>"));
     if (event.type === "rest") {
       const measureAttr = event.measureRest ? ' measure="yes"' : "";
@@ -499,7 +500,7 @@
       rows.push(line(level + 2, `<octave>${finiteNumber(event.pitch?.octave, 4)}</octave>`));
       rows.push(line(level + 1, "</pitch>"));
     }
-    rows.push(line(level + 1, `<duration>${duration}</duration>`));
+    if(!event.grace)rows.push(line(level + 1, `<duration>${duration}</duration>`));
 
     const pitchKey = notePitchKey(event);
     const tieKey = `${staffNumber}:${voiceNumber}:${pitchKey}`;
