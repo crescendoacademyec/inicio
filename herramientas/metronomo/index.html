@@ -665,6 +665,8 @@
     .rhythm-lab-controls .rhythm-editor-actions button:disabled{opacity:.35;cursor:default}
     @media(max-width:1000px){.rhythm-lab-controls{grid-template-columns:repeat(3,minmax(0,1fr))}.rhythm-lab-controls .rhythm-editor-actions{grid-column:1/-1;justify-content:flex-end}}
     @media(max-width:520px){.rhythm-lab-controls{grid-template-columns:repeat(2,minmax(0,1fr))}.rhythm-lab-controls .rhythm-editor-actions{justify-content:flex-start;overflow-x:auto}.rhythm-lab-controls .rhythm-editor-actions button{font-size:.6rem}}
+    .rhythm-save-menu{position:fixed;z-index:1000;width:210px;padding:6px;background:#24201d;border:1px solid #a77b2a;border-radius:12px;box-shadow:0 12px 30px #0007}
+    .rhythm-save-menu[hidden]{display:none}.rhythm-save-menu button{display:block;width:100%;padding:11px 14px;text-align:left;background:transparent;color:#f7edda;border:0;border-radius:7px;cursor:pointer;font:600 .8rem sans-serif}.rhythm-save-menu button:hover,.rhythm-save-menu button:focus-visible{background:#d4a84f;color:#161514;outline:none}
 </style>
     <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/opensheetmusicdisplay@1.8.4/build/opensheetmusicdisplay.min.js"></script>
@@ -781,10 +783,12 @@
                   <button type="button" id="rhythmUndo" class="rhythm-icon-action" aria-label="Deshacer" title="Deshacer" disabled><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m9 14-5-5 5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg></button>
                   <button type="button" id="rhythmRedo" class="rhythm-icon-action" aria-label="Rehacer" title="Rehacer" disabled><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m15 14 5-5-5-5"/><path d="M20 9H10a6 6 0 0 0 0 12h3"/></svg></button>
                   <button type="button" id="rhythmClear" class="rhythm-icon-action" aria-label="Limpiar ambos pentagramas" title="Limpiar ambos pentagramas"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7M14 10v7"/></svg></button>
+                  <button type="button" id="rhythmSave" class="rhythm-icon-action" aria-label="Guardar ejercicio" title="Guardar ejercicio" aria-haspopup="menu" aria-expanded="false" aria-controls="rhythmSaveMenu"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h12l4 4v12a2 2 0 0 1-2 2Z"/><path d="M7 3v6h10V3M7 21v-8h10v8"/></svg></button>
                   <button type="button" id="rhythmFillRests">Completar con silencios</button>
                   <button type="button" id="rhythmGenerate">Generar</button>
                 </div>
             </div>
+            <div id="rhythmSaveMenu" class="rhythm-save-menu" role="menu" aria-label="Guardar ejercicio como" hidden><button type="button" role="menuitem" data-export-format="png">Imagen PNG</button><button type="button" role="menuitem" data-export-format="pdf">PDF</button><button type="button" role="menuitem" data-export-format="musicxml">MusicXML</button></div>
             <div class="rhythm-palette" id="rhythmPalette" aria-label="Figuras y modificadores"></div>
             <div class="rhythm-score-wrap"><div class="rhythm-score" id="rhythmScore" aria-live="polite"></div><div class="rhythm-score-overlay" id="rhythmScoreOverlay" aria-label="Pulsa directamente sobre el pentagrama para escribir"></div></div>
             <p class="rhythm-lab-status" id="rhythmStatus"></p>
@@ -996,6 +1000,7 @@
 <script src="../../shared/music-practice.js?v=20261014-engraving-2"></script>
 <script src="../editor-crescendo/src/bravura-palette-paths.js?v=20261014-preview-1"></script>
 <script src="rhythm-writing.js?v=20261015-toolbar-history-1"></script>
+<script src="rhythm-export.js?v=20261015-export-1"></script>
 <script>
     // --- Lógica de Acordeón ---
     function toggleDrawer(id) {
@@ -1351,6 +1356,33 @@
     function restoreRhythmHistory(direction){const previous=rhythmHistory[direction](JSON.stringify(rhythmEditorEvents));if(previous===null)return;rhythmEditorEvents=JSON.parse(previous);rhythmPointerTarget=null;rhythmPointerEvent=null;rhythmPreview.replaceChildren();activeRhythmTool.actual=0;activeRhythmTool.groupIndex=0;activeRhythmTool.decorationStart=null;syncRhythmPalette();renderRhythmScore();}
     UI.rhythmUndo.addEventListener('click',()=>restoreRhythmHistory('undo'));UI.rhythmRedo.addEventListener('click',()=>restoreRhythmHistory('redo'));
     UI.rhythmClear.addEventListener('click',()=>{const before=JSON.stringify(rhythmEditorEvents);rhythmEditorEvents=[];rhythmHistory.commit(before,JSON.stringify(rhythmEditorEvents));rhythmPointerTarget=null;rhythmPointerEvent=null;rhythmPreview.replaceChildren();activeRhythmTool.groupIndex=0;activeRhythmTool.actual=0;activeRhythmTool.decorationStart=null;syncRhythmPalette();renderRhythmScore('Pentagrama limpio. Elige una figura o silencio y pulsa sobre él.');});UI.rhythmFillRests.addEventListener('click',fillEditorWithRests);
+    const saveButton=document.getElementById('rhythmSave'),saveMenu=document.getElementById('rhythmSaveMenu');
+    function closeRhythmSaveMenu(){saveMenu.hidden=true;saveButton.setAttribute('aria-expanded','false');}
+    saveButton.addEventListener('click',()=>{const open=saveMenu.hidden;closeRhythmSaveMenu();if(!open)return;const r=saveButton.getBoundingClientRect();saveMenu.hidden=false;saveMenu.style.left=`${Math.max(8,Math.min(r.left,window.innerWidth-220))}px`;saveMenu.style.top=`${Math.min(r.bottom+7,window.innerHeight-saveMenu.offsetHeight-8)}px`;saveButton.setAttribute('aria-expanded','true');saveMenu.querySelector('button').focus();});
+    document.addEventListener('pointerdown',e=>{if(!saveMenu.contains(e.target)&&!saveButton.contains(e.target))closeRhythmSaveMenu();});
+    document.addEventListener('keydown',e=>{if(!saveMenu.hidden&&e.key==='Escape'){closeRhythmSaveMenu();saveButton.focus();}});
+    function downloadRhythmBlob(blob,name){const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);}
+    async function rhythmExportCanvas(){
+      await document.fonts.ready;
+      const options={meter:currentRhythmMeter(),clef:UI.rhythmClef.value,bars:Number(UI.rhythmBars.value)||4,width:1200,glyphs:window.CrescendoBravuraPalette};
+      let source=rhythmWriting.render(rhythmEditorEvents,options);
+      const response=await fetch(new URL('../editor-crescendo/assets/fonts/Bravura.otf',document.baseURI));if(!response.ok)throw Error('No se pudo cargar Bravura para exportar.');
+      const font=new Uint8Array(await response.arrayBuffer());let binary='';for(let i=0;i<font.length;i+=8192)binary+=String.fromCharCode(...font.subarray(i,i+8192));
+      const fontData=btoa(binary);source=source.replace(/(<svg\b[^>]*>)/,`$1<defs><style>@font-face{font-family:'Bravura Metronome';src:url(data:font/otf;base64,${fontData}) format('opentype');font-weight:normal;font-style:normal;}text{fill:#222;}</style></defs>`);
+      const url=URL.createObjectURL(new Blob([source],{type:'image/svg+xml;charset=utf-8'}));
+      try{const image=new Image();await new Promise((resolve,reject)=>{image.onload=resolve;image.onerror=()=>reject(Error('No se pudo preparar la imagen de la partitura.'));image.src=url;});const canvas=document.createElement('canvas');canvas.width=image.naturalWidth*2;canvas.height=image.naturalHeight*2;const context=canvas.getContext('2d');context.fillStyle='#fff';context.fillRect(0,0,canvas.width,canvas.height);context.drawImage(image,0,0,canvas.width,canvas.height);return canvas;}finally{URL.revokeObjectURL(url);}
+    }
+    async function exportRhythmExercise(format){
+      closeRhythmSaveMenu();saveButton.disabled=true;UI.rhythmStatus.textContent='Preparando el archivo…';
+      try{const filename='crescendo-ejercicio-'+currentRhythmMeter().replace('/','-');
+        if(format==='musicxml'){const xml=window.CrescendoRhythmExport.musicXML(rhythmEditorEvents,{meter:currentRhythmMeter(),clef:UI.rhythmClef.value,bars:Number(UI.rhythmBars.value)||4,writing:rhythmWriting});downloadRhythmBlob(new Blob([xml],{type:'application/vnd.recordare.musicxml+xml;charset=utf-8'}),filename+'.musicxml');}
+        else{const canvas=await rhythmExportCanvas();if(format==='png'){const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));if(!blob)throw Error('No se pudo crear la imagen.');downloadRhythmBlob(blob,filename+'.png');}
+          else{const jpeg=await new Promise(resolve=>canvas.toBlob(resolve,'image/jpeg',.97));if(!jpeg)throw Error('No se pudo crear el PDF.');const bytes=window.CrescendoRhythmExport.pdf(new Uint8Array(await jpeg.arrayBuffer()),canvas.width,canvas.height);downloadRhythmBlob(new Blob([bytes],{type:'application/pdf'}),filename+'.pdf');}}
+        UI.rhythmStatus.textContent='Archivo '+format.toUpperCase()+' preparado para descargar.';
+      }catch(error){UI.rhythmStatus.textContent='No se pudo guardar: '+error.message;}finally{saveButton.disabled=false;}
+    }
+    saveMenu.querySelectorAll('[data-export-format]').forEach(button=>button.addEventListener('click',()=>exportRhythmExercise(button.dataset.exportFormat)));
+
     UI.rhythmGenerate.addEventListener('click',generateRhythmExercise);
     UI.rhythmBars.addEventListener('change',()=>{const bars=Math.max(1,Math.min(16,Number(UI.rhythmBars.value)||1));UI.rhythmBars.value=String(bars);rhythmEditorEvents=rhythmEditorEvents.filter(event=>(event.bar||0)<bars);renderRhythmScore()});
     function stepRhythmBars(delta){UI.rhythmBars.value=String(Math.max(1,Math.min(16,(Number(UI.rhythmBars.value)||1)+delta)));UI.rhythmBars.dispatchEvent(new Event('change',{bubbles:true}))}
