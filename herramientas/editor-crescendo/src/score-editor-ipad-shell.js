@@ -492,7 +492,7 @@
     const documentState = element("p", "ipad-inspector-copy", "Guardado");
     documentState.id = "ipadDocumentStatus";
     documentSection.appendChild(documentState);
-    rightContent.append(sessionSection, positionSection, paletteSection, documentSection);
+    rightContent.append(paletteSection, sessionSection, positionSection, documentSection);
     rightPanel.append(rightHeader, rightContent);
 
     const scrim = element("button", "ipad-panel-scrim");
