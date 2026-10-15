@@ -30,6 +30,14 @@ function beamGroups(events,meter='4/4'){
  events.forEach((e,index)=>{const duration=figureForEvent(e),flags=Math.max(0,Math.round(Math.log2(.5/duration[1]))+1),bucket=Math.floor((offset+.00001)/beat);if(e.grace||e.kind==='rest'||!flags||bucket!==lastBucket||e.tuplet==='start')flush();if(!e.grace&&e.kind!=='rest'&&flags)current.push({index,flags});offset+=e.beats;lastBucket=bucket;if(e.tuplet==='stop'||Math.abs(offset/beat-Math.round(offset/beat))<.00001)flush();});flush();return groups;
 }
 
+function stemDown(note,staff=1){const m=/^([A-G])(?:[#b]?)(-?\d+)$/.exec(note||'C5');if(!m)return false;return Number(m[2])*7+'CDEFGAB'.indexOf(m[1])>=(staff===2?22:34);}
+function noteGraphic(id,x,y,down,glyphs,color='#222',className='rhythm-note'){
+ const g=glyphs[id];if(!g)return '';const flags={'eighth':1,'sixteenth':2,'thirty-second':3,'sixty-fourth':4,'one-twenty-eighth':5}[id]||0,noStem=['whole','breve'].includes(id),k=.04;
+ let shape;if(down&&flags){const stemX=x-6,end=y+35;shape=`<text x="${x-6}" y="${y}" font-family="Bravura Metronome" font-size="40" font-weight="normal" fill="${color}">&#xE0A4;</text><line x1="${stemX}" x2="${stemX}" y1="${y}" y2="${end}" stroke="${color}" stroke-width="1.2"/><text x="${stemX}" y="${end}" font-family="Bravura Metronome" font-size="40" font-weight="normal" fill="${color}">${String.fromCodePoint(0xE241+(flags-1)*2)}</text>`;}
+ else shape=`<path d="${g.d}" transform="translate(${down&&!noStem?x+160*k:x-160*k} ${y}) scale(${down&&!noStem?-k:k})" fill="${color}"/>`;
+ return `<g class="${className}" data-stem="${noStem?'none':down?'down':'up'}">${shape}</g>`;
+}
+
 function render(events,{clef='treble',meter='4/4',bars=4,width=900,glyphs={}}={}){
  const capacity=Number(meter.split('/')[0])*4/Number(meter.split('/')[1]),grand=clef==='grand',staves=grand?[1,2]:[clef==='bass'?2:1],rowHeight=grand?230:130,rows=Math.ceil(bars/4),w=Math.max(680,width),left=24,header=90,barWidth=(w-left*2-header)/4,spacing=10;
  const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[c]));
@@ -59,9 +67,9 @@ function render(events,{clef='treble',meter='4/4',bars=4,width=900,glyphs={}}={}
      anchors[eventIndex]={x,y};
      if(beamed.has(eventIndex))drawing+=`<text class="beamed-notehead" x="${x-6}" y="${y}" font-family="Bravura Metronome" font-size="40" font-weight="normal">&#xE0A4;</text>`;
      if(e.id)notePositions.set(e.id,{x,y,staff,row});
-     const g=glyphs[d[0]],k=spacing/250*(e.grace?.6:1);if(g&&!beamed.has(eventIndex))drawing+=`<path class="${e.grace?'rhythm-grace-note':'rhythm-note'}" d="${esc(g.d)}" transform="translate(${x-160*k} ${y}) scale(${k})" fill="#222"/>`;
-     if(e.grace)drawing+=`<path d="M${x} ${y-12}l10 -9" stroke="#222" stroke-width="1"/>`;
-     if(e.staccato)drawing+=`<circle class="rhythm-staccato" cx="${x}" cy="${y+10}" r="1.8" fill="#222"/>`;
+     const down=stemDown(note,staff);if(!beamed.has(eventIndex)){const graphic=noteGraphic(d[0],x,y,down,glyphs,'#222',e.grace?'rhythm-grace-note':'rhythm-note');drawing+=e.grace?`<g transform="translate(${x*.4} ${y*.4}) scale(.6)">${graphic}</g>`:graphic;}
+     if(e.grace)drawing+=`<path d="M${x} ${y+(down?12:-12)}l10 ${down?9:-9}" stroke="#222" stroke-width="1"/>`;
+     if(e.staccato)drawing+=`<circle class="rhythm-staccato" cx="${x}" cy="${y+(down?-10:10)}" r="1.8" fill="#222"/>`;
      if(String(note).includes('#'))drawing+=`<text x="${x-15}" y="${y}" font-family="Bravura Metronome" font-weight="normal" font-style="normal" font-size="40">&#xE262;</text>`;
      for(let line=-2;line>=(y-top)/(spacing/2);line-=2)drawing+=`<line x1="${x-9}" x2="${x+9}" y1="${top+line*spacing/2}" y2="${top+line*spacing/2}" stroke="#222"/>`;
      for(let line=10;line<=(y-top)/(spacing/2);line+=2)drawing+=`<line x1="${x-9}" x2="${x+9}" y1="${top+line*spacing/2}" y2="${top+line*spacing/2}" stroke="#222"/>`;
@@ -69,7 +77,7 @@ function render(events,{clef='treble',meter='4/4',bars=4,width=900,glyphs={}}={}
     for(let dot=0;dot<dots;dot++)drawing+=`<circle cx="${x+12+dot*5}" cy="${y-5}" r="1.5" fill="#222"/>`;
    }
    for(const group of groups){
-    const notes=group.map(n=>({...n,...anchors[n.index]})),down=notes.reduce((a,n)=>a+n.y,0)/notes.length<top+20,direction=down?-1:1;
+    const notes=group.map(n=>({...n,...anchors[n.index]})),down=notes.reduce((a,n)=>a+n.y,0)/notes.length<=top+20,direction=down?-1:1;
     const beamY=down?Math.max(...notes.map(n=>n.y))+35:Math.min(...notes.map(n=>n.y))-35;
     const stemX=n=>n.x+(down?-6:6);
     drawing+='<g class="rhythm-beam-group">';
@@ -133,5 +141,5 @@ function generate({capacity=4,bars=4,kind='steady',base=1,clef='treble',random=M
 }
 
 function history(){const past=[],future=[];return {get canUndo(){return past.length>0;},get canRedo(){return future.length>0;},commit(before,after){if(before===after)return;past.push(before);if(past.length>100)past.shift();future.length=0;},undo(current){if(!past.length)return null;future.push(current);return past.pop();},redo(current){if(!future.length)return null;past.push(current);return future.pop();}};}
-const api={history,decorate,beamGroups,generate,gridStep,render,notation,TICKS,durations,ticks,factor,create,select,append};if(typeof module!=='undefined')module.exports=api;else root.CrescendoRhythmWriting=api;
+const api={stemDown,noteGraphic,history,decorate,beamGroups,generate,gridStep,render,notation,TICKS,durations,ticks,factor,create,select,append};if(typeof module!=='undefined')module.exports=api;else root.CrescendoRhythmWriting=api;
 })(typeof window==='undefined'?globalThis:window);

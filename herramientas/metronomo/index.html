@@ -999,8 +999,8 @@
 <script src="../../shared/rhythm-engine.js?v=20260918-locking-in"></script>
 <script src="../../shared/music-practice.js?v=20261014-engraving-2"></script>
 <script src="../editor-crescendo/src/bravura-palette-paths.js?v=20261014-preview-1"></script>
-<script src="rhythm-writing.js?v=20261015-toolbar-history-1"></script>
-<script src="rhythm-export.js?v=20261015-export-1"></script>
+<script src="rhythm-writing.js?v=20261015-stems-1"></script>
+<script src="rhythm-export.js?v=20261015-stems-1"></script>
 <script>
     // --- Lógica de Acordeón ---
     function toggleDrawer(id) {
@@ -1344,7 +1344,7 @@
       const g=window.CrescendoBravuraPalette[activeRhythmTool.duration];
       let shapes='';
       if(activeRhythmTool.rest){const codes={'breve':0xE4E2,'whole':0xE4E3,'half':0xE4E4,'quarter':0xE4E5,'eighth':0xE4E6,'sixteenth':0xE4E7,'thirty-second':0xE4E8,'sixty-fourth':0xE4E9,'one-twenty-eighth':0xE4EA};shapes=`<text x="${x}" y="${top-wrap.top+spacing*2}" font-family="Bravura Metronome" font-size="${spacing*4}">${String.fromCodePoint(codes[activeRhythmTool.duration])}</text>`;}
-      else{shapes=`<path d="${g.d}" transform="translate(${x-160*k} ${y}) scale(${k})" fill="currentColor"/>`;for(let line=-2;line>=index-2;line-=2)shapes+=`<path d="M${x-spacing} ${top-wrap.top+line*spacing/2}h${spacing*2}" stroke="currentColor"/>`;for(let line=10;line<=index-2;line+=2)shapes+=`<path d="M${x-spacing} ${top-wrap.top+line*spacing/2}h${spacing*2}" stroke="currentColor"/>`;}
+      else{const pitch=editorPitches[activeRhythmStaff===2?'bass':'treble'][index];shapes=rhythmWriting.noteGraphic(activeRhythmTool.duration,x,y,rhythmWriting.stemDown(pitch,activeRhythmStaff),window.CrescendoBravuraPalette,'currentColor','rhythm-preview-note');for(let line=-2;line>=index-2;line-=2)shapes+=`<path d="M${x-spacing} ${top-wrap.top+line*spacing/2}h${spacing*2}" stroke="currentColor"/>`;for(let line=10;line<=index-2;line+=2)shapes+=`<path d="M${x-spacing} ${top-wrap.top+line*spacing/2}h${spacing*2}" stroke="currentColor"/>`;}
       for(let dot=0;dot<activeRhythmTool.dots;dot++)shapes+=`<circle cx="${x+spacing*(1.2+dot*.55)}" cy="${activeRhythmTool.rest?top-wrap.top+spacing*1.5:y-(index%2===0?spacing/2:0)}" r="${spacing*.14}" fill="currentColor"/>`;
       if(activeRhythmTool.actual)shapes+=`<text x="${x}" y="${y-spacing*4}" font-size="12" fill="currentColor">${activeRhythmTool.actual}</text>`;
       if(activeRhythmTool.grace)shapes=`<g transform="translate(${x*.4} ${y*.4}) scale(.6)">${shapes}<path d="M${x} ${y-14}l12 -10" stroke="currentColor"/></g>`;rhythmPreview.innerHTML=`<svg width="100%" height="100%" aria-hidden="true">${shapes}</svg>`;
