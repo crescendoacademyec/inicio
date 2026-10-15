@@ -44,5 +44,42 @@ function render(events,{clef='treble',meter='4/4',bars=4,width=900,glyphs={}}={}
  return `<svg xmlns="http://www.w3.org/2000/svg" class="rhythm-stable-score" width="${w}" height="${rows*rowHeight}" viewBox="0 0 ${w} ${rows*rowHeight}" role="img" aria-label="Partitura editable de ${bars} compases">${drawing}</svg>`;
 }
 
-const api={gridStep,render,notation,TICKS,durations,ticks,factor,create,select,append};if(typeof module!=='undefined')module.exports=api;else root.CrescendoRhythmWriting=api;
+const previousExercises=new Map();
+function generate({capacity=4,bars=4,kind='steady',base=1,clef='treble',random=Math.random}={}){
+ const pick=values=>values[Math.min(values.length-1,Math.floor(random()*values.length))],staff=clef==='bass'?2:1,pitches=staff===2?['C3','D3','E3','F3','G3']:['C5','D5','E5','F5','G5'];
+ const mode=kind==='steady'&&Math.abs(base-1/3)<.00001?'triplets':kind;
+ const key=[capacity,bars,kind,base,clef].join(':');
+ function build(){
+  const events=[];let lastPitch=pick(pitches);
+  for(let bar=0;bar<bars;bar++){
+   let cursor=0;const limit=ticks(capacity);
+   const push=(beats,rest=false,extra={})=>{const pitch=pick(pitches.filter(n=>n!==lastPitch));lastPitch=pitch;events.push({staff,bar,offset:cursor/TICKS,beats,note:pitch,kind:rest?'rest':undefined,...extra});cursor+=ticks(beats);};
+   while(cursor<limit){
+    const remaining=limit-cursor;
+    if(mode==='triplets'&&remaining>=ticks(.5)){
+     const unit=remaining>=TICKS?.5:.25,groupTicks=ticks(unit*2),each=groupTicks/3;
+     // Emit a whole group atomically so no tuplet is truncated at a barline.
+     for(let i=0;i<3;i++)push(each/TICKS,random()<.18,{tupletActual:3,tupletNormal:2,tupletUnitBeats:unit,tuplet:i===0?'start':i===2?'stop':''});
+     continue;
+    }
+    if(mode==='syncopation'){
+     const motifs=[[{beats:.5,rest:true},{beats:1},{beats:.5}],[{beats:.5},{beats:1},{beats:.5}],[{beats:.5,rest:true},{beats:.5}],[{beats:1.5},{beats:.5}],[{beats:.5},{beats:.5,rest:true}]];
+     const fits=motifs.filter(m=>ticks(m.reduce((n,e)=>n+e.beats,0))<=remaining);
+     if(fits.length){for(const e of pick(fits))push(e.beats,!!e.rest);continue;}
+    }
+    const values=mode==='steady'?[base]:mode==='mixed'?[.25,.5,1,1.5,2]:[Math.abs(base-1/3)<.00001?.5:base,.5,1];
+    const available=values.filter(v=>ticks(v)>0&&ticks(v)<=remaining);
+    const duration=available.length?pick(available):pick([2,1,.5,.25,.125,.0625,.03125].filter(v=>ticks(v)<=remaining));
+    if(!duration)throw new Error('El compás no admite estas subdivisiones.');
+    push(duration,mode==='rests'?random()<.35:false);
+   }
+  }
+  if(mode==='rests'&&events.length>1){if(!events.some(e=>e.kind==='rest'))pick(events).kind='rest';if(events.every(e=>e.kind==='rest'))events[0].kind=undefined;}
+  return events;
+ }
+ let result,signature;for(let attempt=0;attempt<24;attempt++){result=build();signature=JSON.stringify(result);if(signature!==previousExercises.get(key))break;}
+ previousExercises.set(key,signature);return result;
+}
+
+const api={generate,gridStep,render,notation,TICKS,durations,ticks,factor,create,select,append};if(typeof module!=='undefined')module.exports=api;else root.CrescendoRhythmWriting=api;
 })(typeof window==='undefined'?globalThis:window);
