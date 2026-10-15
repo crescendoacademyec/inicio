@@ -132,5 +132,6 @@ function generate({capacity=4,bars=4,kind='steady',base=1,clef='treble',random=M
  previousExercises.set(key,signature);return result;
 }
 
-const api={decorate,beamGroups,generate,gridStep,render,notation,TICKS,durations,ticks,factor,create,select,append};if(typeof module!=='undefined')module.exports=api;else root.CrescendoRhythmWriting=api;
+function history(){const past=[],future=[];return {get canUndo(){return past.length>0;},get canRedo(){return future.length>0;},commit(before,after){if(before===after)return;past.push(before);if(past.length>100)past.shift();future.length=0;},undo(current){if(!past.length)return null;future.push(current);return past.pop();},redo(current){if(!future.length)return null;past.push(current);return future.pop();}};}
+const api={history,decorate,beamGroups,generate,gridStep,render,notation,TICKS,durations,ticks,factor,create,select,append};if(typeof module!=='undefined')module.exports=api;else root.CrescendoRhythmWriting=api;
 })(typeof window==='undefined'?globalThis:window);
