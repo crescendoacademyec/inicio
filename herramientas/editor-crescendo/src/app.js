@@ -8890,9 +8890,17 @@
   }
 
   function setDuration(duration, options = {}) {
+    if (!duration) return;
+    const tuplet = normalizeTuplet(state.activeTuplet);
+    if (options.keepTuplet === false) deactivateTupletWriting();
+    else if (tuplet && tuplet.unitDurationId !== duration.id) {
+      // A duration choice changes the group's unit; it does not cancel the group.
+      completeActiveTupletRun({ saveHistory: false });
+      state.activeTuplet = normalizeTuplet({ actual: tuplet.actual, normal: tuplet.normal, unitDurationId: duration.id });
+      state.activeTupletRun = null;
+    }
     state.activeDuration = duration;
     rhythmicColumnIndex.clear();
-    if (!options.keepTuplet) deactivateTupletWriting();
     refreshDurationButtons();
     updateModeButtons();
   }
@@ -13347,14 +13355,8 @@
 
   function selectFigureDuration(duration) {
     if (!duration) return;
-    const tuplet = normalizeTuplet(state.activeTuplet);
-    if (tuplet && tuplet.unitDurationId !== duration.id) {
-      completeActiveTupletRun({ saveHistory: false });
-      state.activeTuplet = normalizeTuplet({ actual: tuplet.actual, normal: tuplet.normal, unitDurationId: duration.id });
-      state.activeTupletRun = null;
-    }
     setMode(state.mode === "rest" ? "rest" : "note");
-    chooseDuration(duration, { keepTuplet: !!state.activeTuplet });
+    chooseDuration(duration, { keepTuplet: true });
     if (!state.cursorActive) enterFigureWritingMode();
     render();
   }
