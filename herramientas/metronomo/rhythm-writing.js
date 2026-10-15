@@ -20,7 +20,7 @@ function render(events,{clef='treble',meter='4/4',bars=4,width=900,glyphs={}}={}
  const pitches={1:['A5','G5','F5','E5','D5','C5','B4','A4','G4','F4','E4','D4','C4'],2:['C4','B3','A3','G3','F3','E3','D3','C3','B2','A2','G2','F2','E2']};
  let drawing='';const notationEvents=notation(events,capacity,bars);
  for(let row=0;row<rows;row++)for(let si=0;si<staves.length;si++){
-  const staff=staves[si],top=row*rowHeight+45+si*100,count=Math.min(4,bars-row*4),right=left+header+count*barWidth;
+  const staff=staves[si],top=row*rowHeight+60+si*100,count=Math.min(4,bars-row*4),right=left+header+count*barWidth;
   for(let line=0;line<5;line++)drawing+=`<line x1="${left}" y1="${top+line*spacing}" x2="${right}" y2="${top+line*spacing}" stroke="#222"/>`;
   drawing+=`<text x="${left+6}" y="${top+(staff===1?30:10)}" font-family="Bravura Metronome" font-weight="normal" font-style="normal" font-size="40">${String.fromCodePoint(staff===1?0xE050:0xE062)}</text>`;
   const [numerator,denominator]=meter.split('/');drawing+=`<text x="${left+55}" y="${top+10}" font-family="Bravura Metronome" font-weight="normal" font-style="normal" font-size="40">${[...numerator].map(n=>String.fromCodePoint(0xE080+Number(n))).join('')}</text><text x="${left+55}" y="${top+30}" font-family="Bravura Metronome" font-weight="normal" font-style="normal" font-size="40">${[...denominator].map(n=>String.fromCodePoint(0xE080+Number(n))).join('')}</text>`;
@@ -33,6 +33,7 @@ function render(events,{clef='treble',meter='4/4',bars=4,width=900,glyphs={}}={}
     if(e.measureRest){drawing+=`<rect x="${(start+end)/2-5}" y="${top+10}" width="10" height="4" fill="#222"/>`;continue;}
     const base=e.tupletUnitBeats||e.beats,d=durations.find(d=>Math.abs(d[1]-base)<.00001)||durations.find(d=>Math.abs(d[1]*1.5-base)<.00001)||durations.find(d=>Math.abs(d[1]*1.75-base)<.00001)||durations.find(d=>d[0]==='quarter'),dots=e.tupletActual?0:Math.abs(base-d[1]*1.75)<.00001?2:Math.abs(base-d[1]*1.5)<.00001?1:0;
     let y=top+20;
+    anchors[eventIndex]={x,y};
     if(e.kind==='rest'){
      const codes={'breve':0xE4E2,'whole':0xE4E3,'half':0xE4E4,'quarter':0xE4E5,'eighth':0xE4E6,'sixteenth':0xE4E7,'thirty-second':0xE4E8,'sixty-fourth':0xE4E9,'one-twenty-eighth':0xE4EA};
      drawing+=`<text x="${x-4}" y="${y}" font-family="Bravura Metronome" font-weight="normal" font-style="normal" font-size="40">${String.fromCodePoint(codes[d[0]])}</text>`;
@@ -47,7 +48,6 @@ function render(events,{clef='treble',meter='4/4',bars=4,width=900,glyphs={}}={}
      for(let line=10;line<=(y-top)/(spacing/2);line+=2)drawing+=`<line x1="${x-9}" x2="${x+9}" y1="${top+line*spacing/2}" y2="${top+line*spacing/2}" stroke="#222"/>`;
     }
     for(let dot=0;dot<dots;dot++)drawing+=`<circle cx="${x+12+dot*5}" cy="${y-5}" r="1.5" fill="#222"/>`;
-    if(e.tuplet==='start')drawing+=`<text x="${x}" y="${top-8}" font-size="12" fill="#222">${e.tupletActual||3}</text>`;
    }
    for(const group of groups){
     const notes=group.map(n=>({...n,...anchors[n.index]})),down=notes.reduce((a,n)=>a+n.y,0)/notes.length<top+20,direction=down?-1:1;
@@ -62,6 +62,10 @@ function render(events,{clef='treble',meter='4/4',bars=4,width=900,glyphs={}}={}
     }
     drawing+='</g>';
    }
+   let tuplet=[];
+   const drawTuplet=()=>{if(!tuplet.length)return;const first=tuplet[0],last=tuplet.at(-1),startX=anchors[first].x-7,endX=Math.max(startX+24,anchors[last].x+10),y=Math.min(top-14,...tuplet.map(i=>anchors[i].y-47)),center=(startX+endX)/2,number=barEvents[first].tupletActual;
+    drawing+=`<g class="rhythm-tuplet" data-actual="${number}"><path class="rhythm-tuplet-bracket" d="M${startX} ${y+4}V${y}H${center-8}M${center+8} ${y}H${endX}v4" fill="none" stroke="#222" stroke-width="1.2"/><text class="rhythm-tuplet-number" x="${center}" y="${y+4}" text-anchor="middle" font-family="Georgia,serif" font-style="italic" font-size="13" fill="#222">${number}</text></g>`;tuplet=[];};
+   barEvents.forEach((e,i)=>{if(!e.tupletActual){drawTuplet();return;}if(e.tuplet==='start')drawTuplet();tuplet.push(i);if(e.tuplet==='stop'||tuplet.length===e.tupletActual)drawTuplet();});drawTuplet();
   }
  }
  return `<svg xmlns="http://www.w3.org/2000/svg" class="rhythm-stable-score" width="${w}" height="${rows*rowHeight}" viewBox="0 0 ${w} ${rows*rowHeight}" role="img" aria-label="Partitura editable de ${bars} compases">${drawing}</svg>`;

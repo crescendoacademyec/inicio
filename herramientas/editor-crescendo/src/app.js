@@ -2812,7 +2812,7 @@
     if (!normalized) return "";
     const denominator = durationDenominator(normalized.unitDurationId);
     if (mode === "group") {
-      return (normalized.actual === 3 || normalized.actual === 6)
+      return [3, 5, 6, 7].includes(normalized.actual)
         ? String(normalized.actual)
         : `${normalized.actual}:${normalized.normal}`;
     }
@@ -18980,10 +18980,8 @@
 
   function renderTupletIndicators(root, layout) {
     const groups = new Map();
-    const activeOpenTupletId = isTupletWritingOpen() ? state.activeTupletRun.id : null;
     positionedEntries(layout).forEach((item) => {
       if (!item.entry?.tuplet?.id || item.entry.hiddenTupletReserve) return;
-      if (item.entry.tuplet.id === activeOpenTupletId) return;
       if (!groups.has(item.entry.tuplet.id)) groups.set(item.entry.tuplet.id, []);
       groups.get(item.entry.tuplet.id).push(item);
     });
@@ -19000,7 +18998,7 @@
         ? Math.min(...rects.map((rect) => rect.top))
         : staffTopY();
       const y = Math.min(staffTopY() - 16, top - 14);
-      const label = first.entry.tuplet.label || tupletDisplayLabel(first.entry.tuplet, "group");
+      const label = tupletDisplayLabel(first.entry.tuplet, "group");
       root.appendChild(el("path", {
         class: "tuplet-bracket",
         d: `M ${startX} ${y + 5} L ${startX} ${y} L ${endX} ${y} L ${endX} ${y + 5}`,
@@ -19013,7 +19011,7 @@
       root.appendChild(textNode((startX + endX) / 2, y - 3, label, {
         class: "duration-label tuplet-label",
         "text-anchor": "middle",
-        style: `font-size:14px;${textFontStyle("scoreTextFont")}`
+        style: 'font-family:Georgia,serif;font-size:14px;font-style:italic;font-weight:600;opacity:1;'
       }));
     });
   }
