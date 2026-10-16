@@ -1,6 +1,6 @@
 (function(root){'use strict';
 const esc=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[c]));
-function musicXML(events,{meter='4/4',clef='treble',bars=4,writing=root.CrescendoRhythmWriting}={}){
+function musicXML(events,{meter='4/4',clef='treble',bars=4,writing=root.CrescendoRhythmWriting,marks=[]}={}){
  const [top,bottom]=meter.split('/').map(Number),capacity=top*4/bottom,divisions=writing.TICKS,staffs=clef==='grand'?[1,2]:[clef==='bass'?2:1];
  const sorted=[...events].sort((a,b)=>(a.bar||0)-(b.bar||0)||(a.offset||0)-(b.offset||0)||(b.grace?1:0)-(a.grace?1:0));
  const notation=writing.notation(sorted,capacity,bars),ties=new Set(events.filter(e=>e.tieToId).map(e=>e.tieToId)),slurs=events.filter(e=>e.slurToId).map((e,i)=>({start:e.id,end:e.slurToId,number:i+1}));
@@ -8,8 +8,10 @@ function musicXML(events,{meter='4/4',clef='treble',bars=4,writing=root.Crescend
  const pitch=e=>{let note=e.note;if(!note&&e.midi!==undefined){const names=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];note=names[e.midi%12]+(Math.floor(e.midi/12)-1);}const m=/^([A-G])([#b]?)(-?\d+)$/.exec(note||'C5');return `<pitch><step>${m[1]}</step>${m[2]?`<alter>${m[2]==='#'?1:-1}</alter>`:''}<octave>${Number(m[3])+(e.ottava?1:0)}</octave></pitch>`;};
  let measures='';for(let bar=0;bar<bars;bar++){
   let body='';if(bar===0)body=`<attributes><divisions>${divisions}</divisions><key><fifths>0</fifths></key><time><beats>${top}</beats><beat-type>${bottom}</beat-type></time>${staffs.length===2?'<staves>2</staves>':''}${staffs.map((staff,i)=>`<clef number="${i+1}"><sign>${staff===2?'F':'G'}</sign><line>${staff===2?4:2}</line></clef>`).join('')}</attributes>`;
+  const markTools=root.CrescendoRhythmMarks||(typeof require==='function'?require('./rhythm-marks.js'):null),lines=markTools?.barlines(marks,bar)||{left:'',right:''};body+=lines.left;
   staffs.forEach((staff,si)=>{
    if(si)body+=`<backup><duration>${Math.round(capacity*divisions)}</duration></backup>`;
+   body+=markTools?.xml(marks,bar,staff,capacity,divisions,si+1,staffs[0])||'';
    const notes=notation.filter(e=>e.staff===staff&&e.bar===bar),beams=new Map();writing.beamGroups(notes,meter).forEach(group=>{for(let level=1;level<=Math.max(...group.map(n=>n.flags));level++){let run=[];const flush=()=>{run.forEach((n,i)=>{if(!beams.has(n.index))beams.set(n.index,[]);beams.get(n.index).push({level,value:run.length===1?(group.indexOf(n)===group.length-1?'backward hook':'forward hook'):i===0?'begin':i===run.length-1?'end':'continue'});});run=[];};for(const n of group){if(n.flags>=level)run.push(n);else flush();}flush();}});
    let ottavaActive=false;const shift=type=>`<direction placement="above"><direction-type><octave-shift type="${type}" size="8" number="1"/></direction-type><staff>${si+1}</staff></direction>`;
    notes.forEach((e,i)=>{
@@ -19,7 +21,7 @@ function musicXML(events,{meter='4/4',clef='treble',bars=4,writing=root.Crescend
     const marks=(tieStart?'<tied type="start"/>':'')+(tieStop?'<tied type="stop"/>':'')+slurMarks+(e.staccato?'<articulations><staccato/></articulations>':'')+(e.tupletActual&&e.tuplet?`<tuplet type="${e.tuplet}" bracket="yes" show-number="actual"/>`:'');
     (e.notes||[e.note]).forEach((note,head)=>{const headMarks=head?((tieStart?'<tied type="start"/>':'')+(tieStop?'<tied type="stop"/>':'')):marks;body+=`<note>${head?'<chord/>':''}${e.grace?'<grace slash="yes"/>':''}${e.kind==='rest'?`<rest${e.measureRest?' measure="yes"':''}/>`:pitch({...e,note})}${e.grace?'':`<duration>${Math.round(e.beats*divisions)}</duration>`}${tieStop?'<tie type="stop"/>':''}${tieStart?'<tie type="start"/>':''}<voice>${si+1}</voice>${e.measureRest?'':`<type>${types[d[0]]}</type>${'<dot/>'.repeat(dots)}`}${e.tupletActual?`<time-modification><actual-notes>${e.tupletActual}</actual-notes><normal-notes>${e.tupletNormal}</normal-notes><normal-type>${types[d[0]]}</normal-type></time-modification>`:''}${e.kind!=='rest'&&!beams.has(i)&&!['whole','breve'].includes(d[0])?`<stem>${writing.stemDown(e.note||['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'][Number(e.midi||60)%12]+(Math.floor(Number(e.midi||60)/12)-1),staff)?'down':'up'}</stem>`:''}<staff>${si+1}</staff>${(head?[]:beams.get(i)||[]).map(b=>`<beam number="${b.level}">${b.value}</beam>`).join('')}${headMarks?`<notations>${headMarks}</notations>`:''}</note>`;});
    });if(ottavaActive)body+=shift('stop');
-  });measures+=`<measure number="${bar+1}">${bar&&bar%4===0?'<print new-system="yes"/>':''}${body}</measure>`;
+  });measures+=`<measure number="${bar+1}">${bar&&bar%4===0?'<print new-system="yes"/>':''}${body}${lines.right}</measure>`;
  }
  return `<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE score-partwise PUBLIC "-//Recordare//DTD MusicXML 4.0 Partwise//EN" "http://www.musicxml.org/dtds/partwise.dtd">\n<score-partwise version="4.0"><work><work-title>${esc('Ejercicio de ritmo · Crescendo Academy')}</work-title></work><part-list><score-part id="P1"><part-name>Ejercicio</part-name></score-part></part-list><part id="P1">${measures}</part></score-partwise>`;
 }

@@ -1,7 +1,7 @@
 (function(root){'use strict';
 const instruments={piano:{name:'Piano',bank:'acoustic_grand_piano'},guitar:{name:'Guitarra',bank:'acoustic_guitar_nylon'},bass:{name:'Bajo',bank:'electric_bass_finger'},violin:{name:'Violín',bank:'violin'},ukulele:{name:'Ukelele',bank:'acoustic_guitar_nylon',short:true}};
 function midiFor(e){if(Number.isFinite(e.midi))return e.midi+(e.ottava?12:0);const m=/^([A-G])([#b]?)(-?\d+)$/.exec(e.note||'C5');return (Number(m[3])+1)*12+{C:0,D:2,E:4,F:5,G:7,A:9,B:11}[m[1]]+(m[2]==='#'?1:m[2]==='b'?-1:0)+(e.ottava?12:0);}
-function compile(events,{capacity=4,bars=4,tempo=80,clef='treble'}={}){
+function compile(events,{capacity=4,bars=4,tempo=80,clef='treble',marks=[]}={}){
  const second=60/Math.max(20,Math.min(400,Number(tempo)||80)),visible=events.filter(e=>clef==='grand'||(e.staff||1)===(clef==='bass'?2:1)),byId=new Map(visible.filter(e=>e.id).map(e=>[e.id,e])),targets=new Set();
  // Only valid consecutive equal-pitch links extend a single attack.
  const linked=e=>{const next=byId.get(e.tieToId);return next&&next.kind!=='rest'&&!next.grace&&(next.staff||1)===(e.staff||1)&&JSON.stringify((next.notes||[next.note]).map(note=>midiFor({...next,note})).sort((a,b)=>a-b))===JSON.stringify((e.notes||[e.note]).map(note=>midiFor({...e,note})).sort((a,b)=>a-b))&&Math.abs((e.bar||0)*capacity+(e.offset||0)+e.beats-(next.bar||0)*capacity-(next.offset||0))<.0001?next:null;};
@@ -9,7 +9,8 @@ function compile(events,{capacity=4,bars=4,tempo=80,clef='treble'}={}){
  const notes=[];for(const e of visible){if(e.kind==='rest'||e.grace||targets.has(e.id))continue;let beats=e.beats,tail=e,seen=new Set([e.id]);while(linked(tail)&&!seen.has(linked(tail).id)){tail=linked(tail);seen.add(tail.id);beats+=tail.beats;}const start=((e.bar||0)*capacity+(e.offset||0))*second,duration=beats*second;for(const note of e.notes||[e.note])notes.push({midi:midiFor({...e,note}),start,duration:Math.max(.015,duration*(e.staccato?.35:e.slurToId?1:.9)),staff:e.staff||1,beat:(e.bar||0)*capacity+(e.offset||0),end:start+duration});}
  const graceGroups=new Map();for(const e of visible.filter(e=>e.grace)){const key=[e.staff||1,e.bar||0,e.offset||0].join(':');if(!graceGroups.has(key))graceGroups.set(key,[]);graceGroups.get(key).push(e);}
  for(const group of graceGroups.values()){const e=group[0],at=((e.bar||0)*capacity+(e.offset||0))*second,length=Math.min(.07,second*.15),start=Math.max(0,at-group.length*length);group.forEach((g,i)=>notes.push({midi:midiFor(g),start:start+i*length,duration:length*.9,staff:g.staff||1,grace:true}));if(at===0){const principal=notes.find(n=>!n.grace&&n.start===0&&n.staff===(e.staff||1));if(principal){const delay=Math.min(group.length*length,principal.duration*.5);principal.start+=delay;principal.duration=Math.max(.015,principal.duration-delay);}}}
- return {notes:notes.sort((a,b)=>a.start-b.start),duration:capacity*bars*second,secondsPerBeat:second};
+ const markTools=root.CrescendoRhythmMarks||(typeof require==='function'?require('./rhythm-marks.js'):null),route=markTools?markTools.route(bars,marks):Array.from({length:bars},(_,i)=>i),expanded=[];for(const [visit,bar] of route.entries())for(const note of notes.filter(n=>Math.floor((n.beat??n.start/second)/capacity)===bar)){const shift=(visit-bar)*capacity*second;expanded.push({...note,start:note.start+shift,end:note.end+shift,gain:markTools?markTools.gainAt(marks,bar,(note.beat??note.start/second)%capacity,capacity,note.staff)/.72:1});}
+ return {notes:expanded.sort((a,b)=>a.start-b.start),duration:capacity*route.length*second,secondsPerBeat:second,route,capacity};
 }
 function createPlayer({getContext,loadInstrument,onState=()=>{},onProgress=()=>{},volume=()=>.7,clickDestination=()=>null,setIntervalFn=setInterval,clearIntervalFn=clearInterval}={}){
  const cache=new Map();let token=0,loadVersion=0,timer=null,voices=[],context=null,session=null,paused=false;
@@ -24,8 +25,8 @@ function createPlayer({getContext,loadInstrument,onState=()=>{},onProgress=()=>{
   const tick=()=>{if(run!==token||paused||session!==s)return;const elapsed=context.currentTime-s.origin;
    while(clickIndex<s.count){const at=-s.countDuration+clickIndex*s.clickSeconds;if(at>elapsed+.15)break;click(s.origin+at,clickIndex===0);clickIndex++;}
    if(elapsed>=0&&phase==='counting'){phase='playing';onState('playing');}
-   while(index<s.plan.notes.length&&s.plan.notes[index].start<=elapsed+.15){const note=s.plan.notes[index++],end=note.start+note.duration;if(end<=s.position)continue;const start=Math.max(note.start,s.position),remaining=end-start,duration=s.instrument.short?Math.min(remaining,.22):remaining;const voice=s.player.play(note.midi,s.origin+start,{gain:Math.max(0,Number(volume()))*.65,duration,release:s.instrument.short?.05:.1});if(voice)voices.push(voice);}
-   onProgress(elapsed/s.plan.secondsPerBeat,elapsed<0?{count:Math.min(s.count,Math.max(1,Math.floor((elapsed+s.countDuration)/s.clickSeconds)+1)),total:s.count}:null);
+   while(index<s.plan.notes.length&&s.plan.notes[index].start<=elapsed+.15){const note=s.plan.notes[index++],end=note.start+note.duration;if(end<=s.position)continue;const start=Math.max(note.start,s.position),remaining=end-start,duration=s.instrument.short?Math.min(remaining,.22):remaining;const voice=s.player.play(note.midi,s.origin+start,{gain:Math.max(0,Number(volume()))*.65*(note.gain??1),duration,release:s.instrument.short?.05:.1});if(voice)voices.push(voice);}
+   const beat=elapsed/s.plan.secondsPerBeat,visit=Math.floor(beat/s.plan.capacity),displayBeat=beat<0?beat:(s.plan.route[visit]??s.plan.route.at(-1)+1)*s.plan.capacity+beat%s.plan.capacity;onProgress(displayBeat,elapsed<0?{count:Math.min(s.count,Math.max(1,Math.floor((elapsed+s.countDuration)/s.clickSeconds)+1)),total:s.count}:null);
    if(elapsed>=s.plan.duration+.15){stop();onState('ended');}
   };timer=setIntervalFn(tick,25);tick();
  }

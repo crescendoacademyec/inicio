@@ -48,7 +48,7 @@ function noteGraphic(id,x,y,down,glyphs,color='#222',className='rhythm-note'){
  return `<g class="${className}" data-stem="${noStem?'none':down?'down':'up'}">${shape}</g>`;
 }
 
-function render(events,{clef='treble',meter='4/4',bars=4,width=900,glyphs={}}={}){
+function render(events,{clef='treble',meter='4/4',bars=4,width=900,glyphs={},marks=[]}={}){
  const capacity=Number(meter.split('/')[0])*4/Number(meter.split('/')[1]),grand=clef==='grand',staves=grand?[1,2]:[clef==='bass'?2:1],rowHeight=grand?380:220,rows=Math.ceil(bars/4),w=Math.max(680,width),left=24,header=90,barWidth=(w-left*2-header)/4,spacing=10;
  const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[c]));
  const pitches={1:['A5','G5','F5','E5','D5','C5','B4','A4','G4','F4','E4','D4','C4'],2:['C4','B3','A3','G3','F3','E3','D3','C3','B2','A2','G2','F2','E2']};
@@ -59,8 +59,9 @@ function render(events,{clef='treble',meter='4/4',bars=4,width=900,glyphs={}}={}
   drawing+=`<text x="${left+6}" y="${top+(staff===1?30:10)}" font-family="Bravura Metronome" font-weight="normal" font-style="normal" font-size="40">${String.fromCodePoint(staff===1?0xE050:0xE062)}</text>`;
   const [numerator,denominator]=meter.split('/');drawing+=`<text x="${left+55}" y="${top+10}" font-family="Bravura Metronome" font-weight="normal" font-style="normal" font-size="40">${[...numerator].map(n=>String.fromCodePoint(0xE080+Number(n))).join('')}</text><text x="${left+55}" y="${top+30}" font-family="Bravura Metronome" font-weight="normal" font-style="normal" font-size="40">${[...denominator].map(n=>String.fromCodePoint(0xE080+Number(n))).join('')}</text>`;
   for(let local=0;local<count;local++){
-   const bar=row*4+local,start=left+header+local*barWidth,end=start+barWidth,inputStart=start+12,inputEnd=end-18;
+   const bar=row*4+local,start=left+header+local*barWidth,end=start+barWidth,inputStart=start+(marks.some(m=>m.bar===bar&&m.type==='repeatStart')?22:12),inputEnd=end-18;
    drawing+=`<rect class="rhythm-measure-hit" data-bar="${bar}" data-staff="${staff}" data-start="${inputStart}" data-end="${inputEnd}" data-top="${top}" x="${start}" y="${top-65}" width="${barWidth}" height="170" fill="transparent"/><line x1="${end}" x2="${end}" y1="${top}" y2="${top+40}" stroke="#222" stroke-width="1.5"/><text x="${start+3}" y="${top-16}" font-size="10" fill="#888">${bar+1}</text>`;
+   drawing+=(root.CrescendoRhythmMarks||(typeof require==='function'?require('./rhythm-marks.js'):null))?.svg(marks,{bar,staff,firstStaff:staves[0],top,start,end,inputStart,inputEnd,capacity})||'';
    const barEvents=notationEvents.filter(e=>e.staff===staff&&e.bar===bar),groups=beamGroups(barEvents,meter),beamed=new Set(groups.flatMap(g=>g.map(n=>n.index))),anchors=[];
    let offset=0;for(const [eventIndex,e] of barEvents.entries()){
     const ornaments=e.grace?barEvents.filter(n=>n.grace&&Math.abs(n.offset-e.offset)<.0001):[];const x=inputStart+(inputEnd-inputStart)*(e.grace?e.offset:offset)/capacity-(e.grace?15+(ornaments.length-1-ornaments.indexOf(e))*10:0);offset+=e.beats;
