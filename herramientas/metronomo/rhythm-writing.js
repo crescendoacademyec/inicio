@@ -1,18 +1,19 @@
 (function(root){'use strict';
 const TICKS=13440,durations=[['one-twenty-eighth',.03125,'8','Garrapatea'],['sixty-fourth',.0625,'7','Semifusa'],['thirty-second',.125,'6','Fusa'],['sixteenth',.25,'5','Semicorchea'],['eighth',.5,'4','Corchea'],['quarter',1,'3','Negra'],['half',2,'2','Blanca'],['whole',4,'1','Redonda'],['breve',8,'0','Cuadrada']];
+const clampStaffIndex=index=>Math.max(-8,Math.min(20,index));
 const ticks=b=>Math.round(b*TICKS),factor=d=>[1,1.5,1.75][d||0];
 let decorationId=0;
 function decorate(state,events,position,staff=1,capacity=4){
  const notes=events.filter(e=>(e.staff||1)===staff&&!e.grace&&e.kind!=='rest'&&e.bar===position.bar),note=notes.find(e=>Math.abs((e.offset||0)-position.beat)<.0001);
- if(!note)return 'Selecciona una nota existente para aplicar la ligadura o el staccato.';
+ if(!note)return 'Selecciona una nota existente para aplicar esta marca.';
  if(!note.id)note.id='rhythm-note-'+(++decorationId);
- if(state.tool==='staccato'){note.staccato=!note.staccato;return '';}
+ if(['staccato','accent'].includes(state.tool)){note[state.tool]=!note[state.tool];return '';}
  if(!state.decorationStart){state.decorationStart=note.id;return 'Selecciona la segunda nota de la ligadura.';}
  const first=events.find(e=>e.id===state.decorationStart);if(!first){state.decorationStart=null;return 'Selecciona la primera nota otra vez.';}
  if(first===note){state.decorationStart=null;return 'Selecciona dos notas distintas.';}
  const a=first.bar*capacity+(first.offset||0),b=note.bar*capacity+(note.offset||0),start=a<b?first:note,end=a<b?note:first;
  if(state.tool==='tie'&&(JSON.stringify([...(start.notes||[start.note])].sort())!==JSON.stringify([...(end.notes||[end.note])].sort())||start.midi!==end.midi||!!start.ottava!==!!end.ottava||Math.abs(start.bar*capacity+(start.offset||0)+start.beats-end.bar*capacity-(end.offset||0))>.0001))return 'La prolongación une notas consecutivas de la misma altura.';
- const field=state.tool==='tie'?'tieToId':'slurToId';if(start[field]===end.id)delete start[field];else start[field]=end.id;
+ const field=state.tool==='tie'?'tieToId':state.tool==='glissando'?'glissandoToId':'slurToId';if(start[field]===end.id)delete start[field];else start[field]=end.id;
  state.decorationStart=null;state.tool='';return '';
 }
 
@@ -22,7 +23,7 @@ function select(state,action,value){if(action==='tool'){state.tool=state.tool===
 function append(state,events,note,capacity,bars,staff=1,position=null){const cap=ticks(capacity),used=position?position.bar*cap+ticks(position.beat):events.filter(e=>!e.grace&&(e.staff||1)===staff).reduce((n,e)=>Math.max(n,(e.bar||0)*cap+ticks(e.offset||0)+ticks(e.beats)),0),bar=Math.floor(used/cap),remaining=cap-used%cap;if(state.grace){events.push({id:'rhythm-note-'+(++decorationId),staff,note,beats:0,grace:true,graceUnitBeats:Math.min(.5,state.beats),offset:(used%cap)/TICKS,bar});return '';}
 if(state.chord&&!state.rest){const existing=events.find(e=>!e.grace&&e.kind!=='rest'&&(e.staff||1)===staff&&e.bar===bar&&Math.abs((e.offset||0)-(used%cap)/TICKS)<.0001);if(existing){existing.notes=[...new Set([...(existing.notes||[existing.note]),note])];return '';}}
 if(bar>=bars)return 'El ejercicio ya está completo. Deshaz o limpia para modificarlo.';if(state.actual&&state.groupIndex&&state.groupStaff!==staff)return 'Termina el grupo en el pentagrama donde lo empezaste.';const base=state.beats*factor(state.dots),eventTicks=ticks(base*(state.actual?state.normal/state.actual:1));if(eventTicks>remaining)return 'Esa figura no cabe en el compás. Elige una menor o completa con silencios.';if(state.actual&&state.groupIndex===0&&eventTicks*state.actual>remaining)return 'El grupo completo no cabe en este compás. Elige una figura menor.';if(state.actual&&state.groupIndex===0){state.groupId++;state.groupStaff=staff;}
-const e={id:'rhythm-note-'+(++decorationId),staccato:state.tool==='staccato',ottava:!!state.ottava,staff,offset:(used%cap)/TICKS,note,beats:eventTicks/TICKS,bar,kind:state.rest?'rest':undefined};if(state.actual){Object.assign(e,{tupletActual:state.actual,tupletNormal:state.normal,tupletUnitBeats:base,tuplet:state.groupIndex===0?'start':state.groupIndex===state.actual-1?'stop':'',writingGroupId:state.groupId,writingGroupIndex:state.groupIndex});if(++state.groupIndex===state.actual){state.groupIndex=0;state.actual=0;}}if(position){for(let i=events.length-1;i>=0;i--){const old=events[i];if(!old.grace&&(old.staff||1)===staff&&old.bar===bar&&ticks(old.offset||0)<used%cap+eventTicks&&ticks(old.offset||0)+ticks(old.beats)>used%cap)events.splice(i,1);}}events.push(e);return '';}
+const e={id:'rhythm-note-'+(++decorationId),staccato:state.tool==='staccato',accent:state.tool==='accent',ottava:!!state.ottava,staff,offset:(used%cap)/TICKS,note,beats:eventTicks/TICKS,bar,kind:state.rest?'rest':undefined};if(state.actual){Object.assign(e,{tupletActual:state.actual,tupletNormal:state.normal,tupletUnitBeats:base,tuplet:state.groupIndex===0?'start':state.groupIndex===state.actual-1?'stop':'',writingGroupId:state.groupId,writingGroupIndex:state.groupIndex});if(++state.groupIndex===state.actual){state.groupIndex=0;state.actual=0;}}if(position){for(let i=events.length-1;i>=0;i--){const old=events[i];if(!old.grace&&(old.staff||1)===staff&&old.bar===bar&&ticks(old.offset||0)<used%cap+eventTicks&&ticks(old.offset||0)+ticks(old.beats)>used%cap)events.splice(i,1);}}events.push(e);return '';}
 function notation(events,capacity,bars){const result=[];for(const staff of [1,2])for(let bar=0;bar<bars;bar++){let cursor=0;const selected=events.filter(e=>(e.staff||1)===staff&&(e.bar||0)===bar);let legacy=0;const ordered=selected.map(e=>{const offset=e.offset??legacy;legacy=offset+e.beats;return {...e,offset};}).sort((a,b)=>a.offset-b.offset);const rest=end=>{while(cursor<ticks(end)){const remaining=ticks(end)-cursor,beatRemaining=TICKS-cursor%TICKS;const length=Math.min(remaining,beatRemaining);const value=[4,2,1,.5,.25,.125,.0625,.03125].find(v=>ticks(v)<=length);const duration=value?ticks(value):length;result.push({staff,bar,kind:'rest',beats:duration/TICKS});cursor+=duration;}};if(!ordered.length){result.push({staff,bar,kind:'rest',measureRest:true,beats:capacity});continue;}for(const e of ordered){if(e.grace){result.push(e);continue;}rest(e.offset);result.push(e);cursor=ticks(e.offset+e.beats);}rest(capacity);}return result;}
 function figureForEvent(e){const base=e.tupletUnitBeats||e.graceUnitBeats||e.beats;return durations.find(d=>Math.abs(d[1]-base)<.00001)||durations.find(d=>Math.abs(d[1]*1.5-base)<.00001)||durations.find(d=>Math.abs(d[1]*1.75-base)<.00001)||durations.find(d=>d[0]==='quarter');}
 function beamGroups(events,meter='4/4'){
@@ -82,10 +83,11 @@ function render(events,{clef='treble',meter='4/4',bars=4,width=900,glyphs={},mar
      else{const graphic=noteGraphic(d[0],x,y,down,glyphs,'#222',e.grace?'rhythm-grace-note':'rhythm-note');drawing+=e.grace?`<g transform="translate(${x*.4} ${y*.4}) scale(.6)">${graphic}</g>`:graphic;}
      if(e.grace)drawing+=`<path d="M${x} ${y+(down?12:-12)}l10 ${down?9:-9}" stroke="#222" stroke-width="1"/>`;
      if(e.staccato)drawing+=`<circle class="rhythm-staccato" cx="${x}" cy="${y+(down?-10:10)}" r="1.8" fill="#222"/>`;
+     if(e.accent)drawing+=`<text class="rhythm-accent" x="${x-5}" y="${y+(down?-14:20)}" font-family="Bravura Metronome" font-size="30">${String.fromCodePoint(down?0xE4A0:0xE4A1)}</text>`;
      for(const [ni,headY] of ys.entries()){
       if(chord[ni].includes('#'))drawing+=`<text x="${x-15}" y="${headY}" font-family="Bravura Metronome" font-size="40">&#xE262;</text>`;
-      for(let line=-2;line>=(headY-top)/5;line-=2)drawing+=`<line class="rhythm-ledger-line" x1="${x-9}" x2="${x+9}" y1="${top+line*5}" y2="${top+line*5}" stroke="#222"/>`;
-      for(let line=10;line<=(headY-top)/5;line+=2)drawing+=`<line class="rhythm-ledger-line" x1="${x-9}" x2="${x+9}" y1="${top+line*5}" y2="${top+line*5}" stroke="#222"/>`;
+      for(let line=-2;line>=Math.max(-10,(headY-top)/5);line-=2)drawing+=`<line class="rhythm-ledger-line" x1="${x-9}" x2="${x+9}" y1="${top+line*5}" y2="${top+line*5}" stroke="#222"/>`;
+      for(let line=10;line<=Math.min(18,(headY-top)/5);line+=2)drawing+=`<line class="rhythm-ledger-line" x1="${x-9}" x2="${x+9}" y1="${top+line*5}" y2="${top+line*5}" stroke="#222"/>`;
      }
      if(e.ottava)drawing+=`<g class="rhythm-ottava"><text x="${x-5}" y="${Math.max(14,Math.min(top-35,Math.min(...ys)-50))}" font-family="Georgia,serif" font-style="italic" font-size="13">8va</text><path d="M${x+20} ${Math.max(11,Math.min(top-38,Math.min(...ys)-53))}h${Math.max(15,(inputEnd-inputStart)*e.beats/capacity-20)}v6" stroke="#222" fill="none" stroke-dasharray="3 3"/></g>`;
     }
@@ -110,9 +112,9 @@ function render(events,{clef='treble',meter='4/4',bars=4,width=900,glyphs={},mar
    barEvents.forEach((e,i)=>{if(!e.tupletActual){drawTuplet();return;}if(e.tuplet==='start')drawTuplet();tuplet.push(i);if(e.tuplet==='stop'||tuplet.length===e.tupletActual)drawTuplet();});drawTuplet();
   }
  }
- for(const e of events)for(const [field,cls] of [['tieToId','rhythm-tie'],['slurToId','rhythm-slur']]){
+ for(const e of events)for(const [field,cls] of [['tieToId','rhythm-tie'],['slurToId','rhythm-slur'],['glissandoToId','rhythm-glissando']]){
   if(!e[field])continue;const a=notePositions.get(e.id),b=notePositions.get(e[field]);if(!a||!b||a.staff!==b.staff)continue;
-  const curve=(x1,y1,x2,y2)=>{const lift=cls==='rhythm-tie'?12:20;drawing+=`<path class="${cls}" d="M${x1} ${y1+8}C${x1+(x2-x1)/3} ${y1+lift} ${x2-(x2-x1)/3} ${y2+lift} ${x2} ${y2+8}" fill="none" stroke="#222" stroke-width="1.4"/>`;};
+  const curve=(x1,y1,x2,y2)=>{if(cls==='rhythm-glissando'){const start=x1+10,end=x2-10;if(end>start)drawing+=`<g class="rhythm-glissando"><path d="M${start} ${y1}L${end} ${y2}" fill="none" stroke="#222" stroke-width="1.2"/><text x="${(start+end)/2}" y="${(y1+y2)/2-5}" text-anchor="middle" font-family="serif" font-size="10">gliss.</text></g>`;return;}const lift=cls==='rhythm-tie'?12:20;drawing+=`<path class="${cls}" d="M${x1} ${y1+8}C${x1+(x2-x1)/3} ${y1+lift} ${x2-(x2-x1)/3} ${y2+lift} ${x2} ${y2+8}" fill="none" stroke="#222" stroke-width="1.4"/>`;};
   if(a.row===b.row)curve(a.x,a.y,b.x,b.y);else{curve(a.x,a.y,w-left,a.y);curve(left+header,b.y,b.x,b.y);}
  }
  return `<svg xmlns="http://www.w3.org/2000/svg" class="rhythm-stable-score" data-grand="${grand}" width="${w}" height="${rows*rowHeight}" viewBox="0 0 ${w} ${rows*rowHeight}" role="img" aria-label="Partitura editable de ${bars} compases">${drawing}</svg>`;
@@ -156,5 +158,5 @@ function generate({capacity=4,bars=4,kind='steady',base=1,clef='treble',random=M
 }
 
 function history(){const past=[],future=[];return {get canUndo(){return past.length>0;},get canRedo(){return future.length>0;},commit(before,after){if(before===after)return;past.push(before);if(past.length>100)past.shift();future.length=0;},undo(current){if(!past.length)return null;future.push(current);return past.pop();},redo(current){if(!future.length)return null;past.push(current);return future.pop();}};}
-const api={diatonic,noteAtIndex,stemDown,noteGraphic,history,decorate,beamGroups,generate,gridStep,render,notation,TICKS,durations,ticks,factor,create,select,append};if(typeof module!=='undefined')module.exports=api;else root.CrescendoRhythmWriting=api;
+const api={clampStaffIndex,diatonic,noteAtIndex,stemDown,noteGraphic,history,decorate,beamGroups,generate,gridStep,render,notation,TICKS,durations,ticks,factor,create,select,append};if(typeof module!=='undefined')module.exports=api;else root.CrescendoRhythmWriting=api;
 })(typeof window==='undefined'?globalThis:window);
