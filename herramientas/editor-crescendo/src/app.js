@@ -9313,6 +9313,7 @@
             staff: markSystemIndex(mark) + 1
           };
         }
+        if(mark.type==='navigation'&&Number(mark.measureIndex)===measureIndex)return {type:'navigation',navigation:mark.navigation,text:mark.text,placement:'above',tick:Math.max(0,Math.min(measureTicksValue,Number(mark.tick)||0)),staff:1};
         return musicXmlTempoDirectionForMark(mark, measureIndex, measureTicksValue);
       })
     ].filter(Boolean);
@@ -14812,6 +14813,9 @@
     menu.appendChild(contextMenuGroup("Tipo de barra", palettes.bars.map((item) => (
       contextMenuButton(item.label, () => applyBarlineAtBoundary(item.barlineType, boundaryIndex))
     ))));
+    menu.appendChild(contextMenuGroup("Navegación · D.C. / D.S.", palettes.navigation.map((item) => contextMenuButton(item.label, () => {
+      saveHistory();state.marks.push({id:createMarkId(),type:"navigation",navigation:item.navigation,text:item.symbol,measureIndex,tick:0,staffStep:0,entryId:null});render();
+    }))));
     menu.appendChild(contextMenuGroup("Casillas", palettes.endings.map((item) => (
       contextMenuButton(item.label, () => applyEndingAtMeasure(item, measureIndex, { ignoreSelection: true }))
     ))));
@@ -15697,6 +15701,9 @@
         button.addEventListener("click", () => setJazzSwingPreset(item.jazzSwingPreset));
       } else if (item.clefId) {
         button.addEventListener("click", () => insertClefChange(item));
+      } else if (item.navigation) {
+        button.dataset.navigation=item.navigation;
+        button.addEventListener("click", () => insertMark({ type: "navigation", navigation: item.navigation, text: item.symbol }));
       } else if (item.barlineType) {
         button.addEventListener("click", () => applyBarline(item));
       } else if (item.ending) {
@@ -20035,6 +20042,9 @@
         renderTempoMark(markGroup, x, staffTopY() - 36, { unitDurationId: "quarter", value: "82" });
       } else if (mark.type === "tempo") {
         renderTempoMark(markGroup, x, staffTopY() - 36, mark);
+      } else if (mark.type === "navigation") {
+        const symbol=mark.navigation==='segno'?String.fromCodePoint(0xE047):mark.navigation==='coda'?String.fromCodePoint(0xE048):mark.text||"";
+        markGroup.appendChild(textNode(x,staffTopY()-42+visualOffset(mark,"y"),symbol,{class:"notation-mark navigation-mark",style:['segno','coda'].includes(mark.navigation)?"font-family:MTF Improviso Light;font-size:34px":"font-family:serif;font-size:18px;font-weight:600"}));
       } else if (mark.type === "tempo-text") {
         markGroup.appendChild(textNode(
           x + appearanceValue("tempoOffsetX"),
@@ -20064,7 +20074,7 @@
         }));
       }
       if (!isSlur) {
-        const hitY = mark.type === "dynamic-mf"
+        const hitY = mark.type === "navigation" ? staffTopY()-42+visualOffset(mark,"y") : mark.type === "dynamic-mf"
           ? staffBottomY() + 42
           : mark.type === "fermata"
             ? (mark.flipped ? staffBottomY() + 22 : staffTopY() - 18)

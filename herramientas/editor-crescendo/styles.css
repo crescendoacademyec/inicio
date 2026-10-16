@@ -5791,3 +5791,7 @@ body.editor-page .editor-workbench .score-shell {
 .input-event-preview{opacity:.52;pointer-events:none;--note-color:#c68e25}.input-event-preview *{pointer-events:none!important;fill:#c68e25;stroke:#c68e25}.input-event-preview .stem-glyph,.input-event-preview .music-glyph{stroke:none}.input-event-preview .staff-line{fill:none}
 
 .input-rhythm-ruler .rhythm-slot{stroke:#c68e25;stroke-width:1.2;opacity:.65;vector-effect:non-scaling-stroke;pointer-events:none}.input-rhythm-ruler .rhythm-slot-beat{stroke-width:1.8;opacity:.95}
+
+/* Navigation labels fit the compact inspector without clipping. */
+#durationTools button.palette-navigation .text-glyph{font:600 11px/1.25 sans-serif!important;white-space:normal;overflow-wrap:normal;max-width:100%;text-align:center}
+#durationTools button.palette-navigation .music-glyph{font-family:"MTF Improviso Light"!important;font-size:30px!important}

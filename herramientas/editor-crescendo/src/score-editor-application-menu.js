@@ -41,6 +41,7 @@
         { label: "Articulaciones", palette: "articulations", shortcut: "Shift+O / P / H" },
         { label: "Dinámicas", target: "#dynamicsButton", shortcut: "Shift+D" },
         { label: "Casillas", palette: "endings" },
+        { label: "D.C., D.S., Coda y Fine", palette: "navigation" },
         { label: "Barras y repeticiones", palette: "bars", shortcut: "Shift+B / R" }
       ]
     },

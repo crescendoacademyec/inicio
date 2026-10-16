@@ -327,7 +327,14 @@
     return rows;
   }
 
+  function navigationDirectionRows(direction,level=3){
+    const kind=direction.navigation,defs={dc:['D.C.','dacapo="yes"'],dcFine:['D.C. al Fine','dacapo="yes"'],dcCoda:['D.C. al Coda','dacapo="yes"'],ds:['D.S.','dalsegno="segno"'],dsFine:['D.S. al Fine','dalsegno="segno"'],dsCoda:['D.S. al Coda','dalsegno="segno"'],segno:['','segno="segno"'],coda:['','coda="coda"'],toCoda:['Al Coda','tocoda="coda"'],fine:['Fine','fine="yes"']},definition=defs[kind];
+    if(!definition)return wordsDirectionRows(direction,level);
+    const body=['segno','coda'].includes(kind)?`<${kind}/>`:`<words>${escapeXml(definition[0])}</words>`;
+    return [line(level,'<direction placement="above">'),line(level+1,'<direction-type>'),line(level+2,body),line(level+1,'</direction-type>'),line(level+1,`<staff>${Math.max(1,Number(direction.staff)||1)}</staff>`),line(level+1,`<sound ${definition[1]}/>`),line(level,'</direction>')];
+  }
   function directionRows(direction, level = 3) {
+    if (direction?.type === "navigation") return navigationDirectionRows(direction,level);
     if (direction?.type === "harmony") return harmonyRows(direction, level);
     if (direction?.type === "dynamic") return dynamicDirectionRows(direction, level);
     if (direction?.type === "tempo") return tempoDirectionRows(direction, level);

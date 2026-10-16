@@ -221,6 +221,7 @@
       { selector: "#keySignatureButton", label: "Armadura", icon: "hash" },
       { selector: "[data-palette='articulations']", label: "Articulaciones", icon: "sparkles" },
       { selector: "#dynamicsButton", label: "Dinámicas", icon: "audio-lines" },
+      { selector: "[data-palette='navigation']", label: "D.C. / D.S.", icon: "repeat" },
       { selector: "[data-palette='endings']", label: "Casillas", icon: "between-horizontal-end" },
       { selector: "[data-palette='bars']", label: "Barras", icon: "columns-3" }
     ],
@@ -660,6 +661,7 @@
               keys: "Armadura",
               dynamics: "Dinámicas",
               endings: "Casillas",
+              navigation: "Navegación",
               canvas: "Vista",
               tools: "Voicings",
               bars: "Barras",

@@ -256,6 +256,18 @@
         { id: "repeat-end", label: "Fin de repetición", symbol: "𝄇", music: true, barlineType: "repeat-end" },
         { id: "repeat-both", label: "Doble repetición", symbol: "𝄇𝄆", music: true, barlineType: "repeat-both" }
       ],
+      navigation: [
+        { id: "nav-dc", label: "Da capo", symbol: "D.C.", navigation: "dc" },
+        { id: "nav-dc-fine", label: "Da capo al Fine", symbol: "D.C. al Fine", navigation: "dcFine" },
+        { id: "nav-dc-coda", label: "Da capo al Coda", symbol: "D.C. al Coda", navigation: "dcCoda" },
+        { id: "nav-ds", label: "Dal segno", symbol: "D.S.", navigation: "ds" },
+        { id: "nav-ds-fine", label: "Dal segno al Fine", symbol: "D.S. al Fine", navigation: "dsFine" },
+        { id: "nav-ds-coda", label: "Dal segno al Coda", symbol: "D.S. al Coda", navigation: "dsCoda" },
+        { id: "nav-segno", label: "Segno", symbol: "\uE047", music: true, navigation: "segno" },
+        { id: "nav-coda", label: "Coda", symbol: "\uE048", music: true, navigation: "coda" },
+        { id: "nav-to-coda", label: "Al Coda", symbol: "Al Coda", navigation: "toCoda" },
+        { id: "nav-fine", label: "Fine", symbol: "Fine", navigation: "fine" }
+      ],
       endings: [
         { id: "first-ending", label: "Primera casilla", symbol: "⌜1.", ending: { label: "1.", closedEnd: true } },
         { id: "second-ending", label: "Segunda casilla", symbol: "⌜2.", ending: { label: "2.", closedEnd: false } },
