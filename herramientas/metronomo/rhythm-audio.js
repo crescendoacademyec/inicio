@@ -1,5 +1,5 @@
 (function(root){'use strict';
-const instruments={piano:{name:'Piano',bank:'acoustic_grand_piano'},guitar:{name:'Guitarra',bank:'acoustic_guitar_nylon'},bass:{name:'Bajo',bank:'electric_bass_finger'},violin:{name:'Violín',bank:'violin'},ukulele:{name:'Ukelele · adaptación SoundFont',bank:'acoustic_guitar_nylon',short:true}};
+const instruments={piano:{name:'Piano',bank:'acoustic_grand_piano'},guitar:{name:'Guitarra',bank:'acoustic_guitar_nylon'},bass:{name:'Bajo',bank:'electric_bass_finger'},violin:{name:'Violín',bank:'violin'},ukulele:{name:'Ukelele',bank:'acoustic_guitar_nylon',short:true}};
 function midiFor(e){if(Number.isFinite(e.midi))return e.midi+(e.ottava?12:0);const m=/^([A-G])([#b]?)(-?\d+)$/.exec(e.note||'C5');return (Number(m[3])+1)*12+{C:0,D:2,E:4,F:5,G:7,A:9,B:11}[m[1]]+(m[2]==='#'?1:m[2]==='b'?-1:0)+(e.ottava?12:0);}
 function compile(events,{capacity=4,bars=4,tempo=80,clef='treble'}={}){
  const second=60/Math.max(20,Math.min(400,Number(tempo)||80)),visible=events.filter(e=>clef==='grand'||(e.staff||1)===(clef==='bass'?2:1)),byId=new Map(visible.filter(e=>e.id).map(e=>[e.id,e])),targets=new Set();
@@ -11,11 +11,28 @@ function compile(events,{capacity=4,bars=4,tempo=80,clef='treble'}={}){
  for(const group of graceGroups.values()){const e=group[0],at=((e.bar||0)*capacity+(e.offset||0))*second,length=Math.min(.07,second*.15),start=Math.max(0,at-group.length*length);group.forEach((g,i)=>notes.push({midi:midiFor(g),start:start+i*length,duration:length*.9,staff:g.staff||1,grace:true}));if(at===0){const principal=notes.find(n=>!n.grace&&n.start===0&&n.staff===(e.staff||1));if(principal){const delay=Math.min(group.length*length,principal.duration*.5);principal.start+=delay;principal.duration=Math.max(.015,principal.duration-delay);}}}
  return {notes:notes.sort((a,b)=>a.start-b.start),duration:capacity*bars*second,secondsPerBeat:second};
 }
-function createPlayer({getContext,loadInstrument,onState=()=>{},onProgress=()=>{},volume=()=>.7,setIntervalFn=setInterval,clearIntervalFn=clearInterval}={}){
- const cache=new Map();let token=0,timer=null,voices=[],context=null;
- const stop=()=>{token++;if(timer!==null)clearIntervalFn(timer);timer=null;for(const voice of voices){try{voice.stop();}catch(_){}}voices=[];onState('stopped');};
- async function play(events,options){stop();const run=token;const plan=compile(events,options);if(!plan.notes.length){onState('empty');return;}onState('loading');try{context=getContext();await context.resume();if(run!==token)return;const instrument=instruments[options.instrument]||instruments.piano;if(!cache.has(instrument.bank))cache.set(instrument.bank,Promise.resolve(loadInstrument(context,instrument.bank)).catch(error=>{cache.delete(instrument.bank);throw error;}));const player=await cache.get(instrument.bank);if(run!==token)return;const origin=context.currentTime+.08;let index=0;onState('playing');const tick=()=>{if(run!==token)return;const elapsed=context.currentTime-origin;while(index<plan.notes.length&&plan.notes[index].start<=elapsed+.2){const note=plan.notes[index++],duration=instrument.short?Math.min(note.duration,.22):note.duration;const voice=player.play(note.midi,origin+note.start,{gain:Math.max(0,Number(volume()))*.65,duration,release:instrument.short?.05:.1});if(voice)voices.push(voice);}onProgress(Math.max(0,elapsed)/plan.secondsPerBeat);if(elapsed>=plan.duration+.15){stop();onState('ended');}};timer=setIntervalFn(tick,25);tick();}catch(error){if(run===token){stop();onState('error',error);}}}
- return {play,stop};
+function createPlayer({getContext,loadInstrument,onState=()=>{},onProgress=()=>{},volume=()=>.7,clickDestination=()=>null,setIntervalFn=setInterval,clearIntervalFn=clearInterval}={}){
+ const cache=new Map();let token=0,loadVersion=0,timer=null,voices=[],context=null,session=null,paused=false;
+ const silence=()=>{if(timer!==null)clearIntervalFn(timer);timer=null;for(const voice of voices){try{voice.stop();}catch(_){}}voices=[];};
+ const stop=()=>{token++;silence();session=null;paused=false;onState('stopped');};
+ const instrumentPlayer=name=>{context=getContext();const instrument=instruments[name]||instruments.piano;if(!cache.has(instrument.bank))cache.set(instrument.bank,Promise.resolve(loadInstrument(context,instrument.bank)).catch(error=>{cache.delete(instrument.bank);throw error;}));return cache.get(instrument.bank);};
+ async function preload(name){const version=++loadVersion,run=token;if(!session)onState('preloading');try{const player=await instrumentPlayer(name);if(version===loadVersion&&run===token&&!session)onState('ready');return player;}catch(error){if(version===loadVersion&&run===token&&!session)onState('error',error);return null;}}
+ function click(at,accent){if(!context.createOscillator)return;const oscillator=context.createOscillator(),gain=context.createGain();oscillator.frequency.value=accent?1000:750;gain.gain.setValueAtTime(.09*Math.max(0,Number(volume())),at);gain.gain.exponentialRampToValueAtTime(.001,at+.055);oscillator.connect(gain);gain.connect(clickDestination()||context.destination);oscillator.start(at);oscillator.stop(at+.06);voices.push(oscillator);}
+ function startSession(){
+  const run=token,s=session;s.origin=context.currentTime+.06-s.position;let index=0,clickIndex=0,phase=s.position<0?'counting':'playing';onState(phase);
+  while(clickIndex<s.count&&-s.countDuration+clickIndex*s.clickSeconds<s.position-.0001)clickIndex++;
+  const tick=()=>{if(run!==token||paused||session!==s)return;const elapsed=context.currentTime-s.origin;
+   while(clickIndex<s.count){const at=-s.countDuration+clickIndex*s.clickSeconds;if(at>elapsed+.15)break;click(s.origin+at,clickIndex===0);clickIndex++;}
+   if(elapsed>=0&&phase==='counting'){phase='playing';onState('playing');}
+   while(index<s.plan.notes.length&&s.plan.notes[index].start<=elapsed+.15){const note=s.plan.notes[index++],end=note.start+note.duration;if(end<=s.position)continue;const start=Math.max(note.start,s.position),remaining=end-start,duration=s.instrument.short?Math.min(remaining,.22):remaining;const voice=s.player.play(note.midi,s.origin+start,{gain:Math.max(0,Number(volume()))*.65,duration,release:s.instrument.short?.05:.1});if(voice)voices.push(voice);}
+   onProgress(elapsed/s.plan.secondsPerBeat,elapsed<0?{count:Math.min(s.count,Math.max(1,Math.floor((elapsed+s.countDuration)/s.clickSeconds)+1)),total:s.count}:null);
+   if(elapsed>=s.plan.duration+.15){stop();onState('ended');}
+  };timer=setIntervalFn(tick,25);tick();
+ }
+ async function play(events,options){stop();const run=token,plan=compile(events,options);if(!plan.notes.length){onState('empty');return;}onState('loading');try{context=getContext();await context.resume();if(run!==token)return;const player=await instrumentPlayer(options.instrument);if(run!==token)return;const count=options.countIn===false?0:Number(String(options.meter||'4/4').split('/')[0]),countDuration=count?Number(options.capacity||4)*plan.secondsPerBeat:0;session={plan,player,instrument:instruments[options.instrument]||instruments.piano,position:-countDuration,count,countDuration,clickSeconds:count?countDuration/count:0};paused=false;startSession();}catch(error){if(run===token){stop();onState('error',error);}}}
+ function pause(){if(!session||paused)return;session.position=Math.max(-session.countDuration,context.currentTime-session.origin);token++;silence();paused=true;onState('paused');}
+ async function resume(){if(!session||!paused)return;const run=token;await context.resume();if(run!==token||!session)return;paused=false;startSession();}
+ return {play,stop,pause,resume,preload};
 }
 const api={instruments,midiFor,compile,createPlayer};if(typeof module!=='undefined')module.exports=api;else root.CrescendoRhythmAudio=api;
 })(typeof window==='undefined'?globalThis:window);

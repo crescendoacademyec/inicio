@@ -667,7 +667,7 @@
     @media(max-width:520px){.rhythm-lab-controls{grid-template-columns:repeat(2,minmax(0,1fr))}.rhythm-lab-controls .rhythm-editor-actions{justify-content:flex-start;overflow-x:auto}.rhythm-lab-controls .rhythm-editor-actions button{font-size:.6rem}}
     .rhythm-save-menu{position:fixed;z-index:1000;width:210px;padding:6px;background:#24201d;border:1px solid #a77b2a;border-radius:12px;box-shadow:0 12px 30px #0007}
     .rhythm-save-menu[hidden]{display:none}.rhythm-save-menu button{display:block;width:100%;padding:11px 14px;text-align:left;background:transparent;color:#f7edda;border:0;border-radius:7px;cursor:pointer;font:600 .8rem sans-serif}.rhythm-save-menu button:hover,.rhythm-save-menu button:focus-visible{background:#d4a84f;color:#161514;outline:none}
-    .rhythm-playback-controls{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-top:12px}.rhythm-playback-controls button,.rhythm-playback-controls select{min-height:36px;border:1px solid #9e7c3d;border-radius:9px;background:#211e19;color:var(--text);padding:6px 12px;font:600 .75rem sans-serif}.rhythm-playback-controls button{display:inline-flex;align-items:center;gap:7px;cursor:pointer}.rhythm-playback-controls button[aria-pressed="true"]{background:var(--accent);color:var(--ink)}.rhythm-playback-controls svg{width:17px;height:17px;fill:currentColor}.rhythm-playback-controls label{display:inline;color:var(--text-dim);font-size:.7rem}.rhythm-playback-controls select{width:auto;max-width:220px}.rhythm-playback-controls [role="status"]{font-size:.7rem;color:var(--text-dim)}.rhythm-measure-hit.is-playing-measure{fill:#d4a84f20;stroke:#b9872a;stroke-width:1}
+    .rhythm-lab-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:10px}.rhythm-footer-status{flex:1 1 250px}.rhythm-footer-status p{margin:0}.rhythm-footer-status [role="status"]{font-size:.75rem;color:var(--accent)}.rhythm-playhead{position:absolute;width:2px;background:#b9872a;box-shadow:0 0 4px #d4a84f80;z-index:5;pointer-events:none}.rhythm-playback-controls{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-left:auto}.rhythm-playback-controls input{width:64px;min-height:36px;border:1px solid #9e7c3d;border-radius:9px;background:#211e19;color:var(--text);padding:6px;font:600 .75rem sans-serif}.rhythm-playback-controls button,.rhythm-playback-controls select{min-height:36px;border:1px solid #9e7c3d;border-radius:9px;background:#211e19;color:var(--text);padding:6px 12px;font:600 .75rem sans-serif}.rhythm-playback-controls button{display:inline-flex;align-items:center;gap:7px;cursor:pointer}.rhythm-playback-controls button[aria-pressed="true"]{background:var(--accent);color:var(--ink)}.rhythm-playback-controls svg{width:17px;height:17px;fill:currentColor}.rhythm-playback-controls label{display:inline;color:var(--text-dim);font-size:.7rem}.rhythm-playback-controls select{width:auto;max-width:220px}.rhythm-playback-controls [role="status"]{font-size:.7rem;color:var(--text-dim)}
 </style>
     <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/opensheetmusicdisplay@1.8.4/build/opensheetmusicdisplay.min.js"></script>
@@ -790,10 +790,10 @@
                 </div>
             </div>
             <div id="rhythmSaveMenu" class="rhythm-save-menu" role="menu" aria-label="Guardar ejercicio como" hidden><button type="button" role="menuitem" data-export-format="png">Imagen PNG</button><button type="button" role="menuitem" data-export-format="pdf">PDF</button><button type="button" role="menuitem" data-export-format="musicxml">MusicXML</button></div>
-            <div class="rhythm-playback-controls"><button type="button" id="rhythmListen" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 5 11 7-11 7Z"/></svg><span>Reproducir</span></button><label for="rhythmSound">Sonido</label><select id="rhythmSound"><option value="piano">Piano</option><option value="guitar">Guitarra</option><option value="bass">Bajo</option><option value="violin">Violín</option><option value="ukulele">Ukelele · adaptación</option></select><span id="rhythmSoundStatus" role="status" aria-live="polite">Sonido SoundFont</span></div>
+
             <div class="rhythm-palette" id="rhythmPalette" aria-label="Figuras y modificadores"></div>
             <div class="rhythm-score-wrap"><div class="rhythm-score" id="rhythmScore" aria-live="polite"></div><div class="rhythm-score-overlay" id="rhythmScoreOverlay" aria-label="Pulsa directamente sobre el pentagrama para escribir"></div></div>
-            <p class="rhythm-lab-status" id="rhythmStatus"></p>
+            <div class="rhythm-lab-footer"><div class="rhythm-footer-status"><p class="rhythm-lab-status" id="rhythmStatus"></p><span id="rhythmSoundStatus" role="status" aria-live="polite"></span></div><div class="rhythm-playback-controls"><button type="button" id="rhythmListen" aria-label="Reproducir" title="Reproducir" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 5 11 7-11 7Z"/></svg></button><button type="button" id="rhythmStop" aria-label="Detener" title="Detener"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="1"/></svg></button><label for="rhythmSound">Sonido</label><select id="rhythmSound"><option value="piano">Piano</option><option value="guitar">Guitarra</option><option value="bass">Bajo</option><option value="violin">Violín</option><option value="ukulele">Ukelele</option></select><label for="rhythmPlaybackBpm">BPM</label><input id="rhythmPlaybackBpm" type="number" min="20" max="400" value="80" aria-label="Tempo de reproducción en BPM"></div></div>
         </section>
 
         <div class="controls-grid">
@@ -1004,7 +1004,7 @@
 <script src="rhythm-writing.js?v=20261015-chords-ledger-1"></script>
 <script src="rhythm-export.js?v=20261015-chords-ledger-1"></script>
 <script src="https://cdn.jsdelivr.net/npm/soundfont-player@0.12.0/dist/soundfont-player.min.js"></script>
-<script src="rhythm-audio.js?v=20261015-chords-ledger-1"></script>
+<script src="rhythm-audio.js?v=20261015-playback-2"></script>
 <script>
     // --- Lógica de Acordeón ---
     function toggleDrawer(id) {
@@ -1387,26 +1387,37 @@
     }
     saveMenu.querySelectorAll('[data-export-format]').forEach(button=>button.addEventListener('click',()=>exportRhythmExercise(button.dataset.exportFormat)));
 
-    const rhythmListen=document.getElementById('rhythmListen'),rhythmSound=document.getElementById('rhythmSound'),rhythmSoundStatus=document.getElementById('rhythmSoundStatus');let exerciseContext=null,exerciseBus=null,exerciseRunning=false,rhythmPlaybackTempo=null;
+    const rhythmListen=document.getElementById('rhythmListen'),rhythmStop=document.getElementById('rhythmStop'),rhythmSound=document.getElementById('rhythmSound'),rhythmSoundStatus=document.getElementById('rhythmSoundStatus'),rhythmBpm=document.getElementById('rhythmPlaybackBpm');let exerciseContext=null,exerciseBus=null,exerciseState='stopped',rhythmPlaybackTempo=null,lastPlaybackBar=-1;
+    const playhead=document.createElement('div');playhead.className='rhythm-playhead';playhead.hidden=true;UI.rhythmScore.parentElement.appendChild(playhead);
     try{const saved=localStorage.getItem('crescendo-rhythm-sound');if(window.CrescendoRhythmAudio.instruments[saved])rhythmSound.value=saved;}catch(_){}
     rhythmAudio=window.CrescendoRhythmAudio.createPlayer({
       getContext:()=>{if(!exerciseContext){exerciseContext=new (window.AudioContext||window.webkitAudioContext)();exerciseBus=exerciseContext.createGain();exerciseBus.connect(exerciseContext.destination);}exerciseBus.gain.value=Number(UI.volMaster.value);return exerciseContext;},
-      loadInstrument:(ctx,name)=>{if(!window.Soundfont)throw Error('No se pudo cargar SoundFont. Comprueba tu conexión.');return window.Soundfont.instrument(ctx,name,{soundfont:'MusyngKite',destination:exerciseBus});},
-      volume:()=>1,
+      loadInstrument:(ctx,name)=>{if(!window.Soundfont)throw Error('No se pudo cargar el sonido. Comprueba tu conexión.');return window.Soundfont.instrument(ctx,name,{soundfont:'MusyngKite',destination:exerciseBus});},
+      volume:()=>1,clickDestination:()=>exerciseBus,
       onState:(state,error)=>{
-        exerciseRunning=state==='loading'||state==='playing';rhythmListen.setAttribute('aria-pressed',String(exerciseRunning));rhythmListen.querySelector('span').textContent=state==='loading'?'Cancelar carga':state==='playing'?'Detener':'Reproducir';rhythmListen.querySelector('svg').innerHTML=exerciseRunning?'<rect x="6" y="6" width="12" height="12" rx="1"/>':'<path d="m8 5 11 7-11 7Z"/>';
-        if(state==='loading')rhythmSoundStatus.textContent='Cargando SoundFont…';
-        else if(state==='playing')rhythmSoundStatus.textContent='Reproduciendo a '+Math.round(tempo)+' BPM';
-        else if(state==='empty')rhythmSoundStatus.textContent='Escribe notas o genera un ejercicio para escucharlo.';
-        else if(state==='error')rhythmSoundStatus.textContent=error?.message||'No se pudo cargar el sonido. Comprueba tu conexión e inténtalo de nuevo.';
-        else{rhythmSoundStatus.textContent=rhythmSound.value==='ukulele'?'SoundFont de nylon adaptado a ukelele.':'Sonido SoundFont';UI.rhythmScore.querySelectorAll('.is-playing-measure').forEach(el=>el.classList.remove('is-playing-measure'));}
+        exerciseState=state;const running=state==='playing'||state==='counting',label=running?'Pausar':state==='paused'?'Continuar':state==='loading'?'Cancelar carga':'Reproducir';
+        rhythmListen.setAttribute('aria-pressed',String(running));rhythmListen.setAttribute('aria-label',label);rhythmListen.title=label;rhythmListen.querySelector('svg').innerHTML=running?'<path d="M6 5h4v14H6ZM14 5h4v14h-4Z"/>':'<path d="m8 5 11 7-11 7Z"/>';
+        rhythmSoundStatus.textContent=state==='loading'||state==='preloading'?'Cargando sonido…':state==='paused'?'En pausa':state==='empty'?'Escribe notas o genera un ejercicio para escucharlo.':state==='error'?(error?.message||'No se pudo cargar el sonido. Inténtalo de nuevo.'):'';
+        if(!['playing','counting','paused'].includes(state)){playhead.hidden=true;lastPlaybackBar=-1;}
       },
-      onProgress:beat=>{if(exerciseBus&&Math.abs(exerciseBus.gain.value-Number(UI.volMaster.value))>.001)exerciseBus.gain.setTargetAtTime(Number(UI.volMaster.value),exerciseContext.currentTime,.01);if(tempo!==rhythmPlaybackTempo){rhythmAudio.stop();return;}const bar=Math.floor(beat/rhythmCapacity(currentRhythmMeter()));UI.rhythmScore.querySelectorAll('.rhythm-measure-hit').forEach(el=>el.classList.toggle('is-playing-measure',Number(el.dataset.bar)===bar));}
+      onProgress:(beat,count)=>{
+        if(tempo!==rhythmPlaybackTempo){rhythmAudio.stop();return;}
+        if(exerciseBus&&Math.abs(exerciseBus.gain.value-Number(UI.volMaster.value))>.001)exerciseBus.gain.setTargetAtTime(Number(UI.volMaster.value),exerciseContext.currentTime,.01);
+        if(count){playhead.hidden=true;rhythmSoundStatus.textContent='Conteo previo: '+count.count+' / '+count.total;return;}
+        rhythmSoundStatus.textContent='';const capacity=rhythmCapacity(currentRhythmMeter()),bar=Math.floor(beat/capacity),boxes=[...UI.rhythmScore.querySelectorAll('.rhythm-measure-hit')].filter(el=>Number(el.dataset.bar)===bar);if(!boxes.length){playhead.hidden=true;return;}
+        const box=boxes[0],svg=box.ownerSVGElement;
+        if(bar!==lastPlaybackBar){const y=box.getBoundingClientRect().top-UI.rhythmScore.getBoundingClientRect().top;if(y<0||y+170>UI.rhythmScore.clientHeight)UI.rhythmScore.scrollTop+=y;lastPlaybackBar=bar;}
+        const sr=svg.getBoundingClientRect(),wr=UI.rhythmScore.parentElement.getBoundingClientRect(),scale=sr.width/svg.viewBox.baseVal.width,start=Number(box.dataset.start),end=Number(box.dataset.end),tops=boxes.map(el=>Number(el.dataset.top));
+        playhead.style.left=(sr.left-wr.left+(start+(end-start)*(beat%capacity)/capacity)*scale)+'px';playhead.style.top=(sr.top-wr.top+(Math.min(...tops)-12)*scale)+'px';playhead.style.height=((Math.max(...tops)-Math.min(...tops)+64)*scale)+'px';playhead.hidden=false;
+      }
     });
-    rhythmListen.addEventListener('click',()=>{if(exerciseRunning){rhythmAudio.stop();return;}rhythmPlaybackTempo=tempo;rhythmAudio.play(rhythmEditorEvents,{tempo,capacity:rhythmCapacity(currentRhythmMeter()),bars:Number(UI.rhythmBars.value)||4,clef:UI.rhythmClef.value,instrument:rhythmSound.value});});
-    rhythmSound.addEventListener('change',()=>{rhythmAudio.stop();try{localStorage.setItem('crescendo-rhythm-sound',rhythmSound.value);}catch(_){}});
+    rhythmListen.addEventListener('click',()=>{if(['playing','counting'].includes(exerciseState)){rhythmAudio.pause();return;}if(exerciseState==='paused'){rhythmAudio.resume();return;}if(exerciseState==='loading'){rhythmAudio.stop();return;}rhythmPlaybackTempo=tempo;rhythmAudio.play(rhythmEditorEvents,{tempo,meter:currentRhythmMeter(),capacity:rhythmCapacity(currentRhythmMeter()),bars:Number(UI.rhythmBars.value)||4,clef:UI.rhythmClef.value,instrument:rhythmSound.value});});
+    rhythmStop.addEventListener('click',()=>rhythmAudio.stop());
+    rhythmSound.addEventListener('change',()=>{rhythmAudio.stop();try{localStorage.setItem('crescendo-rhythm-sound',rhythmSound.value);}catch(_){}rhythmAudio.preload(rhythmSound.value);});
+    rhythmBpm.value=Math.round(tempo);rhythmBpm.addEventListener('input',()=>{const value=Number(rhythmBpm.value);if(value>=20&&value<=400){tempo=value;rhythmAudio.stop();updateBpmUI();}});rhythmBpm.addEventListener('change',()=>{tempo=Math.max(20,Math.min(400,Number(rhythmBpm.value)||80));rhythmBpm.value=Math.round(tempo);rhythmAudio.stop();updateBpmUI();});
     UI.bpmSld.addEventListener('input',()=>rhythmAudio.stop());
     document.addEventListener('visibilitychange',()=>{if(document.hidden)rhythmAudio.stop();});
+    rhythmAudio.preload(rhythmSound.value);
 
     UI.rhythmGenerate.addEventListener('click',generateRhythmExercise);
     UI.rhythmBars.addEventListener('change',()=>{const bars=Math.max(1,Math.min(16,Number(UI.rhythmBars.value)||1));UI.rhythmBars.value=String(bars);rhythmEditorEvents=rhythmEditorEvents.filter(event=>(event.bar||0)<bars);renderRhythmScore()});
@@ -1764,6 +1775,7 @@
     UI.volMaster.addEventListener('input', (e) => { if(masterGainNode) masterGainNode.gain.value = e.target.value; });
 
     function updateBpmUI() {
+        const exerciseBpm=document.getElementById("rhythmPlaybackBpm");if(exerciseBpm&&document.activeElement!==exerciseBpm)exerciseBpm.value=Math.round(tempo);
         UI.bpmDisp.innerText = Math.round(tempo); UI.bpmSld.value = Math.round(tempo);
         if (UI.tempoName) UI.tempoName.innerText = tempoMarking(Math.round(tempo));
         if (UI.fsBpm) UI.fsBpm.innerText = Math.round(tempo);
