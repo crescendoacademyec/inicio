@@ -214,6 +214,7 @@ function renderCourse(){
       <section class="lesson-block">
         <h3>${escapeHtml(block.title)}</h3>
         ${block.html}
+        ${window.CourseExamples?.render("reading",block.title)||""}
       </section>`).join("")}
     ${renderTrackExtension(level)}
     ${renderInteractive(level)}

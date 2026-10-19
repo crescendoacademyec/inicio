@@ -11,6 +11,9 @@ window.APP_DATA = {
           "title": "1. Escalas e intervalos",
           "subtitle": "Alturas, semitonos y cualidades interválicas.",
           "items": [
+            {"term":"Semitono","body":"En el sistema de doce notas temperadas que usamos aquí, un semitono es un paso entre alturas cromáticas consecutivas. En un piano incluye cualquier par de teclas vecinas, blancas o negras: Do–Do♯ y Mi–Fa son ejemplos. Al medir una distancia se cuentan los pasos, no las notas de los extremos."},
+            {"term":"Tono","body":"Un tono equivale a dos semitonos. Do–Re recorre Do→Do♯→Re: dos pasos de un semitono. En los patrones de escalas escribimos T para tono y S para semitono."},
+            {"term":"Octava","body":"La octava justa separa dos notas del mismo nombre en registros consecutivos, como Do4 y Do5. En el sistema temperado contiene 12 semitonos o 6 tonos. La cifra del registro distingue sus alturas."},
             {
               "term": "Escala",
               "body": "Una escala organiza alturas alrededor de una referencia mediante un patrón de intervalos. Una nota cromática queda fuera de la colección diatónica de una tonalidad concreta; también existen escalas y colecciones cromáticas."
@@ -25,19 +28,19 @@ window.APP_DATA = {
             },
             {
               "term": "Escala mayor natural",
-              "body": "Sus intervalos desde la tónica son: 1j, 2M, 3M, 4j, 5j, 6M, 7M, 8j."
+              "body": "La escala mayor natural es una escala diatónica de siete notas. Su patrón entre notas vecinas es T–T–S–T–T–T–S; la tercera respecto a la tónica es mayor. Desde la tónica sus intervalos son: 1j, 2M, 3M, 4j, 5j, 6M, 7M, 8j. La octava repite el primer grado en otro registro."
             },
             {
               "term": "Escala menor natural",
-              "body": "Sus intervalos desde la tónica son: 1j, 2M, 3m, 4j, 5j, 6m, 7m, 8j."
+              "body": "La escala menor natural también tiene siete notas, pero sigue T–S–T–T–S–T–T. Su tercera es menor. Desde la tónica sus intervalos son: 1j, 2M, 3m, 4j, 5j, 6m, 7m, 8j. Respecto a la mayor de la misma tónica, los grados 3, 6 y 7 están un semitono más bajos."
             },
             {
               "term": "Alteraciones ascendentes",
-              "body": "Si un intervalo mayor o justo sube un semitono, se convierte en aumentado. Si sube un tono, se convierte en super aumentado."
+              "body": "Manteniendo fija la nota inferior, si elevamos un semitono la nota superior de un intervalo mayor o justo, el intervalo pasa a aumentado; si elevamos un tono, pasa a doble aumentado (llamado super aumentado en el método). Si ambas notas se trasladan lo mismo, el intervalo conserva su cualidad."
             },
             {
               "term": "Alteraciones descendentes",
-              "body": "Si un intervalo mayor baja un semitono, se convierte en menor; si baja un tono, en disminuido. Si un intervalo justo baja un semitono, se convierte en disminuido; si baja un tono, en super disminuido."
+              "body": "Con la nota inferior fija, bajar un semitono la nota superior de un intervalo mayor lo convierte en menor; bajarla un tono, en disminuido. En un intervalo justo, bajar un semitono la nota superior lo convierte en disminuido; bajarla un tono, en doble disminuido (super disminuido en el método)."
             }
           ]
         },
@@ -188,11 +191,11 @@ window.APP_DATA = {
             },
             {
               "term": "Préstamo en tonalidad mayor",
-              "body": "Según el texto estudiado, en tonalidad mayor se pueden tomar prestados acordes de la escala natural mayor y del modo frigio."
+              "body": "El intercambio modal toma material de escalas con la misma tónica. En Do mayor, Fm (Fa–La♭–Do) puede tomarse de Do menor paralelo; Re♭ mayor puede proceder de Do frigio. Elige el acorde según la melodía y su conducción: compartir tónica no vuelve intercambiables todas las notas."
             },
             {
               "term": "Préstamo en tonalidad menor",
-              "body": "Según el texto estudiado, en tonalidad menor se pueden tomar prestados acordes de la escala mayor y del modo frigio."
+              "body": "En un contexto de La menor, Re mayor (Re–Fa♯–La) puede incorporar el Fa♯ de La mayor paralelo o de material dórico/melódico, según el contexto. Si♭ mayor puede relacionarse con La frigio. Identifica la nota que cambia y la dirección del enlace en lugar de decidir el préstamo solo por el grado."
             }
           ]
         }
@@ -886,29 +889,19 @@ window.APP_DATA = {
           "id": 37,
           "section": "III. Tonalidad, funciones armónicas y rearmonización",
           "type": "multipleChoice",
-          "prompt": "Según el texto estudiado, en tonalidad mayor se pueden tomar prestados acordes de:",
-          "choices": [
-            "La escala menor natural y el modo frigio.",
-            "La escala natural mayor y el modo frigio.",
-            "La escala natural mayor y el modo dórico.",
-            "La escala menor armónica y el modo frigio."
-          ],
-          "answer": 1,
-          "sampleAnswer": "La escala natural mayor y el modo frigio."
+          "prompt": "En Do mayor, ¿de qué material paralelo puede proceder Fm (Fa–La♭–Do)?",
+          "choices": ["Do menor natural.","La menor natural, por ser la relativa.","Sol mayor, por tener Fa♯.","Do mayor natural, sin cambiar ninguna nota."],
+          "answer": 0,
+          "sampleAnswer": "Do menor natural: Fm aporta La♭."
         },
         {
           "id": 38,
           "section": "III. Tonalidad, funciones armónicas y rearmonización",
           "type": "multipleChoice",
-          "prompt": "Según el texto estudiado, en tonalidad menor se pueden tomar prestados acordes de:",
-          "choices": [
-            "La escala mayor y el modo frigio.",
-            "La escala mayor y el modo dórico.",
-            "La escala menor armónica y el modo frigio.",
-            "La escala natural mayor y la escala mayor armónica."
-          ],
+          "prompt": "En un contexto de La menor, ¿qué nota de Re mayor muestra el cambio de color respecto a Re menor?",
+          "choices": ["Fa♯, tercera mayor de Re.","La, quinta justa de Re.","Re, fundamental del acorde.","Do natural, que no forma la tríada Re mayor."],
           "answer": 0,
-          "sampleAnswer": "La escala mayor y el modo frigio."
+          "sampleAnswer": "Fa♯ distingue Re mayor de Re menor."
         },
         {
           "id": 39,

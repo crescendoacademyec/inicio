@@ -336,7 +336,7 @@
       var body = document.createElement("div");
       body.className = "topic-body";
       if (isOpen) {
-        body.innerHTML = topic.html + (TOPIC_VISUALS[topic.title] ? '<div class="theory-visual-mount" data-viz="' + TOPIC_VISUALS[topic.title] + '"></div>' : '') + renderTopicClosure(lvl, topic, idx);
+        body.innerHTML = topic.html.replace(/<\/p>/i, function(end){return end+(window.CourseExamples?.render("jazz",topic.title)||"");}) + (TOPIC_VISUALS[topic.title] ? '<div class="theory-visual-mount" data-viz="' + TOPIC_VISUALS[topic.title] + '"></div>' : '') + renderTopicClosure(lvl, topic, idx);
         populateGeneratedDiagrams(body);
         renderCurriculumMounts(body);
         wireTopicPractice(body);

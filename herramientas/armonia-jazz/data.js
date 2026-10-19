@@ -26,8 +26,7 @@ const LEVELS = [
             <li><b>sus4</b> — se reemplaza la 3ª por la 4ª justa (ej. G7sus4 = G-C-D-F)</li>
             <li><b>6 / m6</b> — tríada con sexta añadida en vez de séptima (ej. C6 = C-E-G-A)</li>
           </ul>
-          <p>En jazz casi nunca se toca solo la tríada: la séptima es la nota que define el "color" funcional
-          del acorde, por eso se cifra siempre que sea posible.</p>
+          <p>En muchos contextos de jazz se trabajan tétradas: tercera y séptima ayudan a reconocer la calidad del acorde y su enlace. También se usan tríadas, sextas, acordes suspendidos y disposiciones parciales; no todos los acordes deben incluir séptima.</p>
         `
       },
       {

@@ -1025,6 +1025,7 @@ function renderTheoryDetail() {
         ${section.items.map(item => `<section class="concept-item ${item.diagram ? "has-diagram" : ""}">
           <h4>${escapeHtml(item.term)} ${theoryMethodBadge(item.term)}</h4>
           ${renderConceptBody(item)}
+          ${window.CourseExamples?.render("functional",section.id+":"+item.term)||""}
         </section>`).join("")}
       </div>
       ${renderSectionVisuals(section)}
