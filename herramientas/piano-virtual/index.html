@@ -11,7 +11,7 @@
 <link rel="stylesheet" href="css/chord-bank.css?v=20261005-active-key-color">
 <link rel="stylesheet" href="../../shared/header-metronome.css?v=20260925-beat-stop">
   <link rel="stylesheet" href="../../shared/crescendo-identity.css?v=20261005-instrument-ui">
-<link rel="stylesheet" href="css/chrome-fit.css?v=20261019-2">
+<link rel="stylesheet" href="css/chrome-fit.css?v=20261019-3">
 <script defer src="js/chrome-fit.js?v=20261019-1"></script>
 <script defer src="js/staff-visibility.js?v=20261019-1"></script>
 </head>
@@ -189,8 +189,9 @@
 
     <button type="button" id="openChordBank" aria-controls="chordBank" aria-expanded="false" aria-pressed="false">Laboratorio musical</button>
 
-    <button type="button" id="toggleLiveStaff" class="staff-toggle" aria-label="Mostrar pentagrama" aria-controls="liveStaffPanel" aria-pressed="true" title="Ocultar pentagrama">
-      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h18M3 8h18M3 11h18M3 14h18M3 17h18"/><path d="M10 16V7l7-2v9"/><ellipse cx="7.5" cy="17" rx="2.5" ry="1.7" fill="currentColor" stroke="none"/><ellipse cx="14.5" cy="15" rx="2.5" ry="1.7" fill="currentColor" stroke="none"/></svg>
+    <button type="button" id="toggleLiveStaff" class="instrument-box staff-toggle" aria-label="Mostrar pentagrama" aria-controls="liveStaffPanel" aria-pressed="true" title="Ocultar pentagrama">
+      <span class="instrument-box-label">Pentagrama</span>
+      <span class="instrument-icon"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h18M3 8h18M3 11h18M3 14h18M3 17h18"/><path d="M10 16V7l7-2v9"/><ellipse cx="7.5" cy="17" rx="2.5" ry="1.7" fill="currentColor" stroke="none"/><ellipse cx="14.5" cy="15" rx="2.5" ry="1.7" fill="currentColor" stroke="none"/></svg></span>
     </button>
 
     <div class="sample-controls">
