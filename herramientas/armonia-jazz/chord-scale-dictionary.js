@@ -120,10 +120,10 @@
       return letters[degree]+(delta<0?"b".repeat(-delta):"#".repeat(delta))+octave;
     });
   }
-  function visual(title, root, intervals, steps, stack){
+  function visual(title, root, intervals, steps, stack, context){
     if(!global.CourseExamples)return '';
     var pitches=writtenNotes(root,intervals,steps);
-    return '<section class="csd-example"><h4>'+title+'</h4>'+global.CourseExamples.staff(stack?[pitches.join('+')]:pitches,{compact:true})+'</section>';
+    return '<section class="csd-example"><h4>'+title+'</h4>'+global.CourseExamples.staff(stack?[pitches.join('+')]:pitches,{compact:true,instrumentContext:context})+'</section>';
   }
   function alternatives(quality, primary) {
     var result=[primary];
@@ -147,7 +147,7 @@
       if(!visible.length)table+='<tr><td class="csd-empty" colspan="9">No hay escalas seleccionadas. Abre “Escalas en tabla” para elegir una o pulsa “Campos principales”.</td></tr>';
       table+='</tbody></table></div>';
       var libraryOptions=Object.keys(SCALE).filter(function(id){return id.indexOf("generated-")!==0&&id.indexOf("dictionary-")!==0;}).sort(function(a,b){return SCALE_NAMES[a].localeCompare(SCALE_NAMES[b]);});
-      var visuals=visual("Acorde",pick.root,pick.chordIntervals,[0,2,4,6],true)+visual("Escala y tensiones",pick.root,SCALE[pick.scale],null,false);
+      var visuals=visual("Acorde",pick.root,pick.chordIntervals,[0,2,4,6],true,{root:pick.root})+visual("Escala y tensiones",pick.root,SCALE[pick.scale],null,false,{root:pick.root,chordPcs:chord,tensionPcs:notes.filter(function(n){return tensions([n],chord,pick.root).length>0;})});
       el.innerHTML='<section class="csd"><header><div><p class="kicker">Mapa de improvisación</p><h3>Diccionario escala–acorde</h3><p>Selecciona una tonalidad y una celda. Las escalas sugeridas son puntos de partida: confirma siempre la melodía, función y resolución.</p></div><div class="csd-selectors"><label>Tonalidad <select data-key>'+NAMES.map(function(n,i){return '<option value="'+i+'" '+(i===state.key?'selected':'')+'>'+n+'</option>';}).join('')+'</select></label><details class="csd-scale-picker" '+(state.pickerOpen?'open':'')+'><summary>Escalas en tabla · '+visible.length+' de '+rows.length+'</summary><div><button type="button" data-show-all>Todas las escalas</button><button type="button" data-show-base>Campos principales</button><button type="button" data-show-none>Deseleccionar escalas</button><div class="csd-scale-checks">'+libraryOptions.map(function(id){return '<label><input type="checkbox" data-show-scale="'+id+'" '+(state.shown.indexOf(id)>-1?'checked':'')+'> '+SCALE_NAMES[id]+'</label>';}).join('')+'</div></div></details></div></header>'+table+'<div class="csd-detail"><div><p class="kicker">'+pick.row.name+' · grado '+(ROMAN[state.degree]||("G"+(state.degree+1)))+'</p><h3>'+chordName(pick.root,pick.quality)+'</h3><p class="csd-tones">Notas del acorde: <b>'+chord.map(function(n){return NAMES[n];}).join(' · ')+'</b></p><div class="csd-scales">'+pick.options.map(function(id,i){return '<button data-scale="'+i+'" class="'+(i===state.alternative?'active':'')+'">'+SCALE_NAMES[id]+'<small>'+scaleNotes(pick.root,id).map(function(n){return NAMES[n];}).join(' · ')+'</small></button>';}).join('')+'</div><p class="csd-tensions"><b>Tensiones disponibles:</b> '+(available.length?available.join(' · '):'No añade tensiones fuera de la estructura.')+'</p><p class="small-note">Escala activa: <b>'+SCALE_NAMES[pick.scale]+'</b>. La tabla resume el modo principal; este panel sigue la escala activa. Se omiten las notas de paso que forman una novena menor sobre el acorde, salvo alteraciones habituales de dominantes. La ♭13 en dominantes sustituye a la quinta; la 13 dórica depende de la función y la disposición de voces.</p><div class="csd-actions"><button data-play="chord">▶ Escuchar acorde</button><button data-play="scale">▶ Escuchar escala</button></div></div><div class="csd-visuals">'+visuals+'</div></div></section>';
       el.querySelector('[data-key]').onchange=function(e){state.key=Number(e.target.value);state.alternative=0;state.pickerOpen=false;render();};
       el.querySelector('[data-show-all]').onclick=function(){state.shown=rows.map(function(row){return row.scale;});state.pickerOpen=true;render();};

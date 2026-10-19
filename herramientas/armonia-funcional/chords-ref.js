@@ -174,6 +174,7 @@
   }
 
   function pianoSVG(root, tones, chordName) {
+    if(global.CourseInstruments){var I=global.CourseInstruments,notes=I.roles(tones.map(function(t){return {midi:60+root.pc+t.semi,label:t.name};}),{kind:"chord",root:root.pc});return I.piano(notes).replace('<svg ','<svg '+I.source(notes)+' ');}
     var rootAbsolute = root.pc; // el primer Do del teclado corresponde a C4
     var highest = tones.reduce(function (m, t) { return Math.max(m, rootAbsolute + t.semi); }, rootAbsolute);
     // C4 hasta el final de la octava que contiene la nota más aguda.
@@ -187,7 +188,7 @@
     var w = layout.margin + layout.whiteCount * layout.whiteW + 4;
     var h = whiteH + 22;
     var parts = [];
-    parts.push('<svg '+(global.CourseInstruments?global.CourseInstruments.source(tones.map(function(t){return {midi:60+root.pc+t.semi,label:t.name};})): '')+' viewBox="0 0 ' + w + ' ' + h + '" class="jz-piano" role="img" aria-label="' + escapeXmlAttr(svgLabel(chordName, "Piano", tones)) + '">');
+    parts.push('<svg '+(global.CourseInstruments?global.CourseInstruments.source(global.CourseInstruments.roles(tones.map(function(t){return {midi:60+root.pc+t.semi,label:t.name};}),{kind:"chord",root:root.pc})): '')+' viewBox="0 0 ' + w + ' ' + h + '" class="jz-piano" role="img" aria-label="' + escapeXmlAttr(svgLabel(chordName, "Piano", tones)) + '">');
 
     layout.keys.filter(function (k) { return !k.isBlack; }).forEach(function (k) {
       var tone = matched[k.absoluteStep];
@@ -298,6 +299,7 @@
   }
 
   function guitarSVG(root, tones, chordName) {
+    if(global.CourseInstruments)return global.CourseInstruments.fretboard(global.CourseInstruments.roles(tones.map(function(t){return {midi:60+root.pc+t.semi,label:t.name};}),{kind:"chord",root:root.pc}),"guitar",{kind:"chord"});
     var voicing = findGuitarVoicing(root, tones);
     var nStrings = 6;
     var stringGap = 34, fretGap = 54;

@@ -31,13 +31,14 @@
   var BLACK_ORDER = [1, 3, 6, 8, 10];
 
   function pianoSVG(formula, rootPc) {
+    if(global.CourseInstruments){var I=global.CourseInstruments,notes=I.roles(formula.map(function(n){return 60+((n%12)+12)%12;}),{root:rootPc});return I.piano(notes).replace('<svg ','<svg '+I.source(notes)+' ');}
     var set = {};
     formula.forEach(function (n) { set[((n % 12) + 12) % 12] = true; });
     var root = ((rootPc || 0) % 12 + 12) % 12;
 
     var whiteW = 28, whiteH = 92, blackW = 16, blackH = 56;
     var parts = [];
-    parts.push('<svg '+(global.CourseInstruments?global.CourseInstruments.source(formula.map(function(pc){return 60+((pc%12)+12)%12;})):'')+' viewBox="0 0 200 100" class="jz-piano" role="img" aria-label="Diagrama de piano">');
+    parts.push('<svg '+(global.CourseInstruments?global.CourseInstruments.source(global.CourseInstruments.roles(formula.map(function(pc){return 60+((pc%12)+12)%12;}),{kind:"chord",root:rootPc})):'')+' viewBox="0 0 200 100" class="jz-piano" role="img" aria-label="Diagrama de piano">');
 
     // teclas blancas
     WHITE_ORDER.forEach(function (n) {
@@ -71,6 +72,7 @@
   var STRING_LABELS = ["E", "A", "D", "G", "B", "E"];
 
   function guitarSVG(formula, rootPc) {
+    if(global.CourseInstruments)return global.CourseInstruments.fretboard(global.CourseInstruments.roles(formula.map(function(n){return 60+((n%12)+12)%12;}),{kind:"chord",root:rootPc}),"guitar",{kind:"chord"});
     var set = {};
     formula.forEach(function (n) { set[((n % 12) + 12) % 12] = true; });
     var root = ((rootPc || 0) % 12 + 12) % 12;
@@ -165,7 +167,7 @@
     var h = marginT + fretGap * nFretsShown + 14;
 
     var parts = [];
-    parts.push('<svg viewBox="0 0 ' + w + ' ' + h + '" class="jz-guitar-shape" role="img" aria-label="Forma de guitarra">');
+    parts.push('<svg viewBox="0 0 ' + w + ' ' + h + '" class="jz-guitar-shape" data-ci-kind="chord" role="img" aria-label="Forma de guitarra">');
     parts.push('<text x="' + (marginL - 20) + '" y="' + (marginT + fretGap * 0.7) + '" class="jz-fret-num">' + startFret + '</text>');
 
     for (var f = 0; f <= nFretsShown; f++) {
@@ -182,7 +184,7 @@
       var xx = marginL + i * stringGap;
       var yy = marginT + (relFret - 0.5) * fretGap;
       var isRoot = i === 0;
-      parts.push('<circle cx="' + xx + '" cy="' + yy + '" r="8" class="jz-fret-dot' + (isRoot ? " jz-fret-dot-root" : "") + '"></circle>');
+      parts.push('<circle cx="' + xx + '" cy="' + yy + '" r="8" style="fill:' + (isRoot ? "#4caf6a" : "#4a90d9") + '" class="jz-fret-dot' + (isRoot ? " jz-fret-dot-root" : "") + '"></circle>');
     }
     parts.push("</svg>");
     return parts.join("");

@@ -495,6 +495,7 @@ function staffSVG(rootName,toneList,label="Pentagrama"){
   return CrescendoPractice.sequence(toneList.map(t=>({...CrescendoPractice.spell(root,t.semi,t.degree-1),beats:4,label:t.token})),{labels:true});
 }
 function guitarScaleSVG(rootName,toneList){
+  if(window.CourseInstruments){const root=CrescendoPractice.rootNote(rootName,4),kind=toneList.length<=4?'chord':'scale';return window.CourseInstruments.fretboard(window.CourseInstruments.roles(toneList.map(t=>({midi:root.midi+t.semi,label:t.name})),{kind,root:rootInfo(rootName).pc}),'guitar',{kind});}
   const pcs=new Set(toneList.map(t=>t.pc)),rootPc=rootInfo(rootName).pc;
   const strings=[4,11,7,2,9,4],labels=["E","B","G","D","A","E"],frets=12,gapX=34,gapY=27,ml=30,mt=14,w=ml+frets*gapX+48,h=mt+5*gapY+28;
   const grid=labels.map((lab,r)=>`<text x="12" y="${mt+r*gapY+4}">${lab}</text><line x1="${ml}" x2="${w-14}" y1="${mt+r*gapY}" y2="${mt+r*gapY}"/>`).join("")

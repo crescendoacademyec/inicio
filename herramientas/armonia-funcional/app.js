@@ -2234,6 +2234,7 @@ function renderScaleStaff(rootName, tones, label) {
   return CrescendoPractice.sequence(tones.map(t=>({...CrescendoPractice.spell(root,t.semi,t.diatonicStepsFromRoot),beats:4,label:scaleDegreeRoman(t.token)})),{labels:true});
 }
 function renderScaleGuitar(rootName, tones, label) {
+  if(window.CourseInstruments){const root=CrescendoPractice.rootNote(rootName,4),kind=tones.length<=4?'chord':'scale';return window.CourseInstruments.fretboard(window.CourseInstruments.roles(tones.map(t=>({midi:root.midi+t.semi,label:t.name})),{kind,root:theoryRootInfo(rootName).pc}),'guitar',{kind});}
   const pcs = new Set(tones.map(tone => tone.pc));
   const rootPc = theoryRootInfo(rootName).pc;
   const stringData = [

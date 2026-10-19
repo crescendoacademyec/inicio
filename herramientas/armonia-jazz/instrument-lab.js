@@ -102,7 +102,7 @@
   function fretboard(root, item, region, group, mode) {
     var win = scaleWindowFor(region, root), start = win.start, end = win.end, active = pcs(root, item);
     var left = 44, top = 34, fret = 94, gap = 27, cols = end - start + 1, width = left + cols * fret + 20, height = 215;
-    var svg = ['<svg class="lab-fretboard" viewBox="0 0 '+width+' '+height+'" role="img" aria-label="Diapasón: posición '+(region+1)+'">'];
+    var svg = ['<svg class="lab-fretboard" data-ci-kind="scale" viewBox="0 0 '+width+' '+height+'" role="img" aria-label="Diapasón: posición '+(region+1)+'">'];
     svg.push('<text x="'+left+'" y="16" fill="rgba(255,250,240,.62)" font-size="11">Posición '+(region+1)+' · trastes '+start+'–'+end+'</text>');
     for (var f = start; f <= end + 1; f++) { var x = left + (f - start) * fret; svg.push('<line x1="'+x+'" y1="'+top+'" x2="'+x+'" y2="'+(top+gap*5)+'" stroke="rgba(255,255,255,.25)"/>'); if (f <= end) svg.push('<text x="'+(x+fret/2)+'" y="'+(top+gap*5+22)+'" text-anchor="middle" fill="rgba(255,250,240,.5)" font-size="10">'+f+'</text>'); }
     for (var s = 0; s < 6; s++) { var stringNo = BOARD_STRINGS[s], y = top + s*gap; svg.push('<line x1="'+left+'" y1="'+y+'" x2="'+(left+fret*cols)+'" y2="'+y+'" stroke="rgba(255,255,255,.46)" stroke-width="'+(2-s*.18)+'"/><text x="10" y="'+(y+4)+'" fill="rgba(255,250,240,.55)" font-size="10">'+stringNo+'ª</text>'); }
@@ -111,7 +111,7 @@
   }
 
   function piano(root, item, group, mode) {
-    var active = pcs(root,item), out=['<svg '+(global.CourseInstruments?global.CourseInstruments.source(item.intervals.map(function(semi){return 60+root+semi;})):'')+' class="lab-piano" viewBox="0 0 430 105" role="img" aria-label="Teclado de piano">'];
+    var active = pcs(root,item), out=['<svg '+(global.CourseInstruments?global.CourseInstruments.source(item.intervals.map(function(semi){return {midi:60+root+semi,role:roleForPc((root+semi)%12,root,item,group)};})):'')+' class="lab-piano" viewBox="0 0 430 105" role="img" aria-label="Teclado de piano">'];
     var whites=[0,2,4,5,7,9,11], black=[1,3,6,8,10], wx={0:0,2:30,4:60,5:90,7:120,9:150,11:180};
     for (var oct=0;oct<2;oct++) whites.forEach(function(pc){var on=active.indexOf(pc)>=0, role=on?roleForPc(pc,root,item,group):null; out.push('<rect x="'+(wx[pc]+oct*210+1)+'" y="2" width="28" height="94" rx="2" fill="'+(on?ROLE_COLORS[role]:'#f4efe5')+'" stroke="#171513"/>'); if(on)out.push('<text x="'+(wx[pc]+oct*210+15)+'" y="82" text-anchor="middle" fill="#171513" font-size="9" font-weight="800">'+displayLabel(pc,root,item,mode)+'</text>');});
     for (var oct2=0;oct2<2;oct2++) black.forEach(function(pc2){var x=({1:21,3:51,6:111,8:141,10:171}[pc2])+oct2*210,on2=active.indexOf(pc2)>=0, role2=on2?roleForPc(pc2,root,item,group):null; out.push('<rect x="'+x+'" y="2" width="18" height="59" rx="2" fill="'+(on2?ROLE_COLORS[role2]:'#1b1a18')+'"/>'); if(on2)out.push('<text x="'+(x+9)+'" y="47" text-anchor="middle" fill="#171513" font-size="7" font-weight="800">'+displayLabel(pc2,root,item,mode)+'</text>');});
@@ -200,7 +200,7 @@
     var minFret = frets.length ? Math.min.apply(null, frets) : 0, maxFret = frets.length ? Math.max.apply(null, frets) : 4;
     var start = Math.max(0, minFret - 1), end = Math.max(start + 4, maxFret + 1);
     var openMargin = start === 0 ? 24 : 0, gridLeft = left + openMargin, cols = end - start + 1, width = gridLeft + cols*fretW + 20, height = 215;
-    var svg=['<svg class="lab-fretboard" viewBox="0 0 '+width+' '+height+'" role="img" aria-label="Voicing de acorde: '+esc(positionLabel)+'">'];
+    var svg=['<svg class="lab-fretboard" data-ci-kind="chord" viewBox="0 0 '+width+' '+height+'" role="img" aria-label="Voicing de acorde: '+esc(positionLabel)+'">'];
     svg.push('<text x="'+left+'" y="16" fill="rgba(255,250,240,.62)" font-size="11">'+esc(config.label)+' · '+esc(positionLabel)+' · '+esc(chordName)+'</text>');
     for(var fr=start;fr<=end+1;fr++){ var x=gridLeft+(fr-start)*fretW, isNut = start===0 && fr===0; svg.push('<line x1="'+x+'" y1="'+top+'" x2="'+x+'" y2="'+(top+gap*5)+'" stroke="'+(isNut?"rgba(255,250,240,.85)":"rgba(255,255,255,.25)")+'" stroke-width="'+(isNut?4:1)+'"/>'); if(fr<=end && fr>0) svg.push('<text x="'+(x+fretW/2)+'" y="'+(top+gap*5+22)+'" text-anchor="middle" fill="rgba(255,250,240,.5)" font-size="10">'+fr+'</text>'); }
     if (start === 0) svg.push('<text x="'+(gridLeft-14)+'" y="'+(top+gap*5+22)+'" text-anchor="middle" fill="rgba(255,250,240,.5)" font-size="9">al aire</text>');
