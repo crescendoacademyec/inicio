@@ -5,7 +5,7 @@ const fs=require('node:fs'),vm=require('node:vm');
  class AudioContext{constructor(){this.currentTime=10;this.state='running';}createGain(){return {gain:{value:1},connect(){}};}}
  const ctx={AudioContext,Soundfont:{instrument:()=>new Promise(r=>ready=r)}};ctx.window=ctx;vm.createContext(ctx);
  const source=fs.readFileSync(__dirname+'/theory-visuals.js','utf8');
- vm.runInContext(source.replace('global.TheoryVisuals = { mount: mount, playNotes: playNotes };','global.TheoryVisuals = { mount: mount, playNotes, stopAudio, renderProgression };'),ctx);
+ vm.runInContext(source.replace('global.TheoryVisuals = { mount: mount, playNotes: playNotes, symbolNotes: symbolNotes };','global.TheoryVisuals = { mount: mount, playNotes, stopAudio, renderProgression };'),ctx);
  const api=ctx.TheoryVisuals;
  const first=api.playNotes([60,63,65,66,67,70,72],{melodic:true,duration:.36});
  assert.equal(calls.length,0);

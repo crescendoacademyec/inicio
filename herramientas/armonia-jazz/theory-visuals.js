@@ -68,14 +68,23 @@
     }
     var state = { root: 0 }; paint();
   }
+  // Spell stacked thirds, including E♯/B♯ and double flats after transposition.
+  function symbolNotes(root, suffix) {
+    var tonic=NOTES[((root%12)+12)%12], letters="CDEFGAB", natural=[0,2,4,5,7,9,11], start=letters.indexOf(tonic[0]);
+    return suffixIntervals(suffix).map(function(interval,i){
+      var degree=(start+i*2)%7, delta=((root+interval-natural[degree])%12+12)%12;
+      if(delta>6)delta-=12;
+      return letters[degree]+(delta<0?"♭".repeat(-delta):"♯".repeat(delta));
+    }).join(" · ");
+  }
   function renderTable(root, config) {
     var state = { root: 0 };
     function paint() {
       var rows = config.rows.map(function (r) {
         var example = r.example ? chord(state.root + (r.offset || 0), r.example) : r.value;
-        return '<tr><th>' + esc(r.name) + '</th><td>' + esc(r.formula) + '</td><td>' + esc(example) + '</td><td>' + esc(r.use) + '</td></tr>';
+        return '<tr><th>' + esc(r.name) + '</th><td>' + esc(r.formula) + '</td><td>' + esc(example) + '</td>' + (config.chordNotes ? '<td class="tv-chord-notes">' + esc(symbolNotes(state.root + (r.offset || 0), r.example)) + '</td>' : '') + '<td>' + esc(r.use) + '</td></tr>';
       }).join('');
-      root.innerHTML = '<section class="theory-viz"><div class="tv-head"><div><span class="tv-kicker">Guía visual</span><h4>' + esc(config.title) + '</h4><p>' + esc(config.note) + '</p></div><div class="tv-controls">' + tonicControl(state.root) + '</div></div><div class="tv-table-wrap"><table class="tv-table"><thead><tr><th>Recurso</th><th>Fórmula / relación</th><th>Ejemplo</th><th>Escucha / función</th></tr></thead><tbody>' + rows + '</tbody></table></div></section>';
+      root.innerHTML = '<section class="theory-viz"><div class="tv-head"><div><span class="tv-kicker">Guía visual</span><h4>' + esc(config.title) + '</h4><p>' + esc(config.note) + '</p></div><div class="tv-controls">' + tonicControl(state.root) + '</div></div><div class="tv-table-wrap"><table class="tv-table"><thead><tr><th>Recurso</th><th>Fórmula / relación</th><th>Ejemplo</th>' + (config.chordNotes ? '<th>Notas del acorde</th>' : '') + '<th>Escucha / función</th></tr></thead><tbody>' + rows + '</tbody></table></div></section>';
       root.querySelector('.tv-tonic').addEventListener('change', function (e) { state.root = Number(e.target.value); paint(); });
     }
     paint();
@@ -134,7 +143,7 @@
   var P = function (title, note, steps, footer) { return { type: "progression", title: title, note: note, steps: steps, footer: footer }; };
   var S = function (o, suffix, degree, role) { return { offset: o, suffix: suffix, degree: degree, role: role }; };
   var VISUALS = {
-    symbols: { type: "table", title: "Cómo se lee un símbolo de acorde", note: "La fundamental nombra el centro; la calidad y las tensiones describen el color que debes buscar en guitarra o piano.", rows: [
+    symbols: { type: "table", chordNotes: true, title: "Cómo se lee un símbolo de acorde", note: "La fundamental nombra el centro; la calidad y las tensiones describen el color que debes buscar en guitarra o piano.", rows: [
       { name: "Mayor con 7ª", formula: "1–3–5–7", example: "maj7", use: "Tónica mayor" },
       { name: "Menor con 7ª", formula: "1–♭3–5–♭7", example: "m7", use: "Menor / preparación" },
       { name: "Dominante", formula: "1–3–5–♭7", example: "7", use: "Tensión funcional" },
@@ -248,5 +257,5 @@
     else if (config.type === "bebop") renderBebop(root, config);
     else renderProgression(root, config);
   }
-  global.TheoryVisuals = { mount: mount, playNotes: playNotes };
+  global.TheoryVisuals = { mount: mount, playNotes: playNotes, symbolNotes: symbolNotes };
 })(window);

@@ -7,3 +7,12 @@
 
 /* Printed-score surface: independent of the surrounding course theme. */
 .concept-example .ce-score{box-sizing:border-box;padding:14px 12px;background:#fff;color:#111;border:1px solid #dedede;border-radius:8px}.concept-example .ce-score svg{color:#111}.concept-example .ce-score .ce-step-label{fill:currentColor}
+
+/* Each chord keeps its own notation and instrument, readable side by side. */
+body .ce-compact-chords .ci-group{grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr)!important;align-items:center;gap:12px;margin:6px 0 16px}
+.ce-compact-chords .ce-score>svg{min-width:0!important;min-height:0;max-height:150px}
+.ce-compact-chords .ce-score{padding:6px 8px}
+.ce-compact-chords .ci-instrument{padding:8px}
+.ce-compact-chords .ci-diagram-scroll .ci-piano{min-width:0!important;max-width:320px;max-height:130px;margin:auto}
+.ce-compact-chords .ce-comparison>b{display:block;margin-top:12px}
+@media(max-width:480px){body .ce-compact-chords .ci-group{grid-template-columns:1fr!important}}

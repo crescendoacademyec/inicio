@@ -29,3 +29,24 @@ for (const row of d.ROWS) {
   });
 }
 assert.deepEqual(d.scaleNotes(0, 'ionian'), [0,2,4,5,7,9,11]);
+// Primary summaries are transposition invariant and built from the actual parent field.
+for (const row of d.ROWS) for (let degree=0; degree<7; degree++) {
+  const reference=d.degreeData(row,degree,0);
+  for(let key=0;key<12;key++) {
+    const data=d.degreeData(row,degree,key);
+    assert.deepEqual(data.tensions,reference.tensions);
+    assert.ok(data.chord.every(n=>data.notes.includes(n)), `${row.id}/${degree}: chord must belong to its parent scale`);
+    assert.deepEqual(data.tensions,d.tensions(data.notes,data.chord,data.root));
+  }
+}
+assert.deepEqual(d.ROWS[0].qualities.map((_,i)=>d.degreeData(d.ROWS[0],i,0).tensions),[
+  ['9','13'],['9','11','13'],['11'],['9','♯11','13'],['9','13'],['9','11'],['11','♭13']
+]);
+assert.equal(d.ROWS[3].qualities[3],'m(maj7)');
+assert.deepEqual(d.degreeData(d.ROWS[3],3,0).chord,[5,8,0,4]);
+assert.ok(d.degreeData(d.ROWS[2],3,0).tensions.includes('♯11'));
+assert.deepEqual(d.tensions(d.scaleNotes(0,'altered'),[0,4,7,10],0),['♭9','♯9','♯11','♭13']);
+assert.deepEqual(d.writtenNotes(0,[0,3,6,9],[0,2,4,6]),['C4','Eb4','Gb4','Bbb4']);
+const fs=require('node:fs');
+const html=fs.readFileSync(__dirname+'/index.html','utf8');
+assert.ok(html.indexOf('shared/concept-examples.js')<html.indexOf('src="./improvisation.js'),'Restoring the dictionary view must load notation before its first render');
