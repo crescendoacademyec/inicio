@@ -267,10 +267,10 @@ button:is(.active,.selected,.is-active,[aria-pressed="true"],[aria-selected="tru
   color: #17130a !important;
 }
 
-button:is(.active,.selected,.is-active,[aria-pressed="true"],[aria-selected="true"]) :is(h1,h2,h3,h4,h5,h6,.title,.page-title,.section-title,.eyebrow,.kicker,b,strong,span),
-[role="button"]:is(.active,.selected,.is-active,[aria-pressed="true"],[aria-selected="true"]) :is(h1,h2,h3,h4,h5,h6,.title,.page-title,.section-title,.eyebrow,.kicker,b,strong,span),
-.active > button :is(h1,h2,h3,h4,h5,h6,.title,.page-title,.section-title,.eyebrow,.kicker,b,strong,span),
-.selected > button :is(h1,h2,h3,h4,h5,h6,.title,.page-title,.section-title,.eyebrow,.kicker,b,strong,span) {
+button:is(.active,.selected,.is-active,[aria-pressed="true"],[aria-selected="true"]) :is(h1,h2,h3,h4,h5,h6,.title,.page-title,.section-title,.eyebrow,.kicker,b,strong,span,small,p,em,.subtitle,.description,.muted),
+[role="button"]:is(.active,.selected,.is-active,[aria-pressed="true"],[aria-selected="true"]) :is(h1,h2,h3,h4,h5,h6,.title,.page-title,.section-title,.eyebrow,.kicker,b,strong,span,small,p,em,.subtitle,.description,.muted),
+.active > button :is(h1,h2,h3,h4,h5,h6,.title,.page-title,.section-title,.eyebrow,.kicker,b,strong,span,small,p,em,.subtitle,.description,.muted),
+.selected > button :is(h1,h2,h3,h4,h5,h6,.title,.page-title,.section-title,.eyebrow,.kicker,b,strong,span,small,p,em,.subtitle,.description,.muted) {
   color: #17130a !important;
 }
 
