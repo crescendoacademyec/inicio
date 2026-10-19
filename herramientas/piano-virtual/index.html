@@ -11,7 +11,7 @@
 <link rel="stylesheet" href="css/chord-bank.css?v=20261005-active-key-color">
 <link rel="stylesheet" href="../../shared/header-metronome.css?v=20260925-beat-stop">
   <link rel="stylesheet" href="../../shared/crescendo-identity.css?v=20261005-instrument-ui">
-<link rel="stylesheet" href="css/chrome-fit.css?v=20261019-4">
+<link rel="stylesheet" href="css/chrome-fit.css?v=20261019-5">
 <script defer src="js/chrome-fit.js?v=20261019-1"></script>
 <script defer src="js/staff-visibility.js?v=20261019-1"></script>
 </head>
@@ -187,7 +187,10 @@
       <input type="color" id="activeColor" value="#66b3ff" class="file-input-hidden" tabindex="-1" aria-hidden="true">
     </div>
 
-    <button type="button" id="openChordBank" aria-controls="chordBank" aria-expanded="false" aria-pressed="false">LABORATORIO</button>
+    <button type="button" id="openChordBank" class="instrument-box laboratory-toggle" aria-controls="chordBank" aria-expanded="false" aria-pressed="false">
+      <span class="instrument-box-label">LABORATORIO</span>
+      <span class="instrument-icon"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6m-5 0v6l-5 9a2 2 0 0 0 1.7 3h10.6a2 2 0 0 0 1.7-3l-5-9V3M8 15h8"/></svg></span>
+    </button>
 
     <button type="button" id="toggleLiveStaff" class="instrument-box staff-toggle" aria-label="Mostrar pentagrama" aria-controls="liveStaffPanel" aria-pressed="true" title="Ocultar pentagrama">
       <span class="instrument-box-label">Grand Staff</span>

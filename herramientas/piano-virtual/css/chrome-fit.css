@@ -92,3 +92,12 @@
 .chrome-fit-content.controlbar .staff-toggle:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 #liveStaffPanel[hidden]{display:none!important}
 .staff-wrap.staff-hidden>.staff-right{flex:1 1 100%;width:100%;border-left:0}
+
+/* A single gap across both control clusters; empty sample controls reserve no space. */
+.chrome-fit-content.controlbar .right-indicators{margin-left:0;gap:7px}
+.chrome-fit-content.controlbar .right-indicators .hand-toggle-group{gap:7px}
+.chrome-fit-content.controlbar .sample-controls{gap:7px}
+.chrome-fit-content.controlbar .sample-controls:not(:has(.sample-clear-btn.visible)){display:none}
+.chrome-fit-content.controlbar #openChordBank{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;flex:0 0 auto;min-width:56px;width:auto;padding:3px 5px;border-radius:9px}
+.chrome-fit-content.controlbar #openChordBank .instrument-box-label{font-size:.53rem;letter-spacing:.045em}
+.chrome-fit-content.controlbar #openChordBank .instrument-icon{width:17px;height:17px}
