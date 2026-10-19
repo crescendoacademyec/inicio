@@ -498,5 +498,15 @@ X.catalogs.reading['Vertical y horizontal a la vez']={title:'Dos pentagramas con
 X.catalogs.functional['nivel-4-progresiones-cadencias:Otras cadencias']={title:'Tres finales que se comparan, no una sola progresión',table:[['Plagal','F → C','IV → I'],['Semicadencia','Dm → G y detener la frase','Termina en V'],['Deceptiva','G → Am','V → vi']],caption:'Ejemplos en Do mayor. El final y el contexto de frase explican la función; las tres filas son situaciones independientes.'};
 X.catalogs.jazz['2.10 Tipos de cadencia: auténtica, plagal, semicadencia y deceptiva']={title:'Cuatro destinos en Do mayor',table:[['Auténtica','G7 → C','V7 → I'],['Plagal','F → C','IV → I'],['Semicadencia','Dm → G y detener la frase','Termina en V'],['Deceptiva','G → Am','V → vi']],caption:'Cada fila es un ejemplo independiente. En la cadencia deceptiva se evita el I esperado; en la semicadencia la frase queda orientada hacia la dominante.'};
 
+// Musical examples connect MIDI, sampling and register to the selected instrument.
+X.catalogs.production['sonido-1:0'].notes='A3 A4';
+X.catalogs.production['sonido-1:0'].caption+=' En otro registro, La3 (220 Hz) y La4 (440 Hz) muestran esa misma relación de octava en el pentagrama y en el instrumento.';
+X.catalogs.production['preproduccion-2:0'].notes='C3+G3+E4';
+X.catalogs.production['preproduccion-2:0'].caption+=' En este acorde de Do, Do3 sostiene el grave, Sol3 ocupa una voz interna y Mi4 queda arriba.';
+X.catalogs.production['midi-1:0'].notes='C4 E4 G4 C5';
+X.catalogs.production['midi-1:0'].caption+=' Cambia el instrumento del menú y pulsa sus notas: los eventos de altura se conservan mientras cambia el timbre.';
+X.catalogs.production['midi-3:0'].notes='C4 E4 G4 C5';
+X.catalogs.production['midi-3:0'].caption+=' El ejemplo permite escuchar muestras de piano, guitarra o bajo con las mismas alturas de referencia.';
+
 X.productionIllustrationAt={"sonido-1": 2, "sonido-2": 0, "sonido-3": 0, "sonido-4": 1, "estudio-1": 0, "estudio-2": 0, "estudio-3": 0, "estudio-4": 0, "preproduccion-1": 0, "preproduccion-2": 0, "preproduccion-3": 0, "preproduccion-4": 0, "grabacion-1": 0, "grabacion-2": 0, "grabacion-3": 0, "grabacion-4": 0, "edicion-1": 0, "edicion-2": 0, "edicion-3": 0, "edicion-4": 0, "midi-1": 0, "midi-2": 0, "midi-3": 0, "midi-4": 0, "mezcla-1": 0, "mezcla-2": 0, "mezcla-3": 0, "mezcla-4": 0, "profundidad-1": 0, "profundidad-2": 0, "profundidad-3": 1, "profundidad-4": 0, "mastering-1": 0, "mastering-2": 0, "mastering-3": 0, "mastering-4": 1, "medios-1": 0, "medios-2": 0, "medios-3": 0, "medios-4": 0, "profesion-1": 0, "profesion-2": 0, "profesion-3": 0, "profesion-4": 0, "proyecto-1": 0, "proyecto-2": 0, "proyecto-3": 0, "proyecto-4": 0};
 })(typeof window==='undefined'?globalThis:window);

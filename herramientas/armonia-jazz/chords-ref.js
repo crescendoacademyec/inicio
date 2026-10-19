@@ -37,7 +37,7 @@
 
     var whiteW = 28, whiteH = 92, blackW = 16, blackH = 56;
     var parts = [];
-    parts.push('<svg viewBox="0 0 200 100" class="jz-piano" role="img" aria-label="Diagrama de piano">');
+    parts.push('<svg '+(global.CourseInstruments?global.CourseInstruments.source(formula.map(function(pc){return 60+((pc%12)+12)%12;})):'')+' viewBox="0 0 200 100" class="jz-piano" role="img" aria-label="Diagrama de piano">');
 
     // teclas blancas
     WHITE_ORDER.forEach(function (n) {

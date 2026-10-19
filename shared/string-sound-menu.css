@@ -9,20 +9,20 @@
   min-height: 34px;
   max-width: 210px;
   padding: 5px 10px;
-  border: 1px solid rgba(122, 183, 151, .62);
+  border: 1px solid #786133;
   border-radius: 999px;
-  background: rgba(61, 104, 82, .72);
-  color: #eaf8ef;
+  background: #111;
+  color: #fffaf0;
   font: 700 .72rem/1 Inter, ui-sans-serif, system-ui, sans-serif;
   cursor: pointer;
   white-space: nowrap;
 }
 .string-sound-trigger:hover,
 .string-sound-menu.open .string-sound-trigger {
-  border-color: #a9ddbe;
-  background: rgba(73, 124, 96, .92);
+  border-color: #d4a84f;
+  background: #111;
   color: #fff;
-  box-shadow: 0 4px 16px rgba(28, 77, 53, .35);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, .35);
 }
 .string-sound-menu[data-state="loading"] .string-sound-trigger { background: rgba(181, 137, 39, .88); border-color: #f3ce67; color: #17130a; }
 .string-sound-menu[data-state="loading"] .string-sound-label,
@@ -31,13 +31,13 @@
 .string-sound-menu[data-state="error"] .string-sound-label,
 .string-sound-menu[data-state="error"] .string-sound-chevron { color: #ffd4ce; }
 .string-sound-label {
-  color: #c7ebd4;
+  color: #d4a84f;
   font-size: .62rem;
   letter-spacing: .055em;
   text-transform: uppercase;
 }
 .string-sound-value { overflow: hidden; text-overflow: ellipsis; }
-.string-sound-chevron { color: #c7ebd4; font-size: .78rem; }
+.string-sound-chevron { color: #d4a84f; font-size: .78rem; }
 .string-sound-options {
   position: absolute;
   top: calc(100% + 7px);
@@ -47,9 +47,9 @@
   max-width: min(300px, calc(100vw - 28px));
   gap: 3px;
   padding: 6px;
-  border: 1px solid rgba(122, 183, 151, .62);
+  border: 1px solid #786133;
   border-radius: 10px;
-  background: #254a38;
+  background: #111;
   box-shadow: 0 14px 32px rgba(0, 0, 0, .38);
 }
 .string-sound-options[hidden] { display: none; }
@@ -59,18 +59,20 @@
   border: 1px solid transparent;
   border-radius: 7px;
   background: transparent;
-  color: #eaf8ef;
+  color: #fffaf0;
   font: 650 .78rem/1.25 Inter, ui-sans-serif, system-ui, sans-serif;
   text-align: left;
   cursor: pointer;
 }
 .string-sound-option:hover,
 .string-sound-option.selected {
-  border-color: rgba(190, 237, 209, .5);
-  background: rgba(190, 237, 209, .16);
+  border-color: #d4a84f;
+  background: #30291c;
   color: #fff;
 }
 @media (max-width: 640px) {
   .string-sound-trigger { max-width: 175px; }
   .string-sound-options { right: auto; left: 0; min-width: 220px; }
 }
+
+.string-sound-option.selected{background:#d4a84f;color:#17130a;border-color:#d4a84f}

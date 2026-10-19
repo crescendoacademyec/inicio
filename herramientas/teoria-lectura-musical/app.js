@@ -313,7 +313,7 @@ function chromaticPianoHTML(){
   const label=key=>`<span class="chromatic-key-name">${key.name}</span><small>↑ ${key.up}</small><small>↓ ${key.down}</small>`;
   const white=keys.filter(key=>key.white).map((key,index)=>`<button type="button" class="tlm-key white chromatic-key" data-chromatic-key="${60+key.pc}" style="left:${(index/7)*100}%;width:${100/7}%" aria-label="${key.name}; ascendente ${key.up}; descendente ${key.down}">${label(key)}</button>`).join("");
   const black=keys.filter(key=>!key.white).map(key=>`<button type="button" class="tlm-key black chromatic-key" data-chromatic-key="${60+key.pc}" style="left:${(blacks[key.pc]/7)*100}%;width:${60/7}%" aria-label="${key.name}; ascendente ${key.up}; descendente ${key.down}">${label(key)}</button>`).join("");
-  return `<div class="tlm-piano chromatic-piano">${white}${black}</div>`;
+  return `<div ${window.CourseInstruments?.source(keys.map(key=>60+key.pc).concat(72))||''} class="tlm-piano chromatic-piano">${white}${black}</div>`;
 }
 
 /* ===================== AUDIO ===================== */
@@ -488,7 +488,7 @@ function pianoHTML(rootName,toneList,{octave=4,range=12}={}){
       </div>`;
     });
   }
-  return `<div class="tlm-piano" style="--octaves:${octaves}">${whites}${blacks}</div>`;
+  return `<div ${window.CourseInstruments?.source(toneList.map(t=>({midi:rootM+t.semi,label:t.name})))||''} class="tlm-piano" style="--octaves:${octaves}">${whites}${blacks}</div>`;
 }
 function staffSVG(rootName,toneList,label="Pentagrama"){
   const root=CrescendoPractice.rootNote(rootName,4);

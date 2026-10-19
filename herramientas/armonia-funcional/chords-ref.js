@@ -187,7 +187,7 @@
     var w = layout.margin + layout.whiteCount * layout.whiteW + 4;
     var h = whiteH + 22;
     var parts = [];
-    parts.push('<svg viewBox="0 0 ' + w + ' ' + h + '" class="jz-piano" role="img" aria-label="' + escapeXmlAttr(svgLabel(chordName, "Piano", tones)) + '">');
+    parts.push('<svg '+(global.CourseInstruments?global.CourseInstruments.source(tones.map(function(t){return {midi:60+root.pc+t.semi,label:t.name};})): '')+' viewBox="0 0 ' + w + ' ' + h + '" class="jz-piano" role="img" aria-label="' + escapeXmlAttr(svgLabel(chordName, "Piano", tones)) + '">');
 
     layout.keys.filter(function (k) { return !k.isBlack; }).forEach(function (k) {
       var tone = matched[k.absoluteStep];

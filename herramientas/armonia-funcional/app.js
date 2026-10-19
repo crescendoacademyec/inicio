@@ -1154,7 +1154,7 @@ function renderPianoDiagram(diagram) {
   const whiteCount = notes.filter(note => !note.isBlack).length;
   const keys = diagram.keys || {};
   const labels = pianoFloatingLabels(notes, keys, whiteCount);
-  return `<figure class="piano-diagram${diagram.range ? ' piano-diagram-focused' : ''}">
+  return `<figure ${window.CourseInstruments?.source(Object.keys(keys).map(note=>({midi:noteStep(note)})))||''} class="piano-diagram${diagram.range ? ' piano-diagram-focused' : ''}">
     <div class="piano-diagram-scroll">
       <div class="piano-diagram-keyboard" style="--white-count:${whiteCount};">
         ${notes.map(note => renderPianoKey(note, keys[note.note], whiteCount)).join("")}
@@ -2448,7 +2448,7 @@ function reharmChord(tonic, roman, sevenths) {
 }
 function mountReharmLab(el) {
   const original = ["I","vi","ii","V","I"];
-  let progression = [...original], position = 0, selected = "I", view = "all";
+  let progression = [...original], position = 0, selected = "I";
   const families = ["Tónica","Tónica","Subdominante","Dominante","Tónica"];
   el.innerHTML = `<div class="theory-widget theory-widget-reharm">
     <div class="visual-controls">
@@ -2462,22 +2462,19 @@ function mountReharmLab(el) {
     <details><summary>Comparar con la progresión original</summary><div class="reharm-line" data-reharm-original></div><button type="button" data-reharm-play="original">▶ Escuchar original</button></details>
     <h5 data-reharm-target></h5><div class="function-groups" data-reharm-choices></div>
     <p data-reharm-selection aria-live="polite"></p><button type="button" class="primary-btn" data-reharm-use>Usar en esta posición</button>
-    <div class="visual-controls reharm-views" aria-label="Visualización del acorde">
-      <button type="button" data-reharm-view="staff">Pentagrama</button><button type="button" data-reharm-view="piano">Piano</button><button type="button" data-reharm-view="guitar">Diapasón</button><button type="button" data-reharm-view="all">Todas</button>
-    </div><div data-reharm-viewer></div>
-    <p class="small-note">Las familias siguen el enfoque de este curso; una sustitución depende de la melodía, la conducción de voces y el contexto. El pentagrama y el piano muestran la estructura del acorde; el diapasón propone otra disposición tocable. Cambiar el acorde final puede modificar la sensación de cierre.</p>
+    <div data-reharm-viewer></div>
+    <p class="small-note">Las familias siguen el enfoque de este curso; una sustitución depende de la melodía, la conducción de voces y el contexto. El pentagrama conserva la estructura del acorde y el menú elige su representación instrumental; la guitarra propone una disposición tocable. Cambiar el acorde final puede modificar la sensación de cierre.</p>
     <p class="small-note" data-reharm-status aria-live="polite"></p>
   </div>`;
   const get = selector => el.querySelector(selector);
   const chord = roman => reharmChord(get("[data-reharm-root]").value,roman,get("[data-reharm-quality]").value === "sevenths");
   function viewer() {
-    get("[data-reharm-viewer]").dataset.view=view;
+    get("[data-reharm-viewer]").dataset.view="all";
     const c = chord(selected), panels = [];
-    if(view==="staff"||view==="all")panels.push('<section class="visual-panel"><h6>Pentagrama</h6>'+ChordRef.staffSVG(c.root,c.tones,c.label)+'</section>');
-    if(view==="piano"||view==="all")panels.push('<section class="visual-panel"><h6>Piano</h6>'+ChordRef.pianoSVG(c.root,c.tones,c.label)+'</section>');
-    if(view==="guitar"||view==="all")panels.push('<section class="visual-panel"><h6>Diapasón · voicing sugerido</h6>'+ChordRef.guitarSVG(c.root,c.tones,c.label)+'</section>');
+    panels.push('<section class="visual-panel"><h6>Pentagrama</h6>'+ChordRef.staffSVG(c.root,c.tones,c.label)+'</section>');
+    panels.push('<section class="visual-panel"><h6>Piano</h6>'+ChordRef.pianoSVG(c.root,c.tones,c.label)+'</section>');
+    panels.push('<section class="visual-panel"><h6>Diapasón · voicing sugerido</h6>'+ChordRef.guitarSVG(c.root,c.tones,c.label)+'</section>');
     get("[data-reharm-viewer]").innerHTML=panels.join("");
-    el.querySelectorAll("[data-reharm-view]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.reharmView===view)));
     el.querySelectorAll("[data-reharm-card]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.reharmCard===selected)));
     get("[data-reharm-selection]").textContent=c.roman+" · "+c.label+" · "+c.family;
     get("[data-reharm-use]").disabled=c.family!==families[position];
@@ -2523,7 +2520,6 @@ function mountReharmLab(el) {
     else if(b.hasAttribute("data-reharm-preview"))listen(original[Number(b.dataset.reharmPreview)]);
     else if(b.hasAttribute("data-reharm-card"))listen(b.dataset.reharmCard);
     else if(b.hasAttribute("data-reharm-use")){stop();if(chord(selected).family===families[position]){progression[position]=selected;render();get("[data-reharm-status]").textContent="Posición "+(position+1)+" actualizada.";}}
-    else if(b.hasAttribute("data-reharm-view")){view=b.dataset.reharmView;viewer();}
     else if(b.hasAttribute("data-reharm-play"))play(b.dataset.reharmPlay);
     else if(b.hasAttribute("data-reharm-stop")){stop();get("[data-reharm-status]").textContent="Reproducción detenida.";}
     else if(b.hasAttribute("data-reharm-reset")){stop();progression=[...original];position=0;selected="I";render();}

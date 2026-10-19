@@ -7,7 +7,7 @@
   <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="../../shared/header-icons.css?v=20260919-flat-logo-v2">
 <title>Piano Virtual Pro</title>
-<link rel="stylesheet" href="css/styles.css?v=20261006-selected-hand-black">
+<link rel="stylesheet" href="css/styles.css?v=20261019-black-sound">
 <link rel="stylesheet" href="css/chord-bank.css?v=20261005-active-key-color">
 <link rel="stylesheet" href="../../shared/header-metronome.css?v=20260925-beat-stop">
   <link rel="stylesheet" href="../../shared/crescendo-identity.css?v=20261005-instrument-ui">
@@ -217,9 +217,8 @@
       </div>
       <div class="quick-select" id="qsInstrument">
         <button type="button" class="instrument-box" id="qsInstrumentBox" aria-haspopup="listbox" aria-expanded="false" title="Cambiar el sonido del piano">
-          <span class="instrument-box-label">Sonido</span>
           <span class="instrument-icon" id="qsInstrumentIcon"></span>
-          <span class="sr-only" id="qsInstrumentName">cargando…</span>
+          <span class="instrument-name" id="qsInstrumentName">cargando…</span><span aria-hidden="true">▾</span>
         </button>
         <div class="quick-select-dropdown" id="qsInstrumentDropdown" role="listbox"></div>
       </div>

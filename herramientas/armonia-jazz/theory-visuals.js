@@ -16,7 +16,7 @@
   }
   global.CourseSound?.onChange(stopAudio);
   function piano(instrument) {
-    if(global.CourseSound) return global.CourseSound.getPlayer(audioContext(),{destination:AUDIO.bus,instrument:instrument}).catch(function(){return null;});
+    if(global.CourseSound) return global.CourseSound.getPlayer(audioContext(),{destination:AUDIO.bus}).catch(function(){return null;});
     var ctx = audioContext();
     if (!ctx || AUDIO.failed) return Promise.resolve(null);
     if (AUDIO.player) return Promise.resolve(AUDIO.player);

@@ -22,14 +22,22 @@ test('acorde de guitarra conserva notas simultáneas y anula cargas anteriores a
  const old=play([60,64,67]);await tick();s.set('guitar');t.pending.shift()();await old;assert.equal(t.heard.length,0);
  const chord=play([47,53,58,62]);await tick();assert.equal(t.calls.at(-1).name,'acoustic_guitar_nylon');t.pending.shift()();await chord;
  assert.deepEqual(t.heard.map(n=>n.midi),[47,53,58,62]);assert.equal(new Set(t.heard.map(n=>n.time)).size,1);
-  s.set('piano');t.heard.length=0;await play([47,53,58,62],{instrument:'guitar'});assert.ok(t.heard.every(n=>n.name==='acoustic_guitar_nylon'));assert.equal(s.get(),'piano');
+  s.set('piano');t.heard.length=0;await play([47,53,58,62],{instrument:'guitar'});assert.ok(t.heard.every(n=>n.name==='acoustic_grand_piano'));assert.equal(s.get(),'piano');
   t.heard.length=0;await play([60,62,64],{instrument:'guitar',melodic:true});assert.ok(t.heard[1].time>t.heard[0].time);
 });
-test('un registro de guitarra fuerza guitarra aunque el botón global diga piano',async()=>{
+test('el instrumento global también gobierna ejemplos con un registro de guitarra',async()=>{
  const t=setup(),play=t.context.TheoryVisuals.playNotes;
+ t.context.CourseSound.set('bass');
  const sounding=play([47,53,58,62],{instrument:'guitar'});await tick();
- assert.equal(t.calls[0].name,'acoustic_guitar_nylon');
+ assert.equal(t.calls[0].name,'electric_bass_finger');
  t.pending.shift()();await sounding;
  assert.deepEqual(t.heard.map(n=>n.midi),[47,53,58,62]);
  assert.equal(new Set(t.heard.map(n=>n.time)).size,1);
+});
+
+test('bajo conserva alturas y reutiliza su SoundFont al alternar instrumentos',async()=>{
+ const t=setup(),s=t.context.CourseSound,c=new t.context.AudioContext();
+ s.set('bass');let a=s.getPlayer(c);await tick();assert.equal(t.calls[0].name,'electric_bass_finger');t.pending.shift()();await a;
+ s.set('piano');a=s.getPlayer(c);await tick();t.pending.shift()();await a;
+ s.set('bass');await s.getPlayer(c);assert.equal(t.calls.length,2);assert.equal(s.get(),'bass');
 });
