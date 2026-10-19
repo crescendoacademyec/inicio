@@ -77,3 +77,16 @@
 .chrome-fit-content .right-indicators{width:auto;margin-left:auto;flex-wrap:nowrap;justify-content:flex-start;flex-shrink:0}
 .chrome-fit-content .field-volume{margin-left:0}
 .chrome-fit-content .hand-toggle-group{flex-wrap:nowrap}
+
+/* One height across the control row, independent of the shared zoom factor. */
+.chrome-fit-content.controlbar{--piano-control-height:40px}
+.chrome-fit-content.controlbar .quick-select-box,
+.chrome-fit-content.controlbar #openChordBank,
+.chrome-fit-content.controlbar .sample-clear-btn,
+.chrome-fit-content.controlbar .right-indicators :is(.hand-btn,.instrument-box,.icon-badge,.sustain-indicator,.indicator-button),
+.chrome-fit-content.controlbar .staff-toggle{height:var(--piano-control-height);min-height:var(--piano-control-height);box-sizing:border-box;justify-content:center}
+.chrome-fit-content.controlbar .staff-toggle{display:inline-flex;align-items:center;flex:0 0 var(--piano-control-height);width:var(--piano-control-height);padding:0;border:1px solid #786133;border-radius:9px;background:#111;color:var(--gold);cursor:pointer}
+.chrome-fit-content.controlbar .staff-toggle[aria-pressed="true"]{background:var(--gold);color:#17130a}
+.chrome-fit-content.controlbar .staff-toggle:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+#liveStaffPanel[hidden]{display:none!important}
+.staff-wrap.staff-hidden>.staff-right{flex:1 1 100%;width:100%;border-left:0}
