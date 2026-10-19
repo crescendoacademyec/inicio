@@ -1476,9 +1476,5 @@
 #keyboard .white-key.active.played-hand-right { background:color-mix(in srgb,var(--hand-right-color) 58%,white) !important; box-shadow:0 0 12px var(--hand-right-color) !important; }
 #keyboard .black-key.active.played-hand-right { background:color-mix(in srgb,var(--hand-right-color) 72%,black) !important; box-shadow:0 0 12px var(--hand-right-color) !important; }
 
-/* The instrument name replaces the generic sound label. */
-.controlbar .right-indicators #qsInstrumentBox{display:inline-flex;flex-direction:row;align-items:center;justify-content:center;gap:8px;width:auto;min-width:140px;max-width:240px;padding:6px 11px;border-radius:999px;background:#111;color:#fffaf0;border-color:#786133;font-size:.72rem}
-#qsInstrumentName{display:block;max-width:175px;overflow:hidden;text-overflow:ellipsis;font-weight:700}
-#qsInstrumentDropdown{background:#111;border-color:#786133;min-width:220px;right:0;left:auto}
-#qsInstrumentDropdown .instrument-item.selected{background:#d4a84f;color:#17130a}
-#qsInstrumentDropdown .instrument-item.selected .instrument-icon{color:#17130a}
+/* Original compact sound selector, with the requested black surface. */
+#qsInstrumentBox,#qsInstrumentDropdown{background:#111}
