@@ -1,0 +1,79 @@
+/* Keep the laptop design at a fixed internal scale; fit both rows together. */
+.chrome-fit-frame{position:relative;flex:0 0 auto;width:100%;min-width:0;overflow:visible}
+.chrome-fit-frame:first-child{z-index:40}
+.app-content>.chrome-fit-frame{z-index:30}
+.chrome-fit-content{width:1280px;max-width:none;transform-origin:top left}
+
+.topbar.chrome-fit-content{
+    grid-template-columns:auto minmax(0,1fr) auto;
+    min-height:68px;
+    padding:10px 14px;
+    gap:8px 12px;
+  }.chrome-fit-content .brand{
+    font-size:1.45rem;
+    gap:8px;
+    min-width:0;
+    white-space:nowrap;
+  }.chrome-fit-content .mode-toggle{margin-left:4px;padding:2px;}.chrome-fit-content .mode-toggle-btn{padding:6px 10px;font-size:.61rem;letter-spacing:.035em;}.chrome-fit-content .header-center-tools{gap:8px;min-width:0;flex-wrap:nowrap;}.chrome-fit-content #chordDisplay{min-width:132px;padding:3px 10px;font-size:1.02rem;border-radius:10px;}.chrome-fit-content #chordDisplay .sub{font-size:.60rem;}.chrome-fit-content .header-metronome{gap:4px;padding:4px 5px;min-height:40px;border-radius:10px;}.chrome-fit-content .metro-main{width:30px;min-height:29px;}.chrome-fit-content .metro-tap{padding:0 7px;font-size:.62rem;min-height:29px;}.chrome-fit-content .metro-stepper button{width:21px;height:24px;}.chrome-fit-content .metro-stepper input{width:36px;height:24px;font-size:.68rem;}.chrome-fit-content .metronome select{height:29px;padding:0 5px;font-size:.61rem;}.chrome-fit-content #metroPulse{width:92px;}.chrome-fit-content #metroMeter{width:42px;}.chrome-fit-content .metro-beat{min-width:16px;font-size:.78rem;}.chrome-fit-content .metro-label{font-size:.48rem;}.chrome-fit-content .social-bar{gap:5px;flex-wrap:nowrap;}.chrome-fit-content .social-link,.chrome-fit-content .academy-link{width:32px;height:32px;flex:0 0 32px;}.chrome-fit-content .social-link svg{width:17px;height:17px;}.chrome-fit-content .academy-link .school-logo{width:26px;height:26px;}.controlbar.chrome-fit-content{
+    flex-wrap:nowrap;
+    gap:7px;
+    padding:8px 9px;
+    min-width:0;
+  }.chrome-fit-content .field{gap:4px;font-size:.68rem;flex:0 0 auto;}.chrome-fit-content .field-volume{margin-left:0;}.chrome-fit-content input[type=range]{width:72px;}.chrome-fit-content .quick-select{min-width:0;flex:0 1 auto;}.chrome-fit-content .quick-select-box{
+    min-width:78px;
+    max-width:104px;
+    padding:5px 8px;
+    border-radius:9px;
+    gap:1px;
+  }.chrome-fit-content #qsKey .quick-select-box{min-width:105px;max-width:118px;}.chrome-fit-content #qsColor .quick-select-box{min-width:92px;max-width:98px;}.chrome-fit-content .quick-select-label{font-size:.53rem;letter-spacing:.055em;}.chrome-fit-content .quick-select-value{font-size:.72rem;max-width:100px;}.chrome-fit-content .color-value-row{gap:4px;}.chrome-fit-content .color-swatch{width:12px;height:12px;}.chrome-fit-content .hand-toggle-group{gap:4px;flex:0 0 auto;}.chrome-fit-content .hand-btn{min-width:38px;padding:5px 7px;border-radius:9px;}.chrome-fit-content .hand-btn-label{font-size:.53rem;}.chrome-fit-content .hand-btn svg{width:17px;height:17px;}.chrome-fit-content .sample-controls{gap:3px;flex:0 0 auto;}.chrome-fit-content .sample-clear-btn{padding:5px 7px;font-size:.65rem;}.chrome-fit-content .right-indicators{
+    margin-left:auto;
+    gap:5px;
+    flex-wrap:nowrap;
+    min-width:0;
+  }.chrome-fit-content .instrument-box,.chrome-fit-content .icon-badge,.chrome-fit-content .sustain-indicator{
+    min-width:52px;
+    padding:5px 6px;
+    gap:3px;
+    border-radius:9px;
+    font-size:.53rem;
+    letter-spacing:.045em;
+  }.chrome-fit-content .instrument-box-label{font-size:.53rem;letter-spacing:.045em;}.chrome-fit-content .instrument-icon,.chrome-fit-content .icon-badge .badge-icon{width:17px;height:17px;}.chrome-fit-content .indicator-button{min-width:52px;min-height:48px;}.chrome-fit-content .sustain-icon-row{min-height:17px;}.chrome-fit-content .pedal-icon{width:19px;height:14px;}.chrome-fit-content .right-indicators{
+    gap:5px;
+    flex-wrap:nowrap;
+  }.chrome-fit-content .right-indicators .hand-toggle-group{
+    display:flex;
+    gap:5px;
+    flex:0 0 auto;
+  }.chrome-fit-content .right-indicators .hand-btn,.chrome-fit-content .right-indicators .instrument-box,.chrome-fit-content .right-indicators .icon-badge,.chrome-fit-content .right-indicators .sustain-indicator,.chrome-fit-content .right-indicators .indicator-button{
+    width:56px;
+    min-width:56px;
+    max-width:56px;
+    height:50px;
+    min-height:50px;
+    padding:5px 5px;
+    border-radius:9px;
+    gap:3px;
+    box-sizing:border-box;
+    justify-content:center;
+  }.chrome-fit-content .right-indicators .hand-btn-label,.chrome-fit-content .right-indicators .instrument-box-label,.chrome-fit-content .right-indicators .icon-badge,.chrome-fit-content .right-indicators .sustain-indicator{
+    font-size:.53rem;
+    letter-spacing:.045em;
+  }.chrome-fit-content .right-indicators .hand-btn svg,.chrome-fit-content .right-indicators .instrument-icon,.chrome-fit-content .right-indicators .icon-badge .badge-icon{
+    width:17px;
+    height:17px;
+  }.chrome-fit-content .right-indicators .pedal-icon{width:19px;height:14px;}
+
+/* Override viewport breakpoints: scaling must never rearrange these controls. */
+.chrome-fit-content.topbar{display:grid;grid-template-columns:max-content max-content max-content;justify-content:space-between;align-items:center;min-height:68px;padding:10px 14px;gap:12px}
+.chrome-fit-content .brand{grid-column:auto;grid-row:auto;justify-content:flex-start;flex-wrap:nowrap;white-space:nowrap}
+.chrome-fit-content .mode-toggle{margin-left:4px;justify-content:flex-start;flex-wrap:nowrap}
+.chrome-fit-content .header-center-tools{grid-column:auto;grid-row:auto;width:max-content;flex-direction:row;flex-wrap:nowrap;justify-content:center}
+.chrome-fit-content #chordDisplay{margin:0;min-width:132px;font-size:1.02rem}
+.chrome-fit-content .header-metronome{width:auto;max-width:none;flex-wrap:nowrap;justify-content:center}
+.chrome-fit-content .social-bar{grid-column:auto;grid-row:auto;justify-content:flex-end;flex-wrap:nowrap}
+.chrome-fit-content.controlbar{display:flex;flex-direction:row;align-items:center;flex-wrap:nowrap;overflow:visible;gap:7px;padding:8px 9px}
+.chrome-fit-content.controlbar>*{flex-shrink:0}
+.chrome-fit-content .quick-select{flex:0 0 auto}
+.chrome-fit-content .right-indicators{width:auto;margin-left:auto;flex-wrap:nowrap;justify-content:flex-start;flex-shrink:0}
+.chrome-fit-content .field-volume{margin-left:0}
+.chrome-fit-content .hand-toggle-group{flex-wrap:nowrap}
