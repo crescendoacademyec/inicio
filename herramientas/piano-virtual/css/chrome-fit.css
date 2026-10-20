@@ -81,15 +81,15 @@
 /* One height across the control row, independent of the shared zoom factor. */
 .chrome-fit-content.controlbar{--piano-control-height:40px}
 .chrome-fit-content.controlbar .quick-select-box,
-.chrome-fit-content.controlbar #openChordBank,
+.controlbar #openChordBank,
 .chrome-fit-content.controlbar .sample-clear-btn,
 .chrome-fit-content.controlbar .right-indicators :is(.hand-btn,.instrument-box,.icon-badge,.sustain-indicator,.indicator-button),
-.chrome-fit-content.controlbar .staff-toggle{height:var(--piano-control-height);min-height:var(--piano-control-height);box-sizing:border-box;justify-content:center}
-.chrome-fit-content.controlbar .staff-toggle{display:inline-flex;flex-direction:column;align-items:center;gap:3px;flex:0 0 auto;width:auto;min-width:56px;padding:3px 5px;border:1px solid rgba(255,255,255,.14);border-radius:9px;background:rgba(255,255,255,.08);color:var(--muted);cursor:pointer}
-.chrome-fit-content.controlbar .staff-toggle .instrument-box-label{font-size:.53rem;letter-spacing:.045em;font-weight:700}
-.chrome-fit-content.controlbar .staff-toggle .instrument-icon{width:17px;height:17px}
-.chrome-fit-content.controlbar .staff-toggle[aria-pressed="true"]{background:rgba(212,168,79,.12);border-color:var(--gold);color:var(--gold)}
-.chrome-fit-content.controlbar .staff-toggle:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+.controlbar .staff-toggle{height:var(--piano-control-height);min-height:var(--piano-control-height);box-sizing:border-box;justify-content:center}
+.controlbar .staff-toggle{display:inline-flex;flex-direction:column;align-items:center;gap:3px;flex:0 0 auto;width:auto;min-width:56px;padding:3px 5px;border:1px solid rgba(255,255,255,.14);border-radius:9px;background:rgba(255,255,255,.08);color:var(--muted);cursor:pointer}
+.controlbar .staff-toggle .instrument-box-label{font-size:.53rem;letter-spacing:.045em;font-weight:700}
+.controlbar .staff-toggle .instrument-icon{width:17px;height:17px}
+.controlbar .staff-toggle[aria-pressed="true"]{background:rgba(212,168,79,.12);border-color:var(--gold);color:var(--gold)}
+.controlbar .staff-toggle:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 #liveStaffPanel[hidden]{display:none!important}
 .staff-wrap.staff-hidden>.staff-right{flex:1 1 100%;width:100%;border-left:0}
 
@@ -98,23 +98,23 @@
 .chrome-fit-content.controlbar .right-indicators .hand-toggle-group{gap:7px}
 .chrome-fit-content.controlbar .sample-controls{gap:7px}
 .chrome-fit-content.controlbar .sample-controls:not(:has(.sample-clear-btn.visible)){display:none}
-.chrome-fit-content.controlbar #openChordBank{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;flex:0 0 auto;min-width:56px;width:auto;padding:3px 5px;border-radius:9px;border:0;box-shadow:none}
-.chrome-fit-content.controlbar #openChordBank .instrument-box-label{font-size:.53rem;letter-spacing:.045em;font-weight:700}
-.chrome-fit-content.controlbar #openChordBank .instrument-icon{width:17px;height:17px}
+.controlbar #openChordBank{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;flex:0 0 auto;min-width:56px;width:auto;padding:3px 5px;border-radius:9px;border:0;box-shadow:none}
+.controlbar #openChordBank .instrument-box-label{font-size:.53rem;letter-spacing:.045em;font-weight:700}
+.controlbar #openChordBank .instrument-icon{width:17px;height:17px}
 
 
 /* One continuous row: laboratory, staff, sound, hands and device controls. */
 .chrome-fit-content.controlbar{display:flex;justify-content:flex-start;gap:7px}
 .chrome-fit-content.controlbar :is(.piano-left-controls,.piano-special-controls){display:flex;align-items:center;flex-wrap:nowrap;gap:7px;width:max-content;min-width:0}
 .chrome-fit-content.controlbar .right-indicators{width:max-content}
-.chrome-fit-content.controlbar :is(#openChordBank,#toggleLiveStaff,#qsInstrumentBox){background:#111!important;color:#fff!important;border:0;box-shadow:none}
-.chrome-fit-content.controlbar :is(#openChordBank,#toggleLiveStaff,#qsInstrumentBox) :is(.instrument-box-label,.instrument-icon){color:#fff!important;font-weight:700}
-.chrome-fit-content.controlbar :is(#openChordBank,#toggleLiveStaff)[aria-pressed="true"],
-.chrome-fit-content.controlbar #qsInstrumentBox[aria-expanded="true"]{background:var(--gold)!important;color:#17130a!important}
-.chrome-fit-content.controlbar :is(#openChordBank,#toggleLiveStaff)[aria-pressed="true"] :is(.instrument-box-label,.instrument-icon),
-.chrome-fit-content.controlbar #qsInstrumentBox[aria-expanded="true"] :is(.instrument-box-label,.instrument-icon){color:#17130a!important}
-.chrome-fit-content.controlbar #qsInstrumentBox{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;width:56px;min-width:56px;height:var(--piano-control-height);min-height:var(--piano-control-height);padding:3px 5px;border-radius:9px}
-.chrome-fit-content.controlbar #qsInstrumentBox .instrument-box-label{font-size:.53rem;letter-spacing:.045em}
-.chrome-fit-content.controlbar #qsInstrumentBox .instrument-icon{width:17px;height:17px}
+.controlbar :is(#openChordBank,#toggleLiveStaff,#qsInstrumentBox){background:#111!important;color:#fff!important;border:0;box-shadow:none}
+.controlbar :is(#openChordBank,#toggleLiveStaff,#qsInstrumentBox) :is(.instrument-box-label,.instrument-icon){color:#fff!important;font-weight:700}
+.controlbar :is(#openChordBank,#toggleLiveStaff)[aria-pressed="true"],
+.controlbar #qsInstrumentBox[aria-expanded="true"]{background:var(--gold)!important;color:#17130a!important}
+.controlbar :is(#openChordBank,#toggleLiveStaff)[aria-pressed="true"] :is(.instrument-box-label,.instrument-icon),
+.controlbar #qsInstrumentBox[aria-expanded="true"] :is(.instrument-box-label,.instrument-icon){color:#17130a!important}
+.controlbar #qsInstrumentBox{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;width:56px;min-width:56px;height:var(--piano-control-height);min-height:var(--piano-control-height);padding:3px 5px;border-radius:9px}
+.controlbar #qsInstrumentBox .instrument-box-label{font-size:.53rem;letter-spacing:.045em}
+.controlbar #qsInstrumentBox .instrument-icon{width:17px;height:17px}
 
-.chrome-fit-content.controlbar #openChordBank .instrument-box-label{white-space:nowrap}
+.controlbar #openChordBank .instrument-box-label{white-space:nowrap}
