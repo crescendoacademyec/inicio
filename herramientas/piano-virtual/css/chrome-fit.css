@@ -98,8 +98,25 @@
 .chrome-fit-content.controlbar .right-indicators .hand-toggle-group{gap:7px}
 .chrome-fit-content.controlbar .sample-controls{gap:7px}
 .chrome-fit-content.controlbar .sample-controls:not(:has(.sample-clear-btn.visible)){display:none}
-.chrome-fit-content.controlbar #openChordBank{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;flex:0 0 auto;min-width:56px;width:auto;padding:3px 5px;border-radius:9px;background:#111!important;color:#fff!important;border:0;box-shadow:none}
+.chrome-fit-content.controlbar #openChordBank{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;flex:0 0 auto;min-width:56px;width:auto;padding:3px 5px;border-radius:9px;border:0;box-shadow:none}
 .chrome-fit-content.controlbar #openChordBank .instrument-box-label{font-size:.53rem;letter-spacing:.045em;font-weight:700}
 .chrome-fit-content.controlbar #openChordBank .instrument-icon{width:17px;height:17px}
 
-.chrome-fit-content.controlbar #openChordBank :is(.instrument-box-label,.instrument-icon){color:#fff!important}
+
+/* Three centered special tools, followed by the hand and device controls. */
+.chrome-fit-content.controlbar{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:7px}
+.chrome-fit-content.controlbar :is(.piano-left-controls,.piano-special-controls){display:flex;align-items:center;flex-wrap:nowrap;gap:7px;width:max-content;min-width:0}
+.chrome-fit-content.controlbar .piano-left-controls{justify-self:start}
+.chrome-fit-content.controlbar .piano-special-controls{justify-self:center}
+.chrome-fit-content.controlbar .right-indicators{justify-self:start;width:max-content}
+.chrome-fit-content.controlbar :is(#openChordBank,#toggleLiveStaff,#qsInstrumentBox){background:#111!important;color:#fff!important;border:0;box-shadow:none}
+.chrome-fit-content.controlbar :is(#openChordBank,#toggleLiveStaff,#qsInstrumentBox) :is(.instrument-box-label,.instrument-icon){color:#fff!important;font-weight:700}
+.chrome-fit-content.controlbar :is(#openChordBank,#toggleLiveStaff)[aria-pressed="true"],
+.chrome-fit-content.controlbar #qsInstrumentBox[aria-expanded="true"]{background:var(--gold)!important;color:#17130a!important}
+.chrome-fit-content.controlbar :is(#openChordBank,#toggleLiveStaff)[aria-pressed="true"] :is(.instrument-box-label,.instrument-icon),
+.chrome-fit-content.controlbar #qsInstrumentBox[aria-expanded="true"] :is(.instrument-box-label,.instrument-icon){color:#17130a!important}
+.chrome-fit-content.controlbar #qsInstrumentBox{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;width:56px;min-width:56px;height:var(--piano-control-height);min-height:var(--piano-control-height);padding:3px 5px;border-radius:9px}
+.chrome-fit-content.controlbar #qsInstrumentBox .instrument-box-label{font-size:.53rem;letter-spacing:.045em}
+.chrome-fit-content.controlbar #qsInstrumentBox .instrument-icon{width:17px;height:17px}
+
+.chrome-fit-content.controlbar #openChordBank .instrument-box-label{white-space:nowrap}

@@ -16,6 +16,11 @@ const frames=bars.map(bar=>{
 let pending=false;
 function contentWidth(bar){
  const style=global.getComputedStyle(bar),children=[...bar.children].filter(child=>global.getComputedStyle(child).display!=='none');
+ if(bar.classList.contains('controlbar')){
+  const left=bar.querySelector('.piano-left-controls'),special=bar.querySelector('.piano-special-controls'),right=bar.querySelector('.right-indicators');
+  if(left&&special&&right)return 2*Math.max(left.offsetWidth,right.offsetWidth)+special.offsetWidth+2*(parseFloat(style.columnGap)||0)+(parseFloat(style.paddingLeft)||0)+(parseFloat(style.paddingRight)||0)+2;
+ }
+
  return children.reduce((width,child)=>{const cs=global.getComputedStyle(child);return width+child.offsetWidth+(child.matches(".right-indicators")?0:(parseFloat(cs.marginLeft)||0))+(parseFloat(cs.marginRight)||0);},0)+Math.max(0,children.length-1)*(parseFloat(style.columnGap)||0)+(parseFloat(style.paddingLeft)||0)+(parseFloat(style.paddingRight)||0)+2;
 }
 function fit(){

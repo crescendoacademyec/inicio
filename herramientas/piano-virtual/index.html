@@ -11,8 +11,8 @@
 <link rel="stylesheet" href="css/chord-bank.css?v=20261005-active-key-color">
 <link rel="stylesheet" href="../../shared/header-metronome.css?v=20260925-beat-stop">
   <link rel="stylesheet" href="../../shared/crescendo-identity.css?v=20261005-instrument-ui">
-<link rel="stylesheet" href="css/chrome-fit.css?v=20261019-7">
-<script defer src="js/chrome-fit.js?v=20261019-1"></script>
+<link rel="stylesheet" href="css/chrome-fit.css?v=20261019-9">
+<script defer src="js/chrome-fit.js?v=20261019-2"></script>
 <script defer src="js/staff-visibility.js?v=20261019-1"></script>
 </head>
 <body>
@@ -117,6 +117,7 @@
 <main class="app-content">
 
   <div class="controlbar">
+    <div class="piano-left-controls">
     <div class="field field-volume">
       <label for="volume">Volumen</label>
       <input type="range" id="volume" min="0" max="7" step="0.01" value="4">
@@ -187,6 +188,8 @@
       <input type="color" id="activeColor" value="#66b3ff" class="file-input-hidden" tabindex="-1" aria-hidden="true">
     </div>
 
+    </div>
+    <div class="piano-special-controls" role="group" aria-label="Herramientas especiales">
     <button type="button" id="openChordBank" class="instrument-box laboratory-toggle" aria-controls="chordBank" aria-expanded="false" aria-pressed="false">
       <span class="instrument-box-label">LABORATORIO</span>
       <span class="instrument-icon"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6m-5 0v6l-5 9a2 2 0 0 0 1.7 3h10.6a2 2 0 0 0 1.7-3l-5-9V3M8 15h8"/></svg></span>
@@ -197,18 +200,15 @@
       <span class="instrument-icon"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h18M3 8h18M3 11h18M3 14h18M3 17h18"/><path d="M10 16V7l7-2v9"/><ellipse cx="7.5" cy="17" rx="2.5" ry="1.7" fill="currentColor" stroke="none"/><ellipse cx="14.5" cy="15" rx="2.5" ry="1.7" fill="currentColor" stroke="none"/></svg></span>
     </button>
 
-    <div class="sample-controls">
-      <input type="file" id="sampleFolder" webkitdirectory multiple class="file-input-hidden">
-      <button type="button" class="sample-clear-btn" id="sampleClearBtn" title="Quitar samples cargados y volver al SoundFont de piano" aria-label="Quitar samples cargados y volver al SoundFont de piano">
-        <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none">
-          <line x1="18" y1="6" x2="6" y2="18"/>
-          <line x1="6" y1="6" x2="18" y2="18"/>
-        </svg>
-        Quitar samples
-      </button>
-      <button type="button" class="sample-clear-btn" id="sampleReportBtn" title="Ver cobertura y validación de samples" aria-label="Ver informe de samples">Informe</button>
+      <div class="quick-select" id="qsInstrument">
+        <button type="button" class="instrument-box" id="qsInstrumentBox" aria-haspopup="listbox" aria-expanded="false" title="Cambiar el sonido del piano">
+          <span class="instrument-box-label">Sonido</span>
+          <span class="instrument-icon" id="qsInstrumentIcon"></span>
+          <span class="sr-only" id="qsInstrumentName">cargando…</span>
+        </button>
+        <div class="quick-select-dropdown" id="qsInstrumentDropdown" role="listbox"></div>
+      </div>
     </div>
-
     <div class="right-indicators">
       <div class="hand-toggle-group">
         <div class="hand-control">
@@ -226,14 +226,18 @@
           <button type="button" class="hand-zone-btn" id="handRightZoneBtn" title="Mostrar u ocultar la zona sugerida de la mano derecha" aria-label="Mostrar zona sugerida de mano derecha" aria-pressed="false">Z</button>
         </div>
       </div>
-      <div class="quick-select" id="qsInstrument">
-        <button type="button" class="instrument-box" id="qsInstrumentBox" aria-haspopup="listbox" aria-expanded="false" title="Cambiar el sonido del piano">
-          <span class="instrument-box-label">Sonido</span>
-          <span class="instrument-icon" id="qsInstrumentIcon"></span>
-          <span class="sr-only" id="qsInstrumentName">cargando…</span>
-        </button>
-        <div class="quick-select-dropdown" id="qsInstrumentDropdown" role="listbox"></div>
-      </div>
+    <div class="sample-controls">
+      <input type="file" id="sampleFolder" webkitdirectory multiple class="file-input-hidden">
+      <button type="button" class="sample-clear-btn" id="sampleClearBtn" title="Quitar samples cargados y volver al SoundFont de piano" aria-label="Quitar samples cargados y volver al SoundFont de piano">
+        <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+        Quitar samples
+      </button>
+      <button type="button" class="sample-clear-btn" id="sampleReportBtn" title="Ver cobertura y validación de samples" aria-label="Ver informe de samples">Informe</button>
+    </div>
+
       <label class="icon-badge" id="sampleStatus" for="sampleFolder" title="Sin samples cargados — clic para elegir una carpeta de samples de audio">
         <span>Samples</span>
         <span class="badge-icon" id="sampleStatusIcon">
@@ -426,7 +430,7 @@
 <script src="../../shared/opensheetmusicdisplay-1.8.4.min.js?v=20261019-bravura-1">
 </script>
 
-<script src="js/core.js?v=20261006-default-no-hand"></script>
+<script src="js/core.js?v=20261019-menu-close"></script>
 <script src="../../shared/piano-chord-patterns.js"></script>
 <script src="../../shared/piano-voicings.js"></script>
 <script src="js/audio.js?v=20261006-hand-assignment"></script>

@@ -122,7 +122,7 @@ function initQuickSelect(select, box, valueEl, dropdown) {
   return { sync };
 }
 function closeAllQuickSelects() {
-  document.querySelectorAll('.quick-select-box.open').forEach(b => {
+  document.querySelectorAll('.quick-select [aria-expanded="true"]').forEach(b => {
     b.classList.remove('open');
     b.setAttribute('aria-expanded', 'false');
   });
