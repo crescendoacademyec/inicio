@@ -1,0 +1,39 @@
+.frequency-explorer,.frequency-audio,.frequency-presets{padding:16px;margin:16px 0;border:1px solid #635438;border-radius:10px;background:#1b1a18;color:#eee7db;font-size:14px;line-height:1.6;min-width:0}
+.frequency-explorer p,.frequency-audio p,.frequency-presets p{margin:10px 0 0;font-size:12px;color:#c9c1b5}
+.frequency-audio h3{margin:0 0 12px;font-size:16px;color:#e9bf64}
+.fw-row{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin:10px 0}
+.fw-row>label,.frequency-presets>label{display:flex;gap:5px;flex-direction:column;font-size:12px;min-width:0}
+.fw-row>label:has(input[type=checkbox]){flex-direction:row;align-items:center}
+.fw-row input[type=number]{width:115px}
+.frequency-explorer input,.frequency-explorer select,.frequency-explorer button,.frequency-audio input,.frequency-audio button,.frequency-presets input,.frequency-presets select,.frequency-presets textarea,.frequency-presets button{box-sizing:border-box;max-width:100%;font:inherit;background:#101010;color:#f5efe3;border:1px solid #645b4c;border-radius:6px;padding:8px;min-height:36px}
+.frequency-presets textarea{width:100%;resize:vertical}
+.frequency-explorer button,.frequency-audio button,.frequency-presets button{cursor:pointer}
+.frequency-explorer button:hover,.frequency-audio button:hover,.frequency-presets button:hover{border-color:#dfb158}
+.frequency-audio button[aria-pressed=true]{background:#d4a84f;color:#17140d;border-color:#d4a84f}
+.frequency-audio button:disabled,.frequency-presets button:disabled{opacity:.45;cursor:default}
+.frequency-explorer input[type=checkbox],.frequency-audio input[type=checkbox]{width:16px;height:16px;min-height:0;accent-color:#d4a84f}
+.frequency-audio input[type=range]{padding:0;accent-color:#d4a84f}
+.frequency-audio input[type=file],.frequency-presets input[type=file]{max-width:260px;font-size:12px}
+.fw-seek{display:flex;align-items:center;gap:12px;font-size:12px}.fw-seek input{flex:1;min-width:70px}.fw-seek output{min-width:50px}
+#fwNote{font-weight:650;color:#edc978;font-variant-numeric:tabular-nums}
+.frequency-presets summary{cursor:pointer;color:#ecc775;font-weight:650}
+#viewChart .chart-wrap{overflow:visible}
+#viewChart .freq-ruler{position:sticky;top:0;z-index:6;background:#191816;box-shadow:0 2px 8px #0005}
+#viewChart .row-label{background:#201e1a}
+.fw-harmonic-lines{position:absolute;inset:34px 0 0 var(--label-w,168px);pointer-events:none;z-index:2;overflow:hidden}
+.fw-harmonic-lines>span{position:absolute;top:0;bottom:0;border-left:1px dashed #7eb4dc66}
+.fw-harmonic-lines>span.fw-fundamental{border-left:2px solid #e6b45399}
+.fw-harmonic-lines b{position:absolute;top:4px;left:3px;font:10px system-ui;color:#e7c57c;background:#171614d9;padding:2px}
+.frequency-instrument-card{display:grid;grid-template-columns:90px minmax(0,1fr);gap:12px;align-items:center;padding:12px;background:#151412;border:1px solid #6a5a3855;border-radius:9px;margin:14px 0}
+.fi-picture{color:#dbb66a;min-width:0}.fi-picture img,.fi-picture svg{display:block;width:100%;height:105px;object-fit:contain}
+.fi-reference{min-width:0}.fi-reference svg{display:block;width:100%;height:auto;overflow:visible}
+.fi-reference svg text{fill:#eee5d2;font:12px system-ui}.fi-reference svg path{stroke:#888;fill:none}.fi-fund{fill:#d4a84f}.fi-harm{fill:#83b4d1}
+.fi-reference p{font-size:11px!important;color:#c0b8a7;line-height:1.5}
+#detailPanel [data-audition-low]{font:inherit;font-size:12px;padding:9px;background:#111;border:1px solid #8a6b35;border-radius:6px;color:#ecd4a1;cursor:pointer}
+.fw-row button:focus-visible,.frequency-explorer input:focus-visible,.frequency-presets summary:focus-visible{outline:2px solid #edc978;outline-offset:3px}
+[hidden]{display:none!important}
+@media(max-width:600px){.fw-row{gap:10px}.frequency-explorer,.frequency-audio,.frequency-presets{padding:12px}.fw-row>label:not(:has(input[type=checkbox])){flex:1 1 135px}.fw-row input[type=number],.fw-row input[type=text],.fw-row select{width:100%;min-width:0}.fw-seek{flex-wrap:wrap}.fw-seek input{flex-basis:60%}.frequency-instrument-card{grid-template-columns:65px minmax(0,1fr);padding:8px}.fi-picture img,.fi-picture svg{height:90px}}
+.eq-workspace:has(.eq-proposal-panel.is-empty){grid-template-columns:minmax(0,1fr)}
+.eq-proposal-panel.is-empty{display:none}
+.frequency-audio input::file-selector-button,.frequency-presets input::file-selector-button{background:#d4a84f;color:#17140d;border:0;border-radius:4px;padding:5px 8px;margin-right:8px;cursor:pointer;font:inherit}
+.fi-picture small{display:block;text-align:center;font:10px/1.4 system-ui;color:#bdb19d;margin-top:5px}

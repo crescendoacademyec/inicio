@@ -1,10 +1,10 @@
 (function () {
   const MIN_F = 20, MAX_F = 20000;
-  const LOG_MIN = Math.log10(MIN_F), LOG_MIN_MAX = Math.log10(MAX_F) - LOG_MIN;
+  let chartView={low:MIN_F,high:MAX_F};
 
   function pct(f) {
-    const clamped = Math.max(MIN_F, Math.min(MAX_F, f));
-    return ((Math.log10(clamped) - LOG_MIN) / LOG_MIN_MAX) * 100;
+    const clamped = Math.max(chartView.low, Math.min(chartView.high, f));
+    return ((Math.log10(clamped/chartView.low)) / Math.log10(chartView.high/chartView.low)) * 100;
   }
   function fmtHz(f) {
     return f >= 1000 ? (f % 1000 === 0 ? (f / 1000) + ' kHz' : (f / 1000).toFixed(1) + ' kHz') : f + ' Hz';
@@ -20,7 +20,7 @@
   let compareMode = false;
   let selectedIds = [];       // modo normal: máx 1 ; modo comparar: máx 2
   let activeTab = 'eq';       // 'eq' | 'comp'
-  let rangeMode = localStorage.getItem('crescendo-range-mode') || 'registro'; // registro | mezcla
+  let rangeMode='registro';try{const saved=localStorage.getItem('crescendo-range-mode');if(saved==='mezcla')rangeMode=saved;}catch(_){} // registro | mezcla
 
   // ---------- elementos ----------
   const rulerEl = $('freqRuler');
@@ -49,7 +49,7 @@
 
   function renderRuler() {
     rulerEl.innerHTML = '';
-    TICKS.forEach((f) => {
+    [...new Set([chartView.low,...TICKS.filter(f=>f>chartView.low&&f<chartView.high),chartView.high])].forEach((f) => {
       const tick = document.createElement('div');
       tick.className = 'tick';
       tick.style.left = pct(f) + '%';
@@ -68,7 +68,7 @@
   function renderBands() {
     bandOverlayEl.innerHTML = '';
     if (!bandsToggle.checked) return;
-    BANDS.forEach((b) => {
+    BANDS.filter(b=>b.high>chartView.low&&b.low<chartView.high).forEach((b) => {
       const p1 = pct(b.low), p2 = pct(b.high);
       const div = document.createElement('div');
       div.className = 'band';
@@ -126,7 +126,7 @@
     }
     list.forEach((inst) => {
       const row = document.createElement('div');
-      row.className = 'row';
+      row.className = 'row';row.dataset.instrument=inst.id;
 
       const label = document.createElement('div');
       label.className = 'row-label';
@@ -143,7 +143,7 @@
         const hLow = pct(inst.harm[0]), hHigh = pct(inst.harm[1]);
         const harmBar = document.createElement('div');
         harmBar.className = 'bar-harm';
-        harmBar.title = inst.harmNote;
+        harmBar.title = inst.harmNote;harmBar.hidden=inst.harm[1]<chartView.low||inst.harm[0]>chartView.high;
         harmBar.setAttribute('role', 'img');
         harmBar.setAttribute('aria-label', `${inst.name}: ${fmtHz(inst.harm[0])} – ${fmtHz(inst.harm[1])}. ${inst.harmNote}`);
         harmBar.style.left = hLow + '%';
@@ -162,7 +162,7 @@
       }
       fundBar.style.left = fLow + '%';
       fundBar.style.width = Math.max(0.6, fHigh - fLow) + '%';
-      fundBar.tabIndex = 0;
+      fundBar.hidden=shownRange[1]<chartView.low||shownRange[0]>chartView.high;fundBar.tabIndex = 0;
       fundBar.setAttribute('role', 'button');
       fundBar.setAttribute('aria-label', inst.name + ', ' + fmtHz(shownRange[0]) + ' a ' + fmtHz(shownRange[1]) + ', ' + rangeDescriptor(inst));
       fundBar.addEventListener('click', () => handleBarClick(inst.id));
@@ -175,6 +175,7 @@
   }
 
   function renderAll() { renderRuler(); renderBands(); renderRows(); }
+  window.addEventListener('crescendo:chart-zoom',e=>{chartView=window.FrequencyWorkbench.viewport(e.detail.low,e.detail.high);window.CrescendoFrequencyViewport={...chartView};renderAll();});
 
   // ---------- notas persistentes (localStorage) ----------
   function loadNotes() { try { return JSON.parse(localStorage.getItem(NOTES_KEY) || '{}'); } catch (e) { return {}; } }
@@ -291,6 +292,7 @@
       <h3 class="detail-title">${inst.name}</h3>
       <div class="detail-range">${fmtHz(displayRange(inst)[0])} – ${fmtHz(displayRange(inst)[1])} · ${rangeDescriptor(inst)}</div>
       ${inst.rangeNote && (rangeMode === 'registro' || inst.rangeKind === 'energy' || inst.rangeKind === 'window') ? `<div class="detail-tips" style="margin:-8px 0 16px;font-size:.74rem;">${inst.rangeNote}</div>` : ''}
+      ${window.FrequencyInstrumentVisuals?.render(inst,displayRange(inst))||''}
       ${tabButtons(true)}
       <div id="tabContent">${activeTab === 'comp' ? compHtml(inst) : eqHtml(inst)}</div>
       ${sourceHtml(inst)}
@@ -407,7 +409,7 @@
 
   if (rangeModeToggle) rangeModeToggle.addEventListener('click', () => {
     rangeMode = rangeMode === 'registro' ? 'mezcla' : 'registro';
-    localStorage.setItem('crescendo-range-mode', rangeMode);
+    try{localStorage.setItem('crescendo-range-mode', rangeMode);}catch(_){}
     syncRangeModeUI();
     selectedIds = [];
     closeDetail();

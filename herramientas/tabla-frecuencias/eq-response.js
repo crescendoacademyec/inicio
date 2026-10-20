@@ -1,8 +1,8 @@
 /* RBJ biquad response, 96 kHz reference; no audio processing. */
 (function(root){
 'use strict';
-function coefficients(b){
- const w=2*Math.PI*b.frequency/96000,c=Math.cos(w),s=Math.sin(w),A=10**(b.gain/40),alpha=s/(2*b.q),beta=2*Math.sqrt(A)*s/Math.sqrt(2);
+function coefficients(b,sampleRate=96000){
+ const w=2*Math.PI*b.frequency/sampleRate,c=Math.cos(w),s=Math.sin(w),A=10**(b.gain/40),alpha=s/(2*b.q),beta=2*Math.sqrt(A)*s/Math.sqrt(2);
  switch(b.type){
  case 'highpass':return [(1+c)/2,-(1+c),(1+c)/2,1+alpha,-2*c,1-alpha];
  case 'lowpass':return [(1-c)/2,1-c,(1-c)/2,1+alpha,-2*c,1-alpha];
