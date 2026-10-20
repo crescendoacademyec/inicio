@@ -103,12 +103,10 @@
 .chrome-fit-content.controlbar #openChordBank .instrument-icon{width:17px;height:17px}
 
 
-/* Three centered special tools, followed by the hand and device controls. */
-.chrome-fit-content.controlbar{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:7px}
+/* One continuous row: laboratory, staff, sound, hands and device controls. */
+.chrome-fit-content.controlbar{display:flex;justify-content:flex-start;gap:7px}
 .chrome-fit-content.controlbar :is(.piano-left-controls,.piano-special-controls){display:flex;align-items:center;flex-wrap:nowrap;gap:7px;width:max-content;min-width:0}
-.chrome-fit-content.controlbar .piano-left-controls{justify-self:start}
-.chrome-fit-content.controlbar .piano-special-controls{justify-self:center}
-.chrome-fit-content.controlbar .right-indicators{justify-self:start;width:max-content}
+.chrome-fit-content.controlbar .right-indicators{width:max-content}
 .chrome-fit-content.controlbar :is(#openChordBank,#toggleLiveStaff,#qsInstrumentBox){background:#111!important;color:#fff!important;border:0;box-shadow:none}
 .chrome-fit-content.controlbar :is(#openChordBank,#toggleLiveStaff,#qsInstrumentBox) :is(.instrument-box-label,.instrument-icon){color:#fff!important;font-weight:700}
 .chrome-fit-content.controlbar :is(#openChordBank,#toggleLiveStaff)[aria-pressed="true"],
