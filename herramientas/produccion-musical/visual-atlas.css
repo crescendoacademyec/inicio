@@ -1,0 +1,24 @@
+.production-photo{margin:22px 0 30px;padding:18px;border:1px solid var(--line);border-radius:12px;background:#191815;min-width:0}
+.production-photo>figcaption{margin-bottom:16px}
+.production-photo .eyebrow{font-size:.65rem;color:var(--gold-light)}
+.production-photo h2{margin:5px 0 0;font-size:1.12rem;line-height:1.3;letter-spacing:-.02em}
+.pv-photo-layout{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:18px;align-items:center}
+.pv-photo-frame{position:relative;min-width:0;border-radius:8px;overflow:hidden;background:#111}
+.pv-photo-frame img{display:block;width:100%;height:auto}
+.pv-pins{position:absolute;inset:0;pointer-events:none}
+.pv-pins span{position:absolute;display:grid;place-items:center;transform:translate(-50%,-50%);width:25px;height:25px;border:2px solid #fff0d2;border-radius:50%;background:#1c1915;color:#ffe0a0;font:700 12px/1 system-ui,sans-serif;box-shadow:0 2px 7px #000b}
+.pv-photo-legend{list-style:none!important;counter-reset:pv;display:grid;gap:14px;padding:0!important;margin:0!important}
+.pv-photo-legend li{position:relative;counter-increment:pv;margin:0!important;padding:0 0 0 31px!important;font-size:.8rem;line-height:1.55;min-width:0}
+.pv-photo-legend li:before{content:counter(pv);position:absolute;left:0;top:0;display:grid;place-items:center;width:22px;height:22px;border-radius:50%;background:#d7aa4b;color:#17140e;font:700 12px/1 system-ui,sans-serif}
+.pv-photo-legend b{color:#f5d693;font-size:.85rem;display:block;margin-bottom:4px}
+.pv-photo-legend p{margin:0!important;color:#ded7cb}
+.production-photo .pv-read{margin:16px 0 0;font-size:.85rem;line-height:1.7}
+.production-photo .pv-credit{margin:10px 0 0;font-size:.7rem;line-height:1.6;color:#aaa393}
+.production-photo .pv-credit a{text-decoration:underline;text-underline-offset:3px;margin-left:5px}
+.pv-wide .pv-photo-layout{grid-template-columns:1fr;max-width:660px;margin:auto}
+.pv-wide .pv-photo-legend{grid-template-columns:repeat(3,minmax(0,1fr));gap:15px}
+.production-atlas-diagram .diagram-scroll{padding:8px 0}
+@media(max-width:1000px){.pv-photo-layout{grid-template-columns:1fr}.pv-photo-frame{max-width:600px;width:100%;margin:auto}.pv-photo-legend{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:600px){.production-photo{padding:13px}.pv-photo-legend,.pv-wide .pv-photo-legend{grid-template-columns:1fr;gap:12px}.pv-pins span{width:22px;height:22px;font-size:11px}.production-photo .pv-read{font-size:.82rem}}
+
+.production-atlas-diagram .atlas-tertiary{stroke:#82baa3;stroke-width:3;fill:none}

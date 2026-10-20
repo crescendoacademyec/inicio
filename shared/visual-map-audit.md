@@ -16,3 +16,7 @@ Las imágenes de equipos permiten reconocer objetos reales. La notación se cons
 Los instrumentos de los ejemplos de curso continúan siguiendo el selector Piano/Guitarra/Bajo. El mapa conceptual general usa solo pentagramas y diagramas compactos para que sus nodos no añadan varios paneles de instrumentos.
 
 Ilustración y prompt: [procedencia del recurso](../herramientas/produccion-musical/assets/illustrations/README.md).
+
+## Ampliación posterior centrada en producción
+
+Tras aclarar el usuario que producción necesitaba una revisión más extensa, se revisaron individualmente sus 48 lecciones y se incorporaron ocho imágenes y 21 gráficos adicionales. El alcance, las decisiones por lección y la procedencia están en [la auditoría de producción](../herramientas/produccion-musical/visual-audit.md). Teoría y armonía conservan los ejemplos de notación existentes.
