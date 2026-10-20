@@ -50,7 +50,16 @@ function noteGraphic(id,x,y,down,glyphs,color='#222',className='rhythm-note'){
 }
 
 function render(events,{clef='treble',meter='4/4',bars=4,width=900,glyphs={},marks=[]}={}){
- const capacity=Number(meter.split('/')[0])*4/Number(meter.split('/')[1]),grand=clef==='grand',staves=grand?[1,2]:[clef==='bass'?2:1],rowHeight=grand?380:220,rows=Math.ceil(bars/4),w=Math.max(680,width),left=24,header=90,barWidth=(w-left*2-header)/4,spacing=10;
+ const capacity=Number(meter.split('/')[0])*4/Number(meter.split('/')[1]),grand=clef==='grand',staves=grand?[1,2]:[clef==='bass'?2:1],rowHeight=grand?380:220,rows=Math.ceil(bars/4),left=24,header=90,spacing=10;
+ // Reserve room for the smallest onset gap, using one shared linear time axis.
+ // The hit boxes expose this same interval to guides, preview and playback.
+ let shortest=1;
+ for(const staff of staves)for(let bar=0;bar<bars;bar++){
+  const selected=events.filter(e=>!e.grace&&(e.staff||1)===staff&&(e.bar||0)===bar),points=[0,capacity];
+  for(const e of selected){points.push(e.offset||0);if(e.beats>0)shortest=Math.min(shortest,e.beats);}
+  points.sort((a,b)=>a-b);for(let i=1;i<points.length;i++)if(points[i]-points[i-1]>.00001)shortest=Math.min(shortest,points[i]-points[i-1]);
+ }
+ const barWidth=Math.max(220,(Math.max(680,width)-left*2-header)/4,capacity/shortest*26+40),w=left*2+header+barWidth*4;
  const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[c]));
  const pitches={1:['A5','G5','F5','E5','D5','C5','B4','A4','G4','F4','E4','D4','C4'],2:['C4','B3','A3','G3','F3','E3','D3','C3','B2','A2','G2','F2','E2']};
  const notePositions=new Map();let drawing='';const notationEvents=notation(events,capacity,bars);

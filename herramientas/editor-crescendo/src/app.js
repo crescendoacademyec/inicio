@@ -637,6 +637,7 @@
   let suppressSystemSync = false;
   let lastRenderedLayout = null;
   let cachedScoreLayout = null;
+  let cachedWritingLayoutKey = null;
   let restFontAlignmentQueued = false;
   let renderInProgress = false;
   let renderQueued = false;
@@ -4000,7 +4001,8 @@
   }
 
   function gridStepTicks() {
-    return Math.max(MIN_DURATION_TICKS, activeGridDuration()?.ticks || pulseTicks());
+    const dots = isNoteInputMode() && state.inputDots ? dotFactor(state.inputDots) : 1;
+    return Math.max(MIN_DURATION_TICKS, (activeGridDuration()?.ticks || pulseTicks()) * dots);
   }
 
   function ensureMeasureForAbsoluteTick(absoluteTick) {
@@ -4960,7 +4962,7 @@
 
   function staffStepForEntryPointer(entry, event) {
     const point = svgPointFromEvent(event);
-    if (!point || entry.type === "rest") return entryStaffStep(entry);
+    if (!point) return entryStaffStep(entry);
     return staffStepForSystem(stepFromY(point.y, systemIndexFromY(point.y)));
   }
 
@@ -8448,7 +8450,7 @@
 
   function addChordItemAtPoint(point) {
     const anchor = chordAnchorFromPoint(point);
-    return openTextEditor(chordItemPoint(anchor), null, {
+    return openTextEditor(chordItemPoint(anchor), chordItemAt(anchor.measureIndex, anchor.tick), {
       kind: "chord",
       measureIndex: anchor.measureIndex,
       tick: anchor.tick
@@ -8592,7 +8594,8 @@
 
   function movementGridTicks(event = {}) {
     if (event.shiftKey) return Math.max(MIN_DURATION_TICKS, pulseTicks());
-    return Math.max(MIN_DURATION_TICKS, activeGridDuration()?.ticks || pulseTicks());
+    const dots = isNoteInputMode() && state.inputDots ? dotFactor(state.inputDots) : 1;
+    return Math.max(MIN_DURATION_TICKS, (activeGridDuration()?.ticks || pulseTicks()) * dots);
   }
 
   function clampAbsoluteScoreTick(absoluteTick) {
@@ -13369,6 +13372,7 @@
 
   function selectWritingDecoration(tool) {
     if(tool!=="grace"){state.graceInput=false;renderPalette("figures");}
+    if (tool === "chord-symbol") { toggleChordMode(); renderPalette("figures"); render(); return; }
     if (tool === "ottava") return toggleWritingOttava();
     if (tool === "tie") return toggleDurationTieFromCurrentNote();
     if (tool === "slur") return applyPhraseSlurType("slur");
@@ -15648,7 +15652,7 @@
       applyIconTooltipToElement(button);
       if (item.writingTool) {
         button.dataset.writingTool = item.writingTool;
-        const active = item.writingTool === "grace" ? state.graceInput === true : item.writingTool === "ottava" && state.ottavaInput === true;
+        const active = item.writingTool === "chord-symbol" ? state.chordMode === true : item.writingTool === "grace" ? state.graceInput === true : item.writingTool === "ottava" && state.ottavaInput === true;
         button.classList.toggle("is-active", active);button.setAttribute("aria-pressed", String(active));
         button.addEventListener("click", () => selectWritingDecoration(item.writingTool));
       } else if (item.ticks) {
@@ -17587,6 +17591,21 @@
     ].join(":");
   }
 
+  function writingMeasureWidth(systems, measureIndex) {
+    const length = measureTicksForIndex(measureIndex);
+    const onsets = new Set([0, length]);
+    let shortest = Math.max(MIN_DURATION_TICKS, gridStepTicks());
+    systems.forEach(system => (system.measures?.[measureIndex]?.entries || []).forEach(entry => {
+      if (entry.hiddenTupletReserve) return;
+      onsets.add(Number(entry.tickStart) || 0);
+      shortest = Math.min(shortest, Math.max(MIN_DURATION_TICKS, Number(entry.ticks) || length));
+    }));
+    const sorted = [...onsets].sort((a,b) => a-b);
+    sorted.slice(1).forEach((tick,i) => { if (tick-sorted[i] > EPSILON) shortest = Math.min(shortest, tick-sorted[i]); });
+    return measureLeftInset() + measureRightInset() + meterChangeSpacingBeforeMeasure(measureIndex)
+      + length / shortest * 28 + sharedInternalClefSpacingWidthForMeasure(measureIndex);
+  }
+
   function computeLayout(systems, measureCount) {
     let widths = Array.from({ length: measureCount }, (_, measureIndex) => (
       Math.max(...systems.map((system, systemIndex) => (
@@ -17595,7 +17614,9 @@
     ));
     widths = widths.map((width, measureIndex) => {
       const manualWidth = manualMeasureWidth(measureIndex);
-      return manualWidth ? Math.max(width, manualWidth) : width;
+      const writingWidth = isNoteInputMode() && !measureIsHidden(measureIndex)
+        ? writingMeasureWidth(systems, measureIndex) : 0;
+      return Math.max(width, manualWidth || 0, writingWidth);
     });
     const left = staffLeft() + firstMeasureSignatureInset();
     const rightPadding = 80 + appearanceValue("scoreOffsetX");
@@ -17616,7 +17637,9 @@
   }
 
   function buildLayout(options = {}) {
-    if (!options.fresh && cachedScoreLayout) return cachedScoreLayout;
+    const writingKey = isNoteInputMode() ? `writing:${gridStepTicks()}` : "engraving";
+    if (!options.fresh && cachedScoreLayout && cachedWritingLayoutKey === writingKey) return cachedScoreLayout;
+    cachedWritingLayoutKey = writingKey;
     const systems = scoreSystems();
     const measureCount = Math.max(1, ...systems.map((system) => system.measures?.length || 0));
     layoutCacheKeyComputationCount += 1;
@@ -17824,6 +17847,12 @@
     const positions = new Map();
     let previousEntry = null;
     const measureIndex = state.measures.indexOf(measure);
+    if (isNoteInputMode()) {
+      // Notes, preview, caret, grid and pointer snapping share one time axis.
+      measure.entries.forEach(entry => positions.set(entry.id,
+        xForTickWithInternalClefs(start, width, measureIndex, entry.tickStart, true)));
+      return positions;
+    }
     if (systemCount() > 1) {
       const sharedLayout = sharedMeasureOpticalLayout(measureIndex, start);
       measure.entries.forEach((entry) => {
@@ -17968,7 +17997,7 @@
 
   function pointerGridTicksForMeasure(measureIndex, options = {}) {
     const measureLength = measureTicksForIndex(measureIndex);
-    const step = Math.max(MIN_DURATION_TICKS, Number(activeGridDuration()?.ticks) || pulseTicks());
+    const step = gridStepTicks();
     const ticks = [];
     for (let tick = 0; tick < measureLength - EPSILON; tick += step) {
       ticks.push(Math.max(0, Math.min(measureLength, Number(tick.toFixed(6)))));
@@ -17980,7 +18009,7 @@
   }
 
   function tickFromOpticalMeasureX(layout, measureIndex, x) {
-    const anchors = pointerGridTicksForMeasure(measureIndex);
+    const anchors = pointerGridTicksForMeasure(measureIndex, { includeEnd: false });
     const ranked = anchors.map((tick) => ({
       tick,
       x: cursorVisualXForMeasureTick(layout, measureIndex, tick)
@@ -18478,11 +18507,7 @@
         event.stopPropagation();
         event.preventDefault();
         activateVoiceForEntrySelection(entry);
-        const inputMode = state.mode === "rest" ? "rest" : "note";
-        positionCursorFromEntryPointer(measureIndex, entry, event);
-        setMode(inputMode);
-        pointerInputPreview = null;
-        insertEntry(state.cursorStaffStep, { explicitRest: inputMode === "rest" });
+        beginDragSelection(event);
         return;
       }
       const point = svgPointFromEvent(event);
@@ -20456,11 +20481,7 @@
             event.stopPropagation();
             event.preventDefault();
             activateVoiceForEntrySelection(entry);
-            positionCursorFromEntryPointer(measureIndex, entry, event);
-            if (entry.type === "rest") {
-              setMode("note");
-              insertEntry(state.cursorStaffStep);
-            }
+            beginDragSelection(event);
             return;
           }
           if (state.editMode) {

@@ -168,6 +168,7 @@
       { id: "writing-staccato", label: "Nota picada · staccato", symbol: "♩·", writingTool: "staccato" },
       { id: "writing-grace", label: "Nota de adorno · sin consumir tiempos", symbol: String.fromCodePoint(0xE560), music: true, writingTool: "grace" },
       { id: "writing-ottava", label: "8va · tocar una octava más arriba", symbol: "8va", writingTool: "ottava" },
+      { id: "writing-chord-symbol", label: "Cifrado de acordes · pulsa sobre un compás", symbol: "Cm7", writingTool: "chord-symbol" },
       ...inputModifierPalette
     ];
     const articulations = articulationPaletteItems(smufl);

@@ -17,6 +17,9 @@
   function setEntryMode(state, mode) {
     state.selectMode = false;
     state.editMode = false;
+    state.textMode = false;
+    state.chordMode = false;
+    state.dynamicMode = false;
     state.mode = mode;
   }
 
@@ -27,6 +30,8 @@
     }
     state[modeName] = enabled;
     if (!enabled) return;
+    state.cursorActive = false;
+    state.entryCursorActive = false;
     if (modeName !== "textMode") state.textMode = false;
     if (modeName !== "chordMode") state.chordMode = false;
     if (modeName !== "dynamicMode") state.dynamicMode = false;

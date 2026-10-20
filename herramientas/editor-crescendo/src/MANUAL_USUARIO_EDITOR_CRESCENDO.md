@@ -717,3 +717,9 @@ Si una busqueda no encuentra resultados, pruebe una palabra mas corta. Por ejemp
 El manual cubre las funciones visibles para el usuario: menus superiores, canvas, escritura, seleccion, edicion, voces, ligaduras, tuplets, compases, armaduras, claves, tempo, reproduccion, Jazz mode, dinamicas, articulaciones, texto, cifrados, generacion armonica, voicings, barras, casillas, sistemas, MusicXML, MIDI, menu contextual, apariencia de elementos, pantalla completa, flujos recomendados, atajos y problemas comunes.
 
 Las herramientas administrativas de apariencia profunda aparecen solo cuando se entra en modo administrador. No forman parte del flujo normal de clase, por eso se mencionan como administracion y no se documentan paso a paso aqui.
+
+### Escritura con el puntero y cifrados
+
+En modo de escritura, la nota se coloca en la línea o espacio pulsado, también al pulsar sobre un silencio. Volver a escribir en el mismo tiempo sustituye su contenido; activa **Modo acorde (Q)** para añadir alturas simultáneas. Las líneas superiores, la vista previa y las figuras comparten las posiciones temporales del compás.
+
+La paleta Figuras incluye **Cm7 · Cifrado de acordes**. Actívalo y pulsa un compás para escribir encima del pentagrama. Pulsa el mismo anclaje para editar un cifrado existente. Seleccionar una figura devuelve al modo de escritura. Los cifrados usan el sistema de texto anclado del documento, con deshacer/rehacer y exportación MusicXML.
