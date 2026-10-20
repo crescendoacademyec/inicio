@@ -119,4 +119,5 @@
 
 .controlbar #openChordBank .instrument-box-label{white-space:nowrap}
 
-.controlbar #toggleLiveStaff[aria-pressed="false"] .staff-icon-notes{color:var(--gold)}
+.controlbar #toggleLiveStaff[aria-pressed="false"] .staff-icon-notes{color:#000!important;stroke:#000!important}
+.controlbar #toggleLiveStaff[aria-pressed="false"] .staff-icon-notes ellipse{fill:#000!important}
