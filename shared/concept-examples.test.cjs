@@ -15,3 +15,28 @@ test('jazz chord qualities have separate compact scores and separate instrument 
  const html=X.render('jazz','1.1 Cifrado de acordes jazz');
  assert.match(html,/ce-compact-chords/);assert.equal((html.match(/viewBox="0 0 240 /g)||[]).length,5);
 });
+test('3/4 and 6/8 show six eighth notes with different beam groups and correct meters',()=>{
+ const X=context().window.CourseExamples,spec=X.catalogs.reading['Dos agrupaciones distintas'],html=X.render('reading','Dos agrupaciones distintas');
+ assert.equal(spec.diagrams.length,2);
+ assert.deepEqual(Array.from(spec.diagrams[0].groups),[2,2,2]);assert.deepEqual(Array.from(spec.diagrams[1].groups),[3,3]);
+ assert.equal(spec.diagrams[0].denominator,4);
+ assert.equal((html.match(/&#xe0a4;/g)||[]).length,12);
+ assert.equal((html.match(/stroke-width="4"/g)||[]).length,5);
+ assert.match(html,/&#xe083;/);assert.match(html,/&#xe084;/);assert.match(html,/&#xe086;/);assert.match(html,/&#xe088;/);
+});
+test('new harmonic map examples keep each chord separate from the next instrument view',()=>{
+ const X=context().window.CourseExamples;
+ for(const [course,key,count] of [['jazz','1.2 Campo armónico mayor con tétradas',7],['functional','nivel-4-puente-jazz:ii - V - I mayor',3]]){
+  const spec=X.catalogs[course][key];assert.equal(spec.compare.length,count);assert.ok(spec.compactChords);
+  assert.ok(spec.compare.every(c=>c.notes.split(' ').length===1));
+  assert.equal((X.render(course,key).match(/class="ce-comparison"/g)||[]).length,count);
+ }
+});
+test('the overview map now includes visual examples and production equipment is local and described',()=>{
+ const html=fs.readFileSync(path.join(root,'herramientas/teoria-lectura-musical/index.html'),'utf8');
+ assert.equal((html.match(/data-ce-map=/g)||[]).length,9);
+ const I=require('../herramientas/produccion-musical/illustrations.js'),equipment=I.render('estudio-1');
+ assert.match(equipment,/alt="Ilustración de un micrófono/);assert.match(equipment,/Captura: micrófono → previo → A\/D → DAW/);assert.match(equipment,/Escucha: DAW → D\/A/);
+ const src=equipment.match(/<img src="([^"]+)"/)[1];assert.ok(fs.existsSync(path.join(root,'herramientas/produccion-musical',src)));
+ assert.doesNotMatch(I.render('grabacion-2'),/Orden de preparación/);
+});

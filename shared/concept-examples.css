@@ -16,3 +16,13 @@ body .ce-compact-chords .ci-group{grid-template-columns:minmax(0,.9fr) minmax(0,
 .ce-compact-chords .ci-diagram-scroll .ci-piano{min-width:0!important;max-width:320px;max-height:130px;margin:auto}
 .ce-compact-chords .ce-comparison>b{display:block;margin-top:12px}
 @media(max-width:480px){body .ce-compact-chords .ci-group{grid-template-columns:1fr!important}}
+
+/* Concept maps include a visual example before their reading sequence. */
+.ce-diagram>svg{min-width:460px;max-height:310px}
+.ce-diagram svg .ce-diagram-label{font:12px system-ui,sans-serif}
+.ce-diagram svg .ce-axis{stroke-width:1.5;opacity:.5}
+.ce-diagram+.ce-diagram{margin-top:12px}
+.ce-map-example{margin:14px 0 0;padding:8px;border:0;background:transparent}
+.ce-map-example .ce-scroll>svg{min-width:0;min-height:0;max-height:150px}
+.ce-map-example .ce-score{padding:4px;border-radius:7px}
+.ce-map-example svg{max-height:140px}

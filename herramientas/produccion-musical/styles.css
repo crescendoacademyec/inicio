@@ -4,3 +4,15 @@
 .lab-tabs a[aria-current]:hover{color:#17140e}.quiz-feedback:empty{display:none}.field output{margin-top:0;align-self:flex-start;margin-left:0}.field input[type=range]{margin-top:0}.plot{min-height:145px}.sequence-grid button[aria-pressed=true]{color:#17140e}input:invalid:not(:placeholder-shown){border-color:#bd7865}
 
 .lesson-diagram{margin:30px 0;padding:22px;border:1px solid var(--line);border-radius:12px;background:#191815;min-width:0}.lesson-diagram h2{margin:0 0 15px;font-size:1.15rem;letter-spacing:-.02em}.diagram-scroll{overflow-x:auto;max-width:100%;border-radius:8px;background:#14130f}.lesson-diagram svg{display:block;width:100%;min-width:620px;height:auto}.lesson-diagram svg text{fill:#ded7c8;font:16px system-ui,sans-serif}.lesson-diagram .center{text-anchor:middle}.lesson-diagram .end{text-anchor:end}.lesson-diagram .guide{stroke:#4c4538;stroke-width:1;fill:none}.lesson-diagram .curve,.lesson-diagram .arrow{stroke:#ecc979;stroke-width:3;fill:none;stroke-linejoin:round}.lesson-diagram .secondary{stroke:#a9c0c9;stroke-width:2.5;stroke-dasharray:8 5;fill:none}.lesson-diagram .sample{stroke:#ecc979;stroke-width:1.5;fill:none}.lesson-diagram .sample-dot,.lesson-diagram .gold-fill{fill:#d7aa4b}.lesson-diagram .diagram-box{fill:#28241b;stroke:#857044;stroke-width:1.5}.lesson-diagram figcaption{font-size:.86rem;line-height:1.75;color:var(--muted);margin-top:16px}.diagram-scroll:focus-visible{outline-offset:-3px}@media(max-width:760px){.lesson-diagram{padding:14px;margin:25px 0}.lesson-diagram figcaption:before{content:'Desliza el gráfico para verlo completo. ';color:var(--gold-light)}}
+
+/* Equipment can be recognized visually; captions remain selectable HTML. */
+.studio-chain-scroll{overflow-x:auto;border-radius:9px;background:#111}
+.studio-chain-content{min-width:600px}
+.studio-chain img{display:block;width:100%;height:auto;border-radius:9px 9px 0 0}
+.studio-chain-stages{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;list-style:none!important;padding:0 10px!important;margin:0!important}
+.studio-chain-stages li{position:relative;padding:14px 12px!important;margin:0!important;text-align:center;line-height:1.5}
+.studio-chain-stages li+li:before{content:'→';position:absolute;left:-8px;top:13px;color:#d7aa4b;font-size:20px}
+.studio-chain-stages b{display:block;color:#ecc979;font-size:.86rem}
+.studio-chain-stages span{display:block;margin-top:7px;font-size:.8rem;color:#ddd7cc}
+.studio-chain-routes{display:grid;gap:8px;padding:16px 24px;background:#24211b;font-size:.84rem;color:#f3e7ce;border-top:1px solid #d7aa4b44}
+.studio-chain-scroll:focus-visible{outline:2px solid #d7aa4b;outline-offset:3px}

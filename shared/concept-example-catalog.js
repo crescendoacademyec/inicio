@@ -508,5 +508,73 @@ X.catalogs.production['midi-1:0'].caption+=' Cambia el instrumento del menú y p
 X.catalogs.production['midi-3:0'].notes='C4 E4 G4 C5';
 X.catalogs.production['midi-3:0'].caption+=' El ejemplo permite escuchar muestras de piano, guitarra o bajo con las mismas alturas de referencia.';
 
+// Visual audit: musical relationships need sounding notes, not only named boxes.
+const musicalMaps={
+ functional:{
+ 'enlace-voces:Orden de estudio':'C4+E4+G4 C4+E4+G4+B4 C4+E4+B4+D5',
+ 'nivel-2-sistema-americano-cifrado:Fundamentales del sistema americano':'A3 B3 C4 D4 E4 F4 G4',
+ 'nivel-2-triadas:Cifrados de triadas en C':'C4+E4+G4 C4+Eb4+G4 C4+E4+G#4 C4+Eb4+Gb4',
+ 'nivel-2-septimas:Símbolos de séptima mayor':'C4+E4+G4+B4',
+ 'nivel-2-omision-notas:Casos específicos':'C4+E4+G4+Bb4 C4+E4+Bb4',
+ 'nivel-2-aplicacion:Procedimiento de lectura':'C4+E4+Bb4+D5',
+ 'nivel-2-sintesis-reglas:Omisiones y soportes':'C3+E4+Bb4+D5',
+ 'nivel-4-campo-armonico-mayor:Tríadas del modo mayor':'C4+E4+G4 D4+F4+A4 E4+G4+B4 F4+A4+C5 G4+B4+D5 A4+C5+E5 B4+D5+F5',
+ 'nivel-4-campo-armonico-mayor:Tétradas del modo mayor':'C4+E4+G4+B4 D4+F4+A4+C5 E4+G4+B4+D5 F4+A4+C5+E5 G4+B4+D5+F5 A4+C5+E5+G5 B4+D5+F5+A5',
+ 'nivel-4-campo-armonico-mayor:Grado y función':'D4+F4+A4+C5 G3+B3+D4+F4 C4+E4+G4+B4',
+ 'nivel-4-progresiones-cadencias:Progresión funcional':'C4+E4+G4 A3+C4+E4 D4+F4+A4 G3+B3+D4+F4 C4+E4+G4',
+ 'nivel-4-progresiones-cadencias:Células frecuentes':'D4+F4+A4+C5 G3+B3+D4+F4 C4+E4+G4+B4',
+ 'nivel-4-ciclo-ritmo-armonico:Ciclo diatónico':'E4+G4+B4+D5 A3+C4+E4+G4 D4+F4+A4+C5 G3+B3+D4+F4 C4+E4+G4+B4',
+ 'nivel-4-inversiones-bajos:Cifrado slash':'E3+G3+C4',
+ 'nivel-4-puente-jazz:ii - V - I mayor':'D4+F4+A4+C5 G3+B3+D4+F4 C4+E4+G4+B4',
+ 'nivel-4-puente-jazz:iiø - V - i menor':'B3+D4+F4+A4 E3+G#3+D4+F4 A3+C4+E4',
+ 'nivel-4-puente-jazz:Transposición':'D4+F4+A4+C5 G3+B3+D4+F4 C4+E4+G4+B4 E4+G4+B4+D5 A3+C#4+E4+G4 D4+F#4+A4+C#5',
+ 'n5-modulacion-aplicada:Tres niveles':'D4+F#4+A4+C5 G3+B3+D4'
+ },
+ jazz:{
+ '1.2 Campo armónico mayor con tétradas':'C4+E4+G4+B4 D4+F4+A4+C5 E4+G4+B4+D5 F4+A4+C5+E5 G4+B4+D5+F5 A4+C5+E5+G5 B4+D5+F5+A5',
+ '1.9 Funciones armónicas: tónico, subdominante y dominante':'D4+F4+A4+C5 G3+B3+D4+F4 C4+E4+G4+B4',
+ '1.9b Ritmo armónico y peso métrico':'D4+F4+A4+C5 G3+B3+D4+F4 C4+E4+G4+B4',
+ '2.7 ii-V encadenados y ciclo de quintas':'E4+G4+B4+D5 A3+C#4+E4+G4 D4+F4+A4+C5 G3+B3+D4+F4 C4+E4+G4+B4',
+ '3.2 Dominantes sustitutos extendidos':'D4+F4+A4+C5 Db4+F4+Ab4+Cb5 C4+E4+G4+B4',
+ '3.4 Turnarounds':'C4+E4+G4+B4 A3+C#4+E4+G4 D4+F4+A4+C5 G3+B3+D4+F4',
+ '3.9 Ciclo de Coltrane y sustituciones por terceras mayores':'B3+D#4+F#4+A#4 D4+F#4+A4+C5 G3+B3+D4+F#4 Bb3+D4+F4+Ab4 Eb4+G4+Bb4+D5 F#3+A#3+C#4+E4 B3+D#4+F#4+A#4',
+ '3.11 Modulación: directa y por acorde pivote':'C4+E4+G4 A3+C4+E4 D4+F#4+A4+C5 G3+B3+D4',
+ '4.9 Armonía negativa':'C4+G4 D4+F4 E4+Eb4',
+ '4.11 Acordes compuestos: sobre bajo, inversión, híbrido y acorde sobre acorde':'E3+G3+C4 C3+D4+F#4+A4 C3+E3+G3+D4+F#4+A4',
+ '5.6 Improvisación sobre ii–V–I y turnarounds':'F4 B4 E4'
+ },
+ reading:{'De acorde a función':'D4+F4+A4 G3+B3+D4+F4 C4+E4+G4','Orden y lectura':'F#4 C#5 G#4'}
+};
+const mapQualities={'0,4,7':'','0,3,7':'m','0,4,8':'aug','0,3,6':'dim','0,4,7,11':'maj7','0,3,7,10':'m7','0,4,7,10':'7','0,3,6,10':'m7♭5','0,4,11':'maj7 (sin 5.ª)','0,4,10':'7 (sin 5.ª)','0,2,4,11':'maj9 (sin 5.ª)','0,2,4,10':'9 (sin 5.ª)','0,1,4,10':'7(♭9) (sin 5.ª)'};
+function mapChordLabel(group){const notes=group.split('+'),base=X.pitch(notes[0]).midi,intervals=notes.map(n=>(X.pitch(n).midi-base+120)%12).sort((a,b)=>a-b).join(',');const suffix=mapQualities[intervals],names=notes.map(n=>X.pitch(n).label).join(' · ');return suffix===undefined?names:notes[0].replace(/-?\d+$/,'').replace(/b/g,'♭').replace(/#/g,'♯')+suffix+' · '+names;}
+for(const [course,entries] of Object.entries(musicalMaps))for(const [key,notes] of Object.entries(entries)){
+ const spec=X.catalogs[course][key];if(!spec)throw Error('Mapa sin concepto: '+course+':'+key);
+ const groups=notes.split(' ');if(groups.every(group=>group.includes('+'))){
+  spec.compactChords=true;spec.compare=groups.map((group,i)=>({label:mapChordLabel(group),notes:group}));
+ }else spec.notes=notes;
+}
+X.catalogs.functional['nivel-4-inversiones-bajos:Cifrado slash'].compare[0].label='C/E · Mi en el bajo';
+X.catalogs.functional['nivel-4-inversiones-bajos:Cifrado slash'].compare[0].instrumentContext={root:0};
+const readingDiagrams={
+ 'El pentagrama: líneas y espacios':{type:'staff',label:'Cinco líneas del pentagrama numeradas de abajo hacia arriba'},
+ 'Referencia aproximada de tempo':{type:'tempo',label:'60, 90 y 120 BPM comparados durante dos segundos'},
+ 'Tempo y carácter':{type:'tempo',label:'Más pulsos en el mismo intervalo al aumentar los BPM'},
+ 'Silencios':{type:'rests',label:'Cuatro pulsos: negra, silencio de negra, negra, silencio de negra'},
+ 'Compases compuestos':{type:'meter',groups:[3,3],label:'6/8: dos grupos de tres corcheas'},
+ 'Lee con el cuerpo':{type:'meter',groups:[3,3],label:'6/8: dos pulsos, cada uno con tres subdivisiones'},
+ 'Agrupar para anticipar':{type:'meter',groups:[2,3],label:'5/8 agrupado en dos más tres corcheas'},
+ 'Dinámica':{type:'dynamics',label:'Piano, crescendo y forte debajo del pentagrama'},
+ 'Guía visual de dinámica y articulación':{type:'dynamics',label:'Crescendo desde piano hasta forte'},
+ 'Pulso común':{type:'polyrhythm',label:'Dos contra tres alineados sobre seis subdivisiones'},
+ 'De lo escrito a lo audible':{type:'polyrhythm',label:'Dos y tres ataques distribuidos sobre el mismo ciclo'},
+ 'Círculo de quintas':{type:'fifths',label:'Do, Sol, Re, La, Mi, Si, Fa sostenido, Re bemol, La bemol, Mi bemol, Si bemol y Fa'},
+ 'Forma':{type:'form',sections:[{label:'A',bars:4},{label:'B',bars:4},{label:'A',bars:4}],label:'Ejemplo ABA: tres secciones de cuatro compases'}
+};
+for(const [key,diagram] of Object.entries(readingDiagrams))X.catalogs.reading[key].diagram=diagram;
+X.catalogs.reading['Dos agrupaciones distintas'].diagrams=[{type:'meter',groups:[2,2,2],numerator:3,denominator:4,label:'3/4: tres grupos de dos corcheas'},{type:'meter',groups:[3,3],label:'6/8: dos grupos de tres corcheas'}];
+X.catalogs.jazz['3.5 Forma AABA y rhythm changes'].diagram={type:'form',sections:[{label:'A',bars:8},{label:'A',bars:8},{label:'B',bars:8},{label:'A',bars:8}],label:'AABA: cuatro secciones de ocho compases, treinta y dos en total'};
+delete X.catalogs.production['estudio-1:0'].steps;
+X.catalogs.production['estudio-1:0'].diagram={type:'conversion',label:'Señal analógica continua y muestras de amplitud cuantizada después de la conversión A/D'};
+
 X.productionIllustrationAt={"sonido-1": 2, "sonido-2": 0, "sonido-3": 0, "sonido-4": 1, "estudio-1": 0, "estudio-2": 0, "estudio-3": 0, "estudio-4": 0, "preproduccion-1": 0, "preproduccion-2": 0, "preproduccion-3": 0, "preproduccion-4": 0, "grabacion-1": 0, "grabacion-2": 0, "grabacion-3": 0, "grabacion-4": 0, "edicion-1": 0, "edicion-2": 0, "edicion-3": 0, "edicion-4": 0, "midi-1": 0, "midi-2": 0, "midi-3": 0, "midi-4": 0, "mezcla-1": 0, "mezcla-2": 0, "mezcla-3": 0, "mezcla-4": 0, "profundidad-1": 0, "profundidad-2": 0, "profundidad-3": 1, "profundidad-4": 0, "mastering-1": 0, "mastering-2": 0, "mastering-3": 0, "mastering-4": 1, "medios-1": 0, "medios-2": 0, "medios-3": 0, "medios-4": 0, "profesion-1": 0, "profesion-2": 0, "profesion-3": 0, "profesion-4": 0, "proyecto-1": 0, "proyecto-2": 0, "proyecto-3": 0, "proyecto-4": 0};
 })(typeof window==='undefined'?globalThis:window);
