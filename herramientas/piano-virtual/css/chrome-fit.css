@@ -123,5 +123,7 @@
 .controlbar #toggleLiveStaff[aria-pressed="false"] .staff-icon-notes ellipse{fill:#000!important}
 
 /* Reserve the bottom space for the note and shortcut guide. */
-body>footer.site-footer{margin-top:0;padding:6px clamp(18px,4vw,56px);line-height:1.3}
+body>footer.site-footer{margin-top:0;padding:14px clamp(18px,4vw,56px);line-height:1.4}
 body>footer.site-footer p{margin:0}
+
+@media(min-width:701px){.app-content>.staff-wrap{flex-shrink:1;min-height:160px}}
