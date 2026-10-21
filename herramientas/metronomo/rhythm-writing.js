@@ -4,24 +4,26 @@ const TICKS=13440,durations=[['one-twenty-eighth',.03125,'8','Garrapatea'],['six
 const clampStaffIndex=index=>Math.max(-8,Math.min(20,index));
 const ticks=b=>Math.round(b*TICKS),factor=d=>[1,1.5,1.75][d||0];
 let decorationId=0;
-function decorate(state,events,position,staff=1,capacity=4){
+function decorate(state,events,position,staff=1,capacity=4,marks=[]){
  const notes=events.filter(e=>(e.staff||1)===staff&&!e.grace&&e.kind!=='rest'&&e.bar===position.bar),note=notes.find(e=>Math.abs((e.offset||0)-position.beat)<.0001);
  if(!note)return 'Selecciona una nota existente para aplicar esta marca.';
  if(!note.id)note.id='rhythm-note-'+(++decorationId);
  if(['staccato','accent'].includes(state.tool)){note[state.tool]=!note[state.tool];return '';}
  if(!state.decorationStart){state.decorationStart=note.id;return 'Selecciona la segunda nota de la ligadura.';}
  const first=events.find(e=>e.id===state.decorationStart);if(!first){state.decorationStart=null;return 'Selecciona la primera nota otra vez.';}
+ if((first.staff||1)!==staff)return 'Las notas de la ligadura deben estar en el mismo pentagrama.';
  if(first===note){state.decorationStart=null;return 'Selecciona dos notas distintas.';}
  const absolute=e=>(Array.isArray(capacity)?capacity.slice(0,e.bar).reduce((n,c)=>n+c,0):e.bar*capacity)+(e.offset||0),a=absolute(first),b=absolute(note),start=a<b?first:note,end=a<b?note:first;
- if(state.tool==='tie'&&(JSON.stringify([...(start.notes||[start.note])].sort())!==JSON.stringify([...(end.notes||[end.note])].sort())||start.midi!==end.midi||!!start.ottava!==!!end.ottava||Math.abs(absolute(start)+start.beats-absolute(end))>.0001))return 'La prolongación une notas consecutivas de la misma altura.';
+ const sounding=state.tool==='tie'?Structure.resolve(events,marks):[],soundingStart=sounding[events.indexOf(start)],soundingEnd=sounding[events.indexOf(end)];
+ if(state.tool==='tie'&&(JSON.stringify([...(soundingStart.notes||[soundingStart.note])].sort())!==JSON.stringify([...(soundingEnd.notes||[soundingEnd.note])].sort())||!!start.ottava!==!!end.ottava||Math.abs(absolute(start)+start.beats-absolute(end))>.0001))return 'La prolongación une notas consecutivas de la misma altura.';
  const field=state.tool==='tie'?'tieToId':state.tool==='glissando'?'glissandoToId':'slurToId';if(start[field]===end.id)delete start[field];else start[field]=end.id;
  state.decorationStart=null;state.tool='';return '';
 }
 
 function gridStep(state){return state.beats*factor(state.dots)*(state.actual?state.normal/state.actual:1);}
 function create(){return {duration:'quarter',beats:1,rest:false,dots:0,actual:0,normal:0,groupIndex:0,groupId:0};}
-function select(state,action,value){if(action==='accidental'){state.accidental=state.accidental===value?null:value;state.rest=false;}else if(action==='tool'){state.tool=state.tool===value?'':value;state.grace=false;state.decorationStart=null;}else if(action==='chord'){state.chord=!state.chord;state.rest=false;state.tool='';}else if(action==='ottava'){state.ottava=!state.ottava;}else if(action==='grace'){state.grace=!state.grace;state.rest=false;state.tool='';state.decorationStart=null;}else if(action==='duration'){const d=durations.find(d=>d[0]===value);if(d){state.duration=d[0];state.beats=d[1];state.groupIndex=0;state.dots=0;}}else if(action==='rest')state.rest=!state.rest;else if(action==='dots')state.dots=state.dots===value?0:value;else if(action==='tuplet'){state.actual=state.actual===value?0:value;state.normal=value===3?2:4;state.groupIndex=0;state.dots=0;}}
-function append(state,events,note,capacity,bars,staff=1,position=null){
+function select(state,action,value){if(action==='accidental'){state.accidental=state.accidental===value?null:value;state.rest=false;}else if(action==='tool'){state.tool=state.tool===value?'':value;state.grace=false;state.decorationStart=null;if(['slur','tie'].includes(state.tool)){state.rest=false;state.chord=false;}}else if(action==='chord'){state.chord=!state.chord;state.rest=false;state.tool='';}else if(action==='ottava'){state.ottava=!state.ottava;}else if(action==='grace'){state.grace=!state.grace;state.rest=false;state.tool='';state.decorationStart=null;}else if(action==='duration'){const d=durations.find(d=>d[0]===value);if(d){state.duration=d[0];state.beats=d[1];state.groupIndex=0;state.dots=0;}}else if(action==='rest')state.rest=!state.rest;else if(action==='dots')state.dots=state.dots===value?0:value;else if(action==='tuplet'){state.actual=state.actual===value?0:value;state.normal=value===3?2:4;state.groupIndex=0;state.dots=0;}}
+function appendFigure(state,events,note,capacity,bars,staff=1,position=null){
  const capacities=Array.isArray(capacity)?capacity:Array(bars).fill(capacity),starts=[0];capacities.forEach(c=>starts.push(starts.at(-1)+ticks(c)));
  const used=position?(starts[position.bar]||0)+ticks(position.beat):events.filter(e=>!e.grace&&(e.staff||1)===staff).reduce((n,e)=>Math.max(n,(starts[e.bar||0]||0)+ticks(e.offset||0)+ticks(e.beats)),0);
  const bar=position?position.bar:Math.max(0,starts.findIndex((start,i)=>i<bars&&used<starts[i+1])),offset=used-(starts[bar]||0),remaining=ticks(capacities[bar]||0)-offset;
@@ -38,6 +40,21 @@ function append(state,events,note,capacity,bars,staff=1,position=null){
  if(state.actual){Object.assign(e,{tupletActual:state.actual,tupletNormal:state.normal,tupletUnitBeats:base,tuplet:state.groupIndex===0?'start':state.groupIndex===state.actual-1?'stop':'',writingGroupId:state.groupId,writingGroupIndex:state.groupIndex});if(++state.groupIndex===state.actual){state.groupIndex=0;state.actual=0;}}
  if(position)for(let i=events.length-1;i>=0;i--){const old=events[i];if(!old.grace&&(old.staff||1)===staff&&old.bar===bar&&ticks(old.offset||0)<offset+eventTicks&&ticks(old.offset||0)+ticks(old.beats)>offset)events.splice(i,1);}
  events.push(e);if(!state.rest)state.accidental=null;return '';
+}
+// A ligature tool accepts both existing endpoints and notes written now.
+function append(state,events,note,capacity,bars,staff=1,position=null,marks=[]){
+ const linking=['slur','tie'].includes(state.tool)&&!state.rest&&!state.grace;
+ if(linking&&state.decorationStart){
+  const trialState={...state},trialEvents=JSON.parse(JSON.stringify(events));
+  const error=appendFigure(trialState,trialEvents,note,capacity,bars,staff,position);
+  if(error)return error;
+  const target=trialEvents.at(-1),validation=decorate(trialState,trialEvents,{bar:target.bar,beat:target.offset||0},staff,capacity,marks);
+  if(validation)return validation;
+ }
+ const error=appendFigure(state,events,note,capacity,bars,staff,position);
+ if(error)return error;
+ if(linking){const target=events.at(-1);decorate(state,events,{bar:target.bar,beat:target.offset||0},staff,capacity,marks);}
+ return '';
 }
 // Resize a written figure at its exact onset; the writing grid must not snap it.
 function replaceDuration(state,events,index,capacity,bars){
