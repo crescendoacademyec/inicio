@@ -723,3 +723,7 @@ Las herramientas administrativas de apariencia profunda aparecen solo cuando se 
 En modo de escritura, la nota se coloca en la línea o espacio pulsado, también al pulsar sobre un silencio. Volver a escribir en el mismo tiempo sustituye su contenido; activa **Modo acorde (Q)** para añadir alturas simultáneas. Las líneas superiores, la vista previa y las figuras comparten las posiciones temporales del compás.
 
 La paleta Figuras incluye **Cm7 · Cifrado de acordes**. Actívalo y pulsa un compás para escribir encima del pentagrama. Pulsa el mismo anclaje para editar un cifrado existente. Seleccionar una figura devuelve al modo de escritura. Los cifrados usan el sistema de texto anclado del documento, con deshacer/rehacer y exportación MusicXML.
+
+Las figuras largas también se pueden dibujar en pulsos interiores: después de dos corcheas, una blanca puede empezar en el tiempo 2. Al dibujar con el puntero se conserva la figura escogida, sin dividirla automáticamente en el centro del compás; las barras de compás siguen dividiendo las notas que las cruzan. Las líneas de escritura incluyen esos pulsos y los comienzos/finales de las notas previas.
+
+Clic derecho sobre una barra → **Signatura de medida** o **Armadura** permite cambios desde ese compás. Clic derecho sobre una nota → **Alteraciones** ofrece sostenido, bemol, becuadro y dobles alteraciones, sin cambiar la duración de la nota.

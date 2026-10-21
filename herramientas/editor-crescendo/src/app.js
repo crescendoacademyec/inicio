@@ -4058,10 +4058,9 @@
 
   function nextWritingGridAbsoluteTickAfterEntry(absoluteTick, entry, voice = activeVoice()) {
     const entryEnd = Math.max(Number(absoluteTick) || 0, (Number(absoluteTick) || 0) + Math.max(0, Number(entry?.ticks) || 0));
-    let candidate = nextGridAbsoluteTickAfter(absoluteTick);
-    while (candidate < entryEnd - EPSILON) {
-      candidate = nextGridAbsoluteTickAfter(candidate);
-    }
+    // Duration controls the length, not an alignment to a multiple of it.
+    // Two eighths can be followed immediately by a half note on beat two.
+    let candidate = entryEnd;
     const maxSteps = Math.max(64, state.measures.length * Math.ceil(measureTicksForIndex(0) / gridStepTicks() + 1));
     for (let stepIndex = 0; stepIndex < maxSteps; stepIndex += 1) {
       ensureMeasureForAbsoluteTick(candidate);
@@ -5736,7 +5735,7 @@
     if(entry.type==="note")entry.ottava=state.ottavaInput===true;
     entry.dots = inputDots;entry.dotted = inputDots > 0;
     setEntryVoice(entry, voice);
-    if (state.forceDurationMode) entry.forceDuration = true;
+    if (state.forceDurationMode || options.preserveDuration) entry.forceDuration = true;
     if (entry.type === "note") {
       const writeTick = tupletWrite?.startAbsTick ?? cursorAbsoluteTick();
       const clefId = clefIdAtAbsoluteTick(writeTick);
@@ -5798,7 +5797,7 @@
     } else {
       setCursorFromAbsoluteTick(nextWritingGridAbsoluteTickAfterEntry(
         insertStart,
-        writtenEntries.at(-1) || entry,
+        entry,
         voice
       ));
     }
@@ -17997,11 +17996,20 @@
 
   function pointerGridTicksForMeasure(measureIndex, options = {}) {
     const measureLength = measureTicksForIndex(measureIndex);
-    const step = gridStepTicks();
+    const profile = meterForMeasureIndex(measureIndex);
+    const step = Math.min(gridStepTicks(), 16 / (profile.bottom || 4));
     const ticks = [];
     for (let tick = 0; tick < measureLength - EPSILON; tick += step) {
       ticks.push(Math.max(0, Math.min(measureLength, Number(tick.toFixed(6)))));
     }
+    const addTick = tick => { if (tick >= 0 && tick < measureLength - EPSILON && !ticks.some(t => Math.abs(t-tick)<EPSILON)) ticks.push(tick); };
+    (state.measures?.[measureIndex]?.entries || []).forEach(entry => {
+      if (entry.type !== "note" || entry.hiddenTupletReserve) return;
+      addTick(Number(entry.tickStart) || 0);
+      addTick((Number(entry.tickStart) || 0) + (Number(entry.ticks) || 0));
+    });
+    if (state.cursorMeasure === measureIndex) addTick(Number(state.cursorTick) || 0);
+    ticks.sort((a,b) => a-b);
     if (options.includeEnd !== false && !ticks.some((tick) => Math.abs(tick - measureLength) < EPSILON)) {
       ticks.push(measureLength);
     }
@@ -19246,7 +19254,7 @@
         positionCursorFromPoint(point, { pointerPitch: true });
         setMode(inputMode);
         pointerInputPreview = null;
-        insertEntry(state.cursorStaffStep, { explicitRest: inputMode === "rest" });
+        insertEntry(state.cursorStaffStep, { explicitRest: inputMode === "rest", preserveDuration: true });
       };
       document.addEventListener("pointerup", onInputPointerUp, { once: true });
       return;
@@ -20556,11 +20564,9 @@
     const ruler = el("g", { class: "input-rhythm-ruler", "pointer-events": "none", "aria-hidden": "true" });
     for (const measureIndex of measures) {
       if (measureIsHidden(measureIndex)) continue;
-      const length = measureTicksForIndex(measureIndex);
-      const step = Math.max(MIN_DURATION_TICKS, gridStepTicks());
       const meter = meterForMeasureIndex(measureIndex);
       const beatTicks = 16 / (meter.bottom || 4);
-      for (let tick = 0, count = 0; tick < length - EPSILON && count < 256; tick += step, count++) {
+      for (const tick of pointerGridTicksForMeasure(measureIndex, { includeEnd: false })) {
         const major = Math.abs(tick / beatTicks - Math.round(tick / beatTicks)) < EPSILON;
         const markX = cursorVisualXForMeasureTick(layout, measureIndex, tick);
         ruler.appendChild(el("line", { class: major ? "rhythm-slot rhythm-slot-beat" : "rhythm-slot", "data-measure-index": measureIndex, "data-tick": tick, x1: markX, x2: markX, y1: staffTopY() - (major ? 37 : 33), y2: staffTopY() - 25 }));
