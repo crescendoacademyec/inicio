@@ -1307,7 +1307,7 @@
     const markPalette=document.getElementById('rhythmMarkPalette'),barMenu=document.getElementById('rhythmBarMenu');
     document.body.appendChild(barMenu);
     function renderRhythmMarks(){markPalette.querySelectorAll('button').forEach(b=>{const selected=b.dataset.accidental?activeRhythmTool.accidental===b.dataset.accidental:activeRhythmMark===b.dataset.mark;b.classList.toggle('is-active',selected);b.setAttribute('aria-pressed',String(selected));});}
-    const keyLabel=document.createElement('label');keyLabel.className='rhythm-key-control';keyLabel.textContent='Armadura';const keySelect=document.createElement('select');keySelect.id='rhythmKey';keySelect.setAttribute('aria-label','Armadura inicial');
+    const keyLabel=document.createElement('label');keyLabel.className='rhythm-key-control';const keySelect=document.createElement('select');keySelect.id='rhythmKey';keySelect.setAttribute('aria-label','Armadura inicial');
     const keyOptions=rhythmStructure.keyNames.map(([label,fifths])=>`<option value="${fifths}">${label}</option>`).join('');keySelect.innerHTML=keyOptions;keySelect.value='0';keyLabel.appendChild(keySelect);markPalette.appendChild(keyLabel);
     function setRhythmSignature(type,value,bar){
       const before=rhythmSnapshot(),next=rhythmMarks.filter(m=>!(m.type===type&&m.bar===bar));next.push(type==='key'?{type,bar,fifths:Number(value)}:{type,bar,meter:value});
