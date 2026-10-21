@@ -65,9 +65,7 @@ function replaceDuration(state,events,index,capacity,bars){
  const bar=entry.bar||0,limit=Array.isArray(capacity)?capacity[bar]:capacity,start=ticks(entry.offset||0),end=start+ticks(beats);
  if(bar>=bars||!Number.isFinite(limit)||end>ticks(limit))return {handled:true,message:'Esa figura no cabe en el compás. La nota original se ha conservado.'};
  const overlaps=other=>other!==entry&&!other.grace&&(other.staff||1)===(entry.staff||1)&&(other.bar||0)===bar&&ticks(other.offset||0)<end&&ticks(other.offset||0)+ticks(other.beats)>start;
- const affected=events.filter(overlaps),oldEnd=start+ticks(entry.beats);
- // When shortening, give the released time to the immediately following figure.
- if(end<oldEnd){const next=events.find(other=>other!==entry&&!other.grace&&(other.staff||1)===(entry.staff||1)&&(other.bar||0)===bar&&ticks(other.offset||0)===oldEnd);if(next&&!next.tupletActual)affected.push(next);}
+ const affected=events.filter(overlaps);
  if(affected.some(other=>other.tupletActual))return {handled:true,message:'El cambio cortaría un grupo irregular. Ajusta el grupo completo antes de reemplazar esta figura.'};
  // Calculate every surviving tail before changing the score.
  const values=[...new Set(durations.flatMap(d=>[d[1],d[1]*1.5,d[1]*1.75]).map(ticks))].sort((a,b)=>b-a),tails=new Map();
@@ -96,6 +94,8 @@ function replaceDuration(state,events,index,capacity,bars){
  // Remove only references whose destination was completely consumed.
  for(const other of events)for(const field of ['tieToId','slurToId','glissandoToId'])if(removedIds.has(other[field]))delete other[field];
  entry.beats=beats;
+ // Shortening leaves a rest, so a former prolongation across that gap is invalid.
+ if(entry.tieToId){const destination=events.find(e=>e.id===entry.tieToId),absolute=e=>ticks((Array.isArray(capacity)?capacity.slice(0,e.bar||0).reduce((sum,c)=>sum+c,0):(e.bar||0)*capacity)+(e.offset||0));if(!destination||absolute(entry)+ticks(entry.beats)!==absolute(destination))delete entry.tieToId;}
  return {handled:true,entry,adjusted:affected.some(other=>other.kind!=='rest')};
 }
 function notation(events,capacity,bars){const result=[];for(const staff of [1,2])for(let bar=0;bar<bars;bar++){const barCapacity=Array.isArray(capacity)?capacity[bar]:capacity;let cursor=0;const selected=events.filter(e=>(e.staff||1)===staff&&(e.bar||0)===bar);let legacy=0;const ordered=selected.map(e=>{const offset=e.offset??legacy;legacy=offset+e.beats;return {...e,offset};}).sort((a,b)=>a.offset-b.offset);const rest=end=>{while(cursor<ticks(end)){const remaining=ticks(end)-cursor,beatRemaining=TICKS-cursor%TICKS;const length=Math.min(remaining,beatRemaining);const value=[4,2,1,.5,.25,.125,.0625,.03125].find(v=>ticks(v)<=length);const duration=value?ticks(value):length;result.push({staff,bar,kind:'rest',beats:duration/TICKS});cursor+=duration;}};if(!ordered.length){result.push({staff,bar,kind:'rest',measureRest:true,beats:barCapacity});continue;}for(const e of ordered){if(e.grace){result.push(e);continue;}rest(e.offset);result.push(e);cursor=ticks(e.offset+e.beats);}rest(barCapacity);}return result;}
