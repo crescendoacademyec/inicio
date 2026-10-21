@@ -38,10 +38,35 @@ function transposeHead(events,marks,index,head,direction){
  entry.accidentalsByNote=Object.fromEntries(notes.map(n=>{const p=parsePitch(n);return [p.plain,p.explicit||'natural'];}));
  delete entry.accidental;delete entry.midi;return true;
 }
+function editBars(events,marks,bars,index,operation){
+ const inserting=operation==='insert';
+ if(!['insert','remove'].includes(operation)||!Number.isInteger(index)||index<0||index>(inserting?bars:bars-1))return {message:'Compás no válido.'};
+ if(inserting&&bars>=16)return {message:'El máximo es de 16 compases.'};
+ if(!inserting&&bars<=1)return {message:'Debe quedar al menos un compás.'};
+ const delta=inserting?1:-1,nextEvents=events.filter(e=>inserting||(e.bar||0)!==index).map(e=>({...e,bar:(e.bar||0)+((e.bar||0)>=index?delta:0)}));
+ const ids=new Set(nextEvents.map(e=>e.id).filter(Boolean));
+ for(const e of nextEvents)for(const field of ['tieToId','slurToId','glissandoToId'])if(e[field]&&!ids.has(e[field]))delete e[field];
+ const nextMarks=[];
+ for(const mark of marks){
+  const m={...mark};
+  if(inserting){if(m.bar>=index)m.bar++;if(m.endBar!==undefined&&m.endBar>=index)m.endBar++;nextMarks.push(m);continue;}
+  if(m.endBar!==undefined){
+   if(m.bar===index&&m.endBar===index)continue;
+   if(m.bar===index){m.offset=0;}else if(m.bar>index)m.bar--;
+   if(m.endBar===index){m.endBar=index-1;delete m.endOffset;}else if(m.endBar>index)m.endBar--;
+  }else if(m.bar===index){
+   // Preserve the local meter/key governing the music that follows the removed bar.
+   if(!['meter','key'].includes(m.type)||index===bars-1||marks.some(n=>n.type===m.type&&n.bar===index+1))continue;
+  }else if(m.bar>index)m.bar--;
+  nextMarks.push(m);
+ }
+ if(inserting&&index===0)for(const type of ['meter','key']){const first=marks.find(m=>m.type===type&&m.bar===0);if(first)nextMarks.push({...first,bar:0});}
+ return {events:nextEvents,marks:nextMarks,bars:bars+delta};
+}
 function keyGlyphs(fifths,previous=0){const old=(previous>0?'FCGDAEB':'BEADGCF').slice(0,Math.abs(previous)),next=(fifths>0?'FCGDAEB':'BEADGCF').slice(0,Math.abs(fifths)),order=previous>0?[4,1,5,2,-1,3,0]:[0,3,-1,2,-2,1,-3],glyphs=[];old.split('').forEach((letter,i)=>{if(Math.sign(previous)!==Math.sign(fifths)||!next.includes(letter))glyphs.push({code:0xE261,step:order[i]});});const positions=fifths>0?[4,1,5,2,-1,3,0]:[0,3,-1,2,-2,1,-3];for(let i=0;i<Math.abs(fifths);i++)glyphs.push({code:fifths>0?0xE262:0xE260,step:positions[i]});return glyphs;}
 function keyWidth(fifths,previous=0){const count=keyGlyphs(fifths,previous).length;return count?count*11+6:0;}
 function keySVG(fifths,previous,x,top,staff){return keyGlyphs(fifths,previous).map((g,i)=>`<text class="rhythm-key-accidental" x="${x+i*11}" y="${top+20-(g.step-(staff===2?2:0))*5}" font-family="Bravura Metronome" font-size="40">${String.fromCodePoint(g.code)}</text>`).join('');}
 function slots(duration,capacity,events=[],pulse=1,span=duration){const step=Math.min(duration,pulse),values=new Set([0]);for(let beat=0,n=0;beat<capacity-EPS&&n<2048;beat+=step,n++)values.add(Number(beat.toFixed(7)));for(const e of events){if(e.grace)continue;values.add(e.offset||0);values.add((e.offset||0)+e.beats);}return [...values].filter(beat=>beat>=0&&beat<capacity-EPS&&beat+span<=capacity+EPS).sort((a,b)=>a-b);}
 function validate(events,tl,marks=[]){return marks.every(m=>(m.offset===undefined||m.offset>=0&&m.offset<tl.capacities[m.bar])&&(m.endOffset===undefined||m.endOffset>=0&&m.endOffset<=tl.capacities[m.endBar??m.bar]))&&events.every(e=>e.bar>=0&&e.bar<tl.capacities.length&&(e.offset||0)>=0&&(e.offset||0)+(e.beats||0)<=tl.capacities[e.bar]+.0001);}
-const api={chromaticPitch,transposeHead,meter,timeline,keyAt,keyNames,signatureAccidental,parsePitch,resolve,keyGlyphs,keyWidth,keySVG,slots,validate};if(typeof module!=='undefined')module.exports=api;else root.CrescendoRhythmStructure=api;
+const api={editBars,chromaticPitch,transposeHead,meter,timeline,keyAt,keyNames,signatureAccidental,parsePitch,resolve,keyGlyphs,keyWidth,keySVG,slots,validate};if(typeof module!=='undefined')module.exports=api;else root.CrescendoRhythmStructure=api;
 })(typeof window==='undefined'?globalThis:window);

@@ -56,6 +56,23 @@ function append(state,events,note,capacity,bars,staff=1,position=null,marks=[]){
  if(linking){const target=events.at(-1);decorate(state,events,{bar:target.bar,beat:target.offset||0},staff,capacity,marks);}
  return '';
 }
+function eraseHead(events,index,head=0){
+ const entry=events[index];if(!entry)return false;
+ if(entry.notes?.length>1){
+  if(head<0||head>=entry.notes.length)return false;
+  const removed=Structure.parsePitch(entry.notes[head]).plain;
+  entry.notes.splice(head,1);entry.note=entry.notes[0];
+  if(!entry.notes.some(n=>Structure.parsePitch(n).plain===removed)&&entry.accidentalsByNote)delete entry.accidentalsByNote[removed];
+  if(entry.notes.length===1)delete entry.notes;delete entry.tieToId;for(const other of events)if(entry.id&&other.tieToId===entry.id)delete other.tieToId;
+ }else{
+  if(entry.tupletActual){
+   // Keep the tuplet's timing and grouping as a rest instead of damaging its ratio.
+   entry.kind='rest';delete entry.staccato;delete entry.accent;delete entry.ottava;delete entry.midi;delete entry.notes;delete entry.accidental;delete entry.accidentalsByNote;delete entry.tieToId;delete entry.slurToId;delete entry.glissandoToId;
+  }else events.splice(index,1);
+  for(const other of events)for(const field of ['tieToId','slurToId','glissandoToId'])if(entry.id&&other[field]===entry.id)delete other[field];
+ }
+ return true;
+}
 // Resize a written figure at its exact onset; the writing grid must not snap it.
 function replaceDuration(state,events,index,capacity,bars){
  const entry=events[index];
@@ -247,5 +264,5 @@ function generate({capacity=4,bars=4,kind='steady',base=1,clef='treble',random=M
 }
 
 function history(){const past=[],future=[];return {get canUndo(){return past.length>0;},get canRedo(){return future.length>0;},commit(before,after){if(before===after)return;past.push(before);if(past.length>100)past.shift();future.length=0;},undo(current){if(!past.length)return null;future.push(current);return past.pop();},redo(current){if(!future.length)return null;past.push(current);return future.pop();}};}
-const api={clampStaffIndex,diatonic,noteAtIndex,stemDown,noteGraphic,history,decorate,beamGroups,generate,gridStep,render,notation,TICKS,durations,ticks,factor,create,select,append,replaceDuration};if(typeof module!=='undefined')module.exports=api;else root.CrescendoRhythmWriting=api;
+const api={clampStaffIndex,diatonic,noteAtIndex,stemDown,noteGraphic,history,decorate,beamGroups,generate,gridStep,render,notation,TICKS,durations,ticks,factor,create,select,append,eraseHead,replaceDuration};if(typeof module!=='undefined')module.exports=api;else root.CrescendoRhythmWriting=api;
 })(typeof window==='undefined'?globalThis:window);

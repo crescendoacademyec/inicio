@@ -46,3 +46,9 @@ Selecciona una duración en la paleta (o con su atajo) y pulsa la cabeza de una 
 ### Dibujar notas con ligadura
 
 Elige una figura y activa la ligadura de frase o de prolongación. Dibuja la primera nota y luego la segunda: la ligadura se añade al escribir la segunda y el botón se desactiva. Puedes cambiar la figura entre ambas notas y cruzar una barra de compás. La prolongación exige notas consecutivas de la misma altura efectiva, incluida la armadura y las alteraciones. También puedes elegir notas ya escritas, o combinar una nota existente con una nueva. Esc o el propio botón cancelan la ligadura pendiente.
+
+### Borrado selectivo y estructura
+
+El botón con la goma, junto al selector de tonalidad, activa el borrador. Pulsa la cabeza de una nota o una marca (dinámica, cifrado, regulador o signo de repetición) para quitarla. Al borrar una cabeza de un acorde, permanecen las demás; al borrar una nota de un grupo irregular queda un silencio con la misma duración para conservar el grupo. El tiempo eliminado de las notas normales se completa automáticamente con silencios. Esc o el botón desactivan el borrador; escoger una figura vuelve a la escritura.
+
+Las barras se resaltan en dorado al pasar el puntero y muestran una indicación. Un clic normal o derecho abre sus opciones junto a la barra. El menú permite añadir un compás desde la barra, antes o después del compás, o quitarlo. Estas operaciones afectan a ambas claves, desplazan sus notas y marcas y conservan los cambios de compás y tonalidad. Deshacer y rehacer restauran también el número de compases.
