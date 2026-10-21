@@ -48,11 +48,38 @@ function replaceDuration(state,events,index,capacity,bars){
  const bar=entry.bar||0,limit=Array.isArray(capacity)?capacity[bar]:capacity,start=ticks(entry.offset||0),end=start+ticks(beats);
  if(bar>=bars||!Number.isFinite(limit)||end>ticks(limit))return {handled:true,message:'Esa figura no cabe en el compás. La nota original se ha conservado.'};
  const overlaps=other=>other!==entry&&!other.grace&&(other.staff||1)===(entry.staff||1)&&(other.bar||0)===bar&&ticks(other.offset||0)<end&&ticks(other.offset||0)+ticks(other.beats)>start;
- if(events.some(other=>overlaps(other)&&other.kind!=='rest'))return {handled:true,message:'Esa figura ocuparía el tiempo de otra nota. La escritura se ha conservado.'};
- // Explicit rests can be consumed; notation() restores any uncovered rest fragments.
- for(let i=events.length-1;i>=0;i--)if(events[i].kind==='rest'&&overlaps(events[i]))events.splice(i,1);
+ const affected=events.filter(overlaps),oldEnd=start+ticks(entry.beats);
+ // When shortening, give the released time to the immediately following figure.
+ if(end<oldEnd){const next=events.find(other=>other!==entry&&!other.grace&&(other.staff||1)===(entry.staff||1)&&(other.bar||0)===bar&&ticks(other.offset||0)===oldEnd);if(next&&!next.tupletActual)affected.push(next);}
+ if(affected.some(other=>other.tupletActual))return {handled:true,message:'El cambio cortaría un grupo irregular. Ajusta el grupo completo antes de reemplazar esta figura.'};
+ // Calculate every surviving tail before changing the score.
+ const values=[...new Set(durations.flatMap(d=>[d[1],d[1]*1.5,d[1]*1.75]).map(ticks))].sort((a,b)=>b-a),tails=new Map();
+ for(const other of affected){
+  if(other.kind==='rest')continue;
+  let remaining=ticks(other.offset||0)+ticks(other.beats)-end;
+  const parts=[];
+  while(remaining>0){const value=values.find(v=>v<=remaining);if(!value)return {handled:true,message:'La duración restante no puede representarse con estas figuras. La escritura se ha conservado.'};parts.push(value);remaining-=value;}
+  tails.set(other,parts);
+ }
+ const removedIds=new Set();
+ for(let i=events.length-1;i>=0;i--){
+  const other=events[i];if(!affected.includes(other))continue;
+  const parts=tails.get(other)||[];
+  if(!parts.length){if(other.id)removedIds.add(other.id);events.splice(i,1);continue;}
+  const original={...other},fragments=[];if(parts.length>1&&!other.id)other.id='rhythm-note-'+(++decorationId);let offset=end;
+  for(const [part,value] of parts.entries()){
+   const fragment=part===0?other:{...original,id:'rhythm-note-'+(++decorationId)};
+   fragment.offset=offset/TICKS;fragment.beats=value/TICKS;offset+=value;
+   if(part>0){delete fragment.staccato;delete fragment.accent;}
+   fragments.push(fragment);
+  }
+  for(let part=0;part<fragments.length-1;part++)fragments[part].tieToId=fragments[part+1].id;
+  events.splice(i,1,...fragments);
+ }
+ // Remove only references whose destination was completely consumed.
+ for(const other of events)for(const field of ['tieToId','slurToId','glissandoToId'])if(removedIds.has(other[field]))delete other[field];
  entry.beats=beats;
- return {handled:true,entry};
+ return {handled:true,entry,adjusted:affected.some(other=>other.kind!=='rest')};
 }
 function notation(events,capacity,bars){const result=[];for(const staff of [1,2])for(let bar=0;bar<bars;bar++){const barCapacity=Array.isArray(capacity)?capacity[bar]:capacity;let cursor=0;const selected=events.filter(e=>(e.staff||1)===staff&&(e.bar||0)===bar);let legacy=0;const ordered=selected.map(e=>{const offset=e.offset??legacy;legacy=offset+e.beats;return {...e,offset};}).sort((a,b)=>a.offset-b.offset);const rest=end=>{while(cursor<ticks(end)){const remaining=ticks(end)-cursor,beatRemaining=TICKS-cursor%TICKS;const length=Math.min(remaining,beatRemaining);const value=[4,2,1,.5,.25,.125,.0625,.03125].find(v=>ticks(v)<=length);const duration=value?ticks(value):length;result.push({staff,bar,kind:'rest',beats:duration/TICKS});cursor+=duration;}};if(!ordered.length){result.push({staff,bar,kind:'rest',measureRest:true,beats:barCapacity});continue;}for(const e of ordered){if(e.grace){result.push(e);continue;}rest(e.offset);result.push(e);cursor=ticks(e.offset+e.beats);}rest(barCapacity);}return result;}
 function figureForEvent(e){const base=e.tupletUnitBeats||e.graceUnitBeats||e.beats;return durations.find(d=>Math.abs(d[1]-base)<.00001)||durations.find(d=>Math.abs(d[1]*1.5-base)<.00001)||durations.find(d=>Math.abs(d[1]*1.75-base)<.00001)||durations.find(d=>d[0]==='quarter');}

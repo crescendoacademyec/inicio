@@ -1009,12 +1009,12 @@
 <script src="../../shared/rhythm-engine.js?v=20260918-locking-in"></script>
 <script src="../../shared/music-practice.js?v=20261014-engraving-2"></script>
 <script src="../editor-crescendo/src/bravura-palette-paths.js?v=20261014-preview-1"></script>
-<script src="rhythm-structure.js?v=20261021-replace-duration-2"></script>
-<script src="rhythm-marks.js?v=20261021-replace-duration-2"></script>
-<script src="rhythm-writing.js?v=20261021-replace-duration-2"></script>
-<script src="rhythm-export.js?v=20261021-replace-duration-2"></script>
+<script src="rhythm-structure.js?v=20261021-rebalance-duration-1"></script>
+<script src="rhythm-marks.js?v=20261021-rebalance-duration-1"></script>
+<script src="rhythm-writing.js?v=20261021-rebalance-duration-1"></script>
+<script src="rhythm-export.js?v=20261021-rebalance-duration-1"></script>
 <script src="https://cdn.jsdelivr.net/npm/soundfont-player@0.12.0/dist/soundfont-player.min.js"></script>
-<script src="rhythm-audio.js?v=20261021-replace-duration-2"></script>
+<script src="rhythm-audio.js?v=20261021-rebalance-duration-1"></script>
 <script>
     // --- Lógica de Acordeón ---
     function toggleDrawer(id) {
@@ -1425,7 +1425,7 @@
         if(!replacement.message)rhythmHistory.commit(before,rhythmSnapshot());
         selectedRhythmNote={index:rhythmEditorEvents.indexOf(entry),head:Number(hit.dataset.head)};
         rhythmPointerTarget={bar:entry.bar||0,beat:entry.offset||0};activeRhythmStaff=entry.staff||1;
-        rhythmPreview.replaceChildren();renderRhythmScore(replacement.message||'Figura reemplazada. Se ha conservado su posición en el compás.');document.activeElement?.blur();return true;
+        rhythmPreview.replaceChildren();renderRhythmScore(replacement.message||(replacement.adjusted?'Figura reemplazada. Las figuras siguientes se ajustaron al tiempo restante.':'Figura reemplazada. Se ha conservado su posición en el compás.'));document.activeElement?.blur();return true;
       }
       selectedRhythmNote={index,head:Number(hit.dataset.head)};rhythmPreview.replaceChildren();renderRhythmScore('Nota seleccionada. ↑ / ↓: subir o bajar un semitono.');document.activeElement?.blur();return true;
     }
