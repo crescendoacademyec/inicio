@@ -64,7 +64,7 @@ function noteGraphic(id,x,y,down,glyphs,color='#222',className='rhythm-note'){
  return `<g class="${className}" data-stem="${noStem?'none':down?'down':'up'}">${shape}</g>`;
 }
 
-function render(events,{clef='treble',meter='4/4',bars=4,width=900,glyphs={},marks=[]}={}){
+function render(events,{clef='treble',meter='4/4',bars=4,width=900,glyphs={},marks=[],selected=null}={}){
  const timeline=Structure.timeline(meter,marks,bars),grand=clef==='grand',staves=grand?[1,2]:[clef==='bass'?2:1],rowHeight=grand?380:220,rows=Math.ceil(bars/4),left=24,header=90+Math.max(...timeline.keys.map(key=>Structure.keyWidth(key))),spacing=10;
  // Reserve room for the smallest onset gap, using one shared linear time axis.
  // The hit boxes expose this same interval to guides, preview and playback.
@@ -112,6 +112,9 @@ function render(events,{clef='treble',meter='4/4',bars=4,width=900,glyphs={},mar
      if(e.staccato)drawing+=`<circle class="rhythm-staccato" cx="${x}" cy="${y+(down?-10:10)}" r="1.8" fill="#222"/>`;
      if(e.accent)drawing+=`<text class="rhythm-accent" x="${x-5}" y="${y+(down?-14:20)}" font-family="Bravura Metronome" font-size="30">${String.fromCodePoint(down?0xE4A0:0xE4A1)}</text>`;
      for(const [ni,headY] of ys.entries()){
+      const sourceIndex=events.findIndex(raw=>e.id?raw.id===e.id:raw.bar===e.bar&&(raw.staff||1)===staff&&Math.abs((raw.offset||0)-e.offset)<.0001&&!!raw.grace===!!e.grace);
+      const sortedYs=[...ys].sort((a,b)=>a-b),sortedIndex=sortedYs.indexOf(headY),shift=chord.length>1&&sortedIndex>0&&Math.abs(headY-sortedYs[sortedIndex-1])<6?(down?-10:10):0;
+      drawing+=`<ellipse class="rhythm-head-target" data-event="${sourceIndex}" data-head="${ni}" cx="${x+shift}" cy="${headY}" rx="7" ry="3.5" fill="${selected?.index===sourceIndex&&selected?.head===ni?'#d5aa4566':'transparent'}" stroke="${selected?.index===sourceIndex&&selected?.head===ni?'#b88820':'none'}" pointer-events="none"/>`;
       const accidental=e.displayAccidentals?.[ni];if(accidental)drawing+=`<text class="rhythm-accidental" data-accidental="${accidental}" x="${x-20}" y="${headY}" font-family="Bravura Metronome" font-size="40">${String.fromCodePoint({sharp:0xE262,flat:0xE260,natural:0xE261}[accidental])}</text>`;
       for(let line=-2;line>=Math.max(-10,(headY-top)/5);line-=2)drawing+=`<line class="rhythm-ledger-line" x1="${x-9}" x2="${x+9}" y1="${top+line*5}" y2="${top+line*5}" stroke="#222"/>`;
       for(let line=10;line<=Math.min(18,(headY-top)/5);line+=2)drawing+=`<line class="rhythm-ledger-line" x1="${x-9}" x2="${x+9}" y1="${top+line*5}" y2="${top+line*5}" stroke="#222"/>`;

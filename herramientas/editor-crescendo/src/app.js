@@ -19159,6 +19159,9 @@
     setActiveSystemIndex(systemIndexFromY(point.y));
     const hit = noteHeadHitAtPoint(point);
     if (!hit?.entry || hit.entry.type === "rest") return false;
+    if (event.exactHead && (!pointInRect(point, noteHeadRect(hit.entry, hit.x, hit.staffStep)) ||
+        Math.abs(point.y - pitchY(hit.staffStep) - appearanceValue("noteheadOffsetY")) > 3)) return false;
+    document.activeElement?.blur();
     if (isAdditiveSelectionEvent(event)) {
       toggleEntrySelection(hit.measureIndex, hit.entryIndex, {
         staffStep: hit.staffStep,
@@ -19250,6 +19253,8 @@
       const onInputPointerUp = (upEvent) => {
         const point = svgPointFromEvent(upEvent) || start;
         if (!pointIsInStaffArea(point)) return;
+        if (state.mode !== "rest" && !state.noteChordMode && !state.graceInput &&
+            Math.hypot(point.x-start.x, point.y-start.y)<4 && selectNoteHeadAtPoint(point, { exactHead: true })) return;
         const inputMode = state.mode === "rest" ? "rest" : "note";
         positionCursorFromPoint(point, { pointerPitch: true });
         setMode(inputMode);
@@ -21049,6 +21054,33 @@
     render();
   }
 
+  function moveSelectedNoteChromatically(direction) {
+    if (isNoteInputMode() || activeSystemIsPercussionLine()) return false;
+    const target = findActiveNoteTarget();
+    if (!target || !selectedEntryLocation()) return false;
+    const { entry, staffStep } = target;
+    const midi = midiForDiatonicStep(entryDiatonicStepForStaffStep(entry, staffStep), effectiveEntryAccidental(entry, staffStep)) + (direction > 0 ? 1 : -1);
+    const spelling = (direction > 0
+      ? ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"]
+      : ["C","Db","D","Eb","E","F","Gb","G","Ab","A","Bb","B"])[mod12(midi)];
+    const diatonic = (Math.floor(midi / 12) - 5) * 7 + "CDEFGAB".indexOf(spelling[0]);
+    const nextStep = staffStepForDiatonicStep(diatonic, entryClefId(entry));
+    if (nextStep < -14 || nextStep > 14) return true;
+    const accidental = spelling.includes("#") ? "sharp" : spelling.includes("b") ? "flat" : "natural";
+    // A unison with another chord head cannot be represented as a separate head.
+    if (nextStep !== staffStep && entryStaffSteps(entry).includes(nextStep)) return true;
+    saveHistory();
+    clearEntryAccidental(entry, staffStep);
+    setEntryStaffSteps(entry, entryStaffSteps(entry).map(step => step === staffStep ? nextStep : step));
+    setEntryAccidental(entry, nextStep, accidental);
+    state.selectedNoteRefs = [{ entryId: entry.id, staffStep: nextStep }];
+    state.cursorStaffStep = nextStep;
+    setActiveNote(entry, nextStep);
+    render();
+    auditionEntryStaffStep(entry, nextStep, entryLocationById(entry.id)?.measureIndex ?? state.cursorMeasure);
+    return true;
+  }
+
   function moveSelectedPitchWithShift(direction) {
     if (moveSelectedNotesPitch(direction)) return;
     if (moveActiveNotePitch(direction)) return;
@@ -21514,6 +21546,7 @@
       event.preventDefault();
       if (event.altKey) moveSelectedPitchByOctave(1);
       else if (event.shiftKey) moveSelectedPitchWithShift(1);
+      else if (moveSelectedNoteChromatically(1)) return;
       else if (isNoteInputMode()) moveCursorPitch(1);
       else navigateSelectedNoteHead(1);
       return;
@@ -21523,6 +21556,7 @@
       event.preventDefault();
       if (event.altKey) moveSelectedPitchByOctave(-1);
       else if (event.shiftKey) moveSelectedPitchWithShift(-1);
+      else if (moveSelectedNoteChromatically(-1)) return;
       else if (isNoteInputMode()) moveCursorPitch(-1);
       else navigateSelectedNoteHead(-1);
     }

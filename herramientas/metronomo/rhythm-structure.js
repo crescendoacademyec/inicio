@@ -23,10 +23,25 @@ function resolve(events,marks=[]){
   delete next.midi;result.set(e,next);
  });return events.map(e=>result.get(e));
 }
+function chromaticPitch(note,direction){
+ const p=parsePitch(note),midi=(p.octave+1)*12+({C:0,D:2,E:4,F:5,G:7,A:9,B:11}[p.letter])+(p.explicit==='sharp'?1:p.explicit==='flat'?-1:0)+(direction>0?1:-1);
+ const name=(direction>0?['C','C#','D','D#','E','F','F#','G','G#','A','A#','B']:['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'])[((midi%12)+12)%12];
+ return name+(Math.floor(midi/12)-1);
+}
+function transposeHead(events,marks,index,head,direction){
+ const entry=events[index];if(!entry||entry.kind==='rest')return false;
+ const sounding=resolve(events,marks)[index],notes=[...(sounding.notes||[sounding.note])];if(!notes[head])return false;
+ const next=chromaticPitch(notes[head],direction),pitch=parsePitch(next),diatonic=pitch.octave*7+'CDEFGAB'.indexOf(pitch.letter),staffIndex=((entry.staff||1)===2?28:40)-diatonic;
+ if(staffIndex< -8||staffIndex>20||notes.some((n,i)=>i!==head&&parsePitch(n).plain===pitch.plain))return false;
+ // Pin each chord head to its sounding pitch before moving one of them.
+ notes[head]=next;entry.note=notes[0];if(entry.notes)entry.notes=notes;
+ entry.accidentalsByNote=Object.fromEntries(notes.map(n=>{const p=parsePitch(n);return [p.plain,p.explicit||'natural'];}));
+ delete entry.accidental;delete entry.midi;return true;
+}
 function keyGlyphs(fifths,previous=0){const old=(previous>0?'FCGDAEB':'BEADGCF').slice(0,Math.abs(previous)),next=(fifths>0?'FCGDAEB':'BEADGCF').slice(0,Math.abs(fifths)),order=previous>0?[4,1,5,2,-1,3,0]:[0,3,-1,2,-2,1,-3],glyphs=[];old.split('').forEach((letter,i)=>{if(Math.sign(previous)!==Math.sign(fifths)||!next.includes(letter))glyphs.push({code:0xE261,step:order[i]});});const positions=fifths>0?[4,1,5,2,-1,3,0]:[0,3,-1,2,-2,1,-3];for(let i=0;i<Math.abs(fifths);i++)glyphs.push({code:fifths>0?0xE262:0xE260,step:positions[i]});return glyphs;}
 function keyWidth(fifths,previous=0){const count=keyGlyphs(fifths,previous).length;return count?count*11+6:0;}
 function keySVG(fifths,previous,x,top,staff){return keyGlyphs(fifths,previous).map((g,i)=>`<text class="rhythm-key-accidental" x="${x+i*11}" y="${top+20-(g.step-(staff===2?2:0))*5}" font-family="Bravura Metronome" font-size="40">${String.fromCodePoint(g.code)}</text>`).join('');}
 function slots(duration,capacity,events=[],pulse=1,span=duration){const step=Math.min(duration,pulse),values=new Set([0]);for(let beat=0,n=0;beat<capacity-EPS&&n<2048;beat+=step,n++)values.add(Number(beat.toFixed(7)));for(const e of events){if(e.grace)continue;values.add(e.offset||0);values.add((e.offset||0)+e.beats);}return [...values].filter(beat=>beat>=0&&beat<capacity-EPS&&beat+span<=capacity+EPS).sort((a,b)=>a-b);}
 function validate(events,tl,marks=[]){return marks.every(m=>(m.offset===undefined||m.offset>=0&&m.offset<tl.capacities[m.bar])&&(m.endOffset===undefined||m.endOffset>=0&&m.endOffset<=tl.capacities[m.endBar??m.bar]))&&events.every(e=>e.bar>=0&&e.bar<tl.capacities.length&&(e.offset||0)>=0&&(e.offset||0)+(e.beats||0)<=tl.capacities[e.bar]+.0001);}
-const api={meter,timeline,keyAt,keyNames,signatureAccidental,parsePitch,resolve,keyGlyphs,keyWidth,keySVG,slots,validate};if(typeof module!=='undefined')module.exports=api;else root.CrescendoRhythmStructure=api;
+const api={chromaticPitch,transposeHead,meter,timeline,keyAt,keyNames,signatureAccidental,parsePitch,resolve,keyGlyphs,keyWidth,keySVG,slots,validate};if(typeof module!=='undefined')module.exports=api;else root.CrescendoRhythmStructure=api;
 })(typeof window==='undefined'?globalThis:window);

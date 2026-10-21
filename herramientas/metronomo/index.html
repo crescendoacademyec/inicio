@@ -1009,12 +1009,12 @@
 <script src="../../shared/rhythm-engine.js?v=20260918-locking-in"></script>
 <script src="../../shared/music-practice.js?v=20261014-engraving-2"></script>
 <script src="../editor-crescendo/src/bravura-palette-paths.js?v=20261014-preview-1"></script>
-<script src="rhythm-structure.js?v=20261020-signatures-2"></script>
-<script src="rhythm-marks.js?v=20261020-signatures-2"></script>
-<script src="rhythm-writing.js?v=20261020-signatures-2"></script>
-<script src="rhythm-export.js?v=20261020-signatures-2"></script>
+<script src="rhythm-structure.js?v=20261020-pitch-arrows-2"></script>
+<script src="rhythm-marks.js?v=20261020-pitch-arrows-2"></script>
+<script src="rhythm-writing.js?v=20261020-pitch-arrows-2"></script>
+<script src="rhythm-export.js?v=20261020-pitch-arrows-2"></script>
 <script src="https://cdn.jsdelivr.net/npm/soundfont-player@0.12.0/dist/soundfont-player.min.js"></script>
-<script src="rhythm-audio.js?v=20261020-signatures-2"></script>
+<script src="rhythm-audio.js?v=20261020-pitch-arrows-2"></script>
 <script>
     // --- Lógica de Acordeón ---
     function toggleDrawer(id) {
@@ -1302,6 +1302,7 @@
     // --- Laboratorio de ritmo y feel: generador y editor sobre un único pentagrama ---
     let rhythmMarks=[],rhythmEditorEvents=[],activeRhythmStaff=1;let rhythmAudio=null;let rhythmPointerTarget=null;
     const rhythmStructure=window.CrescendoRhythmStructure,rhythmWriting=window.CrescendoRhythmWriting,activeRhythmTool=rhythmWriting.create(),rhythmHistory=rhythmWriting.history();
+    let selectedRhythmNote=null;
     function rhythmSnapshot(){return JSON.stringify({events:rhythmEditorEvents,marks:rhythmMarks});}
     let activeRhythmMark=null,markRangeStart=null,contextBoundary=0,contextMeasure=0;
     const markPalette=document.getElementById('rhythmMarkPalette'),barMenu=document.getElementById('rhythmBarMenu');
@@ -1358,11 +1359,11 @@
     function rhythmUsedTicks(){const timeline=rhythmTimeline();return rhythmTicks(rhythmEditorEvents.filter(e=>!e.grace&&(e.staff||1)===activeRhythmStaff).reduce((end,event)=>Math.max(end,timeline.absolute(event.bar||0,event.offset||0)+event.beats),0));}
     function generateRhythmExercise(){
         const meter=currentRhythmMeter(),capacity=rhythmCapacity(meter),bars=Math.max(1,Math.min(16,Number(UI.rhythmBars.value)||4)),clef=UI.rhythmClef.value,kind=UI.rhythmExercise.value,base=Number(UI.rhythmFigure.value);
-        const before=rhythmSnapshot();rhythmEditorEvents=rhythmTimeline().capacities.flatMap((cap,bar)=>rhythmWriting.generate({capacity:cap,bars:1,clef,kind,base}).map(e=>({...e,bar})));rhythmHistory.commit(before,rhythmSnapshot());rhythmPointerTarget=null;rhythmPointerEvent=null;rhythmPreview.replaceChildren();activeRhythmStaff=clef==='bass'?2:1;renderRhythmScore();
+        selectedRhythmNote=null;const before=rhythmSnapshot();rhythmEditorEvents=rhythmTimeline().capacities.flatMap((cap,bar)=>rhythmWriting.generate({capacity:cap,bars:1,clef,kind,base}).map(e=>({...e,bar})));rhythmHistory.commit(before,rhythmSnapshot());rhythmPointerTarget=null;rhythmPointerEvent=null;rhythmPreview.replaceChildren();activeRhythmStaff=clef==='bass'?2:1;renderRhythmScore();
         const subValue=kind==='triplets'||Math.abs(base-1/3)<.00001?'3':String(Math.max(.25,1/base));if([...UI.subSel.options].some(o=>o.value===subValue))UI.subSel.value=subValue;
         UI.subSel.dispatchEvent(new Event('change'));renderVisualizer();syncBasicLabels();
     }
-    function renderRhythmScore(message=''){rhythmAudio?.stop();renderRhythmMarks();UI.rhythmUndo.disabled=!rhythmHistory.canUndo;UI.rhythmRedo.disabled=!rhythmHistory.canRedo;if(typeof message!=='string')message='';if(!window.CrescendoPractice)return;const meter=currentRhythmMeter(),clef=UI.rhythmClef.value,bars=Math.max(1,Math.min(16,Number(UI.rhythmBars.value)||1)),systems=Math.ceil(bars/4),used=rhythmBeats(rhythmUsedTicks()),total=rhythmTimeline().total;keySelect.value=rhythmStructure.keyAt(rhythmMarks,0);UI.rhythmScore.innerHTML=rhythmWriting.render(rhythmEditorEvents,{meter,clef,bars,width:UI.rhythmScore.clientWidth||900,glyphs:window.CrescendoBravuraPalette,marks:rhythmMarks});UI.rhythmScore.classList.toggle('has-multiple-systems',systems>1);UI.rhythmStatus.textContent=message||`${bars} ${bars===1?'compás':'compases'} en ${new Set(rhythmTimeline().meters.map(m=>m.label)).size>1?'compases variables':rhythmTimeline().meters[0].label} · ${used.toFixed(2).replace(/\.00$/,'')} de ${total} tiempos · ${clef==='grand'?'sol y fa · escribiendo en '+(activeRhythmStaff===2?'fa':'sol'):'clave de '+(clef==='bass'?'fa':'sol')} · clic: ${UI.rhythmPlacement.options[UI.rhythmPlacement.selectedIndex].text}`}
+    function renderRhythmScore(message=''){rhythmAudio?.stop();renderRhythmMarks();UI.rhythmUndo.disabled=!rhythmHistory.canUndo;UI.rhythmRedo.disabled=!rhythmHistory.canRedo;if(typeof message!=='string')message='';if(!window.CrescendoPractice)return;const meter=currentRhythmMeter(),clef=UI.rhythmClef.value,bars=Math.max(1,Math.min(16,Number(UI.rhythmBars.value)||1)),systems=Math.ceil(bars/4),used=rhythmBeats(rhythmUsedTicks()),total=rhythmTimeline().total;keySelect.value=rhythmStructure.keyAt(rhythmMarks,0);UI.rhythmScore.innerHTML=rhythmWriting.render(rhythmEditorEvents,{meter,clef,bars,width:UI.rhythmScore.clientWidth||900,glyphs:window.CrescendoBravuraPalette,marks:rhythmMarks,selected:selectedRhythmNote});UI.rhythmScore.classList.toggle('has-multiple-systems',systems>1);UI.rhythmStatus.textContent=message||`${bars} ${bars===1?'compás':'compases'} en ${new Set(rhythmTimeline().meters.map(m=>m.label)).size>1?'compases variables':rhythmTimeline().meters[0].label} · ${used.toFixed(2).replace(/\.00$/,'')} de ${total} tiempos · ${clef==='grand'?'sol y fa · escribiendo en '+(activeRhythmStaff===2?'fa':'sol'):'clave de '+(clef==='bass'?'fa':'sol')} · clic: ${UI.rhythmPlacement.options[UI.rhythmPlacement.selectedIndex].text}`}
     function addRhythmEditorEvent(note){const before=rhythmSnapshot();const message=rhythmWriting.append(activeRhythmTool,rhythmEditorEvents,note,rhythmTimeline().capacities,Math.max(1,Math.min(16,Number(UI.rhythmBars.value)||1)),activeRhythmStaff,rhythmPointerTarget);if(!message)rhythmHistory.commit(before,rhythmSnapshot());syncRhythmPalette();rhythmPreview.replaceChildren();renderRhythmScore(message);}
     function syncRhythmPalette(){UI.rhythmPalette.querySelectorAll('button').forEach(b=>{const a=b.dataset.action,v=b.dataset.value;const active=a==='tool'?activeRhythmTool.tool===v:a==='grace'?!!activeRhythmTool.grace:a==='chord'?!!activeRhythmTool.chord:a==='ottava'?!!activeRhythmTool.ottava:a==='duration'?v===activeRhythmTool.duration:a==='rest'?activeRhythmTool.rest:a==='dots'?Number(v)===activeRhythmTool.dots:Number(v)===activeRhythmTool.actual;b.classList.toggle('is-active',active);b.setAttribute('aria-pressed',String(active));});}
     function buildRhythmPalette(){
@@ -1384,7 +1385,7 @@
 
     function fillEditorWithRests(){renderRhythmScore('Los espacios vacíos se completan automáticamente con silencios.');}
 
-    UI.rhythmPalette.addEventListener('click',event=>{const b=event.target.closest('[data-action]');if(!b)return;activeRhythmMark=null;markRangeStart=null;renderRhythmMarks();rhythmWriting.select(activeRhythmTool,b.dataset.action,['duration','tool','accidental'].includes(b.dataset.action)?b.dataset.value:Number(b.dataset.value));syncRhythmPalette();drawRhythmGuides();if(rhythmPointerEvent)showRhythmPreview(rhythmPointerEvent);});
+    UI.rhythmPalette.addEventListener('click',event=>{const b=event.target.closest('[data-action]');if(!b)return;selectedRhythmNote=null;renderRhythmScore();activeRhythmMark=null;markRangeStart=null;renderRhythmMarks();rhythmWriting.select(activeRhythmTool,b.dataset.action,['duration','tool','accidental'].includes(b.dataset.action)?b.dataset.value:Number(b.dataset.value));syncRhythmPalette();drawRhythmGuides();if(rhythmPointerEvent)showRhythmPreview(rhythmPointerEvent);});
     document.addEventListener('keydown',e=>{if(UI.rhythmLab.hidden||e.ctrlKey||e.metaKey||e.altKey||e.target.closest('input,select,textarea,[contenteditable="true"]'))return;const d=rhythmWriting.durations.find(d=>d[2]===e.key),k=e.key.toLowerCase();if(!d&&!['s','p','q'].includes(k))return;e.preventDefault();if(e.repeat)return;activeRhythmMark=null;markRangeStart=null;renderRhythmMarks();rhythmWriting.select(activeRhythmTool,d?'duration':k==='s'?'rest':k==='q'?'chord':'dots',d?d[0]:1);syncRhythmPalette();drawRhythmGuides();if(rhythmPointerEvent)showRhythmPreview(rhythmPointerEvent);});
     function clickedStaffPosition(event){locateRhythmTime(event);if(!rhythmPointerStaff)return 6;return rhythmWriting.clampStaffIndex(Math.round(2+(event.clientY-rhythmPointerStaff.top)/5));}
     let rhythmPointerStaff=null,rhythmPointerEvent=null;
@@ -1413,11 +1414,23 @@
     }
     UI.rhythmScoreOverlay.addEventListener('pointermove',showRhythmPreview);
     UI.rhythmScoreOverlay.addEventListener('pointerleave',()=>{rhythmPointerEvent=null;rhythmPointerTarget=null;rhythmPreview.replaceChildren();});
-    UI.rhythmScoreOverlay.addEventListener('click',event=>{if(placeRhythmMark(event))return;const index=clickedStaffPosition(event);locateRhythmTime(event);const note=rhythmWriting.noteAtIndex(index,activeRhythmStaff);if(['slur','tie','staccato','accent','glissando'].includes(activeRhythmTool.tool)){const existing=rhythmEditorEvents.some(e=>(e.staff||1)===activeRhythmStaff&&e.bar===rhythmPointerTarget.bar&&Math.abs((e.offset||0)-rhythmPointerTarget.beat)<.0001&&!e.grace&&e.kind!=='rest');if(existing||!['staccato','accent'].includes(activeRhythmTool.tool)){const before=rhythmSnapshot(),message=rhythmWriting.decorate(activeRhythmTool,rhythmEditorEvents,rhythmPointerTarget,activeRhythmStaff,rhythmTimeline().capacities);if(before!==rhythmSnapshot())rhythmHistory.commit(before,rhythmSnapshot());syncRhythmPalette();renderRhythmScore(message);return;}}addRhythmEditorEvent(note)});
+    function selectRhythmHead(event){
+      if(activeRhythmTool.rest||activeRhythmTool.chord||activeRhythmTool.grace||activeRhythmTool.accidental||activeRhythmTool.tool||activeRhythmMark)return false;
+      const hit=[...UI.rhythmScore.querySelectorAll('.rhythm-head-target')].reverse().find(el=>{const r=el.getBoundingClientRect();return event.clientX>=r.left&&event.clientX<=r.right&&event.clientY>=r.top&&event.clientY<=r.bottom;});
+      if(!hit)return false;selectedRhythmNote={index:Number(hit.dataset.event),head:Number(hit.dataset.head)};rhythmPreview.replaceChildren();renderRhythmScore('Nota seleccionada. ↑ / ↓: subir o bajar un semitono.');document.activeElement?.blur();return true;
+    }
+    document.addEventListener('keydown',event=>{
+      if(event.defaultPrevented||event.ctrlKey||event.metaKey||event.altKey||event.shiftKey||event.target.closest?.('input,textarea,select,[contenteditable="true"]'))return;
+      if(event.key==='Escape'&&selectedRhythmNote){selectedRhythmNote=null;renderRhythmScore();return;}
+      if(!selectedRhythmNote||!['ArrowUp','ArrowDown'].includes(event.key)||UI.rhythmLab.hidden)return;
+      event.preventDefault();const before=rhythmSnapshot();
+      if(rhythmStructure.transposeHead(rhythmEditorEvents,rhythmMarks,selectedRhythmNote.index,selectedRhythmNote.head,event.key==='ArrowUp'?1:-1)){rhythmHistory.commit(before,rhythmSnapshot());renderRhythmScore('↑ / ↓: mover la nota seleccionada por semitonos.');}
+    });
+    UI.rhythmScoreOverlay.addEventListener('click',event=>{if(placeRhythmMark(event))return;if(selectRhythmHead(event))return;selectedRhythmNote=null;const index=clickedStaffPosition(event);locateRhythmTime(event);const note=rhythmWriting.noteAtIndex(index,activeRhythmStaff);if(['slur','tie','staccato','accent','glissando'].includes(activeRhythmTool.tool)){const existing=rhythmEditorEvents.some(e=>(e.staff||1)===activeRhythmStaff&&e.bar===rhythmPointerTarget.bar&&Math.abs((e.offset||0)-rhythmPointerTarget.beat)<.0001&&!e.grace&&e.kind!=='rest');if(existing||!['staccato','accent'].includes(activeRhythmTool.tool)){const before=rhythmSnapshot(),message=rhythmWriting.decorate(activeRhythmTool,rhythmEditorEvents,rhythmPointerTarget,activeRhythmStaff,rhythmTimeline().capacities);if(before!==rhythmSnapshot())rhythmHistory.commit(before,rhythmSnapshot());syncRhythmPalette();renderRhythmScore(message);return;}}addRhythmEditorEvent(note)});
     UI.rhythmScoreOverlay.addEventListener('wheel',event=>{if(event.shiftKey||Math.abs(event.deltaX)>Math.abs(event.deltaY)){if(UI.rhythmScore.scrollWidth<=UI.rhythmScore.clientWidth)return;event.preventDefault();UI.rhythmScore.scrollLeft+=event.deltaX||event.deltaY;}else{if(UI.rhythmScore.scrollHeight<=UI.rhythmScore.clientHeight)return;event.preventDefault();UI.rhythmScore.scrollTop+=event.deltaY;}},{passive:false});
-    function restoreRhythmHistory(direction){const previous=rhythmHistory[direction](rhythmSnapshot());if(previous===null)return;const restored=JSON.parse(previous);rhythmEditorEvents=restored.events;rhythmMarks=restored.marks;rhythmPointerTarget=null;rhythmPointerEvent=null;rhythmPreview.replaceChildren();activeRhythmTool.actual=0;activeRhythmTool.groupIndex=0;activeRhythmTool.accidental=null;activeRhythmTool.decorationStart=null;syncRhythmPalette();renderRhythmScore();}
+    function restoreRhythmHistory(direction){selectedRhythmNote=null;const previous=rhythmHistory[direction](rhythmSnapshot());if(previous===null)return;const restored=JSON.parse(previous);rhythmEditorEvents=restored.events;rhythmMarks=restored.marks;rhythmPointerTarget=null;rhythmPointerEvent=null;rhythmPreview.replaceChildren();activeRhythmTool.actual=0;activeRhythmTool.groupIndex=0;activeRhythmTool.accidental=null;activeRhythmTool.decorationStart=null;syncRhythmPalette();renderRhythmScore();}
     UI.rhythmUndo.addEventListener('click',()=>restoreRhythmHistory('undo'));UI.rhythmRedo.addEventListener('click',()=>restoreRhythmHistory('redo'));
-    UI.rhythmClear.addEventListener('click',()=>{const before=rhythmSnapshot();rhythmEditorEvents=[];rhythmMarks=[];rhythmHistory.commit(before,rhythmSnapshot());rhythmPointerTarget=null;rhythmPointerEvent=null;rhythmPreview.replaceChildren();activeRhythmTool.groupIndex=0;activeRhythmTool.actual=0;activeRhythmTool.accidental=null;activeRhythmTool.decorationStart=null;syncRhythmPalette();renderRhythmScore('Pentagrama limpio. Elige una figura o silencio y pulsa sobre él.');});UI.rhythmFillRests.addEventListener('click',fillEditorWithRests);
+    UI.rhythmClear.addEventListener('click',()=>{const before=rhythmSnapshot();rhythmEditorEvents=[];rhythmMarks=[];selectedRhythmNote=null;rhythmHistory.commit(before,rhythmSnapshot());rhythmPointerTarget=null;rhythmPointerEvent=null;rhythmPreview.replaceChildren();activeRhythmTool.groupIndex=0;activeRhythmTool.actual=0;activeRhythmTool.accidental=null;activeRhythmTool.decorationStart=null;syncRhythmPalette();renderRhythmScore('Pentagrama limpio. Elige una figura o silencio y pulsa sobre él.');});UI.rhythmFillRests.addEventListener('click',fillEditorWithRests);
     const saveButton=document.getElementById('rhythmSave'),saveMenu=document.getElementById('rhythmSaveMenu');
     document.body.appendChild(saveMenu);
     function closeRhythmSaveMenu(){saveMenu.hidden=true;saveButton.setAttribute('aria-expanded','false');}
@@ -1483,11 +1496,11 @@
     rhythmAudio.preload(rhythmSound.value);
 
     UI.rhythmGenerate.addEventListener('click',generateRhythmExercise);
-    UI.rhythmBars.addEventListener('change',()=>{const bars=Math.max(1,Math.min(16,Number(UI.rhythmBars.value)||1));UI.rhythmBars.value=String(bars);rhythmEditorEvents=rhythmEditorEvents.filter(event=>(event.bar||0)<bars);rhythmMarks=rhythmMarks.filter(m=>m.bar<bars).map(m=>({...m,endBar:Math.min(m.endBar??m.bar,bars-1)}));renderRhythmScore()});
+    UI.rhythmBars.addEventListener('change',()=>{selectedRhythmNote=null;const bars=Math.max(1,Math.min(16,Number(UI.rhythmBars.value)||1));UI.rhythmBars.value=String(bars);rhythmEditorEvents=rhythmEditorEvents.filter(event=>(event.bar||0)<bars);rhythmMarks=rhythmMarks.filter(m=>m.bar<bars).map(m=>({...m,endBar:Math.min(m.endBar??m.bar,bars-1)}));renderRhythmScore()});
     function stepRhythmBars(delta){UI.rhythmBars.value=String(Math.max(1,Math.min(16,(Number(UI.rhythmBars.value)||1)+delta)));UI.rhythmBars.dispatchEvent(new Event('change',{bubbles:true}))}
     UI.rhythmBarsMinus.addEventListener('click',()=>stepRhythmBars(-1));UI.rhythmBarsPlus.addEventListener('click',()=>stepRhythmBars(1));
     [UI.rhythmBarsMinus,UI.rhythmBarsPlus].forEach(button=>{button.addEventListener('pointerenter',()=>{UI.rhythmBarsMinus.classList.remove('is-hovered');UI.rhythmBarsPlus.classList.remove('is-hovered');button.classList.add('is-hovered')});button.addEventListener('pointerleave',()=>button.classList.remove('is-hovered'));button.addEventListener('blur',()=>button.classList.remove('is-hovered'))});
-    UI.rhythmClef.addEventListener('change',()=>{activeRhythmStaff=UI.rhythmClef.value==='bass'?2:1;renderRhythmScore()});
+    UI.rhythmClef.addEventListener('change',()=>{selectedRhythmNote=null;activeRhythmStaff=UI.rhythmClef.value==='bass'?2:1;renderRhythmScore()});
     [UI.rhythmFigure,UI.rhythmExercise,UI.rhythmPlacement].forEach(el=>el.addEventListener('change',renderRhythmScore));
     UI.beatsSel.addEventListener('change',renderRhythmScore);
     UI.exerciseToggleBtn.addEventListener('click',()=>{const opening=UI.rhythmLab.hidden;UI.rhythmLab.hidden=!opening;UI.exerciseToggleBtn.classList.toggle('open',opening);UI.exerciseToggleBtn.setAttribute('aria-expanded',String(opening));if(!opening)rhythmAudio?.stop();if(opening){renderRhythmScore();UI.rhythmLab.scrollIntoView({behavior:'smooth',block:'nearest'})}});
@@ -1821,7 +1834,7 @@
     setMode('basic');
 
     document.addEventListener('keydown', (e) => {
-        if (document.activeElement.tagName === 'INPUT') return;
+        if (e.defaultPrevented || document.activeElement.matches('input,textarea,select,[contenteditable="true"]')) return;
         switch(e.code) {
             case 'Space': e.preventDefault(); toggleMetronome(); break;
             case 'ArrowRight': e.preventDefault(); adjustBpm(5); break;

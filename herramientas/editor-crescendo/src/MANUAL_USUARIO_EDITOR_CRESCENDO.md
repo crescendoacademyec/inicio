@@ -727,3 +727,7 @@ La paleta Figuras incluye **Cm7 · Cifrado de acordes**. Actívalo y pulsa un co
 Las figuras largas también se pueden dibujar en pulsos interiores: después de dos corcheas, una blanca puede empezar en el tiempo 2. Al dibujar con el puntero se conserva la figura escogida, sin dividirla automáticamente en el centro del compás; las barras de compás siguen dividiendo las notas que las cruzan. Las líneas de escritura incluyen esos pulsos y los comienzos/finales de las notas previas.
 
 Clic derecho sobre una barra → **Signatura de medida** o **Armadura** permite cambios desde ese compás. Clic derecho sobre una nota → **Alteraciones** ofrece sostenido, bemol, becuadro y dobles alteraciones, sin cambiar la duración de la nota.
+
+### Ajustar la altura con el teclado
+
+Pulsa la cabeza de una nota existente para seleccionarla y usa ↑ o ↓ para moverla un semitono. Al subir se escriben sostenidos (Do → Do♯ → Re); al bajar, bemoles (Re → Re♭ → Do). Se respetan las armaduras, la duración y la posición rítmica. En un acorde se mueve la cabeza seleccionada. Los cambios admiten deshacer y rehacer.
