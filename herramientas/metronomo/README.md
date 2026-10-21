@@ -38,3 +38,7 @@ Los compases variables utilizan una línea de tiempo acumulada: notas, silencios
 ### Ajustar la altura con el teclado
 
 Pulsa la cabeza de una nota existente para seleccionarla y usa ↑ o ↓ para moverla un semitono. Al subir se escriben sostenidos (Do → Do♯ → Re); al bajar, bemoles (Re → Re♭ → Do). Se respetan las armaduras, la duración y la posición rítmica. En un acorde se mueve la cabeza seleccionada. Los cambios admiten deshacer y rehacer.
+
+### Reemplazar una figura
+
+Selecciona una duración en la paleta (o con su atajo) y pulsa la cabeza de una nota existente para sustituir su duración en el mismo tiempo. Por ejemplo, después de un tresillo de corcheas, una negra en el tiempo 2 puede convertirse en blanca sin borrarla antes. El editor aprovecha los silencios disponibles, conserva las notas siguientes y rechaza los cambios que excedan el compás o se solapen con otra nota. Admite puntillos, ambas claves y deshacer/rehacer. Un clic sin preparar otra duración sigue seleccionando la nota para moverla con las flechas.

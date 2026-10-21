@@ -39,6 +39,21 @@ function append(state,events,note,capacity,bars,staff=1,position=null){
  if(position)for(let i=events.length-1;i>=0;i--){const old=events[i];if(!old.grace&&(old.staff||1)===staff&&old.bar===bar&&ticks(old.offset||0)<offset+eventTicks&&ticks(old.offset||0)+ticks(old.beats)>offset)events.splice(i,1);}
  events.push(e);if(!state.rest)state.accidental=null;return '';
 }
+// Resize a written figure at its exact onset; the writing grid must not snap it.
+function replaceDuration(state,events,index,capacity,bars){
+ const entry=events[index];
+ if(!entry||entry.kind==='rest'||entry.grace||entry.tupletActual||state.actual)return {handled:false};
+ const beats=gridStep(state);
+ if(ticks(beats)===ticks(entry.beats))return {handled:false};
+ const bar=entry.bar||0,limit=Array.isArray(capacity)?capacity[bar]:capacity,start=ticks(entry.offset||0),end=start+ticks(beats);
+ if(bar>=bars||!Number.isFinite(limit)||end>ticks(limit))return {handled:true,message:'Esa figura no cabe en el compás. La nota original se ha conservado.'};
+ const overlaps=other=>other!==entry&&!other.grace&&(other.staff||1)===(entry.staff||1)&&(other.bar||0)===bar&&ticks(other.offset||0)<end&&ticks(other.offset||0)+ticks(other.beats)>start;
+ if(events.some(other=>overlaps(other)&&other.kind!=='rest'))return {handled:true,message:'Esa figura ocuparía el tiempo de otra nota. La escritura se ha conservado.'};
+ // Explicit rests can be consumed; notation() restores any uncovered rest fragments.
+ for(let i=events.length-1;i>=0;i--)if(events[i].kind==='rest'&&overlaps(events[i]))events.splice(i,1);
+ entry.beats=beats;
+ return {handled:true,entry};
+}
 function notation(events,capacity,bars){const result=[];for(const staff of [1,2])for(let bar=0;bar<bars;bar++){const barCapacity=Array.isArray(capacity)?capacity[bar]:capacity;let cursor=0;const selected=events.filter(e=>(e.staff||1)===staff&&(e.bar||0)===bar);let legacy=0;const ordered=selected.map(e=>{const offset=e.offset??legacy;legacy=offset+e.beats;return {...e,offset};}).sort((a,b)=>a.offset-b.offset);const rest=end=>{while(cursor<ticks(end)){const remaining=ticks(end)-cursor,beatRemaining=TICKS-cursor%TICKS;const length=Math.min(remaining,beatRemaining);const value=[4,2,1,.5,.25,.125,.0625,.03125].find(v=>ticks(v)<=length);const duration=value?ticks(value):length;result.push({staff,bar,kind:'rest',beats:duration/TICKS});cursor+=duration;}};if(!ordered.length){result.push({staff,bar,kind:'rest',measureRest:true,beats:barCapacity});continue;}for(const e of ordered){if(e.grace){result.push(e);continue;}rest(e.offset);result.push(e);cursor=ticks(e.offset+e.beats);}rest(barCapacity);}return result;}
 function figureForEvent(e){const base=e.tupletUnitBeats||e.graceUnitBeats||e.beats;return durations.find(d=>Math.abs(d[1]-base)<.00001)||durations.find(d=>Math.abs(d[1]*1.5-base)<.00001)||durations.find(d=>Math.abs(d[1]*1.75-base)<.00001)||durations.find(d=>d[0]==='quarter');}
 function beamGroups(events,meter='4/4'){
@@ -188,5 +203,5 @@ function generate({capacity=4,bars=4,kind='steady',base=1,clef='treble',random=M
 }
 
 function history(){const past=[],future=[];return {get canUndo(){return past.length>0;},get canRedo(){return future.length>0;},commit(before,after){if(before===after)return;past.push(before);if(past.length>100)past.shift();future.length=0;},undo(current){if(!past.length)return null;future.push(current);return past.pop();},redo(current){if(!future.length)return null;past.push(current);return future.pop();}};}
-const api={clampStaffIndex,diatonic,noteAtIndex,stemDown,noteGraphic,history,decorate,beamGroups,generate,gridStep,render,notation,TICKS,durations,ticks,factor,create,select,append};if(typeof module!=='undefined')module.exports=api;else root.CrescendoRhythmWriting=api;
+const api={clampStaffIndex,diatonic,noteAtIndex,stemDown,noteGraphic,history,decorate,beamGroups,generate,gridStep,render,notation,TICKS,durations,ticks,factor,create,select,append,replaceDuration};if(typeof module!=='undefined')module.exports=api;else root.CrescendoRhythmWriting=api;
 })(typeof window==='undefined'?globalThis:window);
