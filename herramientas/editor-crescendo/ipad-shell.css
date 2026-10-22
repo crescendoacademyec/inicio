@@ -1614,9 +1614,10 @@ html{--ipad-inspector-width:146px!important}.ipad-inspector-panel .ipad-side-con
 
 /* Tres columnas dentro del mismo ancho de inspector. */
 .ipad-context-drawer #durationTools > button {
-  height: 48px !important;
-  min-height: 48px !important;
-  padding: 2px !important;
+  aspect-ratio: 1 !important;
+  height: auto !important;
+  min-height: 0 !important;
+  padding: 1px !important;
 }
 .ipad-context-drawer .duration-icons .centered-figure-icon {
   width: 36px !important;
