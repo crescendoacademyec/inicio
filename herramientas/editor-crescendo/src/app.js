@@ -15954,7 +15954,39 @@
         icon.appendChild(el("path", { d:glyph.d, fill:"currentColor", transform:`translate(${24-(glyph.x+glyph.width/2)*scale} ${24-(glyph.y+glyph.height/2)*scale}) scale(${scale})` }));
         span.replaceWith(icon);
       });
+      durationTools.querySelectorAll("button[data-palette-item]").forEach(button => {
+        const icon = writingPaletteSymbol(button.dataset.paletteItem);
+        if (!icon) return;
+        const shortcut = button.querySelector(".figure-shortcut");
+        button.replaceChildren(icon);
+        if (shortcut) button.appendChild(shortcut);
+      });
     }
+  }
+
+  function writingPaletteSymbol(id) {
+    if (!["dot", "double-dot", "writing-staccato", "writing-tie", "input-chord"].includes(id)) return null;
+    const glyph = window.CrescendoBravuraPalette?.quarter;
+    if (!glyph) return null;
+    const icon = el("svg", { viewBox: "0 0 48 48", class: "centered-figure-icon writing-symbol-icon", "aria-hidden": "true" });
+    const note = (x, y, scale) => icon.appendChild(el("path", { d: glyph.d, fill: "currentColor", transform: `translate(${x - 166 * scale} ${y}) scale(${scale})` }));
+    const dot = (x, y) => icon.appendChild(el("circle", { cx: x, cy: y, r: 1.8, fill: "currentColor" }));
+    if (id === "input-chord") {
+      [34, 26, 18].forEach(y => {
+        const head = el("text", { x: 15, y, class: "chord-icon-head", fill: "currentColor" });
+        head.textContent = String.fromCodePoint(0xE0A4);
+        icon.appendChild(head);
+      });
+      icon.appendChild(el("path", { d: "M24 34V6", stroke: "currentColor", "stroke-width": 1.2, fill: "none" }));
+    } else if (id === "writing-tie") {
+      note(12, 29, .024); note(34, 29, .024);
+      icon.appendChild(el("path", { d: "M13 34 Q23 43 33 34", stroke: "currentColor", "stroke-width": 1.5, fill: "none" }));
+    } else {
+      note(19, 32, .032);
+      if (id === "writing-staccato") dot(19, 41);
+      else { dot(29, 31); if (id === "double-dot") dot(35, 31); }
+    }
+    return icon;
   }
 
   function renderKeySignature(root, signature = state.keySignature, xOverride = null, options = {}) {
@@ -19438,6 +19470,7 @@
     }
     const start = svgPointFromEvent(event);
     if (!start) return;
+    document.activeElement?.blur();
     setActiveSystemIndex(systemIndexFromY(start.y));
     event.preventDefault();
     event.stopPropagation();
