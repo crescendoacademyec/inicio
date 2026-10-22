@@ -23046,7 +23046,9 @@
   dynamicsButton?.addEventListener("click", activateDynamicsTool);
   window.addEventListener("crescendo:keyboard-visibility", event => { if (!event.detail.visible) openPaletteById("figures"); });
   function mountStaffViewControl() {
-    document.getElementById("ipad-panel-write")?.append(document.getElementById("staffViewSelect").closest("label"));
+    const panel=document.getElementById("ipad-panel-write");
+    const control=document.getElementById("staffViewSelect")?.closest("label");
+    if(panel&&control)panel.insertBefore(control,panel.children[1]||null);
   }
   mountStaffViewControl();
   const showInitialFigures = () => { mountStaffViewControl();if (durationDrawer.classList.contains("is-hidden")) openPaletteById("figures");else renderPalette("figures"); };
