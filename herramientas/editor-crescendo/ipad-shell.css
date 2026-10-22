@@ -1717,3 +1717,8 @@ html{--ipad-inspector-width:146px!important}.ipad-inspector-panel .ipad-side-con
 .is-score-playing .guitar-fretboard button.is-active:not(.is-playing) { background:transparent;color:transparent; }
 .editor-tab-toggle--mobile { display:none; }
 @media (max-width:820px) { .editor-tab-toggle--mobile { display:inline-flex; } }
+.ipad-primary-action[data-visible-label]::after{content:attr(data-visible-label);display:inline!important;font:700 13px system-ui,sans-serif}.ipad-primary-action[data-visible-label]>.ipad-button-text{display:none!important}.ipad-primary-action[data-visible-label]{gap:9px!important;min-height:44px!important}
+.measure-selection{fill:#d5aa4526;stroke:#b88820;stroke-width:1;pointer-events:none}.measure-select-toggle.is-active{background:#d5aa45;color:#111}
+#ipad-panel-document .exercise-app-menu__actions{display:grid;grid-template-columns:minmax(0,1fr);gap:8px}
+#ipad-panel-document .exercise-app-menu__actions .ipad-primary-action{font-size:0!important;width:100%;white-space:normal}
+#ipad-panel-document .exercise-app-menu__actions .ipad-primary-action::after{white-space:normal;text-align:left}

@@ -18,9 +18,17 @@
   input.addEventListener('blur',commit);input.addEventListener('input',()=>input.removeAttribute('aria-invalid'));
   input.focus({preventScroll:true});input.select();return session;
  }
- function column({svg,x,y,instrument,positions,key,onApply}){
-  const hit=document.createElementNS(ns,'rect');Object.entries({x:x-12,y:y-8,width:24,height:(instrument.tuning.length-1)*17+16,fill:'transparent',class:'string-tab-column'}).forEach(([k,v])=>hit.setAttribute(k,v));svg.appendChild(hit);
-  const open=(event,p,string=p.string)=>{event.preventDefault();event.stopPropagation();chosen.set(key,p);edit({svg,x,y,instrument,position:p,string,key,onApply:(s,f,pos)=>onApply(p,s,f,pos)});};
+ function column({svg,container=svg,x,y,instrument,positions,key,onApply}){
+  const hit=document.createElementNS(ns,'rect');Object.entries({x:x-12,y:y-8,width:24,height:(instrument.tuning.length-1)*17+16,fill:'transparent',class:'string-tab-column'}).forEach(([k,v])=>hit.setAttribute(k,v));container.appendChild(hit);
+  const open=(event,p,string=p.string)=>{
+   event.preventDefault();event.stopPropagation();chosen.set(key,p);
+   if(string!==p.string){
+    const fret=p.midi-instrument.tuning[string-1];
+    if(instrument.midi(string,fret)===p.midi){cancel();const result=onApply(p,string,fret,p.position||'I');if(result!==false&&!(typeof result==='string'&&result))return;}
+    const session=edit({svg,x,y,instrument,position:p,string,key,onApply:(s,f,pos)=>onApply(p,s,f,pos)});session.input.value='';session.input.setAttribute('aria-invalid','true');session.input.title='La nota no tiene una posición disponible en esta cuerda.';return;
+   }
+   edit({svg,x,y,instrument,position:p,string,key,onApply:(s,f,pos)=>onApply(p,s,f,pos)});
+  };
   hit.addEventListener('pointerdown',event=>{const point=new DOMPoint(event.clientX,event.clientY).matrixTransform(svg.getScreenCTM().inverse());const string=Math.max(1,Math.min(instrument.tuning.length,Math.round((point.y-y)/17)+1));const p=positions.find(p=>p.string===string)||positions.find(p=>p.midi===chosen.get(key)?.midi)||positions[0];if(p)open(event,p,string);});
   return (event,p)=>open(event,p);
  }

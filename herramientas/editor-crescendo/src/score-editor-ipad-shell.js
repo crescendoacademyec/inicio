@@ -547,17 +547,21 @@
     documentPanel.appendChild(sectionHeader("ARCHIVO", "Biblioteca", "Organiza, importa y exporta tus ejercicios."));
     const newDocumentButton = createIconButton({
       icon: "file-plus-2",
-      label: "Nuevo ejercicio",
-      text: "Nuevo ejercicio",
+      label: "Crear proyecto",
+      text: "Crear proyecto",
       className: "ipad-primary-action"
     });
+    newDocumentButton.dataset.visibleLabel="Crear proyecto";
     documentPanel.appendChild(newDocumentButton);
-    [ ["png", "Exportar imagen PNG"], ["pdf", "Exportar PDF"] ].forEach(([format, text]) => {
+    const openProject=createIconButton({icon:"folder-open",label:"Abrir proyecto",text:"Abrir proyecto",className:"ipad-primary-action"});openProject.dataset.visibleLabel="Abrir proyecto";openProject.onclick=()=>document.getElementById("importExerciseInput")?.click();documentPanel.appendChild(openProject);
+    [ ["png", "Guardar imagen"], ["pdf", "Guardar PDF"] ].forEach(([format, text]) => {
       const button = createIconButton({icon:"save", label:text, text, className:"ipad-primary-action"});
+      button.dataset.visibleLabel=text;
       button.addEventListener("click", () => document.dispatchEvent(new CustomEvent("editor-export-image", {detail:{format}})));
       documentPanel.appendChild(button);
     });
     moveLegacyPanel(".exercise-app-menu__panel--file", documentPanel);
+    documentPanel.querySelectorAll("#loadExerciseButton,#saveExerciseButton,#exportExerciseButton,#exportMusicXmlButton").forEach(button=>{button.dataset.visibleLabel=button.textContent;button.setAttribute("aria-label",button.textContent);button.classList.add("ipad-primary-action");});
     const versionHistorySection = createControlSection("Historial");
     moveLegacyPanel("#versionHistoryHost", versionHistorySection);
     documentPanel.appendChild(versionHistorySection);

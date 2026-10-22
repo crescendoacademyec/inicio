@@ -26,16 +26,17 @@
  function render(host,{events,marks,instrument:id,score,onEdit}){
   const instrument=Strings.forInstrument(id),toggle=document.getElementById('rhythmTabEnabled');
   if(toggle)toggle.closest('label').hidden=!instrument;
-  host.hidden=!instrument||toggle?.checked===false;host.replaceChildren();if(host.hidden)return;
+  host.hidden=true;host.replaceChildren();if(!instrument||toggle?.checked===false)return;
   const original=score.querySelector('svg');if(!original)return;
   const width=Number(original.getAttribute('width')),boxes=[...score.querySelectorAll('.rhythm-measure-hit')];
   const rows=[...new Set(boxes.map(box=>box.dataset.top))].sort((a,b)=>Number(a)-Number(b));
-  const rowHeight=instrument.tuning.length*17+28;
-  const svg=document.createElementNS(ns,'svg');svg.setAttribute('width',width);svg.setAttribute('height',rows.length*rowHeight);svg.setAttribute('viewBox',`0 0 ${width} ${rows.length*rowHeight}`);svg.setAttribute('aria-label',`${instrument.fretted?'Tablatura':'Digitación'} de ${instrument.name}`);svg.setAttribute('role','group');
-  const add=(name,attrs,text)=>{const node=document.createElementNS(ns,name);Object.entries(attrs).forEach(([k,v])=>node.setAttribute(k,v));if(text!==undefined)node.textContent=text;svg.appendChild(node);return node;};
+  const svg=original;
+  svg.querySelectorAll('.integrated-tab,.string-tab-column,.string-tab-inline').forEach(node=>node.remove());
+  const layer=document.createElementNS(ns,'g');layer.classList.add('integrated-tab');layer.addEventListener('pointerdown',e=>e.stopPropagation());layer.addEventListener('click',e=>e.stopPropagation());svg.appendChild(layer);
+  const add=(name,attrs,text)=>{const node=document.createElementNS(ns,name);Object.entries(attrs).forEach(([k,v])=>node.setAttribute(k,v));if(text!==undefined)node.textContent=text;layer.appendChild(node);return node;};
   const resolved=Structure.resolve(events,marks),heads=[...score.querySelectorAll('.rhythm-head-target')];
   rows.forEach((top,row)=>{
-   const y=row*rowHeight+22,rowBoxes=boxes.filter(box=>box.dataset.top===top),staff=Number(rowBoxes[0].dataset.staff);
+   const y=Number(top)+102,rowBoxes=boxes.filter(box=>box.dataset.top===top),staff=Number(rowBoxes[0].dataset.staff);
    add('text',{x:8,y:y-10,'font-size':10,fill:'#555'},instrument.name);
    instrument.labels.forEach((name,i)=>{const cy=y+i*17;add('line',{x1:65,x2:width-20,y1:cy,y2:cy,stroke:'#666','stroke-width':.8});add('text',{x:8,y:cy+4,'font-size':10,fill:'#555'},`${i+1} ${name}`);});
    rowBoxes.forEach(box=>{const bar=Number(box.dataset.bar),end=Number(box.getAttribute('x'))+Number(box.getAttribute('width'));add('line',{x1:end,x2:end,y1:y,y2:y+(instrument.tuning.length-1)*17,stroke:'#555'});
@@ -54,7 +55,7 @@
     });
    });
   });
-  const strip=document.createElement('div');strip.className='rhythm-tab-scroll';strip.appendChild(svg);host.appendChild(strip);strip.scrollLeft=score.scrollLeft;strip.onscroll=()=>{score.scrollLeft=strip.scrollLeft;};
+
  }
  const api={setPosition,render,noteMidis};if(typeof module!=='undefined')module.exports=api;else root.CrescendoRhythmTab=api;
 })(typeof window==='undefined'?globalThis:window);

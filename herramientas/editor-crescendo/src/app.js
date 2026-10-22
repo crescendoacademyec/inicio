@@ -24,6 +24,7 @@
   const InstrumentSounds = window.JMLScoreInstruments;
   const Guitar = window.JMLScoreGuitar;
   let guitarTabVisible = true;
+  let measureSelectMode=false,measureClipboard=null;
   if (!Timeline) throw new Error("No se cargó score-editor-timeline.js");
   if (!RhythmicColumns) throw new Error("No se cargó score-editor-rhythmic-columns.js");
   if (!InputSession) throw new Error("No se cargó score-editor-input-session.js");
@@ -703,7 +704,7 @@
   }
 
   function systemGapY() {
-    return SYSTEM_GAP_Y;
+    return SYSTEM_GAP_Y + (stringInstrument() && guitarTabVisible ? stringInstrument().tuning.length * 17 + 40 : 0);
   }
 
   function visibleSystemIndices() {
@@ -2218,9 +2219,10 @@
     return true;
   }
 
-  function downloadExerciseDocument(exerciseDocument = currentExerciseDocument()) {
+  async function downloadExerciseDocument(exerciseDocument = currentExerciseDocument()) {
     const exercise = normalizeExerciseDocument(exerciseDocument) || currentExerciseDocument();
-    ExerciseLibrary.downloadJson(exercise, exerciseSlug);
+    const filename=await window.CrescendoScoreFile.ask({suggested:exercise.title||"Proyecto",extension:"json"});if(!filename)return;
+    downloadTextFile(filename,JSON.stringify(exercise,null,2),"application/json");
     setExerciseStatus(`Exportado: ${exercise.title}`);
   }
 
@@ -10123,7 +10125,8 @@
     const xml = MusicXml.serialize(model);
     const validation = validateMusicXmlText(xml);
     const omissions = musicXmlOmissionSummary(Math.max(0, ...scoreSystems().map((system) => system.measures?.length || 0)));
-    downloadTextFile(musicXmlExportFilename(), xml, "application/vnd.recordare.musicxml+xml;charset=utf-8");
+    const filename=await window.CrescendoScoreFile.ask({suggested:musicXmlExportFilename(),extension:"musicxml"});if(!filename)return false;
+    downloadTextFile(filename, xml, "application/vnd.recordare.musicxml+xml;charset=utf-8");
     await showEditorMessage(musicXmlExportMessage(model, validation, omissions));
     return validation.ok;
   }
@@ -13666,6 +13669,51 @@
     }
   }
 
+  function renderMeasureSelection(root,layout){
+    if(!measureSelectMode||!Number.isFinite(state.selectedMeasureIndex))return;
+    const index=state.selectedMeasureIndex;if(!Number.isFinite(layout.starts[index]))return;
+    root.appendChild(el("rect",{class:"measure-selection",x:layout.starts[index],y:scoreStaffTopY()-25,width:layout.widths[index],height:scoreStaffBottomY()-scoreStaffTopY()+(stringInstrument()&&guitarTabVisible?215:65),rx:3}));
+  }
+  function copyWholeMeasure(){
+    const source=state.selectedMeasureIndex,systems=[];if(!Number.isFinite(source))return;
+    visibleSystemIndices().forEach(systemIndex=>withSystemContext(systemIndex,()=>{
+      const entries=(state.measures[source]?.entries||[]).map(entry=>{
+        const copy=JSON.parse(JSON.stringify(entry));if(entry.type==="note")entryStaffSteps(entry).forEach(step=>setEntryAccidental(copy,step,effectiveEntryAccidental(entry,step)||diatonicAccidentalForMeasure(entryDiatonicStepForStaffStep(entry,step),source)||"natural"));return copy;
+      });systems.push({systemIndex,entries});
+    }));
+    const ids=new Set(systems.flatMap(system=>system.entries.map(entry=>entry.id)));
+    measureClipboard=JSON.parse(JSON.stringify({source,systems,marks:state.marks.filter(mark=>mark.measureIndex===source&&(!mark.entryId||ids.has(mark.entryId))&&(!mark.endEntryId||ids.has(mark.endEntryId))),texts:state.textItems.filter(item=>item.measureIndex===source)}));
+    setExerciseStatus(`Compás ${source+1} copiado. Selecciona otro compás y pega con Ctrl+V o Cmd+V.`);
+  }
+  function pasteWholeMeasure(){
+    const destination=state.selectedMeasureIndex;if(!measureClipboard||!Number.isFinite(destination))return;
+    const active=activeSystemIndex();let fits=true;
+    measureClipboard.systems.forEach(system=>withSystemContext(system.systemIndex,()=>{if(!window.CrescendoMeasureClipboard.fits(system.entries,measureTicksForIndex(destination),"tickStart","ticks"))fits=false;}));
+    setActiveSystemIndex(active);if(!fits){setExerciseStatus("El contenido no cabe en el compás seleccionado.");return;}
+    stopMidiPlayback();saveHistory();const copy=window.CrescendoMeasureClipboard.clone(measureClipboard);
+    copy.systems.forEach(system=>withSystemContext(system.systemIndex,()=>{ensureMeasure(destination);state.measures[destination].entries=system.entries;}));setActiveSystemIndex(active);
+    const move=item=>{for(const key of ["measureIndex","startMeasureIndex","endMeasureIndex"])if(Number.isFinite(item[key]))item[key]+=destination-copy.source;return item;};
+    state.marks=state.marks.filter(mark=>mark.measureIndex!==destination||["barline","meter","key"].includes(mark.type)).concat(copy.marks.map(move));
+    state.textItems=state.textItems.filter(item=>item.measureIndex!==destination).concat(copy.texts.map(move));
+    state.selectedEntryIds=[];state.selectedNoteRefs=[];invalidateLayoutCache();render();setExerciseStatus(`Compás pegado en ${destination+1}.`);
+  }
+  function setupMeasureMouse(){
+    const button=document.createElement("button");button.type="button";button.id="measureSelectToggle";button.className="ipad-icon-button measure-select-toggle";button.title="Seleccionar compases · copiar y pegar";button.setAttribute("aria-label","Seleccionar compases");button.setAttribute("aria-pressed","false");button.innerHTML='<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M5 3v16l4-5 4 7 3-2-4-6h7Z" fill="currentColor"/></svg>';
+    document.querySelector(".ipad-header-center")?.prepend(button);
+    const sync=()=>{button.classList.toggle("is-active",measureSelectMode);button.setAttribute("aria-pressed",String(measureSelectMode));};
+    button.onclick=()=>{measureSelectMode=!measureSelectMode;if(measureSelectMode){setMode("note");state.selectMode=true;state.cursorActive=false;}sync();render();};
+    svg.addEventListener("pointerdown",event=>{if(!measureSelectMode||event.button!==0||event.target.closest("input,.string-tab-inline"))return;const point=svgPointFromEvent(event);if(!point)return;event.preventDefault();event.stopImmediatePropagation();document.activeElement?.blur();selectMeasureFromPoint(point);render();},true);
+    svg.addEventListener("click",event=>{if(measureSelectMode){event.preventDefault();event.stopImmediatePropagation();}},true);
+    const handleClipboard=event=>{
+      const key=event.type==="copy"?"c":event.type==="paste"?"v":event.key?.toLowerCase();
+      if(!measureSelectMode||event.target.closest?.('input,textarea,select,dialog,[contenteditable="true"]'))return;
+      if(event.key==="Escape"){measureSelectMode=false;sync();render();return;}
+      if(!['copy','paste'].includes(event.type)&&!(event.ctrlKey||event.metaKey)||!['c','v'].includes(key))return;event.preventDefault();event.stopImmediatePropagation();if(key==='c'){copyWholeMeasure();event.clipboardData?.setData('text/plain',JSON.stringify({type:'crescendo-score-measure',value:measureClipboard}));}else pasteWholeMeasure();
+    };
+    ["keydown","copy","paste"].forEach(type=>document.addEventListener(type,handleClipboard,true));
+    durationTools.addEventListener("pointerdown",()=>{if(measureSelectMode){measureSelectMode=false;sync();render();}},true);
+  }
+
   function renderGuitarPanel() {
     if (!midiKeyboardPanel) return;
     const instrument=stringInstrument();
@@ -13683,14 +13731,13 @@
     if (!panel) {
       panel = document.createElement("div"); panel.id = "editorGuitarPanel";
       midiKeyboardPanel.appendChild(panel);
-      scoreShell?.addEventListener("scroll",()=>{const strip=panel.querySelector(".guitar-tab-strip");if(strip)strip.scrollLeft=scoreShell.scrollLeft;},{passive:true});
     }
     panel.hidden = !enabled;
     if (!enabled) return;
     if(panel.dataset.instrument!==instrument.id){
       panel.dataset.instrument=instrument.id;
       panel.classList.toggle("is-fretless",!instrument.fretted);
-      panel.innerHTML = '<div class="guitar-tab-strip"></div><div class="guitar-fretboard" role="group"></div>';
+      panel.innerHTML = '<div class="guitar-fretboard" role="group"></div>';
       panel.querySelector(".guitar-fretboard").setAttribute("aria-label",`Diapasón de ${instrument.name}`);
       const board = panel.querySelector(".guitar-fretboard");
       instrument.tuning.forEach((_,i)=>{
@@ -13701,16 +13748,6 @@
         if(!instrument.fretted&&[2,4,5,7,9,11,12].includes(fret))button.classList.add("finger-guide");
         button.onclick=()=>applyGuitarPosition(i+1,fret);board.appendChild(button);
       }});
-    }
-    const strip=panel.querySelector(".guitar-tab-strip");
-    strip.hidden=!guitarTabVisible;
-    strip.replaceChildren();
-    if(guitarTabVisible && lastRenderedLayout){
-      const tabSvg=el("svg",{width:lastRenderedLayout.totalWidth*(state.zoom||1),height:instrument.tuning.length*17+17,viewBox:`0 0 ${lastRenderedLayout.totalWidth} ${instrument.tuning.length*17+17}`,role:"group","aria-label":`${instrument.fretted?"Tablatura":"Digitación"} de ${instrument.name}`});
-      const tabRoot=el("g");
-      tabSvg.appendChild(tabRoot);renderGuitarTab(tabRoot,lastRenderedLayout);strip.appendChild(tabSvg);
-      strip.scrollLeft=scoreShell?.scrollLeft||0;
-      strip.onscroll=()=>{if(scoreShell)scoreShell.scrollLeft=strip.scrollLeft;};
     }
     const target=guitarTarget();
     const location=target?.entry ? entryLocationById(target.entry.id):null;
@@ -13729,21 +13766,25 @@
   function renderGuitarTab(root, layout) {
     const instrument=stringInstrument();
     if(!instrument || !guitarTabVisible) return;
-    const y=20;
+    const tabSystemIndex=contextSystemIndex();
+    const y=staffBottomY()+52;
     const group=el("g",{class:"guitar-tablature"});
+    group.addEventListener("pointerdown",event=>event.stopPropagation());
+    group.addEventListener("click",event=>event.stopPropagation());
     for(let string=1;string<=instrument.tuning.length;string++) {
       group.appendChild(el("line",{x1:55,x2:layout.totalWidth-15,y1:y+(string-1)*17,y2:y+(string-1)*17,stroke:"#555","stroke-width":.8}));
       group.appendChild(textNode(15,y+(string-1)*17+4,`${string} ${instrument.labels[string-1]}`,{style:"font:10px sans-serif;fill:#555"}));
     }
     group.appendChild(textNode(55,y-10,instrument.name,{style:"font:bold 12px sans-serif;fill:#111"}));
-    withSystemContext(activeSystemIndex(),()=>{
+    withSystemContext(tabSystemIndex,()=>{
       state.measures.forEach((measure,measureIndex)=>{
         const end=layout.starts[measureIndex]+layout.widths[measureIndex];
         group.appendChild(el("line",{x1:end,x2:end,y1:y,y2:y+(instrument.tuning.length-1)*17,stroke:"#333","stroke-width":1}));
         measure.entries.filter(entry=>entry.type==="note").forEach(entry=>{
           const positions=instrument.fingering(midiNotesForEntry(entry,measureIndex),savedStringFingering(entry));
           const x=cursorVisualXForMeasureTick(layout,measureIndex,entry.tickStart);
-          const open=window.CrescendoStringTab.column({svg:root.ownerSVGElement||root,x,y,instrument,positions,key:`crescendo:${instrument.id}:${entry.id}`,onApply:(p,string,fret,position)=>{
+          const open=window.CrescendoStringTab.column({svg:svg,container:group,x,y,instrument,positions,key:`crescendo:${instrument.id}:${entry.id}`,onApply:(p,string,fret,position)=>{
+            setActiveSystemIndex(tabSystemIndex);
             const step=entryStaffSteps(entry).find(step=>midiNotesForEntry(entry,measureIndex,[step])[0]===p.midi);
             if(!Number.isFinite(step))return "La nota ya cambió. Vuelve a seleccionarla.";
             const notes=entryStaffSteps(entry).filter(s=>s!==step).flatMap(s=>midiNotesForEntry(entry,measureIndex,[s]));
@@ -19809,6 +19850,7 @@
   }
 
   function handleScoreHoverPreview(event) {
+    if(measureSelectMode||event.target.closest?.(".guitar-tablature,.string-tab-inline")){if(pointerInputPreview){pointerInputPreview=null;requestRender();}return;}
     if (state.dragSelection || state.textMode || state.chordMode || state.dynamicMode || state.editMode || !isNoteInputMode()) return;
     const point = svgPointFromEvent(event);
     if (!point || !pointIsInStaffArea(point)) {
@@ -21222,6 +21264,7 @@
       svg.innerHTML = "";
 
       const root = el("g");
+      svg.appendChild(root);
       root.addEventListener("pointerdown", beginDragSelection);
       renderHitZones(root, layout);
       scoreSystems().forEach((system, systemIndex) => {
@@ -21230,12 +21273,14 @@
           renderStaff(root, layout);
           renderEntries(root, layout);
           renderNotationMarks(root, layout);
+          renderGuitarTab(root, layout);
           if (systemIndex === activeIndex) renderCursor(root, layout);
           renderInputPreview(root, layout, systemIndex);
         });
       });
       setActiveSystemIndex(activeIndex);
       renderTextItems(root, layout);
+      renderMeasureSelection(root, layout);
 
       renderDragSelection(root);
       svg.appendChild(root);
@@ -23188,6 +23233,7 @@
   document.addEventListener("keydown", handleKeydown);
 
   document.addEventListener("editor-export-image", async event => {
+    const filename=await window.CrescendoScoreFile.ask({suggested:exerciseTitleInput?.value||"Partitura",extension:event.detail?.format==="pdf"?"pdf":"png"});if(!filename)return;
     try {
       await document.fonts.ready;
       const copy = svg.cloneNode(true), originals = [svg, ...svg.querySelectorAll("*")], clones = [copy, ...copy.querySelectorAll("*")];
@@ -23195,13 +23241,13 @@
         const style = getComputedStyle(node);
         ["fill","stroke","stroke-width","font-family","font-size","font-weight","font-style","opacity","visibility","display"].forEach(key => clones[index].style.setProperty(key, style.getPropertyValue(key)));
       });
-      copy.querySelectorAll('#playbackLine,.input-cursor,.cursor,.cursor-line,.input-event-preview,.input-rhythm-ruler,.pointer-input-preview,[class*="hitbox"],[class*="hit-box"]').forEach(node => node.remove());
+      copy.querySelectorAll('.measure-selection,.string-tab-column,.string-tab-inline,#playbackLine,.input-cursor,.cursor,.cursor-line,.input-event-preview,.input-rhythm-ruler,.pointer-input-preview,[class*="hitbox"],[class*="hit-box"]').forEach(node => node.remove());
       const response = await fetch(new URL("../assets/fonts/Bravura.otf", document.baseURI));
       if (!response.ok) throw Error("No se pudo cargar Bravura.");
       const bytes = new Uint8Array(await response.arrayBuffer());let binary = "";
       for(let i=0;i<bytes.length;i+=8192)binary+=String.fromCharCode(...bytes.subarray(i,i+8192));
       const defs=el("defs"),style=el("style");style.textContent=`@font-face{font-family:'MTF Improviso Light';src:url(data:font/otf;base64,${btoa(binary)}) format('opentype');}`;defs.appendChild(style);copy.prepend(defs);
-      const box={width:svg.viewBox.baseVal.width,height:Math.min(svg.viewBox.baseVal.height,scoreStaffBottomY()+120)};copy.setAttribute("viewBox",`0 0 ${box.width} ${box.height}`);copy.setAttribute("width",box.width);copy.setAttribute("height",box.height);
+      const box={width:svg.viewBox.baseVal.width,height:Math.min(svg.viewBox.baseVal.height,scoreStaffBottomY()+(stringInstrument()&&guitarTabVisible?190:120))};copy.setAttribute("viewBox",`0 0 ${box.width} ${box.height}`);copy.setAttribute("width",box.width);copy.setAttribute("height",box.height);
       const url=URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(copy)],{type:"image/svg+xml"}));
       try {
         const image=new Image();await new Promise((resolve,reject)=>{image.onload=resolve;image.onerror=reject;image.src=url;});
@@ -23210,7 +23256,7 @@
         const pdf=event.detail?.format==="pdf",blob=await new Promise(resolve=>canvas.toBlob(resolve,pdf?"image/jpeg":"image/png",.97));
         if(!blob)throw Error("No se pudo crear el archivo.");
         const result=pdf?new Blob([window.CrescendoRhythmExport.pdf(new Uint8Array(await blob.arrayBuffer()),canvas.width,canvas.height)],{type:"application/pdf"}):blob;
-        const link=document.createElement("a"),download=URL.createObjectURL(result);link.href=download;link.download=`crescendo-partitura.${pdf?"pdf":"png"}`;link.click();setTimeout(()=>URL.revokeObjectURL(download),30000);
+        const link=document.createElement("a"),download=URL.createObjectURL(result);link.href=download;link.download=filename;link.click();setTimeout(()=>URL.revokeObjectURL(download),30000);
       } finally {URL.revokeObjectURL(url);}
     } catch(error) {showEditorMessage("No se pudo exportar: "+(error.message||"error de imagen"));}
   });
@@ -23224,6 +23270,7 @@
   renderMidiFigureStrip();
   renderMidiKeyboard();
   editorShell = IpadShell.setup();
+  setupMeasureMouse();
   initializeDefaultMidiInput();
   document.documentElement.dataset.jmlEditorBoot = "midi-ready";
   if (appearanceAdminMode) {

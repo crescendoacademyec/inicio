@@ -680,6 +680,8 @@
     <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
     <script src="../../shared/opensheetmusicdisplay-1.8.4.min.js?v=20261019-bravura-1"></script>
   <link rel="stylesheet" href="../../shared/crescendo-identity.css?v=20261004">
+
+<style>.rhythm-score-wrap>.rhythm-score-overlay{pointer-events:none}.integrated-tab{font-family:system-ui,sans-serif}.measure-selection{fill:#d5aa4526;stroke:#b88820;stroke-width:1;pointer-events:none}</style>
 </head>
 <body>
 
@@ -1014,15 +1016,18 @@
 <script src="rhythm-structure.js?v=20261021-compact-menu-2"></script>
 <script src="rhythm-marks.js?v=20261021-compact-menu-2"></script>
 <script src="../../shared/overflow-writing.js?v=20261022-1"></script>
-<script src="rhythm-writing.js?v=20261022-delete-selected-1"></script>
+<script src="rhythm-writing.js?v=20261022-integrated-2"></script>
 <script src="rhythm-import.js?v=20261022-1"></script>
 <script src="rhythm-export.js?v=20261021-compact-menu-2"></script>
 <script src="https://cdn.jsdelivr.net/npm/soundfont-player@0.12.0/dist/soundfont-player.min.js"></script>
 <script src="rhythm-audio.js?v=20261022-silence-1"></script>
 <script src="../editor-crescendo/src/score-editor-guitar.js?v=20261022-3"></script>
-<script src="../../shared/string-tablature.js?v=20261022-inline-2"></script>
+<script src="../../shared/score-file-name.js?v=20261022-1"></script>
+<script src="../../shared/measure-clipboard.js?v=20261022-1"></script>
+<link rel="stylesheet" href="../../shared/score-file-name.css?v=20261022-1">
+<script src="../../shared/string-tablature.js?v=20261022-auto-fret-3"></script>
 <link rel="stylesheet" href="../../shared/string-tablature.css?v=20261022-inline-2">
-<script src="rhythm-tablature.js?v=20261022-inline-2"></script>
+<script src="rhythm-tablature.js?v=20261022-integrated-3"></script>
 <style>.rhythm-tab[hidden]{display:none}.rhythm-tab{margin:6px 0;color:#eee}.rhythm-tab>label{display:flex;align-items:center;gap:6px;font-size:12px;margin-bottom:4px}.rhythm-tab-scroll{overflow-x:auto;background:#fffdf8;border-radius:6px}.rhythm-tab-scroll svg{display:block;max-width:none;font-family:system-ui,sans-serif}</style>
 <script>
     // --- Lógica de Acordeón ---
@@ -1366,9 +1371,9 @@
     const barOptions=[['simple','Barra simple'],['barDouble','Barra doble'],['barFinal','Barra final'],['repeatStart','Inicio de repetición'],['repeatEnd','Fin de repetición'],['doubleRepeat','Doble repetición'],['volta1','1.ª casilla'],['volta2','2.ª casilla'],['remove','Eliminar marcas de esta barra']];
     barOptions.forEach(([type,label])=>{const b=document.createElement('button');b.type='button';b.setAttribute('role','menuitem');b.textContent=label;b.addEventListener('click',()=>{closeRhythmBarMenu();const bars=Number(UI.rhythmBars.value),before=rhythmSnapshot(),bar=Math.max(0,contextBoundary-1);if(type.startsWith('volta')){activeRhythmMark=type;markRangeStart={bar:Math.min(contextBoundary,bars-1),offset:0,staff:activeRhythmStaff};UI.rhythmStatus.textContent='Pulsa en el último compás de la casilla.';return;}rhythmMarks=rhythmMarks.filter(m=>!(['barDouble','barFinal','repeatEnd'].includes(m.type)&&m.bar===bar||m.type==='repeatStart'&&m.bar===contextBoundary||type==='remove'&&m.type==='volta'&&m.bar===contextBoundary));if(['repeatEnd','barDouble','barFinal','doubleRepeat'].includes(type)&&contextBoundary>0)rhythmMarks.push({type:type==='doubleRepeat'?'repeatEnd':type,bar,staff:activeRhythmStaff});if(['repeatStart','doubleRepeat'].includes(type)&&contextBoundary<bars)rhythmMarks.push({type:'repeatStart',bar:contextBoundary,staff:activeRhythmStaff});rhythmHistory.commit(before,rhythmSnapshot());renderRhythmScore();});(type.startsWith('volta')?endingGroup:barStyleGroup).appendChild(b);});
     function openRhythmBarMenu(event){event.preventDefault();locateRhythmTime(event);const boxes=[...UI.rhythmScore.querySelectorAll('.rhythm-measure-hit')].filter(el=>Number(el.dataset.staff)===activeRhythmStaff);let nearest=null,barX=event.clientX,distance=Infinity;for(const box of boxes){const r=box.getBoundingClientRect();for(const [x,boundary] of [[r.left,Number(box.dataset.bar)],[r.right,Number(box.dataset.bar)+1]]){const d=Math.abs(event.clientX-x)+Math.max(r.top-event.clientY,0,event.clientY-r.bottom);if(d<distance){distance=d;nearest=boundary;barX=x;}}}if(!rhythmPointerTarget)return;contextMeasure=rhythmPointerTarget.bar;contextBoundary=distance<=24?nearest:contextMeasure;const hovered=rhythmBarHit(event);if(hovered)contextMeasure=Math.max(0,Math.min(Number(UI.rhythmBars.value)-1,hovered.boundary-1));const timeline=rhythmTimeline();document.getElementById('rhythmContextTitle').textContent='Compás '+(contextMeasure+1);document.getElementById('rhythmContextError').textContent='';const meter=timeline.meters[contextMeasure].label;if(![...meterSelect.options].some(o=>o.value===meter))meterSelect.add(new Option(meter,meter));meterSelect.value=meter;document.getElementById('rhythmContextKey').value=timeline.keys[contextMeasure];if(distance>24)barX=event.clientX;barMenu.querySelectorAll('details').forEach(group=>{group.open=false;});rhythmMenuAnchor={x:barX,y:event.clientY};barMenu.hidden=false;positionRhythmBarMenu();barMenu.querySelector('summary').focus({preventScroll:true});}
-    UI.rhythmScoreOverlay.addEventListener('contextmenu',openRhythmBarMenu);
+    UI.rhythmScore.parentElement.addEventListener('contextmenu',openRhythmBarMenu);
     window.addEventListener('resize',positionRhythmBarMenu);
-    document.addEventListener('click',e=>{if(barMenu.hidden||barMenu.contains(e.target))return;if(UI.rhythmScoreOverlay.contains(e.target)&&rhythmBarHit(e))return;closeRhythmBarMenu();});document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeRhythmBarMenu();activeRhythmMark=null;markRangeStart=null;renderRhythmMarks();rhythmPreview.replaceChildren();}});
+    document.addEventListener('click',e=>{if(barMenu.hidden||barMenu.contains(e.target))return;if(UI.rhythmScore.parentElement.contains(e.target)&&rhythmBarHit(e))return;closeRhythmBarMenu();});document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeRhythmBarMenu();activeRhythmMark=null;markRangeStart=null;renderRhythmMarks();rhythmPreview.replaceChildren();}});
     const editorPitches={treble:['A5','G5','F5','E5','D5','C5','B4','A4','G4','F4','E4','D4','C4'],bass:['C4','B3','A3','G3','F3','E3','D3','C3','B2','A2','G2','F2','E2']};
     function currentRhythmMeter(){const selected=UI.beatsSel.options[UI.beatsSel.selectedIndex];return selected?.textContent.trim()||`${UI.beatsSel.value}/4`}
     function rhythmTimeline(){return rhythmStructure.timeline(currentRhythmMeter(),rhythmMarks,Number(UI.rhythmBars.value)||4);}
@@ -1385,7 +1390,43 @@
         const subValue=kind==='triplets'||Math.abs(base-1/3)<.00001?'3':String(Math.max(.25,1/base));if([...UI.subSel.options].some(o=>o.value===subValue))UI.subSel.value=subValue;
         UI.subSel.dispatchEvent(new Event('change'));renderVisualizer();syncBasicLabels();
     }
-    function renderRhythmScore(message=''){if(rhythmDraftReady)try{localStorage.setItem('crescendo-rhythm-draft',JSON.stringify({...JSON.parse(rhythmSnapshot()),clef:UI.rhythmClef.value}));}catch(_){}rhythmAudio?.stop();renderRhythmMarks();UI.rhythmUndo.disabled=!rhythmHistory.canUndo;UI.rhythmRedo.disabled=!rhythmHistory.canRedo;if(typeof message!=='string')message='';if(!window.CrescendoPractice)return;const meter=currentRhythmMeter(),clef=UI.rhythmClef.value,bars=Math.max(1,Math.min(16,Number(UI.rhythmBars.value)||1)),systems=Math.ceil(bars/4),used=rhythmBeats(rhythmUsedTicks()),total=rhythmTimeline().total;keySelect.value=rhythmStructure.keyAt(rhythmMarks,0);UI.rhythmScore.innerHTML=rhythmWriting.render(rhythmEditorEvents,{meter,clef,bars,width:UI.rhythmScore.clientWidth||900,glyphs:window.CrescendoBravuraPalette,marks:rhythmMarks,selected:selectedRhythmNote});UI.rhythmScore.classList.toggle('has-multiple-systems',systems>1);renderRhythmTab();UI.rhythmStatus.textContent=message||`${bars} ${bars===1?'compás':'compases'} en ${new Set(rhythmTimeline().meters.map(m=>m.label)).size>1?'compases variables':rhythmTimeline().meters[0].label} · ${used.toFixed(2).replace(/\.00$/,'')} de ${total} tiempos · ${clef==='grand'?'sol y fa · escribiendo en '+(activeRhythmStaff===2?'fa':'sol'):'clave de '+(clef==='bass'?'fa':'sol')} · clic: ${UI.rhythmPlacement.options[UI.rhythmPlacement.selectedIndex].text}`}
+    function renderRhythmScore(message=''){if(rhythmDraftReady)try{localStorage.setItem('crescendo-rhythm-draft',JSON.stringify({...JSON.parse(rhythmSnapshot()),clef:UI.rhythmClef.value}));}catch(_){}rhythmAudio?.stop();renderRhythmMarks();UI.rhythmUndo.disabled=!rhythmHistory.canUndo;UI.rhythmRedo.disabled=!rhythmHistory.canRedo;if(typeof message!=='string')message='';if(!window.CrescendoPractice)return;const meter=currentRhythmMeter(),clef=UI.rhythmClef.value,bars=Math.max(1,Math.min(16,Number(UI.rhythmBars.value)||1)),systems=Math.ceil(bars/4),used=rhythmBeats(rhythmUsedTicks()),total=rhythmTimeline().total;keySelect.value=rhythmStructure.keyAt(rhythmMarks,0);UI.rhythmScore.innerHTML=rhythmWriting.render(rhythmEditorEvents,{meter,clef,bars,width:UI.rhythmScore.clientWidth||900,glyphs:window.CrescendoBravuraPalette,marks:rhythmMarks,selected:selectedRhythmNote,tabHeight:rhythmTabHeight()});UI.rhythmScore.classList.toggle('has-multiple-systems',systems>1);renderRhythmTab();drawRhythmMeasureSelection();UI.rhythmStatus.textContent=message||`${bars} ${bars===1?'compás':'compases'} en ${new Set(rhythmTimeline().meters.map(m=>m.label)).size>1?'compases variables':rhythmTimeline().meters[0].label} · ${used.toFixed(2).replace(/\.00$/,'')} de ${total} tiempos · ${clef==='grand'?'sol y fa · escribiendo en '+(activeRhythmStaff===2?'fa':'sol'):'clave de '+(clef==='bass'?'fa':'sol')} · clic: ${UI.rhythmPlacement.options[UI.rhythmPlacement.selectedIndex].text}`}
+    let rhythmMouseMode=false,selectedRhythmBar=null,rhythmMeasureClipboard=null;
+    const rhythmMouse=document.createElement('button');rhythmMouse.type='button';rhythmMouse.id='rhythmMouse';rhythmMouse.setAttribute('aria-label','Seleccionar compases');rhythmMouse.setAttribute('aria-pressed','false');rhythmMouse.title='Seleccionar compases · copiar y pegar';rhythmMouse.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3v16l4-5 4 7 3-2-4-6h7Z" fill="currentColor"/></svg>';UI.rhythmPalette.prepend(rhythmMouse);
+    rhythmMouse.onclick=()=>{rhythmMouseMode=!rhythmMouseMode;rhythmMouse.classList.toggle('is-active',rhythmMouseMode);rhythmMouse.setAttribute('aria-pressed',String(rhythmMouseMode));selectedRhythmNote=null;renderRhythmScore('Selecciona un compás. Ctrl/Cmd+C: copiar · Ctrl/Cmd+V: pegar.');};
+    function drawRhythmMeasureSelection(){
+      if(!rhythmMouseMode||selectedRhythmBar===null)return;
+      const score=UI.rhythmScore.querySelector('svg');if(!score)return;
+      for(const box of score.querySelectorAll(`.rhythm-measure-hit[data-bar="${selectedRhythmBar}"]`)){
+        const rect=document.createElementNS('http://www.w3.org/2000/svg','rect');for(const [k,v]of Object.entries({x:box.getAttribute('x'),y:Number(box.dataset.top)-25,width:box.getAttribute('width'),height:90+rhythmTabHeight(),class:'measure-selection'}))rect.setAttribute(k,v);score.appendChild(rect);
+      }
+    }
+    UI.rhythmScore.parentElement.addEventListener('pointerdown',event=>{
+      if(!rhythmMouseMode||event.target.closest('input,.string-tab-inline'))return;
+      const score=UI.rhythmScore.querySelector('svg'),r=score?.getBoundingClientRect();if(!r)return;
+      const point=new DOMPoint(event.clientX,event.clientY).matrixTransform(score.getScreenCTM().inverse());
+      const box=[...score.querySelectorAll('.rhythm-measure-hit')].find(box=>point.x>=Number(box.getAttribute('x'))&&point.x<Number(box.getAttribute('x'))+Number(box.getAttribute('width'))&&point.y>=Number(box.dataset.top)-65&&point.y<Number(box.dataset.top)+110+rhythmTabHeight());
+      if(!box)return;event.preventDefault();event.stopImmediatePropagation();document.activeElement?.blur();selectedRhythmBar=Number(box.dataset.bar);renderRhythmScore('Compás '+(selectedRhythmBar+1)+' seleccionado.');
+    },true);
+    UI.rhythmScore.parentElement.addEventListener('click',event=>{if(rhythmMouseMode){event.preventDefault();event.stopImmediatePropagation();}},true);
+    function handleRhythmMeasureClipboard(event){
+      const key=event.type==='copy'?'c':event.type==='paste'?'v':event.key?.toLowerCase();
+      if(!rhythmMouseMode||UI.rhythmLab.hidden||event.target.closest?.('input,textarea,select,dialog,[contenteditable="true"]'))return;
+      if(event.key==='Escape'){rhythmMouseMode=false;rhythmMouse.classList.remove('is-active');rhythmMouse.setAttribute('aria-pressed','false');renderRhythmScore();return;}
+      if(!['copy','paste'].includes(event.type)&&!(event.ctrlKey||event.metaKey)||!['c','v'].includes(key)||selectedRhythmBar===null)return;
+      event.preventDefault();event.stopImmediatePropagation();
+      if(key==='c'){
+        const events=rhythmStructure.resolve(rhythmEditorEvents,rhythmMarks).filter(e=>(e.bar||0)===selectedRhythmBar).map(e=>{if(e.kind!=='rest')e.accidentalsByNote=Object.fromEntries((e.notes||[e.note]).map(n=>{const p=rhythmStructure.parsePitch(n);return [p.plain,p.explicit||'natural'];}));return e;});
+        rhythmMeasureClipboard=JSON.parse(JSON.stringify({bar:selectedRhythmBar,events,marks:rhythmMarks.filter(m=>m.bar===selectedRhythmBar&&!['key','meter'].includes(m.type)&&(m.endBar??m.bar)===m.bar)}));event.clipboardData?.setData('text/plain',JSON.stringify({type:'crescendo-rhythm-measure',value:rhythmMeasureClipboard}));UI.rhythmStatus.textContent='Compás copiado. Selecciona el destino y pega.';return;
+      }
+      if(!rhythmMeasureClipboard)return;
+      if(!window.CrescendoMeasureClipboard.fits(rhythmMeasureClipboard.events,rhythmTimeline().capacities[selectedRhythmBar])){UI.rhythmStatus.textContent='El contenido no cabe en el compás seleccionado.';return;}
+      const before=rhythmSnapshot(),copy=window.CrescendoMeasureClipboard.clone(rhythmMeasureClipboard);copy.events.forEach(e=>e.bar=selectedRhythmBar);copy.marks.forEach(m=>{m.bar=selectedRhythmBar;if(m.endBar!==undefined)m.endBar=selectedRhythmBar;});
+      rhythmEditorEvents=rhythmEditorEvents.filter(e=>(e.bar||0)!==selectedRhythmBar).concat(copy.events);rhythmMarks=rhythmMarks.filter(m=>m.bar!==selectedRhythmBar||['key','meter'].includes(m.type)).concat(copy.marks);rhythmHistory.commit(before,rhythmSnapshot());renderRhythmScore('Compás pegado.');
+    }
+    ['keydown','copy','paste'].forEach(type=>document.addEventListener(type,handleRhythmMeasureClipboard,true));
+    UI.rhythmPalette.addEventListener('pointerdown',event=>{if(event.target.closest('button')!==rhythmMouse){rhythmMouseMode=false;rhythmMouse.classList.remove('is-active');rhythmMouse.setAttribute('aria-pressed','false');}},true);
+    function rhythmTabHeight(){const ins=window.JMLScoreGuitar.forInstrument(document.getElementById('rhythmSound').value);return ins&&document.getElementById('rhythmTabEnabled').checked?ins.tuning.length*17+40:0;}
     function renderRhythmTab(){
       const host=document.getElementById('rhythmTab');
       window.CrescendoRhythmTab.render(host,{events:rhythmEditorEvents,marks:rhythmMarks,instrument:document.getElementById('rhythmSound').value,score:UI.rhythmScore,onEdit:(index,head,position)=>{
@@ -1394,7 +1435,7 @@
         selectedRhythmNote={index,head};activeRhythmStaff=rhythmEditorEvents[index].staff||1;rhythmHistory.commit(before,rhythmSnapshot());renderRhythmScore('Digitación actualizada.');return true;
       }});
     }
-    document.getElementById('rhythmTabEnabled').addEventListener('change',renderRhythmTab);
+    document.getElementById('rhythmTabEnabled').addEventListener('change',()=>renderRhythmScore());
     UI.rhythmScore.addEventListener('scroll',()=>{const strip=document.querySelector('#rhythmTab .rhythm-tab-scroll');if(strip)strip.scrollLeft=UI.rhythmScore.scrollLeft;},{passive:true});
     const rhythmOverflowDialog=document.createElement('dialog');rhythmOverflowDialog.className='rhythm-overflow-dialog';rhythmOverflowDialog.setAttribute('aria-labelledby','rhythmOverflowTitle');
     rhythmOverflowDialog.innerHTML='<form method="dialog"><h3 id="rhythmOverflowTitle">La figura supera el compás</h3><p></p><div><button value="no">No</button><button value="yes">Sí, escribir con ligaduras</button></div></form>';document.body.appendChild(rhythmOverflowDialog);
@@ -1416,7 +1457,7 @@
       }finally{rhythmOverflowPending=false;}
     }
     function addRhythmEditorEvent(note){const before=rhythmSnapshot();const message=rhythmWriting.append(activeRhythmTool,rhythmEditorEvents,note,rhythmTimeline().capacities,Math.max(1,Math.min(16,Number(UI.rhythmBars.value)||1)),activeRhythmStaff,rhythmPointerTarget,rhythmMarks);if(message&&rhythmWriting.overflowPlan(activeRhythmTool,rhythmEditorEvents,rhythmTimeline().capacities,Number(UI.rhythmBars.value)||4,activeRhythmStaff,rhythmPointerTarget)){offerRhythmOverflow(note);return;}if(!message){rhythmHistory.commit(before,rhythmSnapshot());}syncRhythmPalette();rhythmPreview.replaceChildren();renderRhythmScore(message||(['slur','tie'].includes(activeRhythmTool.tool)&&activeRhythmTool.decorationStart?'Dibuja o selecciona la segunda nota de la ligadura.':''));}
-    function syncRhythmPalette(){renderRhythmMarks();UI.rhythmScoreOverlay.classList.toggle('is-erasing',activeRhythmTool.tool==='erase');UI.rhythmPalette.querySelectorAll('button').forEach(b=>{const a=b.dataset.action,v=b.dataset.value;const active=a==='tool'?activeRhythmTool.tool===v:a==='grace'?!!activeRhythmTool.grace:a==='chord'?!!activeRhythmTool.chord:a==='ottava'?!!activeRhythmTool.ottava:a==='duration'?v===activeRhythmTool.duration:a==='rest'?activeRhythmTool.rest:a==='dots'?Number(v)===activeRhythmTool.dots:Number(v)===activeRhythmTool.actual;b.classList.toggle('is-active',active);b.setAttribute('aria-pressed',String(active));});}
+    function syncRhythmPalette(){renderRhythmMarks();UI.rhythmScoreOverlay.classList.toggle('is-erasing',activeRhythmTool.tool==='erase');UI.rhythmPalette.querySelectorAll('button').forEach(b=>{if(b.id==='rhythmMouse')return;const a=b.dataset.action,v=b.dataset.value;const active=a==='tool'?activeRhythmTool.tool===v:a==='grace'?!!activeRhythmTool.grace:a==='chord'?!!activeRhythmTool.chord:a==='ottava'?!!activeRhythmTool.ottava:a==='duration'?v===activeRhythmTool.duration:a==='rest'?activeRhythmTool.rest:a==='dots'?Number(v)===activeRhythmTool.dots:Number(v)===activeRhythmTool.actual;b.classList.toggle('is-active',active);b.setAttribute('aria-pressed',String(active));});}
     function buildRhythmPalette(){
       const glyph=id=>{const g=window.CrescendoBravuraPalette[id],wide=['whole','breve'].includes(id),k=Math.min((wide?12:29)/g.height,25/g.width);return `<svg viewBox="0 0 40 36" aria-hidden="true"><path d="${g.d}" fill="currentColor" transform="translate(${20-(g.x+g.width/2)*k} ${18-(g.y+g.height/2)*k}) scale(${k})"/></svg>`;};
       const button=(action,value,label,body,key='')=>`<button type="button" class="rhythm-tool" data-action="${action}" data-value="${value}" title="${label}" aria-label="${label}">${body}${key?`<small>${key}</small>`:''}</button>`;
@@ -1430,7 +1471,7 @@
         else body=note('quarter',16,27,.025)+(kind==='staccato'?music(0xE4A3,15,32,22):music(0xE1E7,22,27,22)+(kind==='double-dot'?music(0xE1E7,26,27,22):''));
         return '<svg viewBox="0 0 40 36" aria-hidden="true">'+body+'</svg>';
       };
-      UI.rhythmPalette.innerHTML=[...rhythmWriting.durations].sort((a,b)=>b[1]-a[1]).map(([id,beats,key,label])=>button('duration',id,label+' · '+key,glyph(id),key)).join('')+button('rest','', 'Silencio · S',glyph('active'),'S')+button('dots',1,'Puntillo · P',symbolIcon('dot'),'P')+button('dots',2,'Doble puntillo',symbolIcon('double-dot'))+[3,5,6,7].map(n=>button('tuplet',n,'Grupo de '+n+' figuras',String(n))).join('')+button('tool','slur','Ligadura de frase · dibuja o elige dos notas','⌒')+button('tool','tie','Ligadura de prolongación · dibuja o elige dos notas de igual altura','♩⌒')+button('tool','accent','Acento','<svg viewBox="0 0 40 36" aria-hidden="true"><text x="12" y="24" font-family="Bravura Metronome" font-size="30">&#xE4A0;</text></svg>')+button('tool','glissando','Glissando · elige dos notas','<svg viewBox="0 0 40 36" aria-hidden="true"><path d="M8 26 32 10" stroke="currentColor" stroke-width="1.5"/><circle cx="8" cy="26" r="3" fill="currentColor"/><circle cx="32" cy="10" r="3" fill="currentColor"/></svg>')+button('tool','staccato','Notas picadas · staccato',symbolIcon('staccato'))+button('grace','','Notas de adorno · sin consumir tiempos',symbolIcon('grace'))+button('chord','','Acorde · varias notas en el mismo tiempo',symbolIcon('chord'),'Q')+button('ottava','','8va · tocar una octava más arriba','8va');syncRhythmPalette();
+      UI.rhythmPalette.innerHTML=[...rhythmWriting.durations].sort((a,b)=>b[1]-a[1]).map(([id,beats,key,label])=>button('duration',id,label+' · '+key,glyph(id),key)).join('')+button('rest','', 'Silencio · S',glyph('active'),'S')+button('dots',1,'Puntillo · P',symbolIcon('dot'),'P')+button('dots',2,'Doble puntillo',symbolIcon('double-dot'))+[3,5,6,7].map(n=>button('tuplet',n,'Grupo de '+n+' figuras',String(n))).join('')+button('tool','slur','Ligadura de frase · dibuja o elige dos notas','⌒')+button('tool','tie','Ligadura de prolongación · dibuja o elige dos notas de igual altura','♩⌒')+button('tool','accent','Acento','<svg viewBox="0 0 40 36" aria-hidden="true"><text x="12" y="24" font-family="Bravura Metronome" font-size="30">&#xE4A0;</text></svg>')+button('tool','glissando','Glissando · elige dos notas','<svg viewBox="0 0 40 36" aria-hidden="true"><path d="M8 26 32 10" stroke="currentColor" stroke-width="1.5"/><circle cx="8" cy="26" r="3" fill="currentColor"/><circle cx="32" cy="10" r="3" fill="currentColor"/></svg>')+button('tool','staccato','Notas picadas · staccato',symbolIcon('staccato'))+button('grace','','Notas de adorno · sin consumir tiempos',symbolIcon('grace'))+button('chord','','Acorde · varias notas en el mismo tiempo',symbolIcon('chord'),'Q')+button('ottava','','8va · tocar una octava más arriba','8va');UI.rhythmPalette.prepend(rhythmMouse);syncRhythmPalette();
     }
     const guideLayer=document.createElement('div');guideLayer.className='rhythm-guide-layer';guideLayer.setAttribute('aria-hidden','true');UI.rhythmScoreOverlay.appendChild(guideLayer);
     function drawRhythmGuides(){
@@ -1460,7 +1501,7 @@
       rhythmPointerTarget={bar,beat:positions.length?positions.reduce((best,p)=>Math.abs(p-desired)<Math.abs(best-desired)?p:best,positions[0]):0};
     }
     function showRhythmPreview(event){
-      if(activeRhythmTool.tool==='erase'||rhythmBarHit(event)){rhythmPreview.replaceChildren();return;}
+      if(rhythmMouseMode||event.target.closest?.('.integrated-tab,.string-tab-column,.string-tab-inline')||activeRhythmTool.tool==='erase'||rhythmBarHit(event)){rhythmPreview.replaceChildren();return;}
       if(activeRhythmMark){locateRhythmTime(event);rhythmPreview.replaceChildren();drawRhythmGuides();return;}rhythmPointerEvent=event;const index=clickedStaffPosition(event);locateRhythmTime(event);drawRhythmGuides();
       const caret=guideLayer.querySelector('.rhythm-guide-caret'),wrap=UI.rhythmScoreOverlay.getBoundingClientRect();
       if(!caret||!rhythmPointerStaff){rhythmPreview.replaceChildren();return;}
@@ -1480,8 +1521,8 @@
       for(const box of UI.rhythmScore.querySelectorAll('.rhythm-measure-hit')){const r=box.getBoundingClientRect(),svg=box.ownerSVGElement.getBoundingClientRect(),top=svg.top+Number(box.dataset.top);if(event.clientY<top-12||event.clientY>top+52)continue;for(const [x,boundary] of [[r.left,Number(box.dataset.bar)],[r.right,Number(box.dataset.bar)+1]]){const distance=Math.abs(event.clientX-x);if(distance<=9&&(!best||distance<best.distance))best={x,top,boundary,distance};}}
       return best;
     }
-    UI.rhythmScoreOverlay.addEventListener('pointermove',event=>{const hit=activeRhythmTool.tool==='erase'?null:rhythmBarHit(event);barHover.hidden=!hit;UI.rhythmScoreOverlay.style.cursor=activeRhythmTool.tool==='erase'?'crosshair':hit?'context-menu':'';if(hit){const r=UI.rhythmScoreOverlay.getBoundingClientRect();barHover.style.left=(hit.x-r.left-4)+'px';barHover.style.top=(hit.top-r.top-8)+'px';barHover.style.height='56px';}});
-    UI.rhythmScoreOverlay.addEventListener('pointerleave',()=>{barHover.hidden=true;});
+    UI.rhythmScore.parentElement.addEventListener('pointermove',event=>{const hit=activeRhythmTool.tool==='erase'?null:rhythmBarHit(event);barHover.hidden=!hit;UI.rhythmScoreOverlay.style.cursor=activeRhythmTool.tool==='erase'?'crosshair':hit?'context-menu':'';if(hit){const r=UI.rhythmScoreOverlay.getBoundingClientRect();barHover.style.left=(hit.x-r.left-4)+'px';barHover.style.top=(hit.top-r.top-8)+'px';barHover.style.height='56px';}});
+    UI.rhythmScore.parentElement.addEventListener('pointerleave',()=>{barHover.hidden=true;});
     function eraseRhythmAtPoint(event){
       const contains=(r,pad=3)=>event.clientX>=r.left-pad&&event.clientX<=r.right+pad&&event.clientY>=r.top-pad&&event.clientY<=r.bottom+pad;
       const mark=[...UI.rhythmScore.querySelectorAll('.rhythm-mark-target')].reverse().find(el=>contains((el.querySelector('.rhythm-mark-hit')||el).getBoundingClientRect(),5));
@@ -1490,8 +1531,8 @@
       const before=rhythmSnapshot();if(mark)rhythmMarks.splice(Number(mark.dataset.markIndex),1);else rhythmWriting.eraseHead(rhythmEditorEvents,Number(head.dataset.event),Number(head.dataset.head));
       rhythmHistory.commit(before,rhythmSnapshot());selectedRhythmNote=null;activeRhythmTool.decorationStart=null;rhythmPreview.replaceChildren();renderRhythmScore(mark?'Marca eliminada.':'Nota eliminada. Su tiempo queda como silencio.');
     }
-    UI.rhythmScoreOverlay.addEventListener('pointermove',showRhythmPreview);
-    UI.rhythmScoreOverlay.addEventListener('pointerleave',()=>{rhythmPointerEvent=null;rhythmPointerTarget=null;rhythmPreview.replaceChildren();});
+    UI.rhythmScore.parentElement.addEventListener('pointermove',showRhythmPreview);
+    UI.rhythmScore.parentElement.addEventListener('pointerleave',()=>{rhythmPointerEvent=null;rhythmPointerTarget=null;rhythmPreview.replaceChildren();});
     function selectRhythmHead(event){
       if(activeRhythmTool.rest||activeRhythmTool.chord||activeRhythmTool.grace||activeRhythmTool.accidental||activeRhythmTool.tool||activeRhythmMark)return false;
       const hit=[...UI.rhythmScore.querySelectorAll('.rhythm-head-target')].reverse().find(el=>{const r=el.getBoundingClientRect();return event.clientX>=r.left&&event.clientX<=r.right&&event.clientY>=r.top&&event.clientY<=r.bottom;});
@@ -1523,8 +1564,8 @@
       event.preventDefault();const before=rhythmSnapshot();
       if(rhythmStructure.transposeHead(rhythmEditorEvents,rhythmMarks,selectedRhythmNote.index,selectedRhythmNote.head,event.key==='ArrowUp'?1:-1)){rhythmHistory.commit(before,rhythmSnapshot());renderRhythmScore('↑ / ↓: mover la nota seleccionada por semitonos.');}
     });
-    UI.rhythmScoreOverlay.addEventListener('click',event=>{if(activeRhythmTool.tool==='erase'){eraseRhythmAtPoint(event);return;}if(rhythmBarHit(event)){openRhythmBarMenu(event);return;}if(placeRhythmMark(event))return;if(selectRhythmHead(event))return;selectedRhythmNote=null;const index=clickedStaffPosition(event);locateRhythmTime(event);const note=rhythmWriting.noteAtIndex(index,activeRhythmStaff);if(['slur','tie','staccato','accent','glissando'].includes(activeRhythmTool.tool)){const existing=rhythmEditorEvents.some(e=>(e.staff||1)===activeRhythmStaff&&e.bar===rhythmPointerTarget.bar&&Math.abs((e.offset||0)-rhythmPointerTarget.beat)<.0001&&!e.grace&&e.kind!=='rest');if(existing||activeRhythmTool.tool==='glissando'){const before=rhythmSnapshot(),message=rhythmWriting.decorate(activeRhythmTool,rhythmEditorEvents,rhythmPointerTarget,activeRhythmStaff,rhythmTimeline().capacities,rhythmMarks);if(before!==rhythmSnapshot())rhythmHistory.commit(before,rhythmSnapshot());syncRhythmPalette();renderRhythmScore(message);return;}}addRhythmEditorEvent(note)});
-    UI.rhythmScoreOverlay.addEventListener('wheel',event=>{if(event.shiftKey||Math.abs(event.deltaX)>Math.abs(event.deltaY)){if(UI.rhythmScore.scrollWidth<=UI.rhythmScore.clientWidth)return;event.preventDefault();UI.rhythmScore.scrollLeft+=event.deltaX||event.deltaY;}else{if(UI.rhythmScore.scrollHeight<=UI.rhythmScore.clientHeight)return;event.preventDefault();UI.rhythmScore.scrollTop+=event.deltaY;}},{passive:false});
+    UI.rhythmScore.parentElement.addEventListener('click',event=>{if(activeRhythmTool.tool==='erase'){eraseRhythmAtPoint(event);return;}if(rhythmBarHit(event)){openRhythmBarMenu(event);return;}if(placeRhythmMark(event))return;if(selectRhythmHead(event))return;selectedRhythmNote=null;const index=clickedStaffPosition(event);locateRhythmTime(event);const note=rhythmWriting.noteAtIndex(index,activeRhythmStaff);if(['slur','tie','staccato','accent','glissando'].includes(activeRhythmTool.tool)){const existing=rhythmEditorEvents.some(e=>(e.staff||1)===activeRhythmStaff&&e.bar===rhythmPointerTarget.bar&&Math.abs((e.offset||0)-rhythmPointerTarget.beat)<.0001&&!e.grace&&e.kind!=='rest');if(existing||activeRhythmTool.tool==='glissando'){const before=rhythmSnapshot(),message=rhythmWriting.decorate(activeRhythmTool,rhythmEditorEvents,rhythmPointerTarget,activeRhythmStaff,rhythmTimeline().capacities,rhythmMarks);if(before!==rhythmSnapshot())rhythmHistory.commit(before,rhythmSnapshot());syncRhythmPalette();renderRhythmScore(message);return;}}addRhythmEditorEvent(note)});
+    UI.rhythmScore.parentElement.addEventListener('wheel',event=>{if(event.shiftKey||Math.abs(event.deltaX)>Math.abs(event.deltaY)){if(UI.rhythmScore.scrollWidth<=UI.rhythmScore.clientWidth)return;event.preventDefault();UI.rhythmScore.scrollLeft+=event.deltaX||event.deltaY;}else{if(UI.rhythmScore.scrollHeight<=UI.rhythmScore.clientHeight)return;event.preventDefault();UI.rhythmScore.scrollTop+=event.deltaY;}},{passive:false});
     function restoreRhythmHistory(direction){selectedRhythmNote=null;const previous=rhythmHistory[direction](rhythmSnapshot());if(previous===null)return;const restored=JSON.parse(previous);rhythmEditorEvents=restored.events;rhythmMarks=restored.marks;if(restored.bars)UI.rhythmBars.value=String(restored.bars);rhythmPointerTarget=null;rhythmPointerEvent=null;rhythmPreview.replaceChildren();activeRhythmTool.actual=0;activeRhythmTool.groupIndex=0;activeRhythmTool.accidental=null;activeRhythmTool.decorationStart=null;syncRhythmPalette();renderRhythmScore();}
     UI.rhythmUndo.addEventListener('click',()=>restoreRhythmHistory('undo'));UI.rhythmRedo.addEventListener('click',()=>restoreRhythmHistory('redo'));
     UI.rhythmClear.addEventListener('click',()=>{const before=rhythmSnapshot();rhythmEditorEvents=[];rhythmMarks=[];selectedRhythmNote=null;rhythmHistory.commit(before,rhythmSnapshot());rhythmPointerTarget=null;rhythmPointerEvent=null;rhythmPreview.replaceChildren();activeRhythmTool.groupIndex=0;activeRhythmTool.actual=0;activeRhythmTool.accidental=null;activeRhythmTool.decorationStart=null;syncRhythmPalette();renderRhythmScore('Pentagrama limpio. Elige una figura o silencio y pulsa sobre él.');});UI.rhythmFillRests.addEventListener('click',fillEditorWithRests);
@@ -1538,8 +1579,11 @@
     function downloadRhythmBlob(blob,name){const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);}
     async function rhythmExportCanvas(){
       await document.fonts.ready;
-      const options={meter:currentRhythmMeter(),clef:UI.rhythmClef.value,bars:Number(UI.rhythmBars.value)||4,width:1200,glyphs:window.CrescendoBravuraPalette,marks:rhythmMarks};
+      const options={meter:currentRhythmMeter(),clef:UI.rhythmClef.value,bars:Number(UI.rhythmBars.value)||4,width:1200,glyphs:window.CrescendoBravuraPalette,marks:rhythmMarks,tabHeight:rhythmTabHeight()};
       let source=rhythmWriting.render(rhythmEditorEvents,options);
+      const exportHost=document.createElement('div');exportHost.innerHTML=source;
+      window.CrescendoRhythmTab.render(document.createElement('div'),{events:rhythmEditorEvents,marks:rhythmMarks,instrument:document.getElementById('rhythmSound').value,score:exportHost,onEdit:()=>false});
+      exportHost.querySelectorAll('.string-tab-column,.string-tab-inline,.measure-copy-hit,.measure-selection').forEach(el=>el.remove());source=exportHost.innerHTML;
       const response=await fetch(new URL('../editor-crescendo/assets/fonts/Bravura.otf',document.baseURI));if(!response.ok)throw Error('No se pudo cargar Bravura para exportar.');
       const font=new Uint8Array(await response.arrayBuffer());let binary='';for(let i=0;i<font.length;i+=8192)binary+=String.fromCharCode(...font.subarray(i,i+8192));
       const fontData=btoa(binary);source=source.replace(/(<svg\b[^>]*>)/,`$1<defs><style>@font-face{font-family:'Bravura Metronome';src:url(data:font/otf;base64,${fontData}) format('opentype');font-weight:normal;font-style:normal;}text{fill:#222;}</style></defs>`);
@@ -1547,11 +1591,11 @@
       try{const image=new Image();await new Promise((resolve,reject)=>{image.onload=resolve;image.onerror=()=>reject(Error('No se pudo preparar la imagen de la partitura.'));image.src=url;});const canvas=document.createElement('canvas');canvas.width=image.naturalWidth*2;canvas.height=image.naturalHeight*2;const context=canvas.getContext('2d');context.fillStyle='#fff';context.fillRect(0,0,canvas.width,canvas.height);context.drawImage(image,0,0,canvas.width,canvas.height);return canvas;}finally{URL.revokeObjectURL(url);}
     }
     async function exportRhythmExercise(format){
-      closeRhythmSaveMenu();saveButton.disabled=true;UI.rhythmStatus.textContent='Preparando el archivo…';
-      try{const filename='crescendo-ejercicio-'+currentRhythmMeter().replace('/','-');
-        if(format==='musicxml'){const xml=window.CrescendoRhythmExport.musicXML(rhythmEditorEvents,{meter:currentRhythmMeter(),clef:UI.rhythmClef.value,bars:Number(UI.rhythmBars.value)||4,writing:rhythmWriting,marks:rhythmMarks});downloadRhythmBlob(new Blob([xml],{type:'application/vnd.recordare.musicxml+xml;charset=utf-8'}),filename+'.musicxml');}
-        else{const canvas=await rhythmExportCanvas();if(format==='png'){const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));if(!blob)throw Error('No se pudo crear la imagen.');downloadRhythmBlob(blob,filename+'.png');}
-          else{const jpeg=await new Promise(resolve=>canvas.toBlob(resolve,'image/jpeg',.97));if(!jpeg)throw Error('No se pudo crear el PDF.');const bytes=window.CrescendoRhythmExport.pdf(new Uint8Array(await jpeg.arrayBuffer()),canvas.width,canvas.height);downloadRhythmBlob(new Blob([bytes],{type:'application/pdf'}),filename+'.pdf');}}
+      closeRhythmSaveMenu();const filename=await window.CrescendoScoreFile.ask({suggested:'Crescendo - '+currentRhythmMeter().replace('/','-'),extension:format==='musicxml'?'musicxml':format});if(!filename)return;saveButton.disabled=true;UI.rhythmStatus.textContent='Preparando el archivo…';
+      try{
+        if(format==='musicxml'){const xml=window.CrescendoRhythmExport.musicXML(rhythmEditorEvents,{meter:currentRhythmMeter(),clef:UI.rhythmClef.value,bars:Number(UI.rhythmBars.value)||4,writing:rhythmWriting,marks:rhythmMarks});downloadRhythmBlob(new Blob([xml],{type:'application/vnd.recordare.musicxml+xml;charset=utf-8'}),filename);}
+        else{const canvas=await rhythmExportCanvas();if(format==='png'){const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));if(!blob)throw Error('No se pudo crear la imagen.');downloadRhythmBlob(blob,filename);}
+          else{const jpeg=await new Promise(resolve=>canvas.toBlob(resolve,'image/jpeg',.97));if(!jpeg)throw Error('No se pudo crear el PDF.');const bytes=window.CrescendoRhythmExport.pdf(new Uint8Array(await jpeg.arrayBuffer()),canvas.width,canvas.height);downloadRhythmBlob(new Blob([bytes],{type:'application/pdf'}),filename);}}
         UI.rhythmStatus.textContent='Archivo '+format.toUpperCase()+' preparado para descargar.';
       }catch(error){UI.rhythmStatus.textContent='No se pudo guardar: '+error.message;}finally{saveButton.disabled=false;}
     }
@@ -1569,7 +1613,7 @@
         countOverlay.style.animationPlayState=state==='paused'?'paused':'running';if(countOverlay.firstElementChild)countOverlay.firstElementChild.style.animationPlayState=state==='paused'?'paused':'running';if(state==='counting')lastCountNumber=0;else if(state!=='paused'){countOverlay.hidden=true;lastCountNumber=0;}
         exerciseState=state;const running=state==='playing'||state==='counting',label=running?'Pausar':state==='paused'?'Continuar':state==='loading'?'Cancelar carga':'Reproducir';
         rhythmListen.setAttribute('aria-pressed',String(running));rhythmListen.setAttribute('aria-label',label);rhythmListen.title=label;rhythmListen.querySelector('svg').innerHTML=running?'<path d="M6 5h4v14H6ZM14 5h4v14h-4Z"/>':'<path d="m8 5 11 7-11 7Z"/>';
-        if(!['playing','counting'].includes(state))document.querySelectorAll('#rhythmTab .is-playing').forEach(el=>el.classList.remove('is-playing'));
+        if(!['playing','counting'].includes(state))document.querySelectorAll('#rhythmScore .integrated-tab .is-playing').forEach(el=>el.classList.remove('is-playing'));
         rhythmSoundStatus.textContent=state==='loading'||state==='preloading'?'Cargando sonido…':state==='paused'?'En pausa':state==='empty'?'Escribe notas o genera un ejercicio para escucharlo.':state==='error'?(error?.message||'No se pudo cargar el sonido. Inténtalo de nuevo.'):'';
         if(!['playing','counting','paused'].includes(state)){playhead.hidden=true;lastPlaybackBar=-1;}
       },
@@ -1579,7 +1623,7 @@
         if(count){playhead.hidden=true;rhythmSoundStatus.textContent='';countOverlay.hidden=false;if(count.count!==lastCountNumber){lastCountNumber=count.count;const number=document.createElement('span');number.textContent=String(count.count);number.setAttribute('aria-label','Conteo previo: '+count.count+' de '+count.total);const meter=rhythmTimeline().meters[0];number.style.animationDuration=(60000/tempo*4/meter.bottom)+'ms';countOverlay.replaceChildren(number);}return;}
         countOverlay.hidden=true;
         rhythmSoundStatus.textContent='';const timeline=rhythmTimeline(),position=timeline.locate(beat),bar=position.bar,capacity=timeline.capacities[bar],boxes=[...UI.rhythmScore.querySelectorAll('.rhythm-measure-hit')].filter(el=>Number(el.dataset.bar)===bar);if(!boxes.length){playhead.hidden=true;return;}
-        document.querySelectorAll('#rhythmTab .string-tab-number').forEach(el=>el.classList.toggle('is-playing',Number(el.dataset.bar)===bar&&position.beat>=Number(el.dataset.offset)&&position.beat<Number(el.dataset.offset)+Number(el.dataset.beats)));
+        document.querySelectorAll('#rhythmScore .string-tab-number').forEach(el=>el.classList.toggle('is-playing',Number(el.dataset.bar)===bar&&position.beat>=Number(el.dataset.offset)&&position.beat<Number(el.dataset.offset)+Number(el.dataset.beats)));
         const box=boxes[0],svg=box.ownerSVGElement;
         if(bar!==lastPlaybackBar){const y=box.getBoundingClientRect().top-UI.rhythmScore.getBoundingClientRect().top;if(y<0||y+170>UI.rhythmScore.clientHeight)UI.rhythmScore.scrollTop+=y;lastPlaybackBar=bar;}
         const sr=svg.getBoundingClientRect(),wr=UI.rhythmScore.parentElement.getBoundingClientRect(),scale=sr.width/svg.viewBox.baseVal.width,start=Number(box.dataset.start),end=Number(box.dataset.end),tops=boxes.map(el=>Number(el.dataset.top));
@@ -1588,7 +1632,7 @@
     });
     rhythmListen.addEventListener('click',()=>{if(['playing','counting'].includes(exerciseState)){rhythmAudio.pause();return;}if(exerciseState==='paused'){rhythmAudio.resume();return;}if(exerciseState==='loading'){rhythmAudio.stop();return;}rhythmPlaybackTempo=tempo;rhythmAudio.play(rhythmEditorEvents,{tempo,meter:currentRhythmMeter(),capacity:rhythmCapacity(currentRhythmMeter()),bars:Number(UI.rhythmBars.value)||4,clef:UI.rhythmClef.value,instrument:rhythmSound.value,marks:rhythmMarks});});
     rhythmStop.addEventListener('click',()=>rhythmAudio.stop());
-    rhythmSound.addEventListener('change',()=>{renderRhythmTab();rhythmAudio.stop();try{localStorage.setItem('crescendo-rhythm-sound',rhythmSound.value);}catch(_){}rhythmAudio.preload(rhythmSound.value);});
+    rhythmSound.addEventListener('change',()=>{renderRhythmScore();rhythmAudio.stop();try{localStorage.setItem('crescendo-rhythm-sound',rhythmSound.value);}catch(_){}rhythmAudio.preload(rhythmSound.value);});
     rhythmBpm.value=Math.round(tempo);rhythmBpm.addEventListener('input',()=>{const value=Number(rhythmBpm.value);if(value>=20&&value<=400){tempo=value;rhythmAudio.stop();updateBpmUI();}});rhythmBpm.addEventListener('change',()=>{tempo=Math.max(20,Math.min(400,Number(rhythmBpm.value)||80));rhythmBpm.value=Math.round(tempo);rhythmAudio.stop();updateBpmUI();});
     UI.bpmSld.addEventListener('input',()=>rhythmAudio.stop());
     document.addEventListener('visibilitychange',()=>{if(document.hidden)rhythmAudio.stop();});

@@ -176,8 +176,8 @@ function noteGraphic(id,x,y,down,glyphs,color='#222',className='rhythm-note'){
  return `<g class="${className}" data-stem="${noStem?'none':down?'down':'up'}">${shape}</g>`;
 }
 
-function render(events,{clef='treble',meter='4/4',bars=4,width=900,glyphs={},marks=[],selected=null}={}){
- const timeline=Structure.timeline(meter,marks,bars),grand=clef==='grand',staves=grand?[1,2]:[clef==='bass'?2:1],rowHeight=grand?380:220,rows=Math.ceil(bars/4),left=24,header=90+Math.max(...timeline.keys.map(key=>Structure.keyWidth(key))),spacing=10;
+function render(events,{clef='treble',meter='4/4',bars=4,width=900,glyphs={},marks=[],selected=null,tabHeight=0}={}){
+ const timeline=Structure.timeline(meter,marks,bars),grand=clef==='grand',staves=grand?[1,2]:[clef==='bass'?2:1],rowHeight=(grand?380:220)+tabHeight*staves.length,rows=Math.ceil(bars/4),left=24,header=90+Math.max(...timeline.keys.map(key=>Structure.keyWidth(key))),spacing=10;
  // Reserve room for the smallest onset gap, using one shared linear time axis.
  // The hit boxes expose this same interval to guides, preview and playback.
  let shortest=1;
@@ -192,7 +192,7 @@ function render(events,{clef='treble',meter='4/4',bars=4,width=900,glyphs={},mar
  const pitches={1:['A5','G5','F5','E5','D5','C5','B4','A4','G4','F4','E4','D4','C4'],2:['C4','B3','A3','G3','F3','E3','D3','C3','B2','A2','G2','F2','E2']};
  const notePositions=new Map();let drawing='';const notationEvents=notation(Structure.resolve(events,marks),timeline.capacities,bars);
  for(let row=0;row<rows;row++)for(let si=0;si<staves.length;si++){
-  const staff=staves[si],top=row*rowHeight+100+si*160,count=Math.min(4,bars-row*4),right=left+header+count*barWidth;
+  const staff=staves[si],top=row*rowHeight+100+si*(160+tabHeight),count=Math.min(4,bars-row*4),right=left+header+count*barWidth;
   for(let line=0;line<5;line++)drawing+=`<line x1="${left}" y1="${top+line*spacing}" x2="${right}" y2="${top+line*spacing}" stroke="#222"/>`;
   drawing+=`<text x="${left+6}" y="${top+(staff===1?30:10)}" font-family="Bravura Metronome" font-weight="normal" font-style="normal" font-size="40">${String.fromCodePoint(staff===1?0xE050:0xE062)}</text>`;
   const firstBar=row*4,key=timeline.keys[firstBar],keyWidth=Structure.keyWidth(key),[numerator,denominator]=timeline.meters[firstBar].label.split('/');drawing+=Structure.keySVG(key,0,left+46,top,staff);drawing+=`<text x="${left+55+keyWidth}" y="${top+10}" font-family="Bravura Metronome" font-weight="normal" font-style="normal" font-size="40">${[...numerator].map(n=>String.fromCodePoint(0xE080+Number(n))).join('')}</text><text x="${left+55+keyWidth}" y="${top+30}" font-family="Bravura Metronome" font-weight="normal" font-style="normal" font-size="40">${[...denominator].map(n=>String.fromCodePoint(0xE080+Number(n))).join('')}</text>`;
