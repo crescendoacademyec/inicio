@@ -8132,6 +8132,13 @@
     const textKind = AnchoredText.kindOf(item, createData);
     const isChordEditor = AnchoredText.isChord(textKind);
     const isDynamicEditor = AnchoredText.isDynamic(textKind);
+    if(isChordEditor&&scoreShell){
+      const clientPoint=svgPointToClient(point),bounds=scoreShell.getBoundingClientRect();
+      if(clientPoint.x>bounds.right-130)scoreShell.scrollLeft+=clientPoint.x-(bounds.right-130);
+      else if(clientPoint.x<bounds.left+16)scoreShell.scrollLeft+=clientPoint.x-(bounds.left+16);
+      if(clientPoint.y>bounds.bottom-40)scoreShell.scrollTop+=clientPoint.y-(bounds.bottom-40);
+      else if(clientPoint.y<bounds.top+32)scoreShell.scrollTop+=clientPoint.y-(bounds.top+32);
+    }
     const client = svgPointToClient(point);
     input.value = item?.text || "";
     input.dataset.textId = item?.id || "";
@@ -8246,8 +8253,9 @@
   }
 
   function chordGridStepTicks() {
-    const duration = activeGridDuration();
-    return Math.max(MIN_DURATION_TICKS, Number(duration?.ticks) || subdivisionTicks());
+    const duration = state.activeDuration || activeGridDuration();
+    const dots=[1,1.5,1.75][state.inputDots||0],tuplet=normalizeTuplet(state.activeTuplet);
+    return Math.max(MIN_DURATION_TICKS, (Number(duration?.ticks) || subdivisionTicks())*dots*(tuplet?tuplet.normal/tuplet.actual:1));
   }
 
   function chordGridAnchors(measureIndex = state.cursorMeasure) {
@@ -8258,6 +8266,8 @@
     for (let tick = 0; tick < measureLength - EPSILON; tick += step) {
       anchors.push(Math.max(0, Math.min(measureLength, Number(tick.toFixed(4)))));
     }
+    const notes=state.measures[measureIndex]?.entries.filter(entry=>entry.type==="note"&&!entry.hiddenTupletReserve).map(entry=>entry.tickStart)||[];
+    if(notes.length)return [...new Set(notes)].sort((a,b)=>a-b);
     if (!anchors.length) anchors.push(0);
     return anchors.filter((tick) => tick < profile.measureTicks - EPSILON);
   }
@@ -8284,19 +8294,14 @@
   }
 
   function nextChordAnchor(source, direction) {
-    const sourceMeasureIndex = Math.max(0, Number(source?.measureIndex) || 0);
-    const sourceTick = snapChordTick(Number.isFinite(source?.tick) ? Number(source.tick) : 0, sourceMeasureIndex);
-    const step = chordGridStepTicks();
-    let targetAbsoluteTick = Math.max(0, measureStartAbsoluteTick(sourceMeasureIndex) + sourceTick + direction * step);
-    while (targetAbsoluteTick >= measureStartAbsoluteTick(state.measures.length) - EPSILON) {
-      ensureMeasure(state.measures.length);
-    }
-    const target = measureIndexAndTickFromAbsolute(targetAbsoluteTick);
-    ensureMeasure(target.measureIndex);
-    return {
-      measureIndex: target.measureIndex,
-      tick: snapChordTick(target.tick, target.measureIndex)
-    };
+    const sourceMeasureIndex=Math.max(0,Number(source?.measureIndex)||0),sourceTick=Number(source?.tick)||0;
+    const current=measureStartAbsoluteTick(sourceMeasureIndex)+sourceTick;
+    const notes=state.measures.flatMap((measure,measureIndex)=>measure.entries.filter(entry=>entry.type==="note"&&!entry.hiddenTupletReserve).map(entry=>({measureIndex,tick:entry.tickStart,absolute:measureStartAbsoluteTick(measureIndex)+entry.tickStart}))).sort((a,b)=>a.absolute-b.absolute);
+    const next=direction<0?notes.filter(note=>note.absolute<current-EPSILON).at(-1):notes.find(note=>note.absolute>current+EPSILON);
+    if(next)return {measureIndex:next.measureIndex,tick:next.tick};
+    const targetAbsolute=Math.max(0,current+direction*chordGridStepTicks());
+    while(targetAbsolute>=measureStartAbsoluteTick(state.measures.length)-EPSILON)ensureMeasure(state.measures.length);
+    return measureIndexAndTickFromAbsolute(targetAbsolute);
   }
 
   function dynamicAnchors() {
@@ -13617,15 +13622,29 @@
       events.forEach(event=>withSystemContext(event.systemIndex||0,()=>{
         const entry=state.measures[event.measureIndex]?.entries.find(entry=>entry.id===event.entryId);
         if(!entry)return;
-        positions.push(...instrument.fingering(stringMidisForEntry(entry,event.measureIndex),savedStringFingering(entry)).filter(p=>p.midi===event.midi));
+        const labels=stringNoteLabels(entry,event.measureIndex);
+        positions.push(...instrument.fingering(stringMidisForEntry(entry,event.measureIndex),savedStringFingering(entry)).filter(p=>p.midi===event.midi).map(p=>({...p,label:labels.get(p.midi)})));
       }));
       setActiveSystemIndex(active);
     }
-    document.querySelectorAll(".guitar-fretboard button").forEach(button=>button.classList.toggle("is-playing",positions.some(p=>p.string===Number(button.dataset.string)&&p.fret===Number(button.dataset.fret))));
+    document.querySelectorAll(".guitar-fretboard button").forEach(button=>{
+      const position=positions.find(p=>p.string===Number(button.dataset.string)&&p.fret===Number(button.dataset.fret));
+      button.classList.toggle("is-playing",!!position);button.textContent=position?.label||button.dataset.noteLabel||"";
+    });
   }
 
   function stringInstrument() { return Guitar.forInstrument(state.playbackInstrument); }
   function stringMidisForEntry(entry,measureIndex,steps=entryStaffSteps(entry)){const ins=stringInstrument();return midiNotesForEntry(entry,measureIndex,steps).map(n=>ins?ins.soundingMidi(n):n);}
+  function stringNoteLabels(entry,measureIndex){
+    const labels=new Map(),instrument=stringInstrument(),letters=["C","D","E","F","G","A","B"],natural=[0,2,4,5,7,9,11];
+    for(const staffStep of entryStaffSteps(entry)){
+      const written=entryDiatonicStepForStaffStep(entry,staffStep),shift=instrument?.id==="requinto"?-4:instrument?.id==="guitar"?-7:0;
+      const degree=((written+shift)%7+7)%7,midi=stringMidisForEntry(entry,measureIndex,[staffStep])[0];
+      const alter=(((midi%12)-natural[degree]+18)%12)-6;
+      labels.set(midi,letters[degree]+(alter>0?"#".repeat(alter):"b".repeat(-alter)));
+    }
+    return labels;
+  }
   function savedStringFingering(entry) { return entry.stringFingerings?.[state.playbackInstrument] || (state.playbackInstrument === "guitar" ? entry.guitarFingering : []) || []; }
   function storeStringFingering(entry, positions) {
     entry.stringFingerings = {...entry.stringFingerings, [state.playbackInstrument]:positions};
@@ -13736,6 +13755,7 @@
     panel.hidden = !enabled;
     if (!enabled) return;
     if(panel.dataset.instrument!==instrument.id){
+      panel._boardCleanup?.();
       panel.dataset.instrument=instrument.id;
       panel.classList.toggle("is-fretless",!instrument.fretted);
       panel.innerHTML = '<div class="guitar-fretboard" role="group"></div>';
@@ -13749,15 +13769,26 @@
         if(!instrument.fretted&&[2,4,5,7,9,11,12].includes(fret))button.classList.add("finger-guide");
         button.onclick=()=>applyGuitarPosition(i+1,fret);board.appendChild(button);
       }});
+      board.addEventListener("keydown",event=>{
+        const button=event.target.closest("button[data-string][data-fret]");
+        if(!button||!["ArrowLeft","ArrowRight","ArrowUp","ArrowDown"].includes(event.key)||event.ctrlKey||event.metaKey||event.altKey)return;
+        event.preventDefault();event.stopPropagation();
+        const string=Math.max(1,Math.min(instrument.tuning.length,Number(button.dataset.string)+(event.key==="ArrowDown"?1:event.key==="ArrowUp"?-1:0)));
+        const fret=Math.max(0,Math.min(24,Number(button.dataset.fret)+(event.key==="ArrowRight"?1:event.key==="ArrowLeft"?-1:0)));
+        applyGuitarPosition(string,fret);const next=board.querySelector(`button[data-string="${string}"][data-fret="${fret}"]`);next?.focus({preventScroll:true});next?.scrollIntoView({block:"nearest",inline:"nearest"});
+      });
+      panel._boardCleanup=window.CrescendoEditorStringBoard.mount(board,instrument);
     }
     const target=guitarTarget();
     const location=target?.entry ? entryLocationById(target.entry.id):null;
     const positions=location?instrument.fingering(stringMidisForEntry(target.entry,location.measureIndex),savedStringFingering(target.entry)):[];
-    const selectedMidi=location?stringMidisForEntry(target.entry,location.measureIndex,[target.staffStep??entryStaffSteps(target.entry)[0]])[0]:null;
+    const labels=location?stringNoteLabels(target.entry,location.measureIndex):new Map();
     panel.querySelectorAll(".guitar-fretboard button").forEach(button=>{
-      const active=positions.some(p=>p.string===Number(button.dataset.string)&&p.fret===Number(button.dataset.fret));
+      const position=positions.find(p=>p.string===Number(button.dataset.string)&&p.fret===Number(button.dataset.fret));
+      const active=!!position;
       button.classList.toggle("is-active",active);button.setAttribute("aria-pressed",String(active));
-      button.textContent=active?"●":"";
+      button.dataset.noteLabel=active?labels.get(position.midi)||"":"";
+      button.textContent=button.dataset.noteLabel;
       button.classList.toggle("fret-guide",instrument.fretted&&Number(button.dataset.string)===Math.ceil(instrument.tuning.length/2)&&[3,5,7,9,12,15,17,19,21,24].includes(Number(button.dataset.fret)));
       button.classList.toggle("double-guide",[12,24].includes(Number(button.dataset.fret)));
 
@@ -21493,6 +21524,8 @@
     state.cursorActive = true;
     state.entryCursorActive = false;
     restoreFreeCursorPitch(pitchSnapshot);
+    const note=state.measures[state.cursorMeasure]?.entries.find(entry=>entry.type==="note"&&entryVoice(entry)===activeVoice()&&Math.abs(entry.tickStart-state.cursorTick)<EPSILON);
+    if(note){state.cursorEntryId=note.id;state.cursorStaffStep=entryStaffStep(note);setActiveNote(note,state.cursorStaffStep);hideCursorPitch();}
     syncInputSession();
     render();
     return true;
@@ -21520,7 +21553,7 @@
   }
 
   function moveCursor(direction) {
-    if (isNoteInputMode()) return moveNoteInputCaret(direction);
+    if (isNoteInputMode()&&!selectedEntryLocation()) return moveNoteInputCaret(direction);
     const entries = state.measures.flatMap((measure, measureIndex) => (
       measure.entries.map((entry, entryIndex) => ({ measureIndex, entryIndex, entry }))
     )).filter((location) => (
@@ -21533,8 +21566,9 @@
     const selectedFlatIndex = entries.findIndex((item) => item.entry.id === selection.entry.id);
     const next = entries[selectedFlatIndex + direction];
     if (!next) return false;
-    selectEntry(next.measureIndex, next.entryIndex, { activateCursor: false });
+    selectEntry(next.measureIndex, next.entryIndex, { activateCursor: true });
     render();
+    svg.querySelector(`.cursor-line,[data-entry-id="${next.entry.id}"]`)?.scrollIntoView({block:"nearest",inline:"nearest"});
     return true;
   }
 

@@ -20,3 +20,7 @@ test('a half or whole note can target beat four rather than snapping to beat thr
   const p=W.overflowPlan(c.activeRhythmTool,[],[4,4,4,4],4,1,c.rhythmPointerTarget);assert.equal(p.remaining,1);assert.equal(p.segments[0].offset,3);
  }
 });
+test('left/right traverse existing notes in time order across bars and keep the selected staff, chord head and rhythm intact',()=>{
+ const events=[{id:'later',staff:1,bar:1,offset:0,beats:1,note:'C5'},{id:'bass',staff:2,bar:0,offset:0,beats:1,note:'C3'},{id:'first',staff:1,bar:0,offset:0,beats:1,note:'E5',notes:['C5','E5']},{id:'rest',staff:1,bar:0,offset:1,beats:1,kind:'rest'},{id:'triplet',staff:1,bar:0,offset:2,beats:1/3,note:'D5'}],before=JSON.stringify(events);
+ const c={rhythmEditorEvents:events,activeRhythmStaff:1,selectedRhythmNote:{index:2,head:1},rhythmPreview:{replaceChildren(){}},renderRhythmScore(){},UI:{rhythmScore:{querySelector:()=>null}}};vm.createContext(c);vm.runInContext(fn('moveRhythmSelection'),c);c.moveRhythmSelection(1);assert.equal(c.selectedRhythmNote.index,4);assert.equal(c.selectedRhythmNote.head,0);c.moveRhythmSelection(1);assert.equal(c.selectedRhythmNote.index,0);c.moveRhythmSelection(-1);assert.equal(c.selectedRhythmNote.index,4);assert.equal(JSON.stringify(events),before);c.selectedRhythmNote=null;c.moveRhythmSelection(-1);assert.equal(c.selectedRhythmNote.index,0);
+});
