@@ -3570,8 +3570,14 @@
     const absoluteEnd = absoluteStart + entry.ticks;
     const boundaries = rhythmicSplitBoundaries(absoluteStart, absoluteEnd)
       .filter((boundary) => entry.forceDuration !== true || isMeasureBoundaryTick(boundary));
-    if (!boundaries.length && (entry.forceDuration === true || durationInfoByTicks(entry.ticks))) {
-      return [{ absoluteStart, entry, changed: false }];
+    const spelling=durationInfoByTicks(entry.ticks);
+    if (!boundaries.length && spelling) {
+      // A trimmed note must display the duration it actually occupies. forceDuration
+      // preserves rhythmic placement; it must never preserve an obsolete glyph.
+      const dots=spelling.dots||(spelling.dotted?1:0);
+      const changed=entry.durationId!==spelling.duration.id||(entry.dots||0)!==dots||!!entry.dotted!==!!dots||entry.flags!==spelling.duration.flags;
+      entry.durationId=spelling.duration.id;entry.flags=spelling.duration.flags;entry.dots=dots;entry.dotted=dots>0;
+      return [{ absoluteStart, entry, changed }];
     }
     const sourceEntry = JSON.parse(JSON.stringify(entry));
     const points = [absoluteStart, ...boundaries, absoluteEnd];
@@ -17569,6 +17575,7 @@
   }
 
   function entryDuration(entry) {
+    if(!entry.tuplet){const spelling=durationInfoByTicks(entry.ticks);if(spelling)return spelling.duration;}
     return durations.find((duration) => duration.id === entry.durationId)
       || durations.find((duration) => duration.id === "quarter")
       || durations[4];

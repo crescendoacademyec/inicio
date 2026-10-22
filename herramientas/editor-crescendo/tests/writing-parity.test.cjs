@@ -63,3 +63,16 @@ test('overflow replacement preserves a chord and consumes only the new duration 
  assert.equal(await c.offerOverflowNote(0,12,0,source),true);
  const first=c.entryLocationById('last').entry,next=c.state.measures[1].entries.find(e=>e.type==='note');assert.equal(first.ticks,4);assert.equal(next.ticks,12);assert.deepEqual(plain(next.chordSteps),[0,2,4]);assert.equal(next.accidentalsByStep[0],'sharp');
 });
+test('lengthening quarter-quarter-half displays quarter-half-quarter, not five written beats, including chord tails',()=>{
+ for(const system of [0,1])for(const voice of [1,2]){
+  const c=fixture([note('a',0,4,0,voice),note('b',4,4,2,voice),{...note('tail',8,8,4,voice),chordSteps:[0,2,4],forceDuration:true}],system);c.voice=voice;c.state.activeDuration=c.durationById('half');
+  c.resizeWrittenHead({...c.entryLocationById('b'),staffStep:2});
+  const notes=c.state.measures[0].entries.filter(e=>e.type==='note');assert.deepEqual(plain(notes.map(e=>[e.tickStart,e.ticks,e.durationId])),[[0,4,'quarter'],[4,8,'half'],[12,4,'quarter']]);
+  assert.deepEqual(plain(c.entryLocationById('tail').entry.chordSteps),[0,2,4]);
+  const visualTicks=notes.reduce((sum,e)=>sum+c.durationById(e.durationId).ticks*c.dotFactor(e.dots||0),0);assert.equal(visualTicks,16);assert.equal(notes.reduce((sum,e)=>sum+e.ticks,0),16);
+ }
+});
+test('persisted clipped notes repair duration spelling without changing onset, pitch, voice or ID',()=>{
+ const c=fixture(),entry={...note('saved',12,4,3,2),durationId:'half',flags:0,forceDuration:true,accidental:'flat',chordSteps:[1,3,5]};
+ const result=c.splitEntryRhythmically(entry,12);assert.equal(result[0].entry,entry);assert.equal(entry.durationId,'quarter');assert.equal(entry.ticks,4);assert.equal(entry.tickStart,12);assert.equal(entry.voice,2);assert.equal(entry.accidental,'flat');assert.deepEqual(entry.chordSteps,[1,3,5]);assert.equal(result[0].changed,true);assert.equal(c.splitEntryRhythmically(entry,12)[0].changed,false);
+});
