@@ -13,8 +13,8 @@ function fixture(entries=[],system=0){
  c.entryLocationById=key=>{for(let m=0;m<c.state.measures.length;m++){const i=c.state.measures[m].entries.findIndex(e=>e.id===key);if(i>=0)return {measureIndex:m,entryIndex:i,entry:c.state.measures[m].entries[i]};}return null;};
  c.absoluteTickForLocation=loc=>loc.measureIndex*16+loc.entry.tickStart;
  c.makeRestEntriesForRange=(start,ticks)=>{const result=[];let at=start,left=ticks;while(left>.0001){const value=[16,8,4,2,1,.5,.25,.125].find(t=>t<=left+.0001);assert.ok(value,'representable rest');const d=D.durationByTicks(value);result.push({...c.makeEntry('rest',d),tickStart:at});at+=value;left-=value;}return result;};
- for(const name of ['makeRestSegment','fillVoiceWithRestsExact','normalizeMeasure','copyEntryPitchData','tieStepForEntry','makeRhythmicSegment','splitEntryRhythmically','preservedEntryRange','overwriteEntryInMeasure','writeEntryAcrossMeasures','pointerWriteRangeError','resizeWrittenHead','setActiveNote','clearActiveNote','hideCursorPitch','showCursorPitchAtCursor','carryCursorPitchAfterWrittenNote','nextWritingGridAbsoluteTickAfterEntry','insertEntryCore','insertEntry','toggleWritingLigature','writingLigatureMidi','writingLigatureError','acceptWritingLigatureEndpoint','orderedNoteLocations','pruneBrokenWritingTies'])vm.runInContext(fn(name),c);
- c.Writing=c.window.JMLScoreWriting;c.normalizeMeasure(c.state.measures[0],0);return c;
+ for(const name of ['noteEntryAtExactCursor','addChordPitchAtCursor','entryDiatonicSteps','makeRestSegment','fillVoiceWithRestsExact','normalizeMeasure','copyEntryPitchData','tieStepForEntry','makeRhythmicSegment','splitEntryRhythmically','preservedEntryRange','overwriteEntryInMeasure','writeEntryAcrossMeasures','pointerWriteRangeError','resizeWrittenHead','setActiveNote','clearActiveNote','hideCursorPitch','showCursorPitchAtCursor','carryCursorPitchAfterWrittenNote','nextWritingGridAbsoluteTickAfterEntry','insertEntryCore','insertEntry','toggleWritingLigature','writingLigatureMidi','writingLigatureError','acceptWritingLigatureEndpoint','orderedNoteLocations','pruneBrokenWritingTies'])vm.runInContext(fn(name),c);
+ c.setEntryStaffSteps=(entry,steps)=>{entry.staffStep=steps[0];if(steps.length>1){entry.chordSteps=steps;entry.chordDiatonicSteps=[...steps];}else delete entry.chordSteps;};c.Writing=c.window.JMLScoreWriting;c.normalizeMeasure(c.state.measures[0],0);return c;
 }
 const note=(id,start,ticks,step=0,voice=1)=>({id,type:'note',tickStart:start,ticks,staffStep:step,diatonicStep:step,durationId:ticks===8?'half':'quarter',voice});
 function plain(value){return JSON.parse(JSON.stringify(value));}
@@ -36,4 +36,14 @@ test('new prolongation endpoints use the active secondary voice and sounding key
   assert.equal(notes.length,2);assert.ok(notes.every(e=>e.voice===2));
   assert.equal(notes[0].tieToNext,true);
   assert.equal(c.writingLigatureMidi({entry:notes[0],staffStep:0,measureIndex:0}),61);
+});
+
+test('pointer notes form chords without chord mode, retain duration and voice, and never duplicate a pitch',()=>{
+ for(const voice of [1,2])for(const system of [0,1]){
+  const c=fixture([note('a',12,4,0,voice)],system);c.voice=voice;c.state.cursorTick=12;c.state.activeDuration=c.durationById('half');
+  for(const step of [2,4,2])assert.equal(c.insertEntry(step,{preserveDuration:true,addToChord:true}),true);
+  const entry=c.entryLocationById('a').entry;
+  assert.deepEqual(plain(entry.chordSteps),[0,2,4]);assert.equal(entry.ticks,4);assert.equal(entry.tickStart,12);assert.equal(entry.voice,voice);assert.equal(c.history.length,2);
+  assert.equal(c.state.measures[0].entries.filter(e=>e.type==='note').length,1);
+ }
 });

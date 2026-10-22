@@ -720,7 +720,7 @@ Las herramientas administrativas de apariencia profunda aparecen solo cuando se 
 
 ### Escritura con el puntero y cifrados
 
-En modo de escritura, la nota se coloca en la línea o espacio pulsado, también al pulsar sobre un silencio. Volver a escribir en el mismo tiempo sustituye su contenido; activa **Modo acorde (Q)** para añadir alturas simultáneas. Las líneas superiores, la vista previa y las figuras comparten las posiciones temporales del compás.
+En modo de escritura, la nota se coloca en la línea o espacio pulsado, también al pulsar sobre un silencio. Pulsar otra altura en el mismo tiempo añade una nota al acorde directamente, sin activar ningún botón; se conserva la duración de la figura existente. Pulsar una cabeza existente permite seleccionarla o cambiar su duración. **Modo acorde (Q)** sigue disponible para mantener el cursor en el mismo tiempo al introducir alturas sucesivas con el teclado. Las líneas superiores, la vista previa y las figuras comparten las posiciones temporales del compás.
 
 La paleta Figuras incluye **Cm7 · Cifrado de acordes**. Actívalo y pulsa un compás para escribir encima del pentagrama. Pulsa el mismo anclaje para editar un cifrado existente. Seleccionar una figura devuelve al modo de escritura. Los cifrados usan el sistema de texto anclado del documento, con deshacer/rehacer y exportación MusicXML.
 

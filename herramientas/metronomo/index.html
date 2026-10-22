@@ -1011,7 +1011,7 @@
 <script src="../editor-crescendo/src/bravura-palette-paths.js?v=20261014-preview-1"></script>
 <script src="rhythm-structure.js?v=20261021-compact-menu-2"></script>
 <script src="rhythm-marks.js?v=20261021-compact-menu-2"></script>
-<script src="rhythm-writing.js?v=20261021-compact-menu-2"></script>
+<script src="rhythm-writing.js?v=20261021-auto-chords-1"></script>
 <script src="rhythm-export.js?v=20261021-compact-menu-2"></script>
 <script src="https://cdn.jsdelivr.net/npm/soundfont-player@0.12.0/dist/soundfont-player.min.js"></script>
 <script src="rhythm-audio.js?v=20261021-compact-menu-2"></script>
@@ -1363,7 +1363,7 @@
     const editorPitches={treble:['A5','G5','F5','E5','D5','C5','B4','A4','G4','F4','E4','D4','C4'],bass:['C4','B3','A3','G3','F3','E3','D3','C3','B2','A2','G2','F2','E2']};
     function currentRhythmMeter(){const selected=UI.beatsSel.options[UI.beatsSel.selectedIndex];return selected?.textContent.trim()||`${UI.beatsSel.value}/4`}
     function rhythmTimeline(){return rhythmStructure.timeline(currentRhythmMeter(),rhythmMarks,Number(UI.rhythmBars.value)||4);}
-    function rhythmSlots(bar,free=false){const timeline=rhythmTimeline(),duration=rhythmWriting.gridStep(activeRhythmTool),events=rhythmEditorEvents.filter(e=>(e.staff||1)===activeRhythmStaff&&e.bar===bar);return rhythmStructure.slots(duration,timeline.capacities[bar],events,4/timeline.meters[bar].bottom,free?0:duration);}
+    function rhythmSlots(bar,free=false){const timeline=rhythmTimeline(),duration=rhythmWriting.gridStep(activeRhythmTool),events=rhythmEditorEvents.filter(e=>(e.staff||1)===activeRhythmStaff&&e.bar===bar);const slots=rhythmStructure.slots(duration,timeline.capacities[bar],events,4/timeline.meters[bar].bottom,free?0:duration);if(!activeRhythmTool.rest&&!activeRhythmTool.grace&&!activeRhythmTool.tool&&!activeRhythmMark)for(const e of events)if(!e.grace&&e.kind!=='rest')slots.push(e.offset||0);return [...new Set(slots)].sort((a,b)=>a-b);}
     function rhythmCapacity(meter){const [n,d]=meter.split('/').map(Number);return n*4/d}
     // Resolución exacta para figuras, puntillos y grupos de 3, 5, 6 y 7.
     const RHYTHM_TICKS_PER_BEAT=rhythmWriting.TICKS;

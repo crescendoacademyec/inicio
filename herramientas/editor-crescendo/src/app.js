@@ -5680,7 +5680,7 @@
   }
 
   function addChordPitchAtCursor(staffStep, options = {}) {
-    if (!state.noteChordMode || state.mode !== "note") return false;
+    if (!(state.noteChordMode || options.addToChord) || state.mode !== "note") return false;
     const location = noteEntryAtExactCursor(activeVoice());
     if (!location?.entry) return false;
     const entry = location.entry;
@@ -5696,6 +5696,7 @@
       entry.diatonicStep = diatonicSteps[0] ?? options.diatonicStep;
       entry.chordDiatonicSteps = diatonicSteps;
     }
+    if (options.midiInfo) applyMidiAccidental(entry, staffStep, options.midiInfo, location.measureIndex);
     state.cursorStaffStep = staffStep;
     state.activeNoteEntryId = entry.id;
     state.activeNoteStaffStep = staffStep;
@@ -5712,7 +5713,8 @@
     const absoluteTick = cursorAbsoluteTick(), target = measureIndexAndTickFromAbsolute(absoluteTick);
     const tuplet = normalizeTuplet(state.activeTuplet), unit = tuplet ? durationById(tuplet.unitDurationId) : state.activeDuration;
     const ticks = tuplet ? tupletSlotTicks(tuplet) : unit.ticks * dotFactor(state.inputDots || 0);
-    if (options.preserveDuration && !state.noteChordMode && !tuplet && !state.pendingTupletRatio && !state.graceInput) {
+    const addingChordPitch = options.addToChord && state.mode === "note" && !state.graceInput && noteEntryAtExactCursor(activeVoice());
+    if (options.preserveDuration && !state.noteChordMode && !addingChordPitch && !tuplet && !state.pendingTupletRatio && !state.graceInput) {
       const error = pointerWriteRangeError(target.measureIndex, target.tick, ticks);
       if (error) { showEditorMessage(error); return false; }
     }
@@ -19487,7 +19489,7 @@
         positionCursorFromPoint(point, { pointerPitch: true });
         setMode(inputMode);
         pointerInputPreview = null;
-        insertEntry(state.cursorStaffStep, { explicitRest: inputMode === "rest", preserveDuration: true });
+        insertEntry(state.cursorStaffStep, { explicitRest: inputMode === "rest", preserveDuration: true, addToChord: !state.writingLigature });
       };
       document.addEventListener("pointerup", onInputPointerUp, { once: true });
       return;
