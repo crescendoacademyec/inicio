@@ -1013,7 +1013,7 @@
 <script src="rhythm-structure.js?v=20261021-compact-menu-2"></script>
 <script src="rhythm-marks.js?v=20261021-compact-menu-2"></script>
 <script src="../../shared/overflow-writing.js?v=20261022-1"></script>
-<script src="rhythm-writing.js?v=20261022-overflow-1"></script>
+<script src="rhythm-writing.js?v=20261022-delete-selected-1"></script>
 <script src="rhythm-export.js?v=20261021-compact-menu-2"></script>
 <script src="https://cdn.jsdelivr.net/npm/soundfont-player@0.12.0/dist/soundfont-player.min.js"></script>
 <script src="rhythm-audio.js?v=20261021-compact-menu-2"></script>
@@ -1488,12 +1488,20 @@
         rhythmPointerTarget={bar:entry.bar||0,beat:entry.offset||0};activeRhythmStaff=entry.staff||1;
         rhythmPreview.replaceChildren();renderRhythmScore(replacement.message||(replacement.adjusted?'Figura reemplazada. Las figuras siguientes se ajustaron al tiempo restante.':'Figura reemplazada. Se ha conservado su posición en el compás.'));document.activeElement?.blur();return true;
       }
-      selectedRhythmNote={index,head:Number(hit.dataset.head)};rhythmPreview.replaceChildren();renderRhythmScore('Nota seleccionada. ↑ / ↓: subir o bajar un semitono.');document.activeElement?.blur();return true;
+      selectedRhythmNote={index,head:Number(hit.dataset.head)};rhythmPreview.replaceChildren();renderRhythmScore('Nota seleccionada. ↑ / ↓: mover por semitonos. Suprimir: borrar esta nota.');document.activeElement?.blur();return true;
     }
     document.addEventListener('keydown',event=>{
-      if(event.defaultPrevented||event.ctrlKey||event.metaKey||event.altKey||event.shiftKey||event.target.closest?.('input,textarea,select,[contenteditable="true"]'))return;
+      if(event.defaultPrevented||event.ctrlKey||event.metaKey||event.altKey||event.shiftKey||event.target.closest?.('input,textarea,select,dialog,[role="dialog"],[contenteditable="true"]'))return;
       if(event.key==='Escape'&&['slur','tie','erase'].includes(activeRhythmTool.tool)){event.preventDefault();rhythmWriting.select(activeRhythmTool,'tool',activeRhythmTool.tool);syncRhythmPalette();rhythmPreview.replaceChildren();renderRhythmScore();return;}
       if(event.key==='Escape'&&selectedRhythmNote){selectedRhythmNote=null;renderRhythmScore();return;}
+      if(selectedRhythmNote&&!UI.rhythmLab.hidden&&['Delete','Backspace'].includes(event.key)){
+        event.preventDefault();const before=rhythmSnapshot(),entry=rhythmEditorEvents[selectedRhythmNote.index];
+        if(rhythmWriting.eraseHead(rhythmEditorEvents,selectedRhythmNote.index,selectedRhythmNote.head)){
+          rhythmHistory.commit(before,rhythmSnapshot());selectedRhythmNote=null;activeRhythmTool.decorationStart=null;rhythmPointerTarget=null;rhythmPreview.replaceChildren();
+          renderRhythmScore(rhythmEditorEvents.includes(entry)?'Nota eliminada. Las demás notas del acorde se conservan.':'Nota eliminada. Su duración queda como silencio.');
+        }
+        return;
+      }
       if(!selectedRhythmNote||!['ArrowUp','ArrowDown'].includes(event.key)||UI.rhythmLab.hidden)return;
       event.preventDefault();const before=rhythmSnapshot();
       if(rhythmStructure.transposeHead(rhythmEditorEvents,rhythmMarks,selectedRhythmNote.index,selectedRhythmNote.head,event.key==='ArrowUp'?1:-1)){rhythmHistory.commit(before,rhythmSnapshot());renderRhythmScore('↑ / ↓: mover la nota seleccionada por semitonos.');}
