@@ -704,7 +704,7 @@
   }
 
   function systemGapY() {
-    return SYSTEM_GAP_Y + (stringInstrument() && guitarTabVisible ? stringInstrument().tuning.length * 17 + 40 : 0);
+    return SYSTEM_GAP_Y + (stringInstrument() && guitarTabVisible ? stringInstrument().tuning.length * 17 + 64 : 0);
   }
 
   function visibleSystemIndices() {
@@ -11795,7 +11795,7 @@
         }));
       });
     });
-    return events.sort((a, b) => a.startMs - b.startMs || a.midi - b.midi);
+    return events.map(event=>({...event,midi:stringInstrument()?.soundingMidi(event.midi)??event.midi})).sort((a, b) => a.startMs - b.startMs || a.midi - b.midi);
   }
 
   // Instrumento por SoundFont: utiliza la misma interfaz que una salida MIDI.
@@ -11973,7 +11973,7 @@
   async function auditionMidiNotes(notes, options = {}) {
     if (options.allowLiveAudition !== true) return false;
     const midiNotes = [...new Set((notes || []).map(Number).filter(Number.isFinite))]
-      .map((note) => Math.max(0, Math.min(127, Math.round(note))));
+      .map((note) => Math.max(0, Math.min(127, Math.round(options.sounding?note:(stringInstrument()?.soundingMidi(note)??note)))));
     if (!midiNotes.length) return false;
     const output = await midiPlaybackOutput({ quiet: true });
     if (!output || state.midiPlayback.active) return false;
@@ -13617,7 +13617,7 @@
       events.forEach(event=>withSystemContext(event.systemIndex||0,()=>{
         const entry=state.measures[event.measureIndex]?.entries.find(entry=>entry.id===event.entryId);
         if(!entry)return;
-        positions.push(...instrument.fingering(midiNotesForEntry(entry,event.measureIndex),savedStringFingering(entry)).filter(p=>p.midi===event.midi));
+        positions.push(...instrument.fingering(stringMidisForEntry(entry,event.measureIndex),savedStringFingering(entry)).filter(p=>p.midi===event.midi));
       }));
       setActiveSystemIndex(active);
     }
@@ -13625,6 +13625,7 @@
   }
 
   function stringInstrument() { return Guitar.forInstrument(state.playbackInstrument); }
+  function stringMidisForEntry(entry,measureIndex,steps=entryStaffSteps(entry)){const ins=stringInstrument();return midiNotesForEntry(entry,measureIndex,steps).map(n=>ins?ins.soundingMidi(n):n);}
   function savedStringFingering(entry) { return entry.stringFingerings?.[state.playbackInstrument] || (state.playbackInstrument === "guitar" ? entry.guitarFingering : []) || []; }
   function storeStringFingering(entry, positions) {
     entry.stringFingerings = {...entry.stringFingerings, [state.playbackInstrument]:positions};
@@ -13647,23 +13648,23 @@
       if (!location) return;
       const steps = entryStaffSteps(target.entry);
       const index = Math.max(0, steps.indexOf(target.staffStep));
-      const notes = steps.map(step => midiNotesForEntry(target.entry, location.measureIndex, [step])[0]);
+      const notes = steps.map(step => stringMidisForEntry(target.entry, location.measureIndex, [step])[0]);
       notes[index] = note;
       if(new Set(notes).size !== notes.length){showEditorMessage("Esa altura ya está escrita en el acorde.");return;}
-      const retained = savedStringFingering(target.entry).filter(p => p.midi !== midiNotesForEntry(target.entry, location.measureIndex, [steps[index]])[0]);
+      const retained = savedStringFingering(target.entry).filter(p => p.midi !== stringMidisForEntry(target.entry, location.measureIndex, [steps[index]])[0]);
       const positions = instrument.fingering(notes, [...retained, chosen]);
       if (positions.length !== new Set(notes).size) {
         showEditorMessage("Esa cuerda ya está ocupada por otra nota del acorde. Elige otra cuerda o traste."); return;
       }
       saveHistory();
-      setEntryPitchInfos(target.entry, notes.map(n => midiNoteInfo(n-(target.entry.ottava?12:0), location.measureIndex)), location.measureIndex);
+      setEntryPitchInfos(target.entry, notes.map(n => midiNoteInfo(instrument.writtenMidi(n)-(target.entry.ottava?12:0), location.measureIndex)), location.measureIndex);
       storeStringFingering(target.entry, positions);
       const nextStep = entryStaffSteps(target.entry)[index];
       state.selectedNoteRefs = [{entryId: target.entry.id, staffStep: nextStep}];
       setActiveNote(target.entry, nextStep);
-      auditionMidiNotes([note]);
+      auditionMidiNotes([note],{sounding:true});
       render();
-    } else if (writeMidiNote(note, {commitPending:true})) {
+    } else if (writeMidiNote(instrument.writtenMidi(note), {commitPending:true,suppressAudition:true})) {
       const active = findActiveNoteTarget();
       if (active?.entry) { storeStringFingering(active.entry, [chosen]); render(); }
     }
@@ -13751,8 +13752,8 @@
     }
     const target=guitarTarget();
     const location=target?.entry ? entryLocationById(target.entry.id):null;
-    const positions=location?instrument.fingering(midiNotesForEntry(target.entry,location.measureIndex),savedStringFingering(target.entry)):[];
-    const selectedMidi=location?midiNotesForEntry(target.entry,location.measureIndex,[target.staffStep??entryStaffSteps(target.entry)[0]])[0]:null;
+    const positions=location?instrument.fingering(stringMidisForEntry(target.entry,location.measureIndex),savedStringFingering(target.entry)):[];
+    const selectedMidi=location?stringMidisForEntry(target.entry,location.measureIndex,[target.staffStep??entryStaffSteps(target.entry)[0]])[0]:null;
     panel.querySelectorAll(".guitar-fretboard button").forEach(button=>{
       const active=positions.some(p=>p.string===Number(button.dataset.string)&&p.fret===Number(button.dataset.fret));
       button.classList.toggle("is-active",active);button.setAttribute("aria-pressed",String(active));
@@ -13767,27 +13768,30 @@
     const instrument=stringInstrument();
     if(!instrument || !guitarTabVisible) return;
     const tabSystemIndex=contextSystemIndex();
-    const y=staffBottomY()+52;
+    const y=staffBottomY()+76;
     const group=el("g",{class:"guitar-tablature"});
     group.addEventListener("pointerdown",event=>event.stopPropagation());
     group.addEventListener("click",event=>event.stopPropagation());
     for(let string=1;string<=instrument.tuning.length;string++) {
-      group.appendChild(el("line",{x1:55,x2:layout.totalWidth-15,y1:y+(string-1)*17,y2:y+(string-1)*17,stroke:"#555","stroke-width":.8}));
-      group.appendChild(textNode(15,y+(string-1)*17+4,`${string} ${instrument.labels[string-1]}`,{style:"font:10px sans-serif;fill:#555"}));
+      group.appendChild(el("line",{x1:0,x2:layout.starts.at(-1)+layout.widths.at(-1),y1:y+(string-1)*17,y2:y+(string-1)*17,stroke:"#555","stroke-width":.8}));
     }
-    group.appendChild(textNode(55,y-10,instrument.name,{style:"font:bold 12px sans-serif;fill:#111"}));
+    const bottom=y+(instrument.tuning.length-1)*17;
+    group.appendChild(el("rect",{class:"string-tab-surface",x:0,y:y-26,width:layout.totalWidth,height:instrument.tuning.length*17+34,fill:"transparent"}));
+    ["T","A","B"].forEach((letter,i)=>group.appendChild(textNode(20,y+(instrument.tuning.length-1)*17/2-16+i*18,letter,{"text-anchor":"middle",style:"font:20px serif;fill:#222"})));
+    group.appendChild(el("line",{class:"staff-tab-connector",x1:0,x2:0,y1:staffTopY(),y2:bottom,stroke:"#333","stroke-width":1}));
+    group.appendChild(textNode(12,y-16,instrument.name,{style:"font:bold 12px sans-serif;fill:#111"}));
     withSystemContext(tabSystemIndex,()=>{
       state.measures.forEach((measure,measureIndex)=>{
         const end=layout.starts[measureIndex]+layout.widths[measureIndex];
-        group.appendChild(el("line",{x1:end,x2:end,y1:y,y2:y+(instrument.tuning.length-1)*17,stroke:"#333","stroke-width":1}));
+        group.appendChild(el("line",{class:"staff-tab-connector",x1:end,x2:end,y1:staffTopY(),y2:y+(instrument.tuning.length-1)*17,stroke:"#333","stroke-width":1}));
         measure.entries.filter(entry=>entry.type==="note").forEach(entry=>{
-          const positions=instrument.fingering(midiNotesForEntry(entry,measureIndex),savedStringFingering(entry));
+          const positions=instrument.fingering(stringMidisForEntry(entry,measureIndex),savedStringFingering(entry));
           const x=cursorVisualXForMeasureTick(layout,measureIndex,entry.tickStart);
           const open=window.CrescendoStringTab.column({svg:svg,container:group,x,y,instrument,positions,key:`crescendo:${instrument.id}:${entry.id}`,onApply:(p,string,fret,position)=>{
             setActiveSystemIndex(tabSystemIndex);
-            const step=entryStaffSteps(entry).find(step=>midiNotesForEntry(entry,measureIndex,[step])[0]===p.midi);
+            const step=entryStaffSteps(entry).find(step=>stringMidisForEntry(entry,measureIndex,[step])[0]===p.midi);
             if(!Number.isFinite(step))return "La nota ya cambió. Vuelve a seleccionarla.";
-            const notes=entryStaffSteps(entry).filter(s=>s!==step).flatMap(s=>midiNotesForEntry(entry,measureIndex,[s]));
+            const notes=entryStaffSteps(entry).filter(s=>s!==step).flatMap(s=>stringMidisForEntry(entry,measureIndex,[s]));
             const note=instrument.midi(string,fret);
             if(notes.includes(note))return "Esa altura ya está escrita en el acorde.";
             if(!instrument.fingering([...notes,note],[...savedStringFingering(entry).filter(item=>item.midi!==p.midi),{string,fret,midi:note}]).length)return "Esa cuerda está ocupada.";
@@ -23249,7 +23253,7 @@
       const bytes = new Uint8Array(await response.arrayBuffer());let binary = "";
       for(let i=0;i<bytes.length;i+=8192)binary+=String.fromCharCode(...bytes.subarray(i,i+8192));
       const defs=el("defs"),style=el("style");style.textContent=`@font-face{font-family:'MTF Improviso Light';src:url(data:font/otf;base64,${btoa(binary)}) format('opentype');}`;defs.appendChild(style);copy.prepend(defs);
-      const box={width:svg.viewBox.baseVal.width,height:Math.min(svg.viewBox.baseVal.height,scoreStaffBottomY()+(stringInstrument()&&guitarTabVisible?190:120))};copy.setAttribute("viewBox",`0 0 ${box.width} ${box.height}`);copy.setAttribute("width",box.width);copy.setAttribute("height",box.height);
+      const box={width:svg.viewBox.baseVal.width,height:Math.min(svg.viewBox.baseVal.height,scoreStaffBottomY()+(stringInstrument()&&guitarTabVisible?210:120))};copy.setAttribute("viewBox",`0 0 ${box.width} ${box.height}`);copy.setAttribute("width",box.width);copy.setAttribute("height",box.height);
       const url=URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(copy)],{type:"image/svg+xml"}));
       try {
         const image=new Image();await new Promise((resolve,reject)=>{image.onload=resolve;image.onerror=reject;image.src=url;});
