@@ -52,9 +52,9 @@
     let delta=mod(note.midi-root-expected); if(delta>6) delta-=12;
     return (delta<0?'♭'.repeat(-delta):'♯'.repeat(delta))+degree;
   }
-  const fullFormulas={'9':[0,4,7,10,2],'m9':[0,3,7,10,2],'∆9':[0,4,7,11,2],'m∆9':[0,3,7,11,2],
-    'm11':[0,3,7,10,2,5],'m∆11':[0,3,7,11,2,5],'13':[0,4,7,10,2,5,9],
-    'm13':[0,3,7,10,2,5,9],'∆13':[0,4,7,11,2,5,9],'m∆13':[0,3,7,11,2,5,9]};
+  const fullFormulas={'9':[0,4,7,10,2],'m9':[0,3,7,10,2],'maj9':[0,4,7,11,2],'mmaj9':[0,3,7,11,2],
+    'm11':[0,3,7,10,2,5],'mmaj11':[0,3,7,11,2,5],'13':[0,4,7,10,2,5,9],
+    'm13':[0,3,7,10,2,5,9],'maj13':[0,4,7,11,2,5,9],'mmaj13':[0,3,7,11,2,5,9]};
   function construct(pattern, root=0, inversion=0, octave=4) {
     const offsets=[...new Set(pattern.intervals)].sort((a,b)=>a-b);
     let notes=offsets.map(pc=>spell(12*(octave+1)+root+pc,root,degreeFor(pc,pattern.name)));

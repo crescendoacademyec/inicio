@@ -1,7 +1,7 @@
     // ======================================================================
     // 1. CÓDIGO COMPLETO DEL REQUINTO VIRTUAL (diapasón, escalas, acordes)
     // ======================================================================
-    const NOTE = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
+    const NOTE = ["C","Db","D","Eb","E","F","F#","G","Ab","A","Bb","B"];
 
     const INSTRUMENTS = {
       guitar: {
@@ -82,7 +82,7 @@
       menor:{label:"Menor",menuLabel:"menor",family:"triad",intervals:[0,3,7],suffix:"m",quality:"Tríada menor (T-b3-5)"},
       aumentado:{label:"Aumentado",menuLabel:"aumentado",family:"triad",intervals:[0,4,8],suffix:"+",quality:"Tríada aumentada (T-3-#5)"},
       disminuido:{label:"Disminuido",menuLabel:"disminuido",family:"triad",intervals:[0,3,6],suffix:"°",quality:"Tríada disminuida (T-b3-b5)"},
-      maj7:{label:"7M — Séptima mayor",menuLabel:"Maj7",family:"tetrad",intervals:[0,4,7,11],suffix:"7M",quality:"Cuatríada con 7ª mayor (T-3-5-7)"},
+      maj7:{label:"7M — Séptima mayor",menuLabel:"maj7",family:"tetrad",intervals:[0,4,7,11],suffix:"maj7",quality:"Cuatríada con 7ª mayor (T-3-5-7)"},
       m7:{label:"m7 — Menor con séptima",menuLabel:"m7",family:"tetrad",intervals:[0,3,7,10],suffix:"m7",quality:"Cuatríada menor (T-b3-5-b7)"},
       dom7:{label:"7 — Dominante",menuLabel:"7",family:"tetrad",intervals:[0,4,7,10],suffix:"7",quality:"Cuatríada dominante (T-3-5-b7)"},
       m7b5:{label:"m7(b5) — Semidisminuido",menuLabel:"m7(b5)",family:"tetrad",intervals:[0,3,6,10],suffix:"m7(b5)",quality:"Cuatríada semidisminuida (T-b3-b5-b7)"},
@@ -161,7 +161,7 @@
     };
     const scalePitchClasses = (rootName, scaleKey) => {
       const intervals = SCALE[scaleKey];
-      const rootPc = NOTE.indexOf(rootName);
+      const rootPc = window.CrescendoPitchSpelling.pc(rootName);
       if (!intervals || rootPc < 0) return [];
       const pcs = [rootPc];
       let pc = rootPc;
@@ -238,7 +238,7 @@
       instrumentSel.add(new Option(inst.label, key));
     });
     rootSel.add(new Option("— Ninguna —",""));
-    NOTE.forEach(n => rootSel.add(new Option(n, n)));
+    window.CrescendoPitchSpelling.roots.forEach(n => rootSel.add(new Option(n, n)));
     scaleSel.add(new Option("— Ninguna —",""));
     Object.keys(SCALE).forEach(k => scaleSel.add(new Option(k.replace(/_/g,' '), k)));
     rootSel.value = "";
@@ -521,7 +521,7 @@
 
     function inversionSuffix(rootPc, def, inversion) {
       if (inversion === 0) return "";
-      return `/${NOTE[(rootPc + def.intervals[inversion]) % 12]}`;
+      return `/${window.CrescendoPitchSpelling.spell(60+((rootPc+def.intervals[inversion])%12),rootSel.value||NOTE[rootPc],def.suffix).name}`;
     }
 
     function shapeInVoicingRange(shape){
@@ -888,7 +888,7 @@
       if (chordMode) {
         const chord = parseChordValue();
         if (chord) {
-          const rootPc = NOTE.indexOf(rootSel.value);
+          const rootPc = window.CrescendoPitchSpelling.pc(rootSel.value);
           const def = chord.def;
           const shapes = selectedChordShapes(rootPc, def, chord.voicing);
           shapes.forEach(shape => {
@@ -915,7 +915,7 @@
           });
         }
       } else if (scaleMode) {
-        const rootPc = NOTE.indexOf(rootSel.value);
+        const rootPc = window.CrescendoPitchSpelling.pc(rootSel.value);
         const ints = SCALE[scaleSel.value];
         const pcs = pcPattern(rootPc, ints);
         const spec = SPECIAL.includes(scaleSel.value);
@@ -985,7 +985,7 @@
             ctx.textAlign = "center";
             ctx.textBaseline = "middle";
             ctx.font = `bold 11px Inter, sans-serif`;
-            ctx.fillText(NOTE[pc], x, y);
+            ctx.fillText(spellPc(pc,rootSel.value||''), x, y);
             ctx.restore();
           }
         }
@@ -1034,7 +1034,7 @@
               ctx.textAlign = "center";
               ctx.textBaseline = "middle";
               ctx.font = `bold 11px Inter, sans-serif`;
-              ctx.fillText(NOTE[pc], x, y);
+              ctx.fillText(spellPc(pc,rootSel.value||''), x, y);
               ctx.restore();
             }
           }
@@ -1059,7 +1059,7 @@
       if (chordMode) {
         const chord = parseChordValue();
         if (chord) {
-          const rootPc = NOTE.indexOf(rootSel.value);
+          const rootPc = window.CrescendoPitchSpelling.pc(rootSel.value);
           const def = chord.def;
           const selectedInv = posSel.value.startsWith("inv") ? parseInt(posSel.value.replace("inv","")) : null;
           symbolEl.textContent = rootSel.value + def.suffix + (selectedInv === null ? "" : inversionSuffix(rootPc, def, selectedInv));
@@ -1068,9 +1068,9 @@
           qualityEl.textContent = `${chord.voicing.group} ${chord.voicing.label}${rangeText} · ${selectedInv === null ? "Todas las posiciones" : INVERSION_LABELS[selectedInv]} · ${def.quality}${capoText}`;
         }
       } else if (scaleMode) {
-        const rootPc = NOTE.indexOf(rootSel.value);
+        const rootPc = window.CrescendoPitchSpelling.pc(rootSel.value);
         const scaleName = scaleSel.value.replace(/_/g, ' ');
-        symbolEl.textContent = `Escala: ${scaleName} · Tónica ${NOTE[rootPc]}`;
+        symbolEl.textContent = `Escala: ${scaleName} · Tónica ${rootSel.value||NOTE[rootPc]}`;
         const patternText=patternSel.value==='free'?'':` · ${patternSel.options[patternSel.selectedIndex].text}`;
         const capoText=capoSemitones()?` · Capo ${capoSemitones()}`:'';
         qualityEl.textContent = `Modo ${scaleName}${patternText}${capoText}`;

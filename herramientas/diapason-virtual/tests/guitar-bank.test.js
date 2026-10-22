@@ -11,7 +11,7 @@ for(const entry of bank.entries){
 assert.ok(bank.entries.some(e=>e.quality==='dim7'));
 assert.ok(bank.entries.some(e=>e.quality==='maj9'));
 assert.equal(bank.entries[0].name,'C');
-const html=fs.readFileSync(path.join(__dirname,'../../index.html'),'utf8');
+const html=fs.readFileSync(path.join(__dirname,'../index.html'),'utf8');
 assert.ok(html.includes('<details id="guitarChordBank" hidden>'));
 assert.ok(html.includes('<details id="requintoChordBank" hidden>'));
 const ui=fs.readFileSync(path.join(__dirname,'../js/guitar-bank-ui.js'),'utf8');
@@ -24,3 +24,10 @@ assert.match(ui,/const step=380/);
 assert.match(ui,/function syncBankVisibility\(\)/);
 assert.equal(['C','C#','D','D#','E','F'][(bank.roots.C+5)%12],'F','C de guitarra debe nombrarse F en requinto');
 console.log(bank.entries.length+' posturas verificadas · guitarra/requinto · afinación estándar');
+
+const spelling=require('../../../shared/pitch-spelling.js'),vm=require('node:vm');
+const renderedCode=ui.match(/const rendered=e=>\{([\s\S]*?)\n    \};/)[1];
+for(const [rootOffset,expected] of [[0,'Ebmaj7'],[5,'Abmaj7']]){
+ const render=vm.runInNewContext('(e)=>{'+renderedCode+'}',{bank,config:{rootOffset},rootNames:spelling.defaults});
+ assert.equal(render({root:'D#',quality:'maj7'}).displayName,expected);
+}

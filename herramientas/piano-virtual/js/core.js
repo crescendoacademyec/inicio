@@ -181,7 +181,7 @@ function currentSignature(){
   const map={0:{type:null,count:0},7:{type:'sharp',count:1},2:{type:'sharp',count:2},9:{type:'sharp',count:3},4:{type:'sharp',count:4},11:{type:'sharp',count:5},6:{type:'sharp',count:6},1:{type:'flat',count:5},8:{type:'flat',count:4},3:{type:'flat',count:3},10:{type:'flat',count:2},5:{type:'flat',count:1}};
   return map[majorPc]||{type:null,count:0};
 }
-function formatPc(pc){ return (currentSignature().type==='flat'?PC_NAMES_FLAT:PC_NAMES_SHARP)[((pc%12)+12)%12]; }
+function formatPc(pc){ if(currentKeyPc===null)return window.CrescendoPitchSpelling.name(pc);return (currentSignature().type==='flat'?PC_NAMES_FLAT:PC_NAMES_SHARP)[((pc%12)+12)%12]; }
 function velocityGain(velocity){
   const x=Math.max(1,Math.min(127,velocity||127))/127;
   if(midiVelocityCurve==='fixed') return .82;

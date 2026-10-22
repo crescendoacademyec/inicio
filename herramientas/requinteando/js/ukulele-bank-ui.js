@@ -48,7 +48,7 @@
   }
   function render(){
     grid.replaceChildren();
-    const filtered=bank.entries.filter(e=>(root.value==='all'||e.root===root.value)&&(quality.value==='all'||e.quality===quality.value));
+    const filtered=bank.entries.map(e=>({...e,name:window.CrescendoPitchSpelling.name(bank.roots[e.root])+e.quality})).filter(e=>(root.value==='all'||e.root===root.value)&&(quality.value==='all'||e.quality===quality.value));
     host.querySelector('[data-uke-count]').textContent=filtered.length+' posturas · '+bank.entries.length+' en el banco';
     for(const e of filtered){
       const card=document.createElement('article');card.className='uke-card';card.dataset.id=e.id;

@@ -67,7 +67,7 @@ function fallbackStaffSpelling(midi){
     const letter=NOTE_NAMES_EN[pc];
     return makeStaffSpelling(midi,letter,0);
   }
-  const useFlats=currentSignature().type==='flat';
+  const useFlats=currentSignature().type==='flat'||(currentKeyPc===null&&window.CrescendoPitchSpelling.name(pc).includes('b'));
   const spec=(useFlats?flats:sharps)[pc] || sharps[pc];
   return makeStaffSpelling(midi,spec[0],spec[1]);
 }

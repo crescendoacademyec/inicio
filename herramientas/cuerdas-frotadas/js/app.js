@@ -1,6 +1,6 @@
 
     /***************** Constantes de notas *************************/
-    const NOTE=["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
+    const NOTE=["C","Db","D","Eb","E","F","F#","G","Ab","A","Bb","B"];
 
     // Cada instrumento: pitches[0] = cuerda más aguda (arriba en el dibujo) → pitches[last] = cuerda más grave (abajo)
     const INSTRUMENTS={
@@ -67,7 +67,7 @@
       menor:{label:"Menor",intervals:[0,3,7],suffix:"m",quality:"Tríada menor (T-b3-5)"},
       aumentado:{label:"Aumentado",intervals:[0,4,8],suffix:"+",quality:"Tríada aumentada (T-3-#5)"},
       disminuido:{label:"Disminuido",intervals:[0,3,6],suffix:"°",quality:"Tríada disminuida (T-b3-b5)"},
-      maj7:{label:"7M",intervals:[0,4,7,11],suffix:"7M",quality:"Séptima mayor (T-3-5-7)"},
+      maj7:{label:"maj7",intervals:[0,4,7,11],suffix:"maj7",quality:"Séptima mayor (T-3-5-7)"},
       m7:{label:"m7",intervals:[0,3,7,10],suffix:"m7",quality:"Séptima menor (T-b3-5-b7)"},
       dom7:{label:"7",intervals:[0,4,7,10],suffix:"7",quality:"Séptima dominante (T-3-5-b7)"},
       m7b5:{label:"m7(b5)",intervals:[0,3,6,10],suffix:"m7(b5)",quality:"Semidisminuida (T-b3-b5-b7)"}
@@ -135,7 +135,7 @@
 
     Object.entries(INSTRUMENTS).forEach(([key,ins])=>instrumentSel.add(new Option(ins.label,key)));
     rootSel.add(new Option("— Ninguna —",""));
-    NOTE.forEach(n=>rootSel.add(new Option(n,n)));
+    window.CrescendoPitchSpelling.roots.forEach(n=>rootSel.add(new Option(n,n)));
     scaleSel.add(new Option("— Ninguna —",""));
     Object.keys(SCALE).forEach(k=>scaleSel.add(new Option(k.replace(/_/g,' '),k)));
     chordTypeSel.add(new Option("— Ninguna —",""));
@@ -271,7 +271,7 @@
     function buildScalePracticePlan(){
       scalePracticeRunning=false; scalePracticePanel?.classList.remove('is-running');
       if(scalePracticeTimer){clearTimeout(scalePracticeTimer);scalePracticeTimer=null;}
-      const rootPc=NOTE.indexOf(rootSel.value);
+      const rootPc=window.CrescendoPitchSpelling.pc(rootSel.value);
       if(rootPc<0){scalePracticeStatus.textContent='Selecciona primero una fundamental.';scalePracticePlan=[];draw();return []}
       const offsets=practiceMaterialOffsets();
       if(!offsets){scalePracticeStatus.textContent=(scalePracticeKindEl?.value==='arpeggio')?'Selecciona primero un acorde/arpegio.':'Selecciona primero una escala o modo.';scalePracticePlan=[];draw();return []}
@@ -357,7 +357,7 @@
       return steps?scaleOffsetsFromSteps(steps):null;
     }
     function buildTechnicalBaseMidis(){
-      const rootPc=NOTE.indexOf(rootSel.value);if(rootPc<0)return [];
+      const rootPc=window.CrescendoPitchSpelling.pc(rootSel.value);if(rootPc<0)return [];
       const offsets=technicalMaterialOffsets();if(!offsets)return [];
       const octaves=Math.max(1,Math.min(3,+(technicalPatternOctavesEl?.value||2)));
       const minMidi=Math.min(...activePitches()), maxMidi=Math.max(...activePitches())+28;
@@ -427,7 +427,7 @@
     function buildTechnicalPattern(){
       technicalPatternRunning=false;technicalPatternsPanel?.classList.remove('is-running');
       if(technicalPatternTimer){clearTimeout(technicalPatternTimer);technicalPatternTimer=null;}
-      if(NOTE.indexOf(rootSel.value)<0){technicalPatternStatus.textContent='Selecciona primero una fundamental.';technicalPatternPlan=[];draw();return []}
+      if(window.CrescendoPitchSpelling.pc(rootSel.value)<0){technicalPatternStatus.textContent='Selecciona primero una fundamental.';technicalPatternPlan=[];draw();return []}
       const base=buildTechnicalBaseMidis();
       if(!base.length){technicalPatternStatus.textContent=(technicalPatternMaterialEl?.value==='arpeggio')?'Selecciona un arpegio válido y una extensión posible.':'Selecciona una escala válida y una extensión posible.';technicalPatternPlan=[];draw();return []}
       const type=technicalPatternTypeEl?.value||'thirds';
@@ -1409,7 +1409,7 @@
       const scaleName=scaleSel?.value||'';
       if(!rootName||!scaleName)return null;
       if(!(scaleName in MODE_KEYSIG_OFFSETS))return null;
-      const rootPc=NOTE.indexOf(rootName);
+      const rootPc=window.CrescendoPitchSpelling.pc(rootName);
       if(rootPc<0)return null;
       const majorPc=(rootPc+MODE_KEYSIG_OFFSETS[scaleName])%12;
       const keyName=PC_TO_MAJOR_KEY[majorPc]||'C';
@@ -1432,6 +1432,10 @@
     }
     function spellMidiForStaff(displayMidi,keySig){
       const pc=((displayMidi%12)+12)%12;
+      if((spellingModeSel?.value||'auto')==='auto'&&rootSel.value&&CHORD_TYPES[chordTypeSel.value]){
+        const spelled=window.CrescendoPitchSpelling.spell(displayMidi,rootSel.value,CHORD_TYPES[chordTypeSel.value].suffix);
+        return {pc,letter:spelled.letter,alter:spelled.alter,acc:spelled.alter===-2?'double-flat':spelled.alter===-1?'flat':spelled.alter===1?'sharp':spelled.alter===2?'double-sharp':null,octave:spelled.octave};
+      }
       const spellingMode=spellingModeSel?.value||'auto';
       const preferFlats=spellingMode==='flats'||(spellingMode==='auto'&&keySig&&keySig.prefer==='flats');
       const base=(preferFlats?FLAT_SPELLINGS:SHARP_SPELLINGS)[pc]||SHARP_SPELLINGS[pc];
@@ -2321,7 +2325,7 @@
     const DEGREE_LABELS={0:"1",1:"♭2",2:"2",3:"♭3",4:"3",5:"4",6:"♯4",7:"5",8:"♭6",9:"6",10:"♭7",11:"7"};
     function markerLabel(pc,rootPc){
       const mode=labelModeSel?.value||"notes";
-      if(mode==="notes"||rootPc<0)return NOTE[pc];
+      if(mode==="notes"||rootPc<0)return window.CrescendoPitchSpelling.spell(60+pc,rootSel.value||'',CHORD_TYPES[chordTypeSel.value]?.suffix||'').name;
       const iv=(pc-rootPc+12)%12;
       return mode==="intervals" ? INTERVAL_LABELS[iv] : DEGREE_LABELS[iv];
     }
@@ -2413,7 +2417,7 @@
       const staffNotes = [];
 
       if(!isBlank){
-        const rootPc=NOTE.indexOf(rootSel.value);
+        const rootPc=window.CrescendoPitchSpelling.pc(rootSel.value);
         let pcs, spec=false, chordDef=null;
         if(isChord){ chordDef=CHORD_TYPES[chordTypeSel.value]; pcs=chordDef.intervals.map(iv=>(rootPc+iv)%12); }
         else { pcs=pcPattern(rootPc,SCALE[scaleSel.value]); spec=SPECIAL.includes(scaleSel.value); }
@@ -2448,7 +2452,7 @@
             ctx.fillStyle=isSelected?"#d4a84f":"#fffaf0";
             ctx.beginPath(); ctx.arc(x,y,RAD,0,Math.PI*2); ctx.fill();
             ctx.restore();
-            ctx.fillStyle="#161514"; ctx.fillText(NOTE[pc],x,y+0.5);
+            ctx.fillStyle="#161514"; ctx.fillText(window.CrescendoPitchSpelling.spell(60+pc,rootSel.value||'',CHORD_TYPES[chordTypeSel.value]?.suffix||'').name,x,y+0.5);
           });
         }
       }
@@ -2466,7 +2470,7 @@
               ctx.fillStyle="#d4a84f";
               ctx.beginPath(); ctx.arc(x,y,RAD,0,Math.PI*2); ctx.fill();
               ctx.restore();
-              ctx.fillStyle="#161514"; ctx.fillText(NOTE[pc],x,y+0.5);
+              ctx.fillStyle="#161514"; ctx.fillText(window.CrescendoPitchSpelling.spell(60+pc,rootSel.value||'',CHORD_TYPES[chordTypeSel.value]?.suffix||'').name,x,y+0.5);
             });
           }
           if (!staffNotes.some(n => n.midi === midi)) staffNotes.push({ pc, midi });
@@ -2528,7 +2532,7 @@
     function updateInfo(){
       const isBlank=blankMode(), isChord=!isBlank&&chordTypeSel.value!=="";
       if(isChord){
-        const rootPc=NOTE.indexOf(rootSel.value), def=CHORD_TYPES[chordTypeSel.value];
+        const rootPc=window.CrescendoPitchSpelling.pc(rootSel.value), def=CHORD_TYPES[chordTypeSel.value];
         chordSymbolEl.textContent=rootSel.value+def.suffix;
         chordQualityEl.textContent=def.quality;
       } else if(!isBlank){

@@ -59,13 +59,16 @@
     const STAFF_NATURAL_PC={C:0,D:2,E:4,F:5,G:7,A:9,B:11};
     function rootPrefersFlats(rootName){return /b/.test(rootName)||['F'].includes(rootName)}
     function spellPc(pc, rootName=''){
-      const sharp=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
-      const flat=['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'];
-      return (rootPrefersFlats(rootName)?flat:sharp)[((pc%12)+12)%12];
+      const def=CHORD_TYPES[chordTypeSel.value.split("|")[0]];
+      return rootName&&def?window.CrescendoPitchSpelling.spell(60+pc,rootName,def.suffix).name:window.CrescendoPitchSpelling.name(pc,rootName);
     }
     function staffSpelling(midi){
-      const name=spellPc(midi%12,rootSel.value||''); const letter=name[0]; const acc=name.slice(1);
-      return {letter,acc,label:letter,glyph:acc==='b'?'♭':acc==='#'?'♯':acc==='bb'?'♭♭':acc==='##'?'𝄪':''};
+      const root=rootSel.value||'',def=CHORD_TYPES[chordTypeSel.value.split("|")[0]];
+      const sp=window.CrescendoPitchSpelling.spell(midi,root&&def?root:'',def?.suffix||'');
+      const name=root&&def?sp.name:window.CrescendoPitchSpelling.name(midi,root);
+      const letter=name[0],acc=name.slice(1),alter=[...acc].reduce((n,c)=>n+(c==='b'?-1:1),0);
+      const octave=Math.round((midi-STAFF_NATURAL_PC[letter]-alter)/12)-1;
+      return {letter,acc,alter,octave,label:letter,glyph:acc==='b'?'♭':acc==='#'?'♯':acc==='bb'?'♭♭':acc==='##'?'𝄪':''};
     }
 
     function renderStaffNotes(notes) {

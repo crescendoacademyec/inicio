@@ -2,9 +2,9 @@
 (function(){
   const bank=window.GuitarChordBank;
   if(!bank)return;
-  const rootNames=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+  const rootNames=window.CrescendoPitchSpelling.defaults;
   const displayNames=['C','C♯','D','E♭','E','F','F♯','G','A♭','A','B♭','B'];
-  const rootLabel={C:'Do · C','C#':'Do♯ / Re♭ · C♯ / Re♭',D:'Re · D','D#':'Re♯ / Mi♭ · Re♯ / Mi♭',E:'Mi · E',F:'Fa · F','F#':'Fa♯ / Sol♭ · Fa♯ / Sol♭',G:'Sol · G','G#':'Sol♯ / La♭ · Sol♯ / La♭',A:'La · A','A#':'La♯ / Si♭ · La♯ / Si♭',B:'Si · B'};
+  const rootLabel={Db:'Re♭ · Db',Eb:'Mi♭ · Eb',Ab:'La♭ · Ab',Bb:'Si♭ · Bb',C:'Do · C','C#':'Do♯ / Re♭ · C♯ / Re♭',D:'Re · D','D#':'Re♯ / Mi♭ · Re♯ / Mi♭',E:'Mi · E',F:'Fa · F','F#':'Fa♯ / Sol♭ · Fa♯ / Sol♭',G:'Sol · G','G#':'Sol♯ / La♭ · Sol♯ / La♭',A:'La · A','A#':'La♯ / Si♭ · La♯ / Si♭',B:'Si · B'};
   const configs=[
     {hostId:'guitarChordBank',instrument:'guitar',rootOffset:0,title:'Banco de acordes de guitarra',tuningLabels:['E','A','D','G','B','E'],instrumentLabel:'Guitarra estándar',note:'Las posiciones corresponden a guitarra estándar E–A–D–G–B–E.'},
     {hostId:'requintoChordBank',instrument:'requinto',rootOffset:5,title:'Banco de acordes de requinto',tuningLabels:['A','D','G','C','E','A'],instrumentLabel:'Requinto estándar',note:'El requinto suena una cuarta justa arriba de la guitarra: por ejemplo, la forma C se nombra F.'}

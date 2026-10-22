@@ -12,7 +12,7 @@ for(const e of bank.entries){
 assert.deepEqual(bank.midis(bank.entries.find(e=>e.name==='C')),[67,60,64,72]);
 assert.equal(bank.midis(bank.entries.find(e=>e.name==='G#')).length,3);
 const fs=require('node:fs'),path=require('node:path');
-const html=fs.readFileSync(path.join(__dirname,'../../index.html'),'utf8');
+const html=fs.readFileSync(path.join(__dirname,'../index.html'),'utf8');
 assert.ok(html.includes('<details id="ukuleleBank" hidden>'));
 const ui=fs.readFileSync(path.join(__dirname,'../js/ukulele-bank-ui.js'),'utf8');
 assert.match(ui,/Ver en el diapasón/);

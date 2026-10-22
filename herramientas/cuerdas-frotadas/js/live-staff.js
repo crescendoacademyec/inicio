@@ -1,12 +1,13 @@
 (function(global){
   'use strict';
+  const noteAlter=n=>Number.isFinite(n.alter)?n.alter:n.acc==='double-sharp'?2:n.acc==='double-flat'?-2:n.acc==='sharp'?1:n.acc==='flat'?-1:0;
   function musicXML(notes,clef,key){
     if(clef==='grand'){
-      const staffBody=(staff)=>{const list=notes.filter(n=>(n.staff||1)===staff);return list.length?list.map((n,i)=>`<note>${i?'<chord/>':''}<pitch><step>${n.letter}</step><alter>${n.alter||0}</alter><octave>${n.octave}</octave></pitch><duration>4</duration><voice>${staff}</voice><type>whole</type><staff>${staff}</staff></note>`).join(''):`<note print-object="no"><rest/><duration>4</duration><voice>${staff}</voice><type>whole</type><staff>${staff}</staff></note>`;};
+      const staffBody=(staff)=>{const list=notes.filter(n=>(n.staff||1)===staff);return list.length?list.map((n,i)=>`<note>${i?'<chord/>':''}<pitch><step>${n.letter}</step><alter>${noteAlter(n)}</alter><octave>${n.octave}</octave></pitch><duration>4</duration><voice>${staff}</voice><type>whole</type><staff>${staff}</staff></note>`).join(''):`<note print-object="no"><rest/><duration>4</duration><voice>${staff}</voice><type>whole</type><staff>${staff}</staff></note>`;};
       return `<?xml version="1.0"?><score-partwise version="3.1"><part-list><score-part id="P1"><part-name></part-name></score-part></part-list><part id="P1"><measure number="1"><attributes><divisions>1</divisions><key><fifths>${key}</fifths></key><time print-object="no"><beats>4</beats><beat-type>4</beat-type></time><staves>2</staves><clef number="1"><sign>G</sign><line>2</line></clef><clef number="2"><sign>F</sign><line>4</line></clef></attributes>${staffBody(1)}<backup><duration>4</duration></backup>${staffBody(2)}</measure></part></score-partwise>`;
     }
     const [sign,line]=({treble:['G',2],bass:['F',4],alto:['C',3],tenor:['C',4]})[clef]||['G',2];
-    const body=notes.length?notes.map((n,i)=>`<note>${i?'<chord/>':''}<pitch><step>${n.letter}</step><alter>${n.acc==='sharp'?1:n.acc==='flat'?-1:0}</alter><octave>${n.octave}</octave></pitch><duration>4</duration><type>whole</type></note>`).join(''):'<note print-object="no"><rest/><duration>4</duration><type>whole</type></note>';
+    const body=notes.length?notes.map((n,i)=>`<note>${i?'<chord/>':''}<pitch><step>${n.letter}</step><alter>${noteAlter(n)}</alter><octave>${n.octave}</octave></pitch><duration>4</duration><type>whole</type></note>`).join(''):'<note print-object="no"><rest/><duration>4</duration><type>whole</type></note>';
     return `<?xml version="1.0"?><score-partwise version="3.1"><part-list><score-part id="P1"><part-name></part-name></score-part></part-list><part id="P1"><measure number="1"><attributes><divisions>1</divisions><key><fifths>${key}</fifths></key><time print-object="no"><beats>4</beats><beat-type>4</beat-type></time><clef><sign>${sign}</sign><line>${line}</line></clef></attributes>${body}<barline location="right"><bar-style>none</bar-style></barline></measure></part></score-partwise>`;
   }
   class LiveStaff{
@@ -55,7 +56,7 @@
         text.setAttribute('class','live-note-label');
         text.setAttribute('x',right+column*38);text.setAttribute('y',p.y);
         text.setAttribute('dominant-baseline','central');
-        text.textContent=note.label||note.letter+(note.acc==='sharp'?'♯':note.acc==='flat'?'♭':'')+note.octave;
+        text.textContent=note.label||note.letter+(noteAlter(note)<0?'♭'.repeat(-noteAlter(note)):'♯'.repeat(noteAlter(note)))+note.octave;
         svg.appendChild(text);
       });
       // Fit the actual engraving, not OSMD's page margins, to the original panel.
@@ -83,7 +84,7 @@
           this.engine.Zoom=1.05;
           this.engine.render();
           this.currentNotes=job.notes;this.annotate();this.labels.textContent='';
-          const names=job.notes.map(n=>n.label||n.letter+(n.acc==='sharp'?'♯':n.acc==='flat'?'♭':'')+n.octave).join(' · ');
+          const names=job.notes.map(n=>n.label||n.letter+(noteAlter(n)<0?'♭'.repeat(-noteAlter(n)):'♯'.repeat(noteAlter(n)))+n.octave).join(' · ');
           this.host.setAttribute('aria-label','Pentagrama: '+({grand:'claves de sol y fa',treble:'clave de sol',bass:'clave de fa',alto:'clave de do en tercera',tenor:'clave de do en cuarta'}[job.clef])+(names?', '+names:''));
         }
       }catch(error){

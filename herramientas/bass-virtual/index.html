@@ -1492,13 +1492,14 @@
   <script src="../../shared/score-playback-timing.js?v=20260925"></script>
 <script src="https://cdn.jsdelivr.net/npm/soundfont-player@0.12.0/dist/soundfont-player.min.js"></script>
   <script src="../../shared/opensheetmusicdisplay-1.8.4.min.js?v=20261019-bravura-1"></script>
-  <script src="../cuerdas-frotadas/js/live-staff.js"></script>
+  <script src="../../shared/pitch-spelling.js?v=20261022-1"></script>
+  <script src="../cuerdas-frotadas/js/live-staff.js?v=20261022-enharmonics-1"></script>
   <script src="../../shared/rhythm-engine.js?v=20260918-locking-in"></script>
   <script>
     // ======================================================================
     // 1. CÓDIGO COMPLETO DEL REQUINTO VIRTUAL (diapasón, escalas, acordes)
     // ======================================================================
-    const NOTE = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
+    const NOTE = ["C","Db","D","Eb","E","F","F#","G","Ab","A","Bb","B"];
 
     const INSTRUMENTS = {
       bass4: {
@@ -1569,7 +1570,7 @@
       menor:{label:"Menor",menuLabel:"menor",family:"triad",intervals:[0,3,7],suffix:"m",quality:"Tríada menor (T-b3-5)"},
       aumentado:{label:"Aumentado",menuLabel:"aumentado",family:"triad",intervals:[0,4,8],suffix:"+",quality:"Tríada aumentada (T-3-#5)"},
       disminuido:{label:"Disminuido",menuLabel:"disminuido",family:"triad",intervals:[0,3,6],suffix:"°",quality:"Tríada disminuida (T-b3-b5)"},
-      maj7:{label:"7M — Séptima mayor",menuLabel:"Maj7",family:"tetrad",intervals:[0,4,7,11],suffix:"7M",quality:"Cuatríada con 7ª mayor (T-3-5-7)"},
+      maj7:{label:"7M — Séptima mayor",menuLabel:"maj7",family:"tetrad",intervals:[0,4,7,11],suffix:"maj7",quality:"Cuatríada con 7ª mayor (T-3-5-7)"},
       m7:{label:"m7 — Menor con séptima",menuLabel:"m7",family:"tetrad",intervals:[0,3,7,10],suffix:"m7",quality:"Cuatríada menor (T-b3-5-b7)"},
       dom7:{label:"7 — Dominante",menuLabel:"7",family:"tetrad",intervals:[0,4,7,10],suffix:"7",quality:"Cuatríada dominante (T-3-5-b7)"},
       m7b5:{label:"m7(b5) — Semidisminuido",menuLabel:"m7(b5)",family:"tetrad",intervals:[0,3,6,10],suffix:"m7(b5)",quality:"Cuatríada semidisminuida (T-b3-b5-b7)"},
@@ -1619,7 +1620,7 @@
     };
     const scalePitchClasses = (rootName, scaleKey) => {
       const intervals = SCALE[scaleKey];
-      const rootPc = NOTE.indexOf(rootName);
+      const rootPc = window.CrescendoPitchSpelling.pc(rootName);
       if (!intervals || rootPc < 0) return [];
       const pcs = [rootPc];
       let pc = rootPc;
@@ -1708,7 +1709,7 @@
       instrumentSel.add(new Option(inst.label, key));
     });
     rootSel.add(new Option("— Ninguna —",""));
-    NOTE.forEach(n => rootSel.add(new Option(n, n)));
+    window.CrescendoPitchSpelling.roots.forEach(n => rootSel.add(new Option(n, n)));
     scaleSel.add(new Option("— Ninguna —",""));
     Object.keys(SCALE).forEach(k => scaleSel.add(new Option(k.replace(/_/g,' '), k)));
     rootSel.value = "";
@@ -1995,7 +1996,7 @@
 
     function inversionSuffix(rootPc, def, inversion) {
       if (inversion === 0) return "";
-      return `/${NOTE[(rootPc + def.intervals[inversion]) % 12]}`;
+      return `/${window.CrescendoPitchSpelling.spell(60+((rootPc+def.intervals[inversion])%12),rootSel.value||NOTE[rootPc],def.suffix).name}`;
     }
 
     function shapeInVoicingRange(shape){
@@ -2321,7 +2322,7 @@
     }
     function chooseExerciseRoute(intervals){
       if(!rootSel.value)return [];
-      const rootPc=NOTE.indexOf(rootSel.value), {start,end}=exerciseVisibleRange(), pitches=activePitches();
+      const rootPc=window.CrescendoPitchSpelling.pc(rootSel.value), {start,end}=exerciseVisibleRange(), pitches=activePitches();
       const roots=[];
       for(let s=0;s<pitches.length;s++) for(let f=start;f<=end;f++){
         const midi=pitches[s]+physicalFret(f);
@@ -2359,7 +2360,7 @@
     }
     function buildHorizontalExercise(){
       if(!rootSel.value)return [];
-      const rootPc=NOTE.indexOf(rootSel.value), steps=scaleSel.value&&SCALE[scaleSel.value]?SCALE[scaleSel.value]:SCALE.mayor;
+      const rootPc=window.CrescendoPitchSpelling.pc(rootSel.value), steps=scaleSel.value&&SCALE[scaleSel.value]?SCALE[scaleSel.value]:SCALE.mayor;
       const pcs=pcPattern(rootPc,steps), {start,end}=exerciseVisibleRange(), pitches=activePitches();
       let best=null;
       for(let s=0;s<pitches.length;s++){
@@ -2408,7 +2409,7 @@
       });
     }
     function walkingTargets(kind){
-      const tonic=NOTE.indexOf(rootSel.value);
+      const tonic=window.CrescendoPitchSpelling.pc(rootSel.value);
       const presets={
         'walking-blues':{bars:[0,0,0,0,5,5,0,0,7,5,0,7],qualities:null,romans:null},
         'walking-minor-blues':{bars:[0,0,0,0,5,5,0,0,7,5,0,7],qualities:null,romans:null,minorBlues:true},
@@ -2435,7 +2436,7 @@
       const aliases={Db:'C#',Eb:'D#',Gb:'F#',Ab:'G#',Bb:'A#'};
       return text.split('|').map(v=>v.trim()).filter(Boolean).map((token,index)=>{
         const m=token.match(/^([A-G](?:#|b)?)(.*)$/); if(!m)return null;
-        const note=aliases[m[1]]||m[1],pc=NOTE.indexOf(note); if(pc<0)return null;
+        const note=aliases[m[1]]||m[1],pc=window.CrescendoPitchSpelling.pc(note); if(pc<0)return null;
         const suffix=m[2].toLowerCase(),minor=/^(m|min|m7|m7b5)/.test(suffix),dominant=/^7/.test(suffix);
         const formula=minor?(suffix.includes('b5')?[0,3,6,10]:[0,3,7,10]):(dominant?[0,4,7,10]:suffix.includes('maj7')?[0,4,7,11]:[0,4,7]);
         return {pc,formula,chord:token,role:index?'Nota del acorde':'Fundamental'};
@@ -2655,7 +2656,7 @@
       if (chordMode) {
         const chord = parseChordValue();
         if (chord) {
-          const rootPc = NOTE.indexOf(rootSel.value);
+          const rootPc = window.CrescendoPitchSpelling.pc(rootSel.value);
           const def = chord.def;
           const shapes = selectedChordShapes(rootPc, def, chord.voicing);
           shapes.forEach(shape => {
@@ -2682,7 +2683,7 @@
           });
         }
       } else if (scaleMode) {
-        const rootPc = NOTE.indexOf(rootSel.value);
+        const rootPc = window.CrescendoPitchSpelling.pc(rootSel.value);
         const ints = SCALE[scaleSel.value];
         const pcs = pcPattern(rootPc, ints);
         const spec = SPECIAL.includes(scaleSel.value);
@@ -2757,7 +2758,7 @@
             ctx.textAlign = "center";
             ctx.textBaseline = "middle";
             ctx.font = `bold 11px Inter, sans-serif`;
-            ctx.fillText(NOTE[pc], x, y);
+            ctx.fillText(spellPc(pc,rootSel.value||''), x, y);
             ctx.restore();
           }
         }
@@ -2837,7 +2838,7 @@
               ctx.textAlign = "center";
               ctx.textBaseline = "middle";
               ctx.font = `bold 11px Inter, sans-serif`;
-              ctx.fillText(NOTE[pc], x, y);
+              ctx.fillText(spellPc(pc,rootSel.value||''), x, y);
               ctx.restore();
             }
           }
@@ -2862,7 +2863,7 @@
       if (chordMode) {
         const chord = parseChordValue();
         if (chord) {
-          const rootPc = NOTE.indexOf(rootSel.value);
+          const rootPc = window.CrescendoPitchSpelling.pc(rootSel.value);
           const def = chord.def;
           const selectedInv = posSel.value.startsWith("inv") ? parseInt(posSel.value.replace("inv","")) : null;
           symbolEl.textContent = rootSel.value + def.suffix + (selectedInv === null ? "" : inversionSuffix(rootPc, def, selectedInv));
@@ -2871,9 +2872,9 @@
           qualityEl.textContent = `${chord.voicing.group} ${chord.voicing.label}${rangeText} · ${selectedInv === null ? "Todas las posiciones" : INVERSION_LABELS[selectedInv]} · ${def.quality}${capoText}`;
         }
       } else if (scaleMode) {
-        const rootPc = NOTE.indexOf(rootSel.value);
+        const rootPc = window.CrescendoPitchSpelling.pc(rootSel.value);
         const scaleName = scaleSel.value.replace(/_/g, ' ');
-        symbolEl.textContent = `Escala: ${scaleName} · Tónica ${NOTE[rootPc]}`;
+        symbolEl.textContent = `Escala: ${scaleName} · Tónica ${rootSel.value||NOTE[rootPc]}`;
         const patternText=patternSel.value==='free'?'':` · ${patternSel.options[patternSel.selectedIndex].text}`;
         const capoText=capoSemitones()?` · Capo ${capoSemitones()}`:'';
         qualityEl.textContent = `Modo ${scaleName}${patternText}${capoText}`;
@@ -2935,7 +2936,7 @@
       if(raw==='none')return 0;
       if(raw!=='auto')return parseInt(raw,10)||0;
       if(!rootSel.value||!scaleSel.value||!(scaleSel.value in STAFF_MODE_MAJOR_OFFSET))return 0;
-      const rootPc=NOTE.indexOf(rootSel.value); if(rootPc<0)return 0;
+      const rootPc=window.CrescendoPitchSpelling.pc(rootSel.value); if(rootPc<0)return 0;
       const majorPc=(rootPc+STAFF_MODE_MAJOR_OFFSET[scaleSel.value])%12;
       return STAFF_KEY_SIGNATURES[STAFF_MAJOR_BY_PC[majorPc]]||0;
     }
@@ -2943,13 +2944,16 @@
     const STAFF_NATURAL_PC={C:0,D:2,E:4,F:5,G:7,A:9,B:11};
     function rootPrefersFlats(rootName){return /b/.test(rootName)||['F'].includes(rootName)}
     function spellPc(pc, rootName=''){
-      const sharp=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
-      const flat=['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'];
-      return (rootPrefersFlats(rootName)?flat:sharp)[((pc%12)+12)%12];
+      const def=CHORD_TYPES[chordTypeSel.value.split("|")[0]];
+      return rootName&&def?window.CrescendoPitchSpelling.spell(60+pc,rootName,def.suffix).name:window.CrescendoPitchSpelling.name(pc,rootName);
     }
     function staffSpelling(midi){
-      const name=spellPc(midi%12,rootSel.value||''); const letter=name[0]; const acc=name.slice(1);
-      return {letter,acc,label:letter,glyph:acc==='b'?'♭':acc==='#'?'♯':acc==='bb'?'♭♭':acc==='##'?'𝄪':''};
+      const root=rootSel.value||'',def=CHORD_TYPES[chordTypeSel.value.split("|")[0]];
+      const sp=window.CrescendoPitchSpelling.spell(midi,root&&def?root:'',def?.suffix||'');
+      const name=root&&def?sp.name:window.CrescendoPitchSpelling.name(midi,root);
+      const letter=name[0],acc=name.slice(1),alter=[...acc].reduce((n,c)=>n+(c==='b'?-1:1),0);
+      const octave=Math.round((midi-STAFF_NATURAL_PC[letter]-alter)/12)-1;
+      return {letter,acc,alter,octave,label:letter,glyph:acc==='b'?'♭':acc==='#'?'♯':acc==='bb'?'♭♭':acc==='##'?'𝄪':''};
     }
 
 
@@ -2961,7 +2965,7 @@
       const pitches=[...new Set(bassStaffNotes.map(n=>n.midi))].sort((a,b)=>a-b).map(midi=>{
         // Written bass pitch is one octave above sounding pitch; audio is unchanged.
         const written=midi+12,spelling=staffSpelling(written);
-        return {letter:spelling.letter,acc:spelling.acc==='#'?'sharp':spelling.acc==='b'?'flat':null,octave:Math.floor(written/12)-1};
+        return {letter:spelling.letter,acc:spelling.acc==='#'?'sharp':spelling.acc==='b'?'flat':null,alter:spelling.alter,octave:spelling.octave};
       });
       bassLiveStaff.update(pitches,'bass',currentKeySignatureCount());
     }

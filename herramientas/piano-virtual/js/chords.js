@@ -33,11 +33,11 @@ function identifyChord(midiNotes){
 // análisis funcional habitual también para tonalidades menores relativas.
 const ROMAN_DEGREES=['I','♭II','II','♭III','III','IV','♯IV','V','♭VI','VI','♭VII','VII'];
 function degreeForPc(pc){if(currentKeyPc===null)return null;const rel=(pc-currentKeyPc+12)%12;const scale=MODE_INTERVALS[currentScaleMode]||MODE_INTERVALS.major;const ix=scale.indexOf(rel);return ix>=0?['I','II','III','IV','V','VI','VII'][ix]:ROMAN_DEGREES[rel]}
-function isDominantFamily(s){return /(^7|9|13|sus)/.test(s)&&!s.startsWith('m')&&!s.startsWith('∆')&&!s.startsWith('º')&&!s.startsWith('ø')}
+function isDominantFamily(s){return /(^7|9|13|sus)/.test(s)&&!s.startsWith('m')&&!s.startsWith('º')&&!s.startsWith('ø')}
 function computeRomanNumeral(rootPc,keyPc,suffix){
   let deg=degreeForPc(rootPc)||ROMAN_DEGREES[(rootPc-keyPc+12)%12];
   if(isDominantFamily(suffix)){const target=(rootPc+5)%12,targetDeg=degreeForPc(target);if(targetDeg&&target!==keyPc) return 'V/'+targetDeg.toLowerCase()}
-  if(suffix.startsWith('m')||suffix.startsWith('º')||suffix.startsWith('ø')) deg=deg.toLowerCase(); if(suffix.startsWith('º'))deg+='°';else if(suffix.startsWith('ø'))deg+='ø';else if(suffix.startsWith('+'))deg+='+';return deg;
+  if(/^m(?!aj)/.test(suffix)||suffix.startsWith('º')||suffix.startsWith('ø')) deg=deg.toLowerCase(); if(suffix.startsWith('º'))deg+='°';else if(suffix.startsWith('ø'))deg+='ø';else if(suffix.startsWith('+'))deg+='+';return deg;
 }
 const chordDetailsPanel=document.getElementById('chordDetailsPanel'),chordDetailsBody=document.getElementById('chordDetailsBody'),chordDetailsTitle=document.getElementById('chordDetailsTitle'); let lastChordResult=null;
 function renderChordDetails(){if(!lastChordResult){chordDetailsBody.textContent='Toca al menos dos notas para analizar el acorde.';return}const r=lastChordResult;const notes=r.pcs.map(formatPc).join(' · ');let html=`<div><strong>Notas:</strong> ${notes}</div><div><strong>Coincidencia:</strong> ${r.confidence}</div>`;if(currentKeyPc!==null)html+=`<div><strong>Función:</strong> ${computeRomanNumeral(r.rootPc,currentKeyPc,r.suffix)} en ${formatPc(currentKeyPc)} ${keyModeSelect.options[keyModeSelect.selectedIndex]?.textContent||''}</div>`;if(r.alternatives.length){html+='<div style="margin-top:8px"><strong>Lecturas alternativas</strong></div>'+r.alternatives.map(a=>`<div class="chord-alt">${formatPc(a.root)}${a.name}${a.exact?' · exacta':' · compatible'}</div>`).join('')}chordDetailsBody.innerHTML=html;chordDetailsTitle.textContent=formatPc(r.rootPc)+r.suffix+r.inversion}
