@@ -552,6 +552,11 @@
       className: "ipad-primary-action"
     });
     documentPanel.appendChild(newDocumentButton);
+    [ ["png", "Exportar imagen PNG"], ["pdf", "Exportar PDF"] ].forEach(([format, text]) => {
+      const button = createIconButton({icon:"save", label:text, text, className:"ipad-primary-action"});
+      button.addEventListener("click", () => document.dispatchEvent(new CustomEvent("editor-export-image", {detail:{format}})));
+      documentPanel.appendChild(button);
+    });
     moveLegacyPanel(".exercise-app-menu__panel--file", documentPanel);
     const versionHistorySection = createControlSection("Historial");
     moveLegacyPanel("#versionHistoryHost", versionHistorySection);

@@ -1014,6 +1014,7 @@
 <script src="rhythm-marks.js?v=20261021-compact-menu-2"></script>
 <script src="../../shared/overflow-writing.js?v=20261022-1"></script>
 <script src="rhythm-writing.js?v=20261022-delete-selected-1"></script>
+<script src="rhythm-import.js?v=20261022-1"></script>
 <script src="rhythm-export.js?v=20261021-compact-menu-2"></script>
 <script src="https://cdn.jsdelivr.net/npm/soundfont-player@0.12.0/dist/soundfont-player.min.js"></script>
 <script src="rhythm-audio.js?v=20261021-compact-menu-2"></script>
@@ -1304,7 +1305,7 @@
     // --- Laboratorio de ritmo y feel: generador y editor sobre un único pentagrama ---
     let rhythmMarks=[],rhythmEditorEvents=[],activeRhythmStaff=1;let rhythmAudio=null;let rhythmPointerTarget=null;
     const rhythmStructure=window.CrescendoRhythmStructure,rhythmWriting=window.CrescendoRhythmWriting,activeRhythmTool=rhythmWriting.create(),rhythmHistory=rhythmWriting.history();
-    let selectedRhythmNote=null;
+    let selectedRhythmNote=null;let rhythmDraftReady=false;
     function rhythmSnapshot(){return JSON.stringify({events:rhythmEditorEvents,marks:rhythmMarks,bars:Number(UI.rhythmBars.value)||4});}
     let activeRhythmMark=null,markRangeStart=null,contextBoundary=0,contextMeasure=0;
     const markPalette=document.getElementById('rhythmMarkPalette'),barMenu=document.getElementById('rhythmBarMenu');
@@ -1378,7 +1379,7 @@
         const subValue=kind==='triplets'||Math.abs(base-1/3)<.00001?'3':String(Math.max(.25,1/base));if([...UI.subSel.options].some(o=>o.value===subValue))UI.subSel.value=subValue;
         UI.subSel.dispatchEvent(new Event('change'));renderVisualizer();syncBasicLabels();
     }
-    function renderRhythmScore(message=''){rhythmAudio?.stop();renderRhythmMarks();UI.rhythmUndo.disabled=!rhythmHistory.canUndo;UI.rhythmRedo.disabled=!rhythmHistory.canRedo;if(typeof message!=='string')message='';if(!window.CrescendoPractice)return;const meter=currentRhythmMeter(),clef=UI.rhythmClef.value,bars=Math.max(1,Math.min(16,Number(UI.rhythmBars.value)||1)),systems=Math.ceil(bars/4),used=rhythmBeats(rhythmUsedTicks()),total=rhythmTimeline().total;keySelect.value=rhythmStructure.keyAt(rhythmMarks,0);UI.rhythmScore.innerHTML=rhythmWriting.render(rhythmEditorEvents,{meter,clef,bars,width:UI.rhythmScore.clientWidth||900,glyphs:window.CrescendoBravuraPalette,marks:rhythmMarks,selected:selectedRhythmNote});UI.rhythmScore.classList.toggle('has-multiple-systems',systems>1);UI.rhythmStatus.textContent=message||`${bars} ${bars===1?'compás':'compases'} en ${new Set(rhythmTimeline().meters.map(m=>m.label)).size>1?'compases variables':rhythmTimeline().meters[0].label} · ${used.toFixed(2).replace(/\.00$/,'')} de ${total} tiempos · ${clef==='grand'?'sol y fa · escribiendo en '+(activeRhythmStaff===2?'fa':'sol'):'clave de '+(clef==='bass'?'fa':'sol')} · clic: ${UI.rhythmPlacement.options[UI.rhythmPlacement.selectedIndex].text}`}
+    function renderRhythmScore(message=''){if(rhythmDraftReady)try{localStorage.setItem('crescendo-rhythm-draft',JSON.stringify({...JSON.parse(rhythmSnapshot()),clef:UI.rhythmClef.value}));}catch(_){}rhythmAudio?.stop();renderRhythmMarks();UI.rhythmUndo.disabled=!rhythmHistory.canUndo;UI.rhythmRedo.disabled=!rhythmHistory.canRedo;if(typeof message!=='string')message='';if(!window.CrescendoPractice)return;const meter=currentRhythmMeter(),clef=UI.rhythmClef.value,bars=Math.max(1,Math.min(16,Number(UI.rhythmBars.value)||1)),systems=Math.ceil(bars/4),used=rhythmBeats(rhythmUsedTicks()),total=rhythmTimeline().total;keySelect.value=rhythmStructure.keyAt(rhythmMarks,0);UI.rhythmScore.innerHTML=rhythmWriting.render(rhythmEditorEvents,{meter,clef,bars,width:UI.rhythmScore.clientWidth||900,glyphs:window.CrescendoBravuraPalette,marks:rhythmMarks,selected:selectedRhythmNote});UI.rhythmScore.classList.toggle('has-multiple-systems',systems>1);UI.rhythmStatus.textContent=message||`${bars} ${bars===1?'compás':'compases'} en ${new Set(rhythmTimeline().meters.map(m=>m.label)).size>1?'compases variables':rhythmTimeline().meters[0].label} · ${used.toFixed(2).replace(/\.00$/,'')} de ${total} tiempos · ${clef==='grand'?'sol y fa · escribiendo en '+(activeRhythmStaff===2?'fa':'sol'):'clave de '+(clef==='bass'?'fa':'sol')} · clic: ${UI.rhythmPlacement.options[UI.rhythmPlacement.selectedIndex].text}`}
     const rhythmOverflowDialog=document.createElement('dialog');rhythmOverflowDialog.className='rhythm-overflow-dialog';rhythmOverflowDialog.setAttribute('aria-labelledby','rhythmOverflowTitle');
     rhythmOverflowDialog.innerHTML='<form method="dialog"><h3 id="rhythmOverflowTitle">La figura supera el compás</h3><p></p><div><button value="no">No</button><button value="yes">Sí, escribir con ligaduras</button></div></form>';document.body.appendChild(rhythmOverflowDialog);
     let rhythmOverflowPending=false;
@@ -1584,7 +1585,16 @@
     [UI.rhythmFigure,UI.rhythmExercise,UI.rhythmPlacement].forEach(el=>el.addEventListener('change',renderRhythmScore));
     UI.beatsSel.addEventListener('change',renderRhythmScore);
     UI.exerciseToggleBtn.addEventListener('click',()=>{const opening=UI.rhythmLab.hidden;UI.rhythmLab.hidden=!opening;UI.exerciseToggleBtn.classList.toggle('open',opening);UI.exerciseToggleBtn.setAttribute('aria-expanded',String(opening));if(!opening)rhythmAudio?.stop();if(opening){renderRhythmScore();UI.rhythmLab.scrollIntoView({behavior:'smooth',block:'nearest'})}});
-    renderRhythmScore('Pentagrama limpio. Elige una figura o silencio y pulsa sobre una línea o espacio.');
+    try{const saved=JSON.parse(localStorage.getItem('crescendo-rhythm-draft')||'null');if(saved&&Array.isArray(saved.events)&&Array.isArray(saved.marks)&&saved.bars>=1&&saved.bars<=16){rhythmEditorEvents=saved.events;rhythmMarks=saved.marks;UI.rhythmBars.value=String(saved.bars);if(['treble','bass','grand'].includes(saved.clef))UI.rhythmClef.value=saved.clef;}}catch(_){}
+    rhythmDraftReady=true;renderRhythmScore();
+    const importButton=document.createElement('button');importButton.type='button';importButton.textContent='Importar MusicXML';importButton.className='rhythm-import-button';
+    const importInput=document.createElement('input');importInput.type='file';importInput.accept='.musicxml,.xml,.mxl';importInput.hidden=true;
+    saveButton.parentElement.append(importButton,importInput);importButton.addEventListener('click',()=>importInput.click());
+    importInput.addEventListener('change',async()=>{const file=importInput.files[0];if(!file)return;try{
+      const text=/\.mxl$/i.test(file.name)?await extractMxl(file):await file.text(),result=window.CrescendoRhythmImport.parse(text),before=rhythmSnapshot();
+      rhythmEditorEvents=result.events;rhythmMarks=result.marks;UI.rhythmBars.value=String(result.bars);UI.rhythmClef.value=result.clef;selectedRhythmNote=null;rhythmHistory.commit(before,rhythmSnapshot());syncRhythmPalette();renderRhythmScore('MusicXML importado: '+file.name+(result.warning?' · '+result.warning:''));
+    }catch(error){UI.rhythmStatus.textContent='No se pudo importar: '+error.message;}finally{importInput.value='';}});
+
 
     // --- Pantalla completa (para proyectar en clase) ---
     UI.fullscreenBtn.addEventListener('click', () => { UI.fsView.classList.add('open'); });

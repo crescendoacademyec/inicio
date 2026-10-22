@@ -8124,7 +8124,7 @@
   function openTextEditor(point, item = null, createData = null) {
     if (!point) return false;
     const input = ensureTextEditor();
-    const style = { ...state.textStyle, ...(item?.style || {}) };
+    const style = { ...state.textStyle, ...(item?.style || {}), ...(AnchoredText.isChord(item) ? {font:"Times New Roman"} : {}) };
     const textKind = AnchoredText.kindOf(item, createData);
     const isChordEditor = AnchoredText.isChord(textKind);
     const isDynamicEditor = AnchoredText.isDynamic(textKind);
@@ -8342,7 +8342,7 @@
   }
 
   function chordBaselineY(measureIndex) {
-    return pitchY(highestStaffStepInMeasure(measureIndex)) - STAFF_GAP * 2;
+    return Math.min(...state.measures.map((_, index) => pitchY(highestStaffStepInMeasure(index)))) - STAFF_GAP * 2;
   }
 
   function dynamicBaselineY(measureIndex = state.cursorMeasure) {
@@ -8548,12 +8548,12 @@
 
   function chordItemPoint(item, layout = buildLayout()) {
     const measureIndex = Math.max(0, Math.min(state.measures.length - 1, Number(item.measureIndex) || 0));
-    const style = { ...state.textStyle, ...(item?.style || {}) };
+    const style = { ...state.textStyle, ...(item?.style || {}), ...(AnchoredText.isChord(item) ? {font:"Times New Roman"} : {}) };
     const size = Number(style.size) || 24;
-    const lane = chordLaneMap(layout).get(item.id) || 0;
+    const lane = Math.max(0, ...chordLaneMap(layout).values());
     return {
       x: xForChordAnchor(layout, measureIndex, Number.isFinite(item.tick) ? item.tick : 0) + anchoredTextOffset(item, "x"),
-      y: chordBaselineY(measureIndex) - lane * size * 1.12 + anchoredTextOffset(item, "y")
+      y: chordBaselineY(measureIndex) - lane * 24 * 1.12
     };
   }
 
@@ -12585,7 +12585,7 @@
   function chordTextStyle() {
     return {
       ...state.textStyle,
-      font: appearanceFont("canvasTextFont", "Ink Free"),
+      font: "Times New Roman",
       size: Number(state.textStyle?.size) || 24
     };
   }
@@ -17417,7 +17417,7 @@
   }
 
   function chordItemHorizontalExtents(item) {
-    const style = { ...state.textStyle, ...(item?.style || {}) };
+    const style = { ...state.textStyle, ...(item?.style || {}), ...(AnchoredText.isChord(item) ? {font:"Times New Roman"} : {}) };
     const extents = textBoxExtentsAtAnchor(
       item?.text || AnchoredText.sampleText(AnchoredText.KINDS.CHORD),
       style,
@@ -20602,7 +20602,7 @@
       const text = textNode(point.x, point.y, item.text, {
         class: "canvas-text",
         "text-anchor": textAnchorForAlign(align),
-        style: `font-family:${fontCss(style.font || appearanceFont("canvasTextFont", "Ink Free"))}; font-size:${size}px; fill:${style.color};`
+        style: `font-family:${fontCss(AnchoredText.isChord(item) ? "Times New Roman" : (style.font || appearanceFont("canvasTextFont", "Ink Free")))}; font-size:${size}px; fill:${style.color};`
       });
       text.textContent = "";
       lines.forEach((line, index) => {
@@ -22995,6 +22995,34 @@
     event.returnValue = "";
   });
   document.addEventListener("keydown", handleKeydown);
+
+  document.addEventListener("editor-export-image", async event => {
+    try {
+      await document.fonts.ready;
+      const copy = svg.cloneNode(true), originals = [svg, ...svg.querySelectorAll("*")], clones = [copy, ...copy.querySelectorAll("*")];
+      originals.forEach((node, index) => {
+        const style = getComputedStyle(node);
+        ["fill","stroke","stroke-width","font-family","font-size","font-weight","font-style","opacity","visibility","display"].forEach(key => clones[index].style.setProperty(key, style.getPropertyValue(key)));
+      });
+      copy.querySelectorAll('#playbackLine,.input-cursor,.cursor,.cursor-line,.input-event-preview,.input-rhythm-ruler,.pointer-input-preview,[class*="hitbox"],[class*="hit-box"]').forEach(node => node.remove());
+      const response = await fetch(new URL("../assets/fonts/Bravura.otf", document.baseURI));
+      if (!response.ok) throw Error("No se pudo cargar Bravura.");
+      const bytes = new Uint8Array(await response.arrayBuffer());let binary = "";
+      for(let i=0;i<bytes.length;i+=8192)binary+=String.fromCharCode(...bytes.subarray(i,i+8192));
+      const defs=el("defs"),style=el("style");style.textContent=`@font-face{font-family:'MTF Improviso Light';src:url(data:font/otf;base64,${btoa(binary)}) format('opentype');}`;defs.appendChild(style);copy.prepend(defs);
+      const box={width:svg.viewBox.baseVal.width,height:Math.min(svg.viewBox.baseVal.height,scoreStaffBottomY()+120)};copy.setAttribute("viewBox",`0 0 ${box.width} ${box.height}`);copy.setAttribute("width",box.width);copy.setAttribute("height",box.height);
+      const url=URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(copy)],{type:"image/svg+xml"}));
+      try {
+        const image=new Image();await new Promise((resolve,reject)=>{image.onload=resolve;image.onerror=reject;image.src=url;});
+        const canvas=document.createElement("canvas");canvas.width=Math.ceil(box.width*2);canvas.height=Math.ceil(box.height*2);
+        const ctx=canvas.getContext("2d");ctx.fillStyle="#fff";ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(image,0,0,canvas.width,canvas.height);
+        const pdf=event.detail?.format==="pdf",blob=await new Promise(resolve=>canvas.toBlob(resolve,pdf?"image/jpeg":"image/png",.97));
+        if(!blob)throw Error("No se pudo crear el archivo.");
+        const result=pdf?new Blob([window.CrescendoRhythmExport.pdf(new Uint8Array(await blob.arrayBuffer()),canvas.width,canvas.height)],{type:"application/pdf"}):blob;
+        const link=document.createElement("a"),download=URL.createObjectURL(result);link.href=download;link.download=`crescendo-partitura.${pdf?"pdf":"png"}`;link.click();setTimeout(()=>URL.revokeObjectURL(download),30000);
+      } finally {URL.revokeObjectURL(url);}
+    } catch(error) {showEditorMessage("No se pudo exportar: "+(error.message||"error de imagen"));}
+  });
 
   document.documentElement.dataset.jmlEditorBoot = "listeners-ready";
   ensurePrimaryIconMetadata();

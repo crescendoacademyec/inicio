@@ -5827,3 +5827,6 @@ body.editor-page .editor-workbench .score-shell {
   .editor-count-in span { animation-name: editor-count-fade; }
   @keyframes editor-count-fade { 0%,100% { opacity: 0; } 12%,75% { opacity: 1; } }
 }
+
+/* Los cifrados conservan una tipografía editorial, incluso en borradores antiguos. */
+.canvas-chord-item .canvas-text { font-family: "Times New Roman", Times, serif !important; font-weight: 400 !important; font-style: normal !important; }

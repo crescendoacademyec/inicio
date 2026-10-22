@@ -749,3 +749,7 @@ Al dibujar una figura que no cabe, o al aumentar la duración de una nota escrit
 ### Elegir instrumento
 
 El selector de la barra superior permite escuchar la partitura y las notas de entrada con Piano, Guitarra, Bajo, Violín o Ukelele. Usa los mismos instrumentos SoundFont del metrónomo. La elección se recuerda en este navegador y el instrumento seleccionado se precarga al abrir la página; los sonidos ya cargados se reutilizan. Cambiar de instrumento durante la reproducción la detiene para evitar mezclar timbres. En pantallas pequeñas, el selector permanece en la parte derecha del encabezado.
+
+### Cifrados y exportación visual
+
+Los cifrados se muestran con Times New Roman y comparten una altura por pentagrama, calculada a partir de la nota más alta de todo el sistema y de los espacios necesarios para evitar colisiones. En Archivo están disponibles Exportar imagen PNG y Exportar PDF. Ambas opciones conservan los símbolos Bravura y omiten el cursor y las guías de escritura.
