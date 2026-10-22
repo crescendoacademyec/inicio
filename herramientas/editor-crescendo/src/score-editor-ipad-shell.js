@@ -29,6 +29,7 @@
       '<path d="M20 9H9.5A5.5 5.5 0 0 0 4 14.5v0A5.5 5.5 0 0 0 9.5 20H13"/>'
     ].join(""),
     play: '<polygon points="6 3 20 12 6 21 6 3"/>',
+    speaker: '<path d="M11 5 6 9H3v6h3l5 4V5Z"/><path d="M15 8a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14"/>',
     metronome: [
       '<path d="M8 21h8"/>',
       '<path d="M6.5 21 9.5 3h5l3 18"/>',
@@ -432,7 +433,24 @@
     beatIndicator.setAttribute("aria-label", "Metrónomo detenido");
     const bpmUp = createIconButton({ icon: "chevron-up", label: "Subir tempo", className: "ipad-bpm-step" });
     bpmGroup.append(bpmDown, bpmValue, bpmUp);
-    headerCenter.append(clearButton, saveButton, undoProxy, redoProxy, playProxy, metronomeProxy, beatIndicator, bpmGroup);
+    function createSoundSelector(mobile = false) {
+      const label = element("label", `ipad-sound-selector${mobile ? " ipad-sound-selector--mobile" : ""}`);
+      label.appendChild(icon("speaker"));
+      const select = document.createElement("select");
+      select.setAttribute("aria-label", "Instrumento de reproducción");
+      select.title = "Instrumento de reproducción";
+      for (const [value, sound] of Object.entries(global.JMLScoreInstruments.instruments)) {
+        const option = document.createElement("option");option.value = value;option.textContent = sound.name;select.appendChild(option);
+      }
+      select.value = global.JMLScoreInstruments.readPreference();
+      select.addEventListener("change", () => {
+        document.querySelectorAll('.ipad-sound-selector select').forEach(other => { other.value = select.value; });
+        document.dispatchEvent(new CustomEvent("editor-instrument-select", { detail: { instrument: select.value } }));
+      });
+      label.appendChild(select);
+      return label;
+    }
+    headerCenter.append(clearButton, saveButton, undoProxy, redoProxy, playProxy, metronomeProxy, beatIndicator, bpmGroup, createSoundSelector());
 
     const headerRight = element("div", "ipad-header-actions");
     const saveStatus = element("span", "ipad-save-status");
@@ -441,7 +459,7 @@
     const keyboardToggle = createIconButton({ icon: "piano", label: "Mostrar u ocultar teclado MIDI" });
     const toggleRight = createIconButton({ icon: "panel-right", label: "Mostrar u ocultar inspector" });
     const fullscreenProxy = createIconButton({ icon: "maximize", label: "Pantalla completa" });
-    headerRight.append(saveStatus, keyboardToggle, toggleRight, fullscreenProxy);
+    headerRight.append(createSoundSelector(true), saveStatus, keyboardToggle, toggleRight, fullscreenProxy);
     header.append(headerLeft, headerCenter, headerRight);
 
     const body = element("div", "ipad-workspace-body");

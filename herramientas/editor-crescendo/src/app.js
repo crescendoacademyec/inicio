@@ -21,6 +21,7 @@
   const Keymap = window.JMLScoreKeymap;
   const ApplicationMenu = window.JMLScoreApplicationMenu;
   const IpadShell = window.JMLScoreIpadShell;
+  const InstrumentSounds = window.JMLScoreInstruments;
   if (!Timeline) throw new Error("No se cargó score-editor-timeline.js");
   if (!RhythmicColumns) throw new Error("No se cargó score-editor-rhythmic-columns.js");
   if (!InputSession) throw new Error("No se cargó score-editor-input-session.js");
@@ -551,6 +552,7 @@
     midiChordMode: false,
     midiAutoChordMode: false,
     midiCaptureStatus: "",
+    playbackInstrument: InstrumentSounds.readPreference(),
     midiPlayback: {
       active: false,
       starting: false,
@@ -11791,13 +11793,14 @@
     return events.sort((a, b) => a.startMs - b.startMs || a.midi - b.midi);
   }
 
-  // Piano acústico por SoundFont: se usa como salida MIDI de respaldo cuando
+  // Instrumento por SoundFont: utiliza la misma interfaz que una salida MIDI.
+  // También sirve de respaldo cuando
   // el navegador no expone ninguna salida MIDI local de hardware/software
   // (el caso normal para casi cualquier alumno). Implementa la misma forma
   // que un MIDIOutput real (`send(mensaje, timestamp)`, `clear()`, `name`,
   // `state`) para que el resto del motor de reproducción no necesite saber
   // la diferencia.
-  function createAcousticPianoOutput(instrument, audioContext) {
+  function createAcousticPianoOutput(instrument, audioContext, sound = { name: "Piano" }) {
     let originTime = performance.now();
     let originAudioTime = audioContext.currentTime;
     const activeNodes = new Map();
@@ -11809,7 +11812,7 @@
       const when = audioTimeFor(timestamp);
       const node = instrument.play(midi, when, {
         gain: Math.max(0.05, Math.min(1, (Number(velocity) || 88) / 127)),
-        duration: 6
+        duration: sound.short ? 2 : 6
       });
       const stack = activeNodes.get(midi) || [];
       stack.push(node);
@@ -11829,7 +11832,7 @@
       else activeNodes.delete(midi);
     };
     return {
-      name: "Piano acústico (SoundFont)",
+      name: sound.name,
       manufacturer: "Cuaderno de estudio",
       state: "connected",
       audioContext,
@@ -11848,7 +11851,7 @@
         if (status === 0x90 && velocity > 0) noteOn(midi, velocity, timestamp);
         else if (status === 0x80 || (status === 0x90 && velocity === 0)) noteOff(midi, timestamp);
         // Los mensajes de cambio de programa y control change se ignoran:
-        // el piano acústico es el único timbre de esta salida.
+        // el instrumento seleccionado determina el timbre de esta salida.
       },
       clear() {
         activeNodes.forEach((stack) => {
@@ -11865,42 +11868,48 @@
     };
   }
 
-  async function acousticPianoOutput() {
-    if (state.midiPlayback.acousticPianoOutput) {
-      // El navegador puede suspender el AudioContext por inactividad
-      // (ahorro de batería). Si no se reactiva en cada reproducción, el
-      // piano deja de sonar de forma silenciosa después de la primera vez.
-      const cachedContext = state.midiPlayback.acousticPianoOutput.audioContext;
-      if (cachedContext?.state === "suspended") {
-        try { await cachedContext.resume(); } catch {
-          // Se reintentará en el próximo click de reproducción.
-        }
-      }
-      state.midiPlayback.acousticPianoOutput.recalibrate?.();
-      return state.midiPlayback.acousticPianoOutput;
-    }
-    if (!window.Soundfont) return null;
-    if (!state.midiPlayback.acousticPianoPromise) {
-      state.midiPlayback.acousticPianoPromise = (async () => {
-        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-        if (!AudioContextClass) return null;
-        const audioContext = new AudioContextClass();
-        if (audioContext.state === "suspended") {
-          try { await audioContext.resume(); } catch {
-            // Some browsers only allow resuming after a user gesture; the
-            // click on the playback button itself counts as that gesture.
-          }
-        }
-        const instrument = await window.Soundfont.instrument(audioContext, "acoustic_grand_piano");
-        return createAcousticPianoOutput(instrument, audioContext);
-      })().catch(() => null);
-    }
-    state.midiPlayback.acousticPianoOutput = await state.midiPlayback.acousticPianoPromise;
-    return state.midiPlayback.acousticPianoOutput;
+  let editorInstrumentAudioContext = null;
+  const loadEditorInstrument = InstrumentSounds.createLoader({
+    getContext: () => {
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextClass || !window.Soundfont) return null;
+      return editorInstrumentAudioContext ||= new AudioContextClass();
+    },
+    loadInstrument: (context, bank) => window.Soundfont.instrument(context, bank),
+    createOutput: createAcousticPianoOutput
+  });
+
+  async function acousticPianoOutput(options = {}) {
+    try { return await loadEditorInstrument(state.playbackInstrument, options); }
+    catch { return null; }
   }
+
+  document.addEventListener("editor-instrument-select", event => {
+    const instrument = InstrumentSounds.normalize(event.detail?.instrument);
+    if (instrument === state.playbackInstrument) return;
+    if (state.midiPlayback.active || state.midiPlayback.starting) stopMidiPlayback();
+    state.midiPlayback.output?.clear?.();
+    state.playbackInstrument = instrument;
+    InstrumentSounds.remember(instrument);
+    state.midiPlayback.output = null;
+    state.midiPlayback.outputName = "";
+    acousticPianoOutput().then(output => {
+      if (state.playbackInstrument !== instrument) return;
+      if (output) state.midiPlayback.outputName = output.name;
+      else showEditorMessage("No se pudo cargar el instrumento. Revisa tu conexión y vuelve a reproducir.");
+      emitEditorState();
+    });
+  });
 
   async function midiPlaybackOutput(options = {}) {
     const quiet = options.quiet === true;
+    const selectedSound = await acousticPianoOutput();
+    if (selectedSound) {
+      state.midiPlayback.output = selectedSound;
+      state.midiPlayback.outputName = selectedSound.name;
+      emitEditorState();
+      return selectedSound;
+    }
     if (!navigator.requestMIDIAccess) {
       const piano = await acousticPianoOutput();
       if (piano) {
@@ -23008,6 +23017,7 @@
   emitEditorState();
   document.documentElement.dataset.jmlEditorBoot = "render-ready";
   loadBundledExercises();
+  acousticPianoOutput({ preload: true });
   scheduleIconFit();
   document.documentElement.dataset.jmlEditorBoot = "complete";
 })();

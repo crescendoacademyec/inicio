@@ -745,3 +745,7 @@ Cada reproducción comienza con un compás de preparación: aparecen números gr
 ### Figuras que continúan en otro compás
 
 Al dibujar una figura que no cabe, o al aumentar la duración de una nota escrita, aparece un aviso con el tiempo disponible y una propuesta equivalente con ligaduras. En 4/4, una blanca en el tiempo 4 se divide en negra ligada a negra; una redonda se divide en negra ligada a blanca con puntillo. **Sí, escribir con ligaduras** aplica el cambio completo; **No** conserva la escritura. Se añaden compases si hacen falta. Las notas que ocupen el tramo nuevo se reemplazan, conservando los fragmentos que queden fuera. Toda la operación se puede deshacer de una vez. Los grupos irregulares mantienen su protección contra reemplazos parciales.
+
+### Elegir instrumento
+
+El selector de la barra superior permite escuchar la partitura y las notas de entrada con Piano, Guitarra, Bajo, Violín o Ukelele. Usa los mismos instrumentos SoundFont del metrónomo. La elección se recuerda en este navegador y el instrumento seleccionado se precarga al abrir la página; los sonidos ya cargados se reutilizan. Cambiar de instrumento durante la reproducción la detiene para evitar mezclar timbres. En pantallas pequeñas, el selector permanece en la parte derecha del encabezado.
