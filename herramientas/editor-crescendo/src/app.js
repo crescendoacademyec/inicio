@@ -22,6 +22,8 @@
   const ApplicationMenu = window.JMLScoreApplicationMenu;
   const IpadShell = window.JMLScoreIpadShell;
   const InstrumentSounds = window.JMLScoreInstruments;
+  const Guitar = window.JMLScoreGuitar;
+  let guitarTabVisible = true;
   if (!Timeline) throw new Error("No se cargó score-editor-timeline.js");
   if (!RhythmicColumns) throw new Error("No se cargó score-editor-rhythmic-columns.js");
   if (!InputSession) throw new Error("No se cargó score-editor-input-session.js");
@@ -11890,6 +11892,7 @@
     if (state.midiPlayback.active || state.midiPlayback.starting) stopMidiPlayback();
     state.midiPlayback.output?.clear?.();
     state.playbackInstrument = instrument;
+    render();
     InstrumentSounds.remember(instrument);
     state.midiPlayback.output = null;
     state.midiPlayback.outputName = "";
@@ -13576,6 +13579,115 @@
     if (!midiKeyboard) return;
     updateMidiKeyboardGeometry();
     refreshMidiKeyboardSelectionHighlights();
+  }
+
+  function guitarTarget() {
+    return selectedNoteLocations()[0] || findActiveNoteTarget();
+  }
+
+  function applyGuitarPosition(string, fret) {
+    const note = Guitar.midi(string, fret);
+    if (note === null) return;
+    const target = guitarTarget();
+    if (target?.entry?.type === "note") {
+      const location = entryLocationById(target.entry.id);
+      if (!location) return;
+      const steps = entryStaffSteps(target.entry);
+      const index = Math.max(0, steps.indexOf(target.staffStep));
+      const notes = steps.map(step => midiNotesForEntry(target.entry, location.measureIndex, [step])[0]);
+      notes[index] = note;
+      if(new Set(notes).size !== notes.length){showEditorMessage("Esa altura ya está escrita en el acorde.");return;}
+      const retained = (target.entry.guitarFingering || []).filter(p => p.midi !== midiNotesForEntry(target.entry, location.measureIndex, [steps[index]])[0]);
+      const positions = Guitar.fingering(notes, [...retained, {string, fret, midi: note}]);
+      if (positions.length !== new Set(notes).size) {
+        showEditorMessage("Esa cuerda ya está ocupada por otra nota del acorde. Elige otra cuerda o traste."); return;
+      }
+      saveHistory();
+      setEntryPitchInfos(target.entry, notes.map(n => midiNoteInfo(n-(target.entry.ottava?12:0), location.measureIndex)), location.measureIndex);
+      target.entry.guitarFingering = positions;
+      const nextStep = entryStaffSteps(target.entry)[index];
+      state.selectedNoteRefs = [{entryId: target.entry.id, staffStep: nextStep}];
+      setActiveNote(target.entry, nextStep);
+      auditionMidiNotes([note]);
+      render();
+    } else if (writeMidiNote(note, {commitPending:true})) {
+      const active = findActiveNoteTarget();
+      if (active?.entry) { active.entry.guitarFingering = [{string, fret, midi:note}]; render(); }
+    }
+  }
+
+  function renderGuitarPanel() {
+    if (!midiKeyboardPanel) return;
+    const enabled = state.playbackInstrument === "guitar";
+    midiKeyboard.hidden = enabled;
+    let panel = document.getElementById("editorGuitarPanel");
+    if (!panel) {
+      panel = document.createElement("div"); panel.id = "editorGuitarPanel";
+      panel.innerHTML = `<div class="guitar-tab-strip"></div><div class="guitar-controls"><label><input type="checkbox" id="guitarTabToggle" checked> TAB</label><label>Cuerda <select id="guitarString">${Guitar.tuning.map((_,i)=>`<option value="${i+1}">${i+1}</option>`).join("")}</select></label><label>Traste <input id="guitarFret" type="number" min="0" max="24" value="0"></label><button type="button" id="guitarApply">Aplicar digitación</button><span>Selecciona una nota para editarla; sin selección, escribe desde el diapasón.</span></div><div class="guitar-fretboard" role="group" aria-label="Diapasón de guitarra"></div>`;
+      midiKeyboardPanel.appendChild(panel);
+      scoreShell?.addEventListener("scroll",()=>{panel.querySelector(".guitar-tab-strip").scrollLeft=scoreShell.scrollLeft;},{passive:true});
+      panel.querySelector("#guitarTabToggle").onchange = event => {guitarTabVisible=event.target.checked;render();};
+      panel.querySelector("#guitarApply").onclick = () => applyGuitarPosition(Number(panel.querySelector("#guitarString").value),Number(panel.querySelector("#guitarFret").value));
+      const board = panel.querySelector(".guitar-fretboard");
+      Guitar.tuning.forEach((_,i)=>{for(let fret=0;fret<=24;fret++){
+        const button=document.createElement("button");button.type="button";button.textContent=i===0?String(fret):"";button.dataset.string=String(i+1);button.dataset.fret=String(fret);
+        button.setAttribute("aria-label",`Cuerda ${i+1}, traste ${fret}`);
+        button.onclick=()=>applyGuitarPosition(i+1,fret);board.appendChild(button);
+      }});
+    }
+    panel.hidden = !enabled;
+    if (!enabled) return;
+    const strip=panel.querySelector(".guitar-tab-strip");
+    strip.hidden=!guitarTabVisible;
+    strip.replaceChildren();
+    if(guitarTabVisible && lastRenderedLayout){
+      const tabSvg=el("svg",{width:lastRenderedLayout.totalWidth*(state.zoom||1),height:140,viewBox:`0 0 ${lastRenderedLayout.totalWidth} 140`,role:"img","aria-label":"Tablatura de guitarra"});
+      const tabRoot=el("g",{transform:`translate(0 ${20-scoreStaffBottomY()-80})`});
+      renderGuitarTab(tabRoot,lastRenderedLayout);tabSvg.appendChild(tabRoot);strip.appendChild(tabSvg);
+      strip.scrollLeft=scoreShell?.scrollLeft||0;
+      strip.onscroll=()=>{if(scoreShell)scoreShell.scrollLeft=strip.scrollLeft;};
+    }
+    const target=guitarTarget();
+    const location=target?.entry ? entryLocationById(target.entry.id):null;
+    const positions=location?Guitar.fingering(midiNotesForEntry(target.entry,location.measureIndex),target.entry.guitarFingering):[];
+    const selectedMidi=location?midiNotesForEntry(target.entry,location.measureIndex,[target.staffStep??entryStaffSteps(target.entry)[0]])[0]:null;
+    const current=positions.find(p=>p.midi===selectedMidi);
+    if(current){panel.querySelector("#guitarString").value=current.string;panel.querySelector("#guitarFret").value=current.fret;}
+    panel.querySelectorAll(".guitar-fretboard button").forEach(button=>{
+      const active=positions.some(p=>p.string===Number(button.dataset.string)&&p.fret===Number(button.dataset.fret));
+      button.classList.toggle("is-active",active);button.setAttribute("aria-pressed",String(active));
+      button.textContent=active||button.dataset.string==="1"?button.dataset.fret:"";
+    });
+  }
+
+  function renderGuitarTab(root, layout) {
+    if(state.playbackInstrument!=="guitar" || !guitarTabVisible) return;
+    const y=scoreStaffBottomY()+80;
+    const group=el("g",{class:"guitar-tablature"});
+    for(let string=1;string<=6;string++) {
+      group.appendChild(el("line",{x1:55,x2:layout.totalWidth-15,y1:y+(string-1)*17,y2:y+(string-1)*17,stroke:"#555","stroke-width":.8}));
+      group.appendChild(textNode(15,y+(string-1)*17+4,`${string} ${["Mi","Si","Sol","Re","La","Mi"][string-1]}`,{style:"font:10px sans-serif;fill:#555"}));
+    }
+    group.appendChild(textNode(55,y-10,"TAB",{style:"font:bold 12px sans-serif;fill:#111"}));
+    withSystemContext(activeSystemIndex(),()=>{
+      state.measures.forEach((measure,measureIndex)=>{
+        const end=layout.starts[measureIndex]+layout.widths[measureIndex];
+        group.appendChild(el("line",{x1:end,x2:end,y1:y,y2:y+85,stroke:"#333","stroke-width":1}));
+        measure.entries.filter(entry=>entry.type==="note").forEach(entry=>{
+          const positions=Guitar.fingering(midiNotesForEntry(entry,measureIndex),entry.guitarFingering);
+          const x=cursorVisualXForMeasureTick(layout,measureIndex,entry.tickStart);
+          positions.forEach(p=>{
+            const cy=y+(p.string-1)*17;
+            group.appendChild(el("rect",{x:x-9,y:cy-9,width:18,height:17,fill:"#fffdf8"}));
+            const label=textNode(x,cy+5,String(p.fret),{"text-anchor":"middle",style:"font:14px sans-serif;fill:#111;cursor:pointer"});
+            label.addEventListener("pointerdown",event=>{event.stopPropagation();const step=entryStaffSteps(entry).find(step=>midiNotesForEntry(entry,measureIndex,[step])[0]===p.midi);state.selectedNoteRefs=[{entryId:entry.id,staffStep:step}];state.selectedEntryIds=[];setActiveNote(entry,step);render();});
+            group.appendChild(label);
+          });
+          if(!positions.length) group.appendChild(textNode(x,y-15,"—",{style:"fill:#a33"}));
+        });
+      });
+    });
+    root.appendChild(group);
   }
 
   function toggleMidiChordMode() {
@@ -21047,6 +21159,7 @@
       });
       setActiveSystemIndex(activeIndex);
       renderTextItems(root, layout);
+
       renderDragSelection(root);
       svg.appendChild(root);
       scheduleRestAlignment();
@@ -21059,6 +21172,7 @@
       syncTouchModeClass();
       updateTouchToolbar();
       refreshMidiKeyboardSelectionHighlights();
+      renderGuitarPanel();
       if (state.midiPlayback.active) updatePlaybackLine();
       scheduleCanvasAutosave();
     } finally {
