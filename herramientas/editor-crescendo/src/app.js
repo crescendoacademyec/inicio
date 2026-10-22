@@ -11806,18 +11806,21 @@
     let originTime = performance.now();
     let originAudioTime = audioContext.currentTime;
     const activeNodes = new Map();
+    const scheduledNodes = new Set();
     const audioTimeFor = (timestamp) => {
       const target = Number.isFinite(timestamp) ? timestamp : performance.now();
       return Math.max(audioContext.currentTime, originAudioTime + (target - originTime) / 1000);
     };
     const noteOn = (midi, velocity, timestamp) => {
       const when = audioTimeFor(timestamp);
+      scheduledNodes.forEach(node=>{if(node.__crescendoStopAt!==undefined&&node.__crescendoStopAt<audioContext.currentTime)scheduledNodes.delete(node);});
       const node = instrument.play(midi, when, {
         gain: Math.max(0.05, Math.min(1, (Number(velocity) || 88) / 127)),
         duration: sound.short ? 2 : 6
       });
       const stack = activeNodes.get(midi) || [];
       stack.push(node);
+      if(node)scheduledNodes.add(node);
       activeNodes.set(midi, stack);
     };
     const noteOff = (midi, timestamp) => {
@@ -11825,6 +11828,7 @@
       const stack = activeNodes.get(midi);
       if (!stack || !stack.length) return;
       const node = stack.shift();
+      if(node)node.__crescendoStopAt=when+.5;
       try {
         node?.stop?.(when);
       } catch {
@@ -11856,6 +11860,9 @@
         // el instrumento seleccionado determina el timbre de esta salida.
       },
       clear() {
+        scheduledNodes.forEach(node=>{try{node.gain?.cancelScheduledValues?.(audioContext.currentTime);node.gain?.setValueAtTime?.(0,audioContext.currentTime);node.source?.stop?.(audioContext.currentTime);node?.stop?.(audioContext.currentTime);}catch(_){}});
+        scheduledNodes.clear();
+        instrument.stop?.(audioContext.currentTime);
         activeNodes.forEach((stack) => {
           stack.forEach((node) => {
             try {
@@ -12083,6 +12090,7 @@
   }
 
   function updatePlaybackLine() {
+    updateInstrumentPlayback();
     if (!state.midiPlayback.active || performance.now() < state.midiPlayback.startAt) {
       removePlaybackLine();
       return;
@@ -12125,6 +12133,7 @@
       state.midiPlayback.animationFrame = null;
     }
     removePlaybackLine();
+    updateInstrumentPlayback();
   }
 
   function clearPlaybackTimers() {
@@ -12177,6 +12186,7 @@
     sendMidiAllNotesOff();
     state.midiPlayback.scheduledNotes = [];
     state.midiPlayback.suppressInputUntil = performance.now() + 120;
+    state.midiPlayback.pausedTick = null;
     state.midiPlayback.startAt = 0;
     state.midiPlayback.startOffsetMs = 0;
     state.midiPlayback.durationMs = 0;
@@ -12192,8 +12202,9 @@
     const running = state.midiPlayback.active || state.midiPlayback.starting;
     playbackButton.classList.toggle("is-active", running);
     playbackButton.setAttribute("aria-pressed", running ? "true" : "false");
-    playbackButton.setAttribute("aria-label", running ? "Detener MIDI local" : "Reproducir MIDI local desde la selección");
-    playbackButton.title = running ? "Detener MIDI local" : "Reproducir MIDI local desde la selección";
+    playbackButton.dataset.paused=String(Number.isFinite(state.midiPlayback.pausedTick));
+    playbackButton.setAttribute("aria-label", running ? "Pausar reproducción" : "Reproducir MIDI local desde la selección");
+    playbackButton.title = running ? "Pausar reproducción" : Number.isFinite(state.midiPlayback.pausedTick)?"Continuar reproducción":"Reproducir MIDI local desde la selección";
     MenuRenderer.renderControl(playbackButton, {
       label: running ? "Detener" : "Reproducir",
       shortcut: false
@@ -12372,9 +12383,13 @@
 
   async function toggleMidiPlayback(options = {}) {
     if (state.midiPlayback.active || state.midiPlayback.starting) {
-      stopMidiPlayback();
-      return;
+      const pausedTick=state.midiPlayback.active&&performance.now()>=state.midiPlayback.startAt?playbackTickForMs(Math.max(0,performance.now()-state.midiPlayback.startAt)+(state.midiPlayback.startOffsetMs||0),state.midiPlayback.tempoEvents):null;
+      stopMidiPlayback();state.midiPlayback.pausedTick=pausedTick;updatePlaybackButton();return;
     }
+    const resumeTick=state.midiPlayback.pausedTick;
+    const resuming=Number.isFinite(resumeTick);
+    if(resuming)options={...options,startAbsoluteTick:resumeTick};
+    state.midiPlayback.pausedTick=null;
     const tempoEvents = playbackTempoEvents();
     const events = playbackNoteEvents();
     const startAbsoluteTick = playbackStartAbsoluteTick(options);
@@ -12413,7 +12428,7 @@
     sendMidiAllNotesOff(output);
     clearPendingMidiInputWrite();
     const startDelayMs = 120;
-    const countPlan = playbackCountInPlan(startAbsoluteTick, tempoEvents);
+    const countPlan = resuming?{beats:0,beatMs:0,durationMs:0}:playbackCountInPlan(startAbsoluteTick, tempoEvents);
     const countStartAt = performance.now() + startDelayMs;
     const startAt = countStartAt + countPlan.durationMs;
     state.midiPlayback.starting = false;
@@ -13236,6 +13251,8 @@
   let midiNoteCapture = null;
   let midiAutoWriteTimer = null;
   const midiInputNoteBuffer = new Set();
+  let midiKeyboardPlaybackNotes = [];
+  let instrumentPlaybackSignature = "";
   let midiKeyboardFlashNotes = [];
   let midiKeyboardFlashLabels = {};
   let midiKeyboardFlashUntil = 0;
@@ -13495,9 +13512,9 @@
   function applyMidiKeyboardHighlights() {
     if (!midiKeyboard) return;
     const flashActive = Date.now() < midiKeyboardFlashUntil && midiKeyboardFlashNotes.length;
-    const notes = flashActive ? midiKeyboardFlashNotes : midiKeyboardSelectionNotes;
+    const notes = state.midiPlayback.active ? midiKeyboardPlaybackNotes : flashActive ? midiKeyboardFlashNotes : midiKeyboardSelectionNotes;
     const labels = flashActive ? midiKeyboardFlashLabels : midiKeyboardSelectionLabels;
-    const source = flashActive ? "played" : "selection";
+    const source = state.midiPlayback.active || flashActive ? "played" : "selection";
     MidiKeyboard.applyHighlights(midiKeyboard, {
       notes,
       labels,
@@ -13581,6 +13598,29 @@
     refreshMidiKeyboardSelectionHighlights();
   }
 
+  function updateInstrumentPlayback() {
+    document.querySelector?.(".editor-workbench")?.classList.toggle("is-score-playing",state.midiPlayback.active);
+    const elapsed=performance.now()-(state.midiPlayback.startAt||0);
+    const events=state.midiPlayback.active&&elapsed>=0?(state.midiPlayback.scheduledNotes||[]).filter(event=>event.startMs<=elapsed&&event.endMs>elapsed):[];
+    const signature=events.map(event=>`${event.systemIndex}:${event.entryId}:${event.midi}`).join("|");
+    if(signature===instrumentPlaybackSignature)return;
+    instrumentPlaybackSignature=signature;
+    midiKeyboardPlaybackNotes=[...new Set(events.map(event=>event.midi))];
+    applyMidiKeyboardHighlights();
+    midiKeyboard?.querySelectorAll("[data-midi-note]").forEach(key=>key.classList.toggle("is-playing",midiKeyboardPlaybackNotes.includes(Number(key.dataset.midiNote))));
+    const instrument=stringInstrument(),positions=[];
+    if(instrument){
+      const active=activeSystemIndex();
+      events.forEach(event=>withSystemContext(event.systemIndex||0,()=>{
+        const entry=state.measures[event.measureIndex]?.entries.find(entry=>entry.id===event.entryId);
+        if(!entry)return;
+        positions.push(...instrument.fingering(midiNotesForEntry(entry,event.measureIndex),savedStringFingering(entry)).filter(p=>p.midi===event.midi));
+      }));
+      setActiveSystemIndex(active);
+    }
+    document.querySelectorAll(".guitar-fretboard button").forEach(button=>button.classList.toggle("is-playing",positions.some(p=>p.string===Number(button.dataset.string)&&p.fret===Number(button.dataset.fret))));
+  }
+
   function stringInstrument() { return Guitar.forInstrument(state.playbackInstrument); }
   function savedStringFingering(entry) { return entry.stringFingerings?.[state.playbackInstrument] || (state.playbackInstrument === "guitar" ? entry.guitarFingering : []) || []; }
   function storeStringFingering(entry, positions) {
@@ -13591,10 +13631,11 @@
   }
 
   function applyGuitarPosition(string, fret, options={}) {
+    if(state.midiPlayback.active||state.midiPlayback.starting||Number.isFinite(state.midiPlayback.pausedTick))stopMidiPlayback();
     const instrument=stringInstrument();
     if(!instrument) return;
     const note = instrument.midi(string, fret);
-    const position=options.position || document.querySelector("#violinPosition")?.value || "I";
+    const position=options.position || "I";
     const chosen={string,fret,midi:note,...(!instrument.fretted?Guitar.technique(fret,position):{})};
     if (note === null) return;
     const target = guitarTarget();
@@ -13630,6 +13671,13 @@
     const instrument=stringInstrument();
     const enabled = !!instrument;
     midiKeyboard.hidden = enabled;
+    for(const [id,selector,mobile] of [["editorTabToggle",".ipad-header-center",false],["editorTabToggleMobile",".ipad-header-actions",true]]){
+      const parent=document.querySelector(selector);if(!parent)continue;
+      let input=document.getElementById(id);
+      if(!input){const label=document.createElement("label");label.className="editor-tab-toggle"+(mobile?" editor-tab-toggle--mobile":"");label.innerHTML=`<input type="checkbox" id="${id}" aria-label="Mostrar tablatura"> TAB`;parent.appendChild(label);input=label.querySelector("input");input.onchange=()=>{guitarTabVisible=input.checked;render();};}
+      input.checked=guitarTabVisible;input.closest("label").hidden=!enabled;
+    }
+
     document.querySelector(".editor-workbench")?.classList.toggle("has-string-instrument",enabled);
     let panel = document.getElementById("editorGuitarPanel");
     if (!panel) {
@@ -13642,20 +13690,13 @@
     if(panel.dataset.instrument!==instrument.id){
       panel.dataset.instrument=instrument.id;
       panel.classList.toggle("is-fretless",!instrument.fretted);
-      panel.innerHTML = `<div class="guitar-tab-strip"></div><div class="guitar-controls"><label><input type="checkbox" id="guitarTabToggle" ${guitarTabVisible?"checked":""}> ${instrument.fretted?"TAB":"Digitación"}</label><label>Cuerda <select id="guitarString">${instrument.tuning.map((_,i)=>`<option value="${i+1}">${i+1} · ${instrument.labels[i]}</option>`).join("")}</select></label><label>${instrument.fretted?"Traste":"Banda (semitonos)"} <input id="guitarFret" type="number" min="0" max="24" value="0"></label>${instrument.fretted?"":`<label>Posición <select id="violinPosition"><option>I</option><option>III</option><option>V</option></select></label><label>Dedo <select id="violinFinger"><option value="0">0 · al aire</option>${Guitar.violinPositions.I.map(([offset,finger])=>`<option value="${offset}">${finger} · banda ${offset}</option>`).join("")}</select></label>`}<button type="button" id="guitarApply">Aplicar digitación</button><span>${instrument.fretted?"Selecciona una nota para editarla; sin selección, escribe desde el diapasón.":"Bandas de referencia, sin trastes · selecciona una nota, cuerda, posición y dedo."}</span></div><div class="guitar-fretboard" role="group" aria-label="Diapasón de ${instrument.name}"></div>`;
-
-      panel.querySelector("#guitarTabToggle").onchange = event => {guitarTabVisible=event.target.checked;render();};
-      panel.querySelector("#guitarApply").onclick = () => applyGuitarPosition(Number(panel.querySelector("#guitarString").value),Number(panel.querySelector("#guitarFret").value));
-      if(!instrument.fretted){
-        const position=panel.querySelector("#violinPosition"),finger=panel.querySelector("#violinFinger"),band=panel.querySelector("#guitarFret");
-        position.onchange=()=>{finger.innerHTML='<option value="0">0 · al aire</option>'+Guitar.violinPositions[position.value].map(([offset,digit])=>`<option value="${offset}">${digit} · banda ${offset}</option>`).join("");band.value=finger.value;};
-        finger.onchange=()=>{band.value=finger.value;};
-      }
+      panel.innerHTML = '<div class="guitar-tab-strip"></div><div class="guitar-fretboard" role="group"></div>';
+      panel.querySelector(".guitar-fretboard").setAttribute("aria-label",`Diapasón de ${instrument.name}`);
       const board = panel.querySelector(".guitar-fretboard");
       instrument.tuning.forEach((_,i)=>{
         const name=document.createElement("span");name.className="guitar-string-name";name.textContent=`${i+1} · ${instrument.labels[i]}`;board.appendChild(name);
         for(let fret=0;fret<=24;fret++){
-        const button=document.createElement("button");button.type="button";button.textContent=i===0?String(fret):"";button.dataset.string=String(i+1);button.dataset.fret=String(fret);button.style.setProperty("--string-thickness",`${.7+i*.3}px`);
+        const button=document.createElement("button");button.type="button";button.textContent="";button.dataset.string=String(i+1);button.dataset.fret=String(fret);button.style.setProperty("--string-thickness",`${.7+i*.3}px`);
         button.setAttribute("aria-label",`Cuerda ${i+1}, ${instrument.fretted?"traste":"banda"} ${fret}`);
         if(!instrument.fretted&&[2,4,5,7,9,11,12].includes(fret))button.classList.add("finger-guide");
         button.onclick=()=>applyGuitarPosition(i+1,fret);board.appendChild(button);
@@ -13666,8 +13707,8 @@
     strip.replaceChildren();
     if(guitarTabVisible && lastRenderedLayout){
       const tabSvg=el("svg",{width:lastRenderedLayout.totalWidth*(state.zoom||1),height:instrument.tuning.length*17+17,viewBox:`0 0 ${lastRenderedLayout.totalWidth} ${instrument.tuning.length*17+17}`,role:"group","aria-label":`${instrument.fretted?"Tablatura":"Digitación"} de ${instrument.name}`});
-      const tabRoot=el("g",{transform:`translate(0 ${20-scoreStaffBottomY()-80})`});
-      renderGuitarTab(tabRoot,lastRenderedLayout);tabSvg.appendChild(tabRoot);strip.appendChild(tabSvg);
+      const tabRoot=el("g");
+      tabSvg.appendChild(tabRoot);renderGuitarTab(tabRoot,lastRenderedLayout);strip.appendChild(tabSvg);
       strip.scrollLeft=scoreShell?.scrollLeft||0;
       strip.onscroll=()=>{if(scoreShell)scoreShell.scrollLeft=strip.scrollLeft;};
     }
@@ -13675,39 +13716,26 @@
     const location=target?.entry ? entryLocationById(target.entry.id):null;
     const positions=location?instrument.fingering(midiNotesForEntry(target.entry,location.measureIndex),savedStringFingering(target.entry)):[];
     const selectedMidi=location?midiNotesForEntry(target.entry,location.measureIndex,[target.staffStep??entryStaffSteps(target.entry)[0]])[0]:null;
-    const current=positions.find(p=>p.midi===selectedMidi);
-    if(current){
-      panel.querySelector("#guitarString").value=current.string;panel.querySelector("#guitarFret").value=current.fret;
-      if(!instrument.fretted){
-        const tech=Guitar.technique(current.fret,current.position),position=panel.querySelector("#violinPosition"),finger=panel.querySelector("#violinFinger");
-        if(Guitar.violinPositions[tech.position]){
-          position.value=tech.position;
-          finger.innerHTML='<option value="0">0 · al aire</option>'+Guitar.violinPositions[tech.position].map(([offset,digit])=>`<option value="${offset}">${digit} · banda ${offset}</option>`).join("");
-          finger.value=String(current.fret);
-        }else finger.value="0";
-      }
-    }
     panel.querySelectorAll(".guitar-fretboard button").forEach(button=>{
       const active=positions.some(p=>p.string===Number(button.dataset.string)&&p.fret===Number(button.dataset.fret));
       button.classList.toggle("is-active",active);button.setAttribute("aria-pressed",String(active));
-      if(!instrument.fretted){
-        const selected=positions.find(p=>p.string===Number(button.dataset.string)&&p.fret===Number(button.dataset.fret));
-        const tech=Guitar.technique(Number(button.dataset.fret),selected?.position);
-        button.textContent=active?(tech.finger===null?"●":String(tech.finger)):(button.dataset.string==="1"?button.dataset.fret:"");
-      }else button.textContent=active||button.dataset.string==="1"?button.dataset.fret:"";
+      button.textContent=active?"●":"";
+      button.classList.toggle("fret-guide",instrument.fretted&&Number(button.dataset.string)===Math.ceil(instrument.tuning.length/2)&&[3,5,7,9,12,15,17,19,21,24].includes(Number(button.dataset.fret)));
+      button.classList.toggle("double-guide",[12,24].includes(Number(button.dataset.fret)));
+
     });
   }
 
   function renderGuitarTab(root, layout) {
     const instrument=stringInstrument();
     if(!instrument || !guitarTabVisible) return;
-    const y=scoreStaffBottomY()+80;
+    const y=20;
     const group=el("g",{class:"guitar-tablature"});
     for(let string=1;string<=instrument.tuning.length;string++) {
       group.appendChild(el("line",{x1:55,x2:layout.totalWidth-15,y1:y+(string-1)*17,y2:y+(string-1)*17,stroke:"#555","stroke-width":.8}));
       group.appendChild(textNode(15,y+(string-1)*17+4,`${string} ${instrument.labels[string-1]}`,{style:"font:10px sans-serif;fill:#555"}));
     }
-    group.appendChild(textNode(55,y-10,instrument.fretted?"TAB":"Digitación · cuerda / dedo · posición",{style:"font:bold 12px sans-serif;fill:#111"}));
+    group.appendChild(textNode(55,y-10,instrument.name,{style:"font:bold 12px sans-serif;fill:#111"}));
     withSystemContext(activeSystemIndex(),()=>{
       state.measures.forEach((measure,measureIndex)=>{
         const end=layout.starts[measureIndex]+layout.widths[measureIndex];
@@ -13715,26 +13743,22 @@
         measure.entries.filter(entry=>entry.type==="note").forEach(entry=>{
           const positions=instrument.fingering(midiNotesForEntry(entry,measureIndex),savedStringFingering(entry));
           const x=cursorVisualXForMeasureTick(layout,measureIndex,entry.tickStart);
+          const open=window.CrescendoStringTab.column({svg:root.ownerSVGElement||root,x,y,instrument,positions,key:`crescendo:${instrument.id}:${entry.id}`,onApply:(p,string,fret,position)=>{
+            const step=entryStaffSteps(entry).find(step=>midiNotesForEntry(entry,measureIndex,[step])[0]===p.midi);
+            if(!Number.isFinite(step))return "La nota ya cambió. Vuelve a seleccionarla.";
+            const notes=entryStaffSteps(entry).filter(s=>s!==step).flatMap(s=>midiNotesForEntry(entry,measureIndex,[s]));
+            const note=instrument.midi(string,fret);
+            if(notes.includes(note))return "Esa altura ya está escrita en el acorde.";
+            if(!instrument.fingering([...notes,note],[...savedStringFingering(entry).filter(item=>item.midi!==p.midi),{string,fret,midi:note}]).length)return "Esa cuerda está ocupada.";
+            state.selectedNoteRefs=[{entryId:entry.id,staffStep:step}];state.selectedEntryIds=[];setActiveNote(entry,step);
+            applyGuitarPosition(string,fret,{position});return true;
+          }});
           positions.forEach(p=>{
             const cy=y+(p.string-1)*17;
-            group.appendChild(el("rect",{x:x-(instrument.fretted?9:24),y:cy-9,width:instrument.fretted?18:48,height:17,fill:"#fffdf8"}));
-            const tech=Guitar.technique(p.fret,p.position);
-            const label=textNode(x,cy+5,instrument.fretted?String(p.fret):tech.finger===null?`b${p.fret}`:`${tech.finger}·${tech.position}`,{"text-anchor":"middle",style:"font:14px sans-serif;fill:#111;cursor:pointer"});
-            const edit=event=>{
-              event.preventDefault();event.stopPropagation();
-              const step=entryStaffSteps(entry).find(step=>midiNotesForEntry(entry,measureIndex,[step])[0]===p.midi);
-              state.selectedNoteRefs=[{entryId:entry.id,staffStep:step}];state.selectedEntryIds=[];setActiveNote(entry,step);render();
-              window.CrescendoStringTab.edit({instrument,position:p,onApply:(string,fret,position)=>{
-                const notes=entryStaffSteps(entry).filter(s=>s!==step).flatMap(s=>midiNotesForEntry(entry,measureIndex,[s]));
-                const note=instrument.midi(string,fret);
-                if(notes.includes(note))return "Esa altura ya está escrita en el acorde.";
-                if(!instrument.fingering([...notes,note],[...savedStringFingering(entry).filter(item=>item.midi!==p.midi),{string,fret,midi:note}]).length)return "Esa cuerda está ocupada por otra nota del acorde.";
-                applyGuitarPosition(string,fret,{position});return true;
-              }});
-            };
+            group.appendChild(el("rect",{x:x-9,y:cy-9,width:18,height:17,fill:"#fffdf8","pointer-events":"none"}));
+            const label=textNode(x,cy+5,String(p.fret),{"text-anchor":"middle",style:"font:14px sans-serif;fill:#111;cursor:text"});
             label.classList.add("string-tab-number");label.setAttribute("tabindex","0");label.setAttribute("role","button");label.setAttribute("aria-label",`Editar cuerda ${p.string}, ${instrument.fretted?"traste":"banda"} ${p.fret}`);
-            label.addEventListener("click",edit);label.addEventListener("keydown",event=>{if(["Enter"," "].includes(event.key))edit(event);});
-            group.appendChild(label);
+            label.addEventListener("pointerdown",event=>open(event,p));label.addEventListener("keydown",event=>{if(["Enter"," "].includes(event.key))open(event,p);});group.appendChild(label);
           });
           if(!positions.length) group.appendChild(textNode(x,y-15,"—",{style:"fill:#a33"}));
         });

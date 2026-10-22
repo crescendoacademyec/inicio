@@ -1,10 +1,7 @@
-.string-tab-editor { background:#262626; color:#fff; border:1px solid #b69343; border-radius:12px; padding:20px; max-width:min(380px,calc(100vw - 32px)); font:14px system-ui,sans-serif; }
-.string-tab-editor::backdrop { background:#0008; }
-.string-tab-editor h3 { font-size:16px; margin:0 0 14px; }
-.string-tab-editor label { display:flex; align-items:center; justify-content:space-between; gap:15px; margin:10px 0; }
-.string-tab-editor input,.string-tab-editor select,.string-tab-editor button { background:#151515; color:#fff; border:1px solid #777; border-radius:6px; padding:8px; font:inherit; }
-.string-tab-editor input { width:75px; }
-.string-tab-editor form>div { display:flex; justify-content:flex-end; gap:8px; }
-.string-tab-editor button[type=submit] { background:#d5aa45; color:#111; border-color:#d5aa45; }
-.string-tab-error { color:#ffc5aa; font-size:12px; }
+.string-tab-inline input { display:block; box-sizing:border-box; width:36px; height:22px; margin:0; padding:0 2px; border:1px solid #b88820; border-radius:3px; background:#fff4ca; color:#111; text-align:center; font:14px system-ui,sans-serif; outline:none; }
+.string-tab-inline input[aria-invalid=true] { border-color:#c33; background:#ffe1dc; }
 .string-tab-number:focus-visible { outline:2px solid #b88820; }
+.string-tab-column { cursor:text; }
+.string-tab-number.is-playing { fill:#9b6b00;font-weight:700; }
+.rhythm-tab-toggle[hidden] { display:none !important; }
+.rhythm-tab-toggle { display:inline-flex;align-items:center;gap:4px;white-space:nowrap; }

@@ -729,11 +729,11 @@
       const syncPlayIcon = () => {
         const running = playbackSource.classList.contains("is-active");
         playProxy.replaceChildren(icon(running ? "pause" : "play"));
-        playProxy.setAttribute("aria-label", running ? "Detener reproducción" : "Reproducir");
-        playProxy.title = running ? "Detener reproducción" : "Reproducir";
+        playProxy.setAttribute("aria-label", running ? "Pausar reproducción" : playbackSource.dataset.paused==="true"?"Continuar reproducción":"Reproducir");
+        playProxy.title = running ? "Pausar reproducción" : playbackSource.dataset.paused==="true"?"Continuar reproducción":"Reproducir";
       };
       syncPlayIcon();
-      new MutationObserver(syncPlayIcon).observe(playbackSource, { attributes: true, attributeFilter: ["class"] });
+      new MutationObserver(syncPlayIcon).observe(playbackSource, { attributes: true, attributeFilter: ["class","data-paused"] });
     }
 
     const metronomeSource = document.querySelector("#metronomeButton");

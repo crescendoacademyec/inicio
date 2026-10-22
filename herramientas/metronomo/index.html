@@ -803,7 +803,7 @@
             <div class="rhythm-mark-palette" id="rhythmMarkPalette" role="group" aria-label="Dinámicas y signos de repetición"></div><div id="rhythmBarMenu" class="rhythm-bar-menu" role="menu" aria-label="Opciones del compás" hidden></div>
             <div class="rhythm-score-wrap"><div class="rhythm-score" id="rhythmScore" aria-live="polite"></div><div class="rhythm-score-overlay" id="rhythmScoreOverlay" aria-label="Pulsa sobre el pentagrama para escribir o sobre sus barras para abrir las opciones del compás"></div></div>
             <div id="rhythmTab" class="rhythm-tab" hidden></div>
-            <div class="rhythm-lab-footer"><div class="rhythm-footer-status"><p class="rhythm-lab-status" id="rhythmStatus"></p><span id="rhythmSoundStatus" role="status" aria-live="polite"></span></div><div class="rhythm-playback-controls"><button type="button" id="rhythmListen" aria-label="Reproducir" title="Reproducir" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 5 11 7-11 7Z"/></svg></button><button type="button" id="rhythmStop" aria-label="Detener" title="Detener"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="1"/></svg></button><label for="rhythmPlaybackBpm">BPM</label><input id="rhythmPlaybackBpm" type="number" min="20" max="400" value="80" aria-label="Tempo de reproducción en BPM"><label for="rhythmSound">Sonido</label><select id="rhythmSound"><option value="piano">Piano</option><option value="guitar">Guitarra</option><option value="bass">Bajo</option><option value="violin">Violín</option><option value="ukulele">Ukelele</option></select></div></div>
+            <div class="rhythm-lab-footer"><div class="rhythm-footer-status"><p class="rhythm-lab-status" id="rhythmStatus"></p><span id="rhythmSoundStatus" role="status" aria-live="polite"></span></div><div class="rhythm-playback-controls"><button type="button" id="rhythmListen" aria-label="Reproducir" title="Reproducir" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 5 11 7-11 7Z"/></svg></button><button type="button" id="rhythmStop" aria-label="Detener" title="Detener"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="1"/></svg></button><label class="rhythm-tab-toggle" hidden><input id="rhythmTabEnabled" type="checkbox" checked aria-label="Mostrar tablatura"> TAB</label><label for="rhythmPlaybackBpm">BPM</label><input id="rhythmPlaybackBpm" type="number" min="20" max="400" value="80" aria-label="Tempo de reproducción en BPM"><label for="rhythmSound">Sonido</label><select id="rhythmSound"><option value="piano">Piano</option><option value="guitar">Guitarra</option><option value="requinto">Requinto</option><option value="bass">Bajo</option><option value="violin">Violín</option><option value="ukulele">Ukelele</option></select></div></div>
         </section>
 
         <div class="controls-grid">
@@ -1018,11 +1018,11 @@
 <script src="rhythm-import.js?v=20261022-1"></script>
 <script src="rhythm-export.js?v=20261021-compact-menu-2"></script>
 <script src="https://cdn.jsdelivr.net/npm/soundfont-player@0.12.0/dist/soundfont-player.min.js"></script>
-<script src="rhythm-audio.js?v=20261021-compact-menu-2"></script>
-<script src="../editor-crescendo/src/score-editor-guitar.js?v=20261022-2"></script>
-<script src="../../shared/string-tablature.js?v=20261022-1"></script>
-<link rel="stylesheet" href="../../shared/string-tablature.css?v=20261022-1">
-<script src="rhythm-tablature.js?v=20261022-1"></script>
+<script src="rhythm-audio.js?v=20261022-silence-1"></script>
+<script src="../editor-crescendo/src/score-editor-guitar.js?v=20261022-3"></script>
+<script src="../../shared/string-tablature.js?v=20261022-inline-2"></script>
+<link rel="stylesheet" href="../../shared/string-tablature.css?v=20261022-inline-2">
+<script src="rhythm-tablature.js?v=20261022-inline-2"></script>
 <style>.rhythm-tab[hidden]{display:none}.rhythm-tab{margin:6px 0;color:#eee}.rhythm-tab>label{display:flex;align-items:center;gap:6px;font-size:12px;margin-bottom:4px}.rhythm-tab-scroll{overflow-x:auto;background:#fffdf8;border-radius:6px}.rhythm-tab-scroll svg{display:block;max-width:none;font-family:system-ui,sans-serif}</style>
 <script>
     // --- Lógica de Acordeón ---
@@ -1394,6 +1394,7 @@
         selectedRhythmNote={index,head};activeRhythmStaff=rhythmEditorEvents[index].staff||1;rhythmHistory.commit(before,rhythmSnapshot());renderRhythmScore('Digitación actualizada.');return true;
       }});
     }
+    document.getElementById('rhythmTabEnabled').addEventListener('change',renderRhythmTab);
     UI.rhythmScore.addEventListener('scroll',()=>{const strip=document.querySelector('#rhythmTab .rhythm-tab-scroll');if(strip)strip.scrollLeft=UI.rhythmScore.scrollLeft;},{passive:true});
     const rhythmOverflowDialog=document.createElement('dialog');rhythmOverflowDialog.className='rhythm-overflow-dialog';rhythmOverflowDialog.setAttribute('aria-labelledby','rhythmOverflowTitle');
     rhythmOverflowDialog.innerHTML='<form method="dialog"><h3 id="rhythmOverflowTitle">La figura supera el compás</h3><p></p><div><button value="no">No</button><button value="yes">Sí, escribir con ligaduras</button></div></form>';document.body.appendChild(rhythmOverflowDialog);
@@ -1568,6 +1569,7 @@
         countOverlay.style.animationPlayState=state==='paused'?'paused':'running';if(countOverlay.firstElementChild)countOverlay.firstElementChild.style.animationPlayState=state==='paused'?'paused':'running';if(state==='counting')lastCountNumber=0;else if(state!=='paused'){countOverlay.hidden=true;lastCountNumber=0;}
         exerciseState=state;const running=state==='playing'||state==='counting',label=running?'Pausar':state==='paused'?'Continuar':state==='loading'?'Cancelar carga':'Reproducir';
         rhythmListen.setAttribute('aria-pressed',String(running));rhythmListen.setAttribute('aria-label',label);rhythmListen.title=label;rhythmListen.querySelector('svg').innerHTML=running?'<path d="M6 5h4v14H6ZM14 5h4v14h-4Z"/>':'<path d="m8 5 11 7-11 7Z"/>';
+        if(!['playing','counting'].includes(state))document.querySelectorAll('#rhythmTab .is-playing').forEach(el=>el.classList.remove('is-playing'));
         rhythmSoundStatus.textContent=state==='loading'||state==='preloading'?'Cargando sonido…':state==='paused'?'En pausa':state==='empty'?'Escribe notas o genera un ejercicio para escucharlo.':state==='error'?(error?.message||'No se pudo cargar el sonido. Inténtalo de nuevo.'):'';
         if(!['playing','counting','paused'].includes(state)){playhead.hidden=true;lastPlaybackBar=-1;}
       },
@@ -1577,6 +1579,7 @@
         if(count){playhead.hidden=true;rhythmSoundStatus.textContent='';countOverlay.hidden=false;if(count.count!==lastCountNumber){lastCountNumber=count.count;const number=document.createElement('span');number.textContent=String(count.count);number.setAttribute('aria-label','Conteo previo: '+count.count+' de '+count.total);const meter=rhythmTimeline().meters[0];number.style.animationDuration=(60000/tempo*4/meter.bottom)+'ms';countOverlay.replaceChildren(number);}return;}
         countOverlay.hidden=true;
         rhythmSoundStatus.textContent='';const timeline=rhythmTimeline(),position=timeline.locate(beat),bar=position.bar,capacity=timeline.capacities[bar],boxes=[...UI.rhythmScore.querySelectorAll('.rhythm-measure-hit')].filter(el=>Number(el.dataset.bar)===bar);if(!boxes.length){playhead.hidden=true;return;}
+        document.querySelectorAll('#rhythmTab .string-tab-number').forEach(el=>el.classList.toggle('is-playing',Number(el.dataset.bar)===bar&&position.beat>=Number(el.dataset.offset)&&position.beat<Number(el.dataset.offset)+Number(el.dataset.beats)));
         const box=boxes[0],svg=box.ownerSVGElement;
         if(bar!==lastPlaybackBar){const y=box.getBoundingClientRect().top-UI.rhythmScore.getBoundingClientRect().top;if(y<0||y+170>UI.rhythmScore.clientHeight)UI.rhythmScore.scrollTop+=y;lastPlaybackBar=bar;}
         const sr=svg.getBoundingClientRect(),wr=UI.rhythmScore.parentElement.getBoundingClientRect(),scale=sr.width/svg.viewBox.baseVal.width,start=Number(box.dataset.start),end=Number(box.dataset.end),tops=boxes.map(el=>Number(el.dataset.top));

@@ -1,6 +1,6 @@
 (function(root){'use strict';
 const Structure=root.CrescendoRhythmStructure||(typeof require==='function'?require('./rhythm-structure.js'):null);
-const instruments={piano:{name:'Piano',bank:'acoustic_grand_piano'},guitar:{name:'Guitarra',bank:'acoustic_guitar_nylon'},bass:{name:'Bajo',bank:'electric_bass_finger'},violin:{name:'Violín',bank:'violin'},ukulele:{name:'Ukelele',bank:'acoustic_guitar_nylon',short:true}};
+const instruments={piano:{name:'Piano',bank:'acoustic_grand_piano'},guitar:{name:'Guitarra',bank:'acoustic_guitar_nylon'},requinto:{name:'Requinto',bank:'acoustic_guitar_nylon'},bass:{name:'Bajo',bank:'electric_bass_finger'},violin:{name:'Violín',bank:'violin'},ukulele:{name:'Ukelele',bank:'acoustic_guitar_nylon',short:true}};
 function midiFor(e){if(Number.isFinite(e.midi))return e.midi+(e.ottava?12:0);const m=/^([A-G])([#b]?)(-?\d+)$/.exec(e.note||'C5');return (Number(m[3])+1)*12+{C:0,D:2,E:4,F:5,G:7,A:9,B:11}[m[1]]+(m[2]==='#'?1:m[2]==='b'?-1:0)+(e.ottava?12:0);}
 function compile(events,{capacity=4,bars=4,tempo=80,clef='treble',marks=[],meter=null}={}){
  const fallback=[4,8,16,32,2,1].map(bottom=>[capacity*bottom/4,bottom]).find(([top])=>Number.isInteger(top)&&top>0&&top<=32);
@@ -18,7 +18,7 @@ function compile(events,{capacity=4,bars=4,tempo=80,clef='treble',marks=[],meter
 }
 function createPlayer({getContext,loadInstrument,onState=()=>{},onProgress=()=>{},volume=()=>.7,clickDestination=()=>null,setIntervalFn=setInterval,clearIntervalFn=clearInterval}={}){
  const cache=new Map();let token=0,loadVersion=0,timer=null,voices=[],context=null,session=null,paused=false;
- const silence=()=>{if(timer!==null)clearIntervalFn(timer);timer=null;for(const voice of voices){try{voice.stop();}catch(_){}}voices=[];};
+ const silence=()=>{if(timer!==null)clearIntervalFn(timer);timer=null;for(const voice of voices){try{voice.gain?.cancelScheduledValues?.(context?.currentTime||0);voice.gain?.setValueAtTime?.(0,context?.currentTime||0);voice.source?.stop?.(context?.currentTime||0);voice.stop(context?.currentTime||0);}catch(_){}}voices=[];};
  const stop=()=>{token++;silence();session=null;paused=false;onState('stopped');};
  const instrumentPlayer=name=>{context=getContext();const instrument=instruments[name]||instruments.piano;if(!cache.has(instrument.bank))cache.set(instrument.bank,Promise.resolve(loadInstrument(context,instrument.bank)).catch(error=>{cache.delete(instrument.bank);throw error;}));return cache.get(instrument.bank);};
  async function preload(name){const version=++loadVersion,run=token;if(!session)onState('preloading');try{const player=await instrumentPlayer(name);if(version===loadVersion&&run===token&&!session)onState('ready');return player;}catch(error){if(version===loadVersion&&run===token&&!session)onState('error',error);return null;}}

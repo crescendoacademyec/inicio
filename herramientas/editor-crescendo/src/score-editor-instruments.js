@@ -1,5 +1,5 @@
 (function(root){'use strict';
- const instruments=Object.freeze({piano:{name:'Piano',bank:'acoustic_grand_piano'},guitar:{name:'Guitarra',bank:'acoustic_guitar_nylon'},bass:{name:'Bajo',bank:'electric_bass_finger'},violin:{name:'Violín',bank:'violin'},ukulele:{name:'Ukelele',bank:'acoustic_guitar_nylon',short:true}});
+ const instruments=Object.freeze({piano:{name:'Piano',bank:'acoustic_grand_piano'},guitar:{name:'Guitarra',bank:'acoustic_guitar_nylon'},requinto:{name:'Requinto',bank:'acoustic_guitar_nylon'},bass:{name:'Bajo',bank:'electric_bass_finger'},violin:{name:'Violín',bank:'violin'},ukulele:{name:'Ukelele',bank:'acoustic_guitar_nylon',short:true}});
  const normalize=id=>Object.hasOwn(instruments,id)?id:'piano';
  function readPreference(){try{return normalize(root.localStorage?.getItem('crescendo-editor-instrument'));}catch{return 'piano';}}
  function remember(id){try{root.localStorage?.setItem('crescendo-editor-instrument',normalize(id));}catch{}}

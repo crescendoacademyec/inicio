@@ -1,17 +1,28 @@
 (function(root){'use strict';
- // A single editor for per-note string assignments in both score applications.
- function edit({instrument,position,onApply}){
-  const dialog=document.createElement('dialog');dialog.className='string-tab-editor';
-  dialog.setAttribute('aria-label','Editar digitación');
-  dialog.innerHTML=`<form><h3>Editar digitación · ${instrument.name}</h3><label>Cuerda <select name="string">${instrument.labels.map((name,i)=>`<option value="${i+1}">${i+1} · ${name}</option>`).join('')}</select></label><label>${instrument.fretted?'Traste':'Banda (semitonos)'} <input name="fret" type="number" min="0" max="24" step="1" required></label>${instrument.fretted?'':`<label>Posición <select name="position"><option>I</option><option>III</option><option>V</option></select></label>`}<p class="string-tab-error" role="status"></p><div><button type="button" data-cancel>Cancelar</button><button type="submit">Aplicar</button></div></form>`;
-  const form=dialog.querySelector('form');form.elements.string.value=position.string;form.elements.fret.value=position.fret;
-  if(form.elements.position)form.elements.position.value=['I','III','V'].includes(position.position)?position.position:'I';
-  form.onsubmit=event=>{event.preventDefault();const string=Number(form.elements.string.value),fret=Number(form.elements.fret.value);if(instrument.midi(string,fret)===null)return;
-   const result=onApply(string,fret,form.elements.position?.value||'I');
-   if(typeof result==='string'&&result){dialog.querySelector('.string-tab-error').textContent=result;return;}
-   if(result!==false)dialog.close();
+ let active=null;const chosen=new Map(),ns='http://www.w3.org/2000/svg';
+ function cancel(){if(!active)return;const old=active;active=null;old.node.remove();}
+ // The input lives on the clicked string, inside the TAB itself.
+ function edit({svg,x,y,instrument,position,string=position.string,onApply,key=''}){
+  const draft=active?.key===key?active.input.value:String(position.fret);cancel();
+  const node=document.createElementNS(ns,'foreignObject');node.setAttribute('x',x-18);node.setAttribute('y',y+(string-1)*17-11);node.setAttribute('width',38);node.setAttribute('height',24);node.classList.add('string-tab-inline');
+  const input=document.createElement('input');input.type='text';input.inputMode='numeric';input.value=draft;input.setAttribute('aria-label',`Cuerda ${string}: ${instrument.fretted?'traste':'banda'}`);input.autocomplete='off';node.appendChild(input);svg.appendChild(node);
+  const session={node,input,key};active=session;
+  const commit=()=>{if(active!==session)return;const value=input.value.trim(),fret=Number(value);
+   if(!/^\d{1,2}$/.test(value)||instrument.midi(string,fret)===null){input.setAttribute('aria-invalid','true');input.title='Escribe un número de 0 a 24.';return;}
+   active=null;const result=onApply(string,fret,position.position||'I');
+   if(result===false||typeof result==='string'&&result){active=session;input.setAttribute('aria-invalid','true');input.title=result||'No se puede aplicar esa digitación.';input.focus();return;}
+   node.remove();
   };
-  dialog.querySelector('[data-cancel]').onclick=()=>dialog.close();dialog.addEventListener('close',()=>dialog.remove(),{once:true});document.body.appendChild(dialog);dialog.showModal();form.elements.fret.focus();form.elements.fret.select();
+  input.addEventListener('pointerdown',e=>e.stopPropagation());input.addEventListener('click',e=>e.stopPropagation());
+  input.addEventListener('keydown',e=>{e.stopPropagation();if(e.key==='Enter'){e.preventDefault();commit();}else if(e.key==='Escape'){e.preventDefault();cancel();}});
+  input.addEventListener('blur',commit);input.addEventListener('input',()=>input.removeAttribute('aria-invalid'));
+  input.focus({preventScroll:true});input.select();return session;
  }
- const api={edit};if(typeof module!=='undefined')module.exports=api;else root.CrescendoStringTab=api;
+ function column({svg,x,y,instrument,positions,key,onApply}){
+  const hit=document.createElementNS(ns,'rect');Object.entries({x:x-12,y:y-8,width:24,height:(instrument.tuning.length-1)*17+16,fill:'transparent',class:'string-tab-column'}).forEach(([k,v])=>hit.setAttribute(k,v));svg.appendChild(hit);
+  const open=(event,p,string=p.string)=>{event.preventDefault();event.stopPropagation();chosen.set(key,p);edit({svg,x,y,instrument,position:p,string,key,onApply:(s,f,pos)=>onApply(p,s,f,pos)});};
+  hit.addEventListener('pointerdown',event=>{const point=new DOMPoint(event.clientX,event.clientY).matrixTransform(svg.getScreenCTM().inverse());const string=Math.max(1,Math.min(instrument.tuning.length,Math.round((point.y-y)/17)+1));const p=positions.find(p=>p.string===string)||positions.find(p=>p.midi===chosen.get(key)?.midi)||positions[0];if(p)open(event,p,string);});
+  return (event,p)=>open(event,p);
+ }
+ const api={edit,column,cancel};if(typeof module!=='undefined')module.exports=api;else root.CrescendoStringTab=api;
 })(typeof window==='undefined'?globalThis:window);

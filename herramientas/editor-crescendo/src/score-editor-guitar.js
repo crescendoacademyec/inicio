@@ -1,6 +1,7 @@
 (function(root){'use strict';
  const profiles={
   guitar:{id:'guitar',name:'Guitarra',tuning:[64,59,55,50,45,40],labels:['Mi4','Si3','Sol3','Re3','La2','Mi2'],fretted:true},
+  requinto:{id:'requinto',name:'Requinto',tuning:[69,64,60,55,50,45],labels:['La4','Mi4','Do4','Sol3','Re3','La2'],fretted:true},
   bass:{id:'bass',name:'Bajo',tuning:[43,38,33,28],labels:['Sol2','Re2','La1','Mi1'],fretted:true},
   ukulele:{id:'ukulele',name:'Ukelele',tuning:[69,64,60,67],labels:['La4','Mi4','Do4','Sol4'],fretted:true},
   violin:{id:'violin',name:'Violín',tuning:[76,69,62,55],labels:['Mi5','La4','Re4','Sol3'],fretted:false}
