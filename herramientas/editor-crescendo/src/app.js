@@ -12013,7 +12013,7 @@
   }
 
   function updatePlaybackLine() {
-    if (!state.midiPlayback.active) {
+    if (!state.midiPlayback.active || performance.now() < state.midiPlayback.startAt) {
       removePlaybackLine();
       return;
     }
@@ -12103,6 +12103,7 @@
       state.midiPlayback.stopTimer = null;
     }
     clearPlaybackTimers();
+    stopPlaybackCountIn();
     sendMidiAllNotesOff();
     state.midiPlayback.scheduledNotes = [];
     state.midiPlayback.suppressInputUntil = performance.now() + 120;
@@ -12158,8 +12159,7 @@
     return { top: Math.max(1, Number(meter.top) || 4), bottom: Math.max(1, Number(meter.bottom) || 4) };
   }
 
-  function soundEditorMetronomeClick(time, accented = false) {
-    const context = editorMetronome.context;
+  function soundEditorMetronomeClick(time, accented = false, context = editorMetronome.context, nodes = editorMetronome.nodes) {
     if (!context) return;
     const oscillator = context.createOscillator();
     const gain = context.createGain();
@@ -12169,8 +12169,8 @@
     gain.gain.exponentialRampToValueAtTime(accented ? 0.18 : 0.1, time + 0.002);
     gain.gain.exponentialRampToValueAtTime(0.0001, time + 0.055);
     oscillator.connect(gain).connect(context.destination);
-    editorMetronome.nodes.add(oscillator);
-    oscillator.onended = () => { editorMetronome.nodes.delete(oscillator); oscillator.disconnect(); gain.disconnect(); };
+    nodes.add(oscillator);
+    oscillator.onended = () => { nodes.delete(oscillator); oscillator.disconnect(); gain.disconnect(); };
     oscillator.start(time);
     oscillator.stop(time + 0.065);
   }
@@ -12257,6 +12257,49 @@
     return { adjustedEvents, startOffsetMs };
   }
 
+  const playbackCountIn = { context: null, nodes: new Set() };
+
+  function playbackCountInPlan(startAbsoluteTick, tempoEvents) {
+    const location = measureIndexAndTickFromAbsolute(startAbsoluteTick);
+    const meter = meterForMeasureIndex(location.measureIndex) || { top: 4, bottom: 4 };
+    const tempo = tempoEvents.filter(event => event.absoluteTick <= startAbsoluteTick + EPSILON).at(-1) || { bpm: 82, unitTicks: 4 };
+    const beats = Math.max(1, Number(meter.top) || 4);
+    const beatMs = 60000 / Math.max(1, tempo.bpm) * (16 / Math.max(1, Number(meter.bottom) || 4)) / Math.max(EPSILON, tempo.unitTicks);
+    return { beats, beatMs, durationMs: beats * beatMs };
+  }
+
+  function stopPlaybackCountIn() {
+    const overlay = document.getElementById("playbackCountIn");
+    if (overlay) { overlay.hidden = true; overlay.replaceChildren(); }
+    playbackCountIn.nodes.forEach(node => { try { node.stop(); } catch (_) {} });
+    playbackCountIn.nodes.clear();
+  }
+
+  function schedulePlaybackCountIn(plan, countStartAt, runId) {
+    const overlay = document.getElementById("playbackCountIn");
+    const schedule = (callback, delay) => {
+      const timer = setTimeout(() => {
+        if (state.midiPlayback.active && state.midiPlayback.runId === runId) callback();
+      }, Math.max(0, delay));
+      state.midiPlayback.scheduledTimers.push(timer);
+    };
+    for (let beat = 1; beat <= plan.beats; beat++) {
+      schedule(() => {
+        if (overlay) {
+          const number = document.createElement("span");
+          number.textContent = String(beat);
+          number.style.animationDuration = `${plan.beatMs}ms`;
+          overlay.replaceChildren(number);
+          overlay.hidden = false;
+          overlay.setAttribute("aria-label", `Conteo previo: ${beat} de ${plan.beats}`);
+        }
+        const context = playbackCountIn.context;
+        if (context?.state === "running") soundEditorMetronomeClick(context.currentTime + 0.005, beat === 1, context, playbackCountIn.nodes);
+      }, countStartAt - performance.now() + (beat - 1) * plan.beatMs);
+    }
+    schedule(() => stopPlaybackCountIn(), countStartAt - performance.now() + plan.durationMs);
+  }
+
   async function toggleMidiPlayback(options = {}) {
     if (state.midiPlayback.active || state.midiPlayback.starting) {
       stopMidiPlayback();
@@ -12287,11 +12330,22 @@
       return;
     }
 
+    const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
+    try {
+      if (AudioContextCtor) {
+        playbackCountIn.context ||= new AudioContextCtor();
+        if (playbackCountIn.context.state === "suspended") await playbackCountIn.context.resume();
+      }
+    } catch (_) { /* El conteo visual sigue disponible si el audio está bloqueado. */ }
+    if (state.midiPlayback.runId !== playbackRunId || !state.midiPlayback.starting) return;
+
     clearPlaybackTimers();
     sendMidiAllNotesOff(output);
     clearPendingMidiInputWrite();
     const startDelayMs = 120;
-    const startAt = performance.now() + startDelayMs;
+    const countPlan = playbackCountInPlan(startAbsoluteTick, tempoEvents);
+    const countStartAt = performance.now() + startDelayMs;
+    const startAt = countStartAt + countPlan.durationMs;
     state.midiPlayback.starting = false;
     state.midiPlayback.active = true;
     state.midiPlayback.startAt = startAt;
@@ -12301,6 +12355,7 @@
     state.midiPlayback.suppressInputUntil = startAt + totalMs + 700;
     state.midiPlayback.scheduledNotes = adjustedEvents;
     state.midiPlayback.durationMs = totalMs;
+    schedulePlaybackCountIn(countPlan, countStartAt, playbackRunId);
     const scheduledMessages = [{
       timestamp: startAt,
       priority: 0,
@@ -12329,7 +12384,7 @@
     startPlaybackLineAnimation();
     state.midiPlayback.stopTimer = setTimeout(() => {
       stopMidiPlayback({ expectedRunId: playbackRunId });
-    }, totalMs + 260);
+    }, startDelayMs + countPlan.durationMs + totalMs + 260);
     updatePlaybackButton();
   }
 

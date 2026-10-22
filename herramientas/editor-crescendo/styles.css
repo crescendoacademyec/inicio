@@ -5795,3 +5795,35 @@ body.editor-page .editor-workbench .score-shell {
 /* Navigation labels fit the compact inspector without clipping. */
 #durationTools button.palette-navigation .text-glyph{font:600 11px/1.25 sans-serif!important;white-space:normal;overflow-wrap:normal;max-width:100%;text-align:center}
 #durationTools button.palette-navigation .music-glyph{font-family:"MTF Improviso Light"!important;font-size:30px!important}
+
+/* Conteo previo sobre el área visible del pentagrama. */
+.system-area { position: relative; }
+.editor-count-in {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  overflow: hidden;
+  border-radius: 8px;
+  background: radial-gradient(circle, rgba(255,253,248,.94) 0, rgba(255,253,248,.6) 85px, rgba(255,253,248,0) 180px);
+}
+.editor-count-in[hidden] { display: none; }
+.editor-count-in span {
+  font: 800 clamp(80px,10vw,124px)/1 sans-serif;
+  color: #ad791d;
+  text-shadow: 0 2px 1px #fff, 0 0 20px #fff;
+  animation: editor-count-pulse 750ms ease-out both;
+  transform-origin: center;
+}
+@keyframes editor-count-pulse {
+  0% { opacity: 0; transform: scale(.7); }
+  12% { opacity: 1; transform: scale(1.08); }
+  28%,70% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.12); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .editor-count-in span { animation-name: editor-count-fade; }
+  @keyframes editor-count-fade { 0%,100% { opacity: 0; } 12%,75% { opacity: 1; } }
+}

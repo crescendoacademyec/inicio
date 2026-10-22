@@ -42,7 +42,7 @@
     <!-- Los módulos del editor viven en src/. Esta base conserva el HTML en la raíz
          y permite que las dependencias se resuelvan correctamente en GitHub Pages. -->
     <base href="src/">
-    <link rel="stylesheet" href="../styles.css?v=20261019-bravura-1">
+    <link rel="stylesheet" href="../styles.css?v=20261021-count-in-1">
     <link rel="stylesheet" href="../ipad-shell.css?v=20261014-input-10">
     <link rel="stylesheet" href="../../../shared/crescendo-identity.css?v=20261004">
 <style>.staff-view-control{display:flex;flex-direction:column;gap:4px;font-size:11px}.staff-view-control select{background:#26241f;color:#eee;border:1px solid #8e7741;border-radius:8px;padding:7px;font:inherit}</style></head>
@@ -311,6 +311,7 @@
                 <div class="score-shell">
                   <svg id="score" class="score" role="img" aria-label="Partitura editable"></svg>
                 </div>
+                <div id="playbackCountIn" class="editor-count-in" role="status" aria-live="polite" aria-atomic="true" hidden></div>
               </div>
             </div>
           </section>
@@ -420,6 +421,6 @@
     <script src="https://cdn.jsdelivr.net/npm/soundfont-player@0.12.0/dist/soundfont-player.min.js"></script>
     <script src="score-editor-ipad-shell.js?v=20261015-navigation-2"></script>
   <script src="bravura-palette-paths.js?v=20261014-input-10"></script>
-  <script src="app.js?v=20261021-writing-parity-1"></script>
+  <script src="app.js?v=20261021-count-in-1"></script>
   </body>
 </html>
