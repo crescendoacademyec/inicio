@@ -731,3 +731,9 @@ Clic derecho sobre una barra → **Signatura de medida** o **Armadura** permite 
 ### Ajustar la altura con el teclado
 
 Pulsa la cabeza de una nota existente para seleccionarla y usa ↑ o ↓ para moverla un semitono. Al subir se escriben sostenidos (Do → Do♯ → Re); al bajar, bemoles (Re → Re♭ → Do). Se respetan las armaduras, la duración y la posición rítmica. En un acorde se mueve la cabeza seleccionada. Los cambios admiten deshacer y rehacer.
+
+### Reemplazar figuras y dibujar ligaduras
+
+Con una figura seleccionada, pulsa exactamente la cabeza de una nota para cambiar su duración conservando su altura y las demás notas del acorde. Al acortarla, el tiempo liberado queda como silencio; las notas posteriores mantienen su posición. Al alargarla, se ocupa el tiempo necesario y se conserva la parte restante de la figura siguiente con sus alturas y alteraciones. No se permite sobrepasar el compás ni cortar parcialmente un grupo irregular. Alt + clic permite seleccionar una cabeza sin cambiar su duración.
+
+Para dibujar una ligadura, escoge una figura y activa la ligadura de frase o de prolongación. Dibuja o selecciona sus dos extremos: la ligadura se completa y la herramienta se desactiva. Puedes cambiar de figura entre ambos extremos. La prolongación requiere notas consecutivas de igual altura sonora, también entre compases; la ligadura de frase admite alturas distintas. Ambos extremos deben estar en el mismo pentagrama y voz. Escape cancela la herramienta. Estas operaciones admiten deshacer y rehacer.

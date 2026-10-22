@@ -526,6 +526,7 @@
     activeNoteEntryId: null,
     activeNoteStaffStep: null,
     pendingTieEntryId: null,
+    writingLigature: null,
     cursorPitchVisible: false,
     cursorPitchAnchorEntryId: null,
     cursorActive: false,
@@ -1358,6 +1359,7 @@
       activeNoteEntryId: state.activeNoteEntryId,
       activeNoteStaffStep: state.activeNoteStaffStep,
       pendingTieEntryId: state.pendingTieEntryId,
+      writingLigature: state.writingLigature,
       cursorPitchVisible: state.cursorPitchVisible,
       cursorPitchAnchorEntryId: state.cursorPitchAnchorEntryId,
       cursorActive: state.cursorActive,
@@ -2344,6 +2346,7 @@
     state.activeNoteEntryId = data.activeNoteEntryId || null;
     state.activeNoteStaffStep = Number.isFinite(data.activeNoteStaffStep) ? data.activeNoteStaffStep : null;
     state.pendingTieEntryId = data.pendingTieEntryId || null;
+    state.writingLigature = data.writingLigature || null;
     state.cursorPitchVisible = data.cursorPitchVisible === true;
     state.cursorPitchAnchorEntryId = data.cursorPitchAnchorEntryId || null;
     state.cursorActive = data.cursorActive !== false;
@@ -3703,6 +3706,7 @@
     if (state.cursorEntryId === oldId) state.cursorEntryId = newId;
     if (state.activeNoteEntryId === oldId) state.activeNoteEntryId = newId;
     if (state.pendingTieEntryId === oldId) state.pendingTieEntryId = newId;
+    if (state.writingLigature?.startEntryId === oldId) state.writingLigature.startEntryId = newId;
     if (state.cursorPitchAnchorEntryId === oldId) state.cursorPitchAnchorEntryId = newId;
     state.selectedEntryIds = state.selectedEntryIds.map((id) => (id === oldId ? newId : id));
     state.selectedNoteRefs = state.selectedNoteRefs.map((ref) => (
@@ -5188,6 +5192,7 @@
   }
 
   function activateSelectTool() {
+    state.writingLigature = null;
     deselectAll();
     setInputPhase(InputSession.PHASES.SELECT);
     updateModeButtons();
@@ -5704,6 +5709,33 @@
 
   function insertEntry(staffStep = 0, options = {}) {
     if (!state.cursorActive) return false;
+    const absoluteTick = cursorAbsoluteTick(), target = measureIndexAndTickFromAbsolute(absoluteTick);
+    const tuplet = normalizeTuplet(state.activeTuplet), unit = tuplet ? durationById(tuplet.unitDurationId) : state.activeDuration;
+    const ticks = tuplet ? tupletSlotTicks(tuplet) : unit.ticks * dotFactor(state.inputDots || 0);
+    if (options.preserveDuration && !state.noteChordMode && !tuplet && !state.pendingTupletRatio && !state.graceInput) {
+      const error = pointerWriteRangeError(target.measureIndex, target.tick, ticks);
+      if (error) { showEditorMessage(error); return false; }
+    }
+    if (state.writingLigature && state.mode !== "rest" && !state.graceInput) {
+      const candidate = makeEntry("note", { ...unit, ticks }, staffStep);
+      setEntryVoice(candidate, activeVoice());
+      candidate.ottava = state.ottavaInput === true;
+      candidate.diatonicStep = Number.isFinite(options.diatonicStep) ? options.diatonicStep : diatonicStepForStaffStep(staffStep, clefIdAtAbsoluteTick(absoluteTick));
+      if (options.midiInfo) applyMidiAccidental(candidate, staffStep, options.midiInfo, target.measureIndex);
+      const error = writingLigatureError({ entry: candidate, staffStep, measureIndex: target.measureIndex, absoluteTick });
+      if (error) { showEditorMessage(error); return false; }
+    }
+    const result = insertEntryCore(staffStep, options);
+    if (result && state.writingLigature && state.mode !== "rest" && !state.graceInput) {
+      const location = entryLocationById(state.activeNoteEntryId);
+      if (location?.entry) acceptWritingLigatureEndpoint({ ...location, staffStep: state.activeNoteStaffStep ?? entryStaffStep(location.entry), absoluteTick: absoluteTickForLocation(location) }, { historySaved: true, redraw: false });
+    }
+    if (result) { pruneBrokenWritingTies(); render(); }
+    return result;
+  }
+
+  function insertEntryCore(staffStep = 0, options = {}) {
+    if (!state.cursorActive) return false;
     staffStep = staffStepForSystem(staffStep);
     state.cursorStaffStep = staffStepForSystem(state.cursorStaffStep);
     if (state.graceInput) return insertGraceNote(staffStep);
@@ -5856,9 +5888,7 @@
           setEntryDuration(entry, duration);
           entry.tickStart = nextTickStart;
         } else {
-          measure.entries.splice(nextIndex, 1, ...makeRestEntriesForRange(nextTickStart, remainingTicks).map((rest) => (
-            setEntryVoice(rest, voice)
-          )));
+          measure.entries.splice(nextIndex, 1, ...preservedEntryRange(entry, nextTickStart, remainingTicks, state.measures.indexOf(measure), voice));
         }
         remaining = 0;
       }
@@ -5882,6 +5912,8 @@
       setEntryVoice(rest, voice)
     )));
     setEntryDuration(entry, duration);
+    entry.forceDuration = true;
+    if (duration.ticks < oldTicks) { entry.tieToNext = false; entry.tieStaffStep = null; }
     setEntryVoice(entry, voice);
     const writtenEntries = writeEntryAcrossMeasures(measureIndex, oldTick, entry);
     const firstWritten = writtenEntries[0] || entry;
@@ -6513,6 +6545,50 @@
     });
   }
 
+  function preservedEntryRange(source, tickStart, ticks, measureIndex, voice, keepId = true, keepOutgoingTie = true) {
+    if (source.type === "rest") return makeRestSegment(ticks, tickStart, measureIndex, voice);
+    const copy = JSON.parse(JSON.stringify(source));
+    if (!keepId) copy.id = cloneEntryForPaste(source).id;
+    copy.ticks = ticks;
+    copy.forceDuration = true;
+    if (!keepOutgoingTie) { copy.tieToNext = false; copy.tieStaffStep = null; copy.tieDiatonicStep = null; }
+    const absoluteStart = measureStartAbsoluteTick(measureIndex) + tickStart;
+    return splitEntryRhythmically(copy, absoluteStart).map(segment => {
+      segment.entry.tickStart = segment.absoluteStart - measureStartAbsoluteTick(measureIndex);
+      return setEntryVoice(segment.entry, voice);
+    });
+  }
+
+  function pointerWriteRangeError(measureIndex, tick, ticks, voice = activeVoice()) {
+    if (tick + ticks > measureTicksForIndex(measureIndex) + EPSILON) return "Esa figura no cabe en el compás. La escritura se ha conservado.";
+    const entries = state.measures[measureIndex]?.entries || [], end = tick + ticks;
+    const groups = new Set(entries.filter(entry => entryVoice(entry) === voice && entry.tuplet && entry.tickStart < end - EPSILON && entry.tickStart + entry.ticks > tick + EPSILON).map(entry => entry.tuplet.id));
+    for (const id of groups) if (entries.some(entry => entryVoice(entry) === voice && entry.tuplet?.id === id && (entry.tickStart < tick - EPSILON || entry.tickStart + entry.ticks > end + EPSILON))) return "El cambio cortaría un grupo irregular. Ajusta el grupo completo antes de reemplazar esta figura.";
+    return "";
+  }
+
+  function resizeWrittenHead(hit) {
+    if (!isNoteInputMode() || state.noteChordMode || state.activeTuplet || state.pendingTupletRatio || hit.entry.tuplet) return false;
+    const dots = state.inputDots || 0, ticks = state.activeDuration.ticks * dotFactor(dots);
+    if (Math.abs(ticks - hit.entry.ticks) < EPSILON) return false;
+    const error = pointerWriteRangeError(hit.measureIndex, hit.entry.tickStart, ticks, entryVoice(hit.entry));
+    if (error) { showEditorMessage(error); return true; }
+    saveHistory();
+    const measure = state.measures[hit.measureIndex], old = hit.entry, oldTicks = old.ticks;
+    const copy = JSON.parse(JSON.stringify(old));
+    setEntryDuration(copy, { ...state.activeDuration, ticks });
+    copy.dots = dots; copy.dotted = dots > 0; copy.forceDuration = true;
+    if (ticks < oldTicks) { copy.tieToNext = false; copy.tieStaffStep = null; copy.tieDiatonicStep = null; }
+    measure.entries.splice(hit.entryIndex, 1, ...makeRestSegment(oldTicks, old.tickStart, hit.measureIndex, entryVoice(old)));
+    overwriteEntryInMeasure(hit.measureIndex, old.tickStart, copy);
+    const location = entryLocationById(copy.id);
+    if (location) selectEntry(location.measureIndex, location.entryIndex, { activateCursor: false, staffStep: hit.staffStep, selectHead: true });
+    pointerInputPreview = null;
+    pruneBrokenWritingTies();
+    render();
+    return true;
+  }
+
   function overwriteEntryInMeasure(measureIndex, tick, entry) {
     ensureMeasure(measureIndex);
     const measure = state.measures[measureIndex];
@@ -6535,10 +6611,10 @@
         return;
       }
       if (start < rangeStart - EPSILON) {
-        nextEntries.push(...makeRestSegment(rangeStart - start, start, measureIndex, voice));
+        nextEntries.push(...preservedEntryRange(existing, start, rangeStart - start, measureIndex, voice, true, false));
       }
       if (end > rangeEnd + EPSILON) {
-        nextEntries.push(...makeRestSegment(end - rangeEnd, rangeEnd, measureIndex, voice));
+        nextEntries.push(...preservedEntryRange(existing, rangeEnd, end - rangeEnd, measureIndex, voice, start >= rangeStart - EPSILON));
       }
     });
 
@@ -6765,6 +6841,66 @@
     if (dots === 0) return addDotsToPreviousFigure(1);
     if (dots === 1) return addDotsToPreviousFigure(2);
     return removeDotsFromPreviousFigure(location);
+  }
+
+  function toggleWritingLigature(type) {
+    state.writingLigature = state.writingLigature?.type === type ? null : { type, startEntryId: null };
+    state.graceInput = false; state.noteChordMode = false;
+    setMode("note");
+    if (!state.cursorActive) enterFigureWritingMode();
+    render();
+    return true;
+  }
+
+  function writingLigatureMidi(location) {
+    const step = entryDiatonicStepForStaffStep(location.entry, location.staffStep);
+    const accidental = getEntryAccidental(location.entry, location.staffStep) || diatonicAccidentalForMeasure(step, location.measureIndex);
+    return midiForDiatonicStep(step, accidental) + (location.entry.ottava ? 12 : 0);
+  }
+
+  function writingLigatureError(target) {
+    const pending = state.writingLigature;
+    if (!pending?.startEntryId) return "";
+    if (pending.systemIndex !== activeSystemIndex() || pending.voice !== entryVoice(target.entry)) return "Las notas de la ligadura deben estar en el mismo pentagrama y voz.";
+    const start = entryLocationById(pending.startEntryId);
+    if (!start) return "";
+    if (start.entry.id === target.entry.id) return "Selecciona dos notas distintas.";
+    if (pending.type !== "tie") return "";
+    const first = { ...start, staffStep: pending.staffStep, absoluteTick: absoluteTickForLocation(start) };
+    const [a, b] = [first, target].sort((x, y) => x.absoluteTick - y.absoluteTick);
+    if (Math.abs(a.absoluteTick + a.entry.ticks - b.absoluteTick) > EPSILON || writingLigatureMidi(a) !== writingLigatureMidi(b)) return "La prolongación une notas consecutivas de la misma altura.";
+    return "";
+  }
+
+  function acceptWritingLigatureEndpoint(target, { historySaved = false, redraw = true } = {}) {
+    const pending = state.writingLigature;
+    if (!pending || target.entry.type !== "note") return false;
+    const error = writingLigatureError(target);
+    if (error) { showEditorMessage(error); return false; }
+    const first = pending.startEntryId ? entryLocationById(pending.startEntryId) : null;
+    if (!first) {
+      activateVoiceForEntrySelection(target.entry);
+      Object.assign(pending, { startEntryId: target.entry.id, staffStep: target.staffStep, systemIndex: activeSystemIndex(), voice: entryVoice(target.entry) });
+    } else {
+      if (!historySaved) saveHistory();
+      const [a, b] = [{ ...first, staffStep: pending.staffStep, absoluteTick: absoluteTickForLocation(first) }, target].sort((x, y) => x.absoluteTick - y.absoluteTick);
+      if (pending.type === "tie") { a.entry.tieToNext = true; a.entry.tieStaffStep = a.staffStep; a.entry.tieDiatonicStep = entryDiatonicStepForStaffStep(a.entry, a.staffStep); state.pendingTieEntryId = null; }
+      else state.marks.push({ id: createMarkId(), type: "slur", systemIndex: activeSystemIndex(), voice: entryVoice(a.entry), measureIndex: a.measureIndex, tick: a.entry.tickStart, staffStep: a.staffStep, entryId: a.entry.id, endEntryId: b.entry.id, endStaffStep: b.staffStep });
+      state.writingLigature = null;
+    }
+    if (redraw) render();
+    return true;
+  }
+
+  function pruneBrokenWritingTies() {
+    const locations = orderedNoteLocations();
+    locations.forEach((location, index) => {
+      const entry = location.entry;
+      if (!entry.tieToNext || entry.id === state.pendingTieEntryId) return;
+      const next = locations.slice(index + 1).find(item => entryVoice(item.entry) === entryVoice(entry));
+      const sourceStep = tieStepForEntry(entry), targetStep = next ? nearestEntryStaffStep(next.entry, sourceStep) : null;
+      if (!next || Math.abs(location.absoluteTick + entry.ticks - next.absoluteTick) > EPSILON || writingLigatureMidi({ ...location, staffStep: sourceStep }) !== writingLigatureMidi({ ...next, staffStep: targetStep })) { entry.tieToNext = false; entry.tieStaffStep = null; entry.tieDiatonicStep = null; }
+    });
   }
 
   function addTieFromPreviousNote() {
@@ -7462,6 +7598,7 @@
       system.measures.forEach((measure, measureIndex) => { measure.entries = [makeMeasureRest(measureTicksForIndex(measureIndex))]; });
     }));
     state.marks = [];state.textItems = [];state.inputDots = 0;pointerInputPreview = null;
+    state.writingLigature = null;
     state.activeTuplet = null;state.activeTupletRun = null;state.pendingTupletRatio = null;
     setActiveSystemIndex(activeIndex);state.cursorMeasure = 0;state.cursorTick = 0;
     clearEntrySelection();clearMeasureSelection();clearActiveNote();hideCursorPitch();
@@ -7607,6 +7744,7 @@
 
   function clearScore() {
     saveHistory();
+    state.writingLigature = null;
     state.cursorMeasure = 0;
     state.cursorTick = 0;
     state.cursorStaffStep = 0;
@@ -13370,11 +13508,11 @@
   }
 
   function selectWritingDecoration(tool) {
+    if (!["tie", "slur"].includes(tool)) state.writingLigature = null;
     if(tool!=="grace"){state.graceInput=false;renderPalette("figures");}
     if (tool === "chord-symbol") { toggleChordMode(); renderPalette("figures"); render(); return; }
     if (tool === "ottava") return toggleWritingOttava();
-    if (tool === "tie") return toggleDurationTieFromCurrentNote();
-    if (tool === "slur") return applyPhraseSlurType("slur");
+    if (tool === "tie" || tool === "slur") return toggleWritingLigature(tool);
     if (tool === "staccato") return insertNotationMark({ markType: "glyph", glyphName: "articStaccatoAbove" });
     if (tool === "grace") {
       state.graceInput = !state.graceInput;
@@ -15651,7 +15789,7 @@
       applyIconTooltipToElement(button);
       if (item.writingTool) {
         button.dataset.writingTool = item.writingTool;
-        const active = item.writingTool === "chord-symbol" ? state.chordMode === true : item.writingTool === "grace" ? state.graceInput === true : item.writingTool === "ottava" && state.ottavaInput === true;
+        const active = item.writingTool === "chord-symbol" ? state.chordMode === true : item.writingTool === "grace" ? state.graceInput === true : item.writingTool === "ottava" ? state.ottavaInput === true : state.writingLigature?.type === item.writingTool;
         button.classList.toggle("is-active", active);button.setAttribute("aria-pressed", String(active));
         button.addEventListener("click", () => selectWritingDecoration(item.writingTool));
       } else if (item.ticks) {
@@ -19162,6 +19300,8 @@
     if (event.exactHead && (!pointInRect(point, noteHeadRect(hit.entry, hit.x, hit.staffStep)) ||
         Math.abs(point.y - pitchY(hit.staffStep) - appearanceValue("noteheadOffsetY")) > 3)) return false;
     document.activeElement?.blur();
+    if (state.writingLigature) { acceptWritingLigatureEndpoint({ ...hit, absoluteTick: measureStartAbsoluteTick(hit.measureIndex) + hit.entry.tickStart }); return true; }
+    if (event.exactHead && !event.altKey && resizeWrittenHead(hit)) return true;
     if (isAdditiveSelectionEvent(event)) {
       toggleEntrySelection(hit.measureIndex, hit.entryIndex, {
         staffStep: hit.staffStep,
@@ -19254,7 +19394,7 @@
         const point = svgPointFromEvent(upEvent) || start;
         if (!pointIsInStaffArea(point)) return;
         if (state.mode !== "rest" && !state.noteChordMode && !state.graceInput &&
-            Math.hypot(point.x-start.x, point.y-start.y)<4 && selectNoteHeadAtPoint(point, { exactHead: true })) return;
+            Math.hypot(point.x-start.x, point.y-start.y)<4 && selectNoteHeadAtPoint(point, { exactHead: true, altKey: upEvent.altKey })) return;
         const inputMode = state.mode === "rest" ? "rest" : "note";
         positionCursorFromPoint(point, { pointerPitch: true });
         setMode(inputMode);
@@ -20760,6 +20900,7 @@
       durationTools.querySelectorAll("[data-input-tuplet-actual]").forEach(button => { const active = Number(button.dataset.inputTupletActual) === state.activeTuplet?.actual;button.classList.toggle("is-active", active);button.setAttribute("aria-pressed", String(active)); });
       if (document.getElementById("staffViewSelect")) document.getElementById("staffViewSelect").value = state.staffView || "both";
       updateModeButtons();
+      durationTools.querySelectorAll('[data-writing-tool="slur"],[data-writing-tool="tie"]').forEach(button => { const active = state.writingLigature?.type === button.dataset.writingTool; button.classList.toggle("is-active", active); button.setAttribute("aria-pressed", String(active)); });
       syncTouchModeClass();
       updateTouchToolbar();
       refreshMidiKeyboardSelectionHighlights();
@@ -21076,6 +21217,7 @@
     state.selectedNoteRefs = [{ entryId: entry.id, staffStep: nextStep }];
     state.cursorStaffStep = nextStep;
     setActiveNote(entry, nextStep);
+    pruneBrokenWritingTies();
     render();
     auditionEntryStaffStep(entry, nextStep, entryLocationById(entry.id)?.measureIndex ?? state.cursorMeasure);
     return true;
@@ -21353,8 +21495,8 @@
     }
     else if (command === "duration.dot") addDotToPreviousFigure();
     else if (command === "duration.cycle-dots") cycleDotsOnPreviousFigure();
-    else if (command === "notation.tie") toggleDurationTieFromCurrentNote();
-    else if (command === "notation.slur") addPhraseSlur();
+    else if (command === "notation.tie") toggleWritingLigature("tie");
+    else if (command === "notation.slur") toggleWritingLigature("slur");
     else if (command === "notation.slur-stop") stopPhraseSlurInput();
     else if (command === "dynamic.crescendo") insertNotationMark({ markType: "crescendo" });
     else if (command === "dynamic.diminuendo") insertNotationMark({ markType: "diminuendo" });
