@@ -5716,7 +5716,11 @@
     const addingChordPitch = options.addToChord && state.mode === "note" && !state.graceInput && noteEntryAtExactCursor(activeVoice());
     if (options.preserveDuration && !state.noteChordMode && !addingChordPitch && !tuplet && !state.pendingTupletRatio && !state.graceInput) {
       const error = pointerWriteRangeError(target.measureIndex, target.tick, ticks);
-      if (error) { showEditorMessage(error); return false; }
+      if (error) {
+        if (target.tick + ticks > measureTicksForIndex(target.measureIndex) + EPSILON && state.mode === "note" && !state.writingLigature) offerOverflowNote(target.measureIndex, target.tick, staffStep, null, options);
+        else showEditorMessage(error);
+        return false;
+      }
     }
     if (state.writingLigature && state.mode !== "rest" && !state.graceInput) {
       const candidate = makeEntry("note", { ...unit, ticks }, staffStep);
@@ -6574,7 +6578,11 @@
     const dots = state.inputDots || 0, ticks = state.activeDuration.ticks * dotFactor(dots);
     if (Math.abs(ticks - hit.entry.ticks) < EPSILON) return false;
     const error = pointerWriteRangeError(hit.measureIndex, hit.entry.tickStart, ticks, entryVoice(hit.entry));
-    if (error) { showEditorMessage(error); return true; }
+    if (error) {
+      if (hit.entry.tickStart + ticks > measureTicksForIndex(hit.measureIndex) + EPSILON && !state.writingLigature) offerOverflowNote(hit.measureIndex, hit.entry.tickStart, hit.staffStep, hit.entry);
+      else showEditorMessage(error);
+      return true;
+    }
     saveHistory();
     const measure = state.measures[hit.measureIndex], old = hit.entry, oldTicks = old.ticks;
     const copy = JSON.parse(JSON.stringify(old));
@@ -6589,6 +6597,54 @@
     pruneBrokenWritingTies();
     render();
     return true;
+  }
+
+  let overflowNotePending = false;
+  async function offerOverflowNote(measureIndex, tick, staffStep, sourceEntry = null, options = {}) {
+    if (overflowNotePending) return false;
+    const duration = { ...state.activeDuration, ticks: state.activeDuration.ticks * dotFactor(state.inputDots || 0) };
+    const plan = window.CrescendoOverflowWriting.plan({ capacities: state.measures.map((_, i) => measureTicksForIndex(i) / 4), bar: measureIndex, offset: tick / 4, duration: duration.ticks / 4 });
+    if (!plan) { showEditorMessage("No se puede repartir esa figura entre los compases disponibles."); return false; }
+    const voice = sourceEntry ? entryVoice(sourceEntry) : activeVoice();
+    for (const part of plan.segments) {
+      if (part.bar >= state.measures.length) continue;
+      const error = pointerWriteRangeError(part.bar, part.offset * 4, part.beats * 4, voice);
+      if (error) { showEditorMessage(error); return false; }
+    }
+    const system = activeSystemIndex(), before = JSON.stringify(state.measures);
+    const source = sourceEntry ? JSON.parse(JSON.stringify(sourceEntry)) : makeEntry("note", duration, staffStep);
+    if (!sourceEntry) {
+      source.diatonicStep = Number.isFinite(options.diatonicStep) ? options.diatonicStep : diatonicStepForStaffStep(staffStep, clefIdAtAbsoluteTick(measureStartAbsoluteTick(measureIndex) + tick));
+      source.ottava = state.ottavaInput === true;
+      if (options.midiInfo) applyMidiAccidental(source, staffStep, options.midiInfo, measureIndex);
+    }
+    setEntryVoice(source, voice);
+    source.forceDuration = true;
+    source.tieToNext = false;
+    const accidentals = entryStaffSteps(source).map(step => [step, effectiveEntryAccidental(source, step, measureIndex) || diatonicAccidentalForMeasure(entryDiatonicStepForStaffStep(source, step), measureIndex)]);
+    overflowNotePending = true;
+    try {
+      const accepted = await confirmEditorAction({ title: "La figura supera el compás", message: window.CrescendoOverflowWriting.message(plan) + " Si hay notas en ese tramo, se reemplazarán.", okLabel: "Sí, escribir con ligaduras", cancelLabel: "No" });
+      if (!accepted || activeSystemIndex() !== system || JSON.stringify(state.measures) !== before) return false;
+      saveHistory();
+      ensureMeasure(plan.bars - 1);
+      const original = JSON.parse(JSON.stringify(source));
+      const written = plan.segments.map((part, index) => {
+        const entry = makeRhythmicSegment(original, part.beats * 4, index, plan.segments.length, index === 0 ? source : null);
+        accidentals.forEach(([step, accidental]) => setEntryAccidental(entry, step, accidental));
+        overwriteEntryInMeasure(part.bar, part.offset * 4, entry);
+        return entry;
+      });
+      const last = plan.segments.at(-1);
+      setCursorFromAbsoluteTick(measureStartAbsoluteTick(last.bar) + (last.offset + last.beats) * 4);
+      carryCursorPitchAfterWrittenNote(written.at(-1), staffStep);
+      clearEntrySelection();
+      pointerInputPreview = null;
+      pruneBrokenWritingTies();
+      syncInputSession();
+      render();
+      return true;
+    } finally { overflowNotePending = false; }
   }
 
   function overwriteEntryInMeasure(measureIndex, tick, entry) {

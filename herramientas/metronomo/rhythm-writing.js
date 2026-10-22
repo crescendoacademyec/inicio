@@ -115,6 +115,42 @@ function replaceDuration(state,events,index,capacity,bars){
  if(entry.tieToId){const destination=events.find(e=>e.id===entry.tieToId),absolute=e=>ticks((Array.isArray(capacity)?capacity.slice(0,e.bar||0).reduce((sum,c)=>sum+c,0):(e.bar||0)*capacity)+(e.offset||0));if(!destination||absolute(entry)+ticks(entry.beats)!==absolute(destination))delete entry.tieToId;}
  return {handled:true,entry,adjusted:affected.some(other=>other.kind!=='rest')};
 }
+function overflowPlan(state,events,capacity,bars,staff,position,index=null){
+ if(state.rest||state.grace||state.actual||state.tool)return null;
+ const source=Number.isInteger(index)?events[index]:null;
+ if(source?.tupletActual)return null;
+ const capacities=Array.isArray(capacity)?capacity:Array(bars).fill(capacity);
+ const target=source?{bar:source.bar||0,beat:source.offset||0}:position;
+ if(!target)return null;
+ const Overflow=root.CrescendoOverflowWriting||(typeof require==='function'?require('../../shared/overflow-writing.js'):null);
+ return Overflow?.plan({capacities,bar:target.bar,offset:target.beat,duration:gridStep(state),maxBars:16})||null;
+}
+function writeOverflow(state,events,note,capacity,bars,staff,position,plan,index=null,marks=[]){
+ const trial=JSON.parse(JSON.stringify(events)),source=Number.isInteger(index)?trial[index]:null;
+ const caps=Array.isArray(capacity)?[...capacity]:Array(bars).fill(capacity);
+ while(caps.length<plan.bars)caps.push(caps.at(-1));
+ const original=source?JSON.parse(JSON.stringify(source)):{staff,note,accidental:state.accidental||null,ottava:!!state.ottava};
+ const written=[];
+ for(const [i,part] of plan.segments.entries()){
+  const entry=i===0&&source?source:{...JSON.parse(JSON.stringify(original)),id:'rhythm-note-'+(++decorationId)};
+  if(!entry.id)entry.id='rhythm-note-'+(++decorationId);
+  if(i>0){delete entry.staccato;delete entry.accent;delete entry.slurToId;delete entry.glissandoToId;}
+  delete entry.tieToId;
+  entry.bar=part.bar;entry.offset=part.offset;entry.beats=0;
+  if(!trial.includes(entry))trial.push(entry);
+  const result=replaceDuration({...state,beats:part.beats,dots:0,actual:0},trial,trial.indexOf(entry),caps,Math.max(bars,plan.bars));
+  if(result.message)return result.message;
+  written.push(entry);
+ }
+ const resolved=Structure.resolve(trial,marks),first=resolved[trial.indexOf(written[0])];
+ for(let i=1;i<written.length;i++){
+  if(first.notes)written[i].notes=[...first.notes];else written[i].note=first.note;
+  delete written[i].accidental;delete written[i].accidentalsByNote;
+ }
+ for(let i=0;i<written.length-1;i++)written[i].tieToId=written[i+1].id;
+ events.splice(0,events.length,...trial);state.accidental=null;
+ return '';
+}
 function notation(events,capacity,bars){const result=[];for(const staff of [1,2])for(let bar=0;bar<bars;bar++){const barCapacity=Array.isArray(capacity)?capacity[bar]:capacity;let cursor=0;const selected=events.filter(e=>(e.staff||1)===staff&&(e.bar||0)===bar);let legacy=0;const ordered=selected.map(e=>{const offset=e.offset??legacy;legacy=offset+e.beats;return {...e,offset};}).sort((a,b)=>a.offset-b.offset);const rest=end=>{while(cursor<ticks(end)){const remaining=ticks(end)-cursor,beatRemaining=TICKS-cursor%TICKS;const length=Math.min(remaining,beatRemaining);const value=[4,2,1,.5,.25,.125,.0625,.03125].find(v=>ticks(v)<=length);const duration=value?ticks(value):length;result.push({staff,bar,kind:'rest',beats:duration/TICKS});cursor+=duration;}};if(!ordered.length){result.push({staff,bar,kind:'rest',measureRest:true,beats:barCapacity});continue;}for(const e of ordered){if(e.grace){result.push(e);continue;}rest(e.offset);result.push(e);cursor=ticks(e.offset+e.beats);}rest(barCapacity);}return result;}
 function figureForEvent(e){const base=e.tupletUnitBeats||e.graceUnitBeats||e.beats;return durations.find(d=>Math.abs(d[1]-base)<.00001)||durations.find(d=>Math.abs(d[1]*1.5-base)<.00001)||durations.find(d=>Math.abs(d[1]*1.75-base)<.00001)||durations.find(d=>d[0]==='quarter');}
 function beamGroups(events,meter='4/4'){
@@ -264,5 +300,5 @@ function generate({capacity=4,bars=4,kind='steady',base=1,clef='treble',random=M
 }
 
 function history(){const past=[],future=[];return {get canUndo(){return past.length>0;},get canRedo(){return future.length>0;},commit(before,after){if(before===after)return;past.push(before);if(past.length>100)past.shift();future.length=0;},undo(current){if(!past.length)return null;future.push(current);return past.pop();},redo(current){if(!future.length)return null;past.push(current);return future.pop();}};}
-const api={clampStaffIndex,diatonic,noteAtIndex,stemDown,noteGraphic,history,decorate,beamGroups,generate,gridStep,render,notation,TICKS,durations,ticks,factor,create,select,append,eraseHead,replaceDuration};if(typeof module!=='undefined')module.exports=api;else root.CrescendoRhythmWriting=api;
+const api={clampStaffIndex,diatonic,noteAtIndex,stemDown,noteGraphic,history,decorate,beamGroups,generate,gridStep,render,notation,TICKS,durations,ticks,factor,create,select,append,eraseHead,replaceDuration,overflowPlan,writeOverflow};if(typeof module!=='undefined')module.exports=api;else root.CrescendoRhythmWriting=api;
 })(typeof window==='undefined'?globalThis:window);
