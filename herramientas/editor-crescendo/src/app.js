@@ -13590,11 +13590,11 @@
     return selectedNoteLocations()[0] || findActiveNoteTarget();
   }
 
-  function applyGuitarPosition(string, fret) {
+  function applyGuitarPosition(string, fret, options={}) {
     const instrument=stringInstrument();
     if(!instrument) return;
     const note = instrument.midi(string, fret);
-    const position=document.querySelector("#violinPosition")?.value || "I";
+    const position=options.position || document.querySelector("#violinPosition")?.value || "I";
     const chosen={string,fret,midi:note,...(!instrument.fretted?Guitar.technique(fret,position):{})};
     if (note === null) return;
     const target = guitarTarget();
@@ -13665,7 +13665,7 @@
     strip.hidden=!guitarTabVisible;
     strip.replaceChildren();
     if(guitarTabVisible && lastRenderedLayout){
-      const tabSvg=el("svg",{width:lastRenderedLayout.totalWidth*(state.zoom||1),height:instrument.tuning.length*17+35,viewBox:`0 0 ${lastRenderedLayout.totalWidth} ${instrument.tuning.length*17+35}`,role:"img","aria-label":`${instrument.fretted?"Tablatura":"Digitación"} de ${instrument.name}`});
+      const tabSvg=el("svg",{width:lastRenderedLayout.totalWidth*(state.zoom||1),height:instrument.tuning.length*17+17,viewBox:`0 0 ${lastRenderedLayout.totalWidth} ${instrument.tuning.length*17+17}`,role:"group","aria-label":`${instrument.fretted?"Tablatura":"Digitación"} de ${instrument.name}`});
       const tabRoot=el("g",{transform:`translate(0 ${20-scoreStaffBottomY()-80})`});
       renderGuitarTab(tabRoot,lastRenderedLayout);tabSvg.appendChild(tabRoot);strip.appendChild(tabSvg);
       strip.scrollLeft=scoreShell?.scrollLeft||0;
@@ -13720,7 +13720,20 @@
             group.appendChild(el("rect",{x:x-(instrument.fretted?9:24),y:cy-9,width:instrument.fretted?18:48,height:17,fill:"#fffdf8"}));
             const tech=Guitar.technique(p.fret,p.position);
             const label=textNode(x,cy+5,instrument.fretted?String(p.fret):tech.finger===null?`b${p.fret}`:`${tech.finger}·${tech.position}`,{"text-anchor":"middle",style:"font:14px sans-serif;fill:#111;cursor:pointer"});
-            label.addEventListener("pointerdown",event=>{event.stopPropagation();const step=entryStaffSteps(entry).find(step=>midiNotesForEntry(entry,measureIndex,[step])[0]===p.midi);state.selectedNoteRefs=[{entryId:entry.id,staffStep:step}];state.selectedEntryIds=[];setActiveNote(entry,step);render();});
+            const edit=event=>{
+              event.preventDefault();event.stopPropagation();
+              const step=entryStaffSteps(entry).find(step=>midiNotesForEntry(entry,measureIndex,[step])[0]===p.midi);
+              state.selectedNoteRefs=[{entryId:entry.id,staffStep:step}];state.selectedEntryIds=[];setActiveNote(entry,step);render();
+              window.CrescendoStringTab.edit({instrument,position:p,onApply:(string,fret,position)=>{
+                const notes=entryStaffSteps(entry).filter(s=>s!==step).flatMap(s=>midiNotesForEntry(entry,measureIndex,[s]));
+                const note=instrument.midi(string,fret);
+                if(notes.includes(note))return "Esa altura ya está escrita en el acorde.";
+                if(!instrument.fingering([...notes,note],[...savedStringFingering(entry).filter(item=>item.midi!==p.midi),{string,fret,midi:note}]).length)return "Esa cuerda está ocupada por otra nota del acorde.";
+                applyGuitarPosition(string,fret,{position});return true;
+              }});
+            };
+            label.classList.add("string-tab-number");label.setAttribute("tabindex","0");label.setAttribute("role","button");label.setAttribute("aria-label",`Editar cuerda ${p.string}, ${instrument.fretted?"traste":"banda"} ${p.fret}`);
+            label.addEventListener("click",edit);label.addEventListener("keydown",event=>{if(["Enter"," "].includes(event.key))edit(event);});
             group.appendChild(label);
           });
           if(!positions.length) group.appendChild(textNode(x,y-15,"—",{style:"fill:#a33"}));

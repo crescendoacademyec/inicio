@@ -1704,3 +1704,6 @@ html{--ipad-inspector-width:146px!important}.ipad-inspector-panel .ipad-side-con
 .guitar-fretboard { grid-template-columns:54px repeat(25,minmax(36px,1fr)); }
 .guitar-string-name { display:flex; align-items:center; position:sticky; left:0; z-index:1; background:#211c18; color:#eee; font:10px system-ui,sans-serif; padding-left:4px; }
 .is-fretless .guitar-string-name { background:#161616; }
+.has-string-instrument #midiFigureStrip,.has-string-instrument #midiChordButton { display:none !important; }
+.has-string-instrument .midi-keyboard-panel { padding-top:0 !important; }
+.guitar-tab-strip { margin-bottom:4px; }

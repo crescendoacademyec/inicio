@@ -802,6 +802,7 @@
             <div class="rhythm-palette" id="rhythmPalette" aria-label="Figuras y modificadores"></div>
             <div class="rhythm-mark-palette" id="rhythmMarkPalette" role="group" aria-label="Dinámicas y signos de repetición"></div><div id="rhythmBarMenu" class="rhythm-bar-menu" role="menu" aria-label="Opciones del compás" hidden></div>
             <div class="rhythm-score-wrap"><div class="rhythm-score" id="rhythmScore" aria-live="polite"></div><div class="rhythm-score-overlay" id="rhythmScoreOverlay" aria-label="Pulsa sobre el pentagrama para escribir o sobre sus barras para abrir las opciones del compás"></div></div>
+            <div id="rhythmTab" class="rhythm-tab" hidden></div>
             <div class="rhythm-lab-footer"><div class="rhythm-footer-status"><p class="rhythm-lab-status" id="rhythmStatus"></p><span id="rhythmSoundStatus" role="status" aria-live="polite"></span></div><div class="rhythm-playback-controls"><button type="button" id="rhythmListen" aria-label="Reproducir" title="Reproducir" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 5 11 7-11 7Z"/></svg></button><button type="button" id="rhythmStop" aria-label="Detener" title="Detener"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="1"/></svg></button><label for="rhythmPlaybackBpm">BPM</label><input id="rhythmPlaybackBpm" type="number" min="20" max="400" value="80" aria-label="Tempo de reproducción en BPM"><label for="rhythmSound">Sonido</label><select id="rhythmSound"><option value="piano">Piano</option><option value="guitar">Guitarra</option><option value="bass">Bajo</option><option value="violin">Violín</option><option value="ukulele">Ukelele</option></select></div></div>
         </section>
 
@@ -1018,6 +1019,11 @@
 <script src="rhythm-export.js?v=20261021-compact-menu-2"></script>
 <script src="https://cdn.jsdelivr.net/npm/soundfont-player@0.12.0/dist/soundfont-player.min.js"></script>
 <script src="rhythm-audio.js?v=20261021-compact-menu-2"></script>
+<script src="../editor-crescendo/src/score-editor-guitar.js?v=20261022-2"></script>
+<script src="../../shared/string-tablature.js?v=20261022-1"></script>
+<link rel="stylesheet" href="../../shared/string-tablature.css?v=20261022-1">
+<script src="rhythm-tablature.js?v=20261022-1"></script>
+<style>.rhythm-tab[hidden]{display:none}.rhythm-tab{margin:6px 0;color:#eee}.rhythm-tab>label{display:flex;align-items:center;gap:6px;font-size:12px;margin-bottom:4px}.rhythm-tab-scroll{overflow-x:auto;background:#fffdf8;border-radius:6px}.rhythm-tab-scroll svg{display:block;max-width:none;font-family:system-ui,sans-serif}</style>
 <script>
     // --- Lógica de Acordeón ---
     function toggleDrawer(id) {
@@ -1379,7 +1385,16 @@
         const subValue=kind==='triplets'||Math.abs(base-1/3)<.00001?'3':String(Math.max(.25,1/base));if([...UI.subSel.options].some(o=>o.value===subValue))UI.subSel.value=subValue;
         UI.subSel.dispatchEvent(new Event('change'));renderVisualizer();syncBasicLabels();
     }
-    function renderRhythmScore(message=''){if(rhythmDraftReady)try{localStorage.setItem('crescendo-rhythm-draft',JSON.stringify({...JSON.parse(rhythmSnapshot()),clef:UI.rhythmClef.value}));}catch(_){}rhythmAudio?.stop();renderRhythmMarks();UI.rhythmUndo.disabled=!rhythmHistory.canUndo;UI.rhythmRedo.disabled=!rhythmHistory.canRedo;if(typeof message!=='string')message='';if(!window.CrescendoPractice)return;const meter=currentRhythmMeter(),clef=UI.rhythmClef.value,bars=Math.max(1,Math.min(16,Number(UI.rhythmBars.value)||1)),systems=Math.ceil(bars/4),used=rhythmBeats(rhythmUsedTicks()),total=rhythmTimeline().total;keySelect.value=rhythmStructure.keyAt(rhythmMarks,0);UI.rhythmScore.innerHTML=rhythmWriting.render(rhythmEditorEvents,{meter,clef,bars,width:UI.rhythmScore.clientWidth||900,glyphs:window.CrescendoBravuraPalette,marks:rhythmMarks,selected:selectedRhythmNote});UI.rhythmScore.classList.toggle('has-multiple-systems',systems>1);UI.rhythmStatus.textContent=message||`${bars} ${bars===1?'compás':'compases'} en ${new Set(rhythmTimeline().meters.map(m=>m.label)).size>1?'compases variables':rhythmTimeline().meters[0].label} · ${used.toFixed(2).replace(/\.00$/,'')} de ${total} tiempos · ${clef==='grand'?'sol y fa · escribiendo en '+(activeRhythmStaff===2?'fa':'sol'):'clave de '+(clef==='bass'?'fa':'sol')} · clic: ${UI.rhythmPlacement.options[UI.rhythmPlacement.selectedIndex].text}`}
+    function renderRhythmScore(message=''){if(rhythmDraftReady)try{localStorage.setItem('crescendo-rhythm-draft',JSON.stringify({...JSON.parse(rhythmSnapshot()),clef:UI.rhythmClef.value}));}catch(_){}rhythmAudio?.stop();renderRhythmMarks();UI.rhythmUndo.disabled=!rhythmHistory.canUndo;UI.rhythmRedo.disabled=!rhythmHistory.canRedo;if(typeof message!=='string')message='';if(!window.CrescendoPractice)return;const meter=currentRhythmMeter(),clef=UI.rhythmClef.value,bars=Math.max(1,Math.min(16,Number(UI.rhythmBars.value)||1)),systems=Math.ceil(bars/4),used=rhythmBeats(rhythmUsedTicks()),total=rhythmTimeline().total;keySelect.value=rhythmStructure.keyAt(rhythmMarks,0);UI.rhythmScore.innerHTML=rhythmWriting.render(rhythmEditorEvents,{meter,clef,bars,width:UI.rhythmScore.clientWidth||900,glyphs:window.CrescendoBravuraPalette,marks:rhythmMarks,selected:selectedRhythmNote});UI.rhythmScore.classList.toggle('has-multiple-systems',systems>1);renderRhythmTab();UI.rhythmStatus.textContent=message||`${bars} ${bars===1?'compás':'compases'} en ${new Set(rhythmTimeline().meters.map(m=>m.label)).size>1?'compases variables':rhythmTimeline().meters[0].label} · ${used.toFixed(2).replace(/\.00$/,'')} de ${total} tiempos · ${clef==='grand'?'sol y fa · escribiendo en '+(activeRhythmStaff===2?'fa':'sol'):'clave de '+(clef==='bass'?'fa':'sol')} · clic: ${UI.rhythmPlacement.options[UI.rhythmPlacement.selectedIndex].text}`}
+    function renderRhythmTab(){
+      const host=document.getElementById('rhythmTab');
+      window.CrescendoRhythmTab.render(host,{events:rhythmEditorEvents,marks:rhythmMarks,instrument:document.getElementById('rhythmSound').value,score:UI.rhythmScore,onEdit:(index,head,position)=>{
+        const before=rhythmSnapshot(),message=window.CrescendoRhythmTab.setPosition(rhythmEditorEvents,rhythmMarks,index,head,document.getElementById('rhythmSound').value,position);
+        if(message)return message;
+        selectedRhythmNote={index,head};activeRhythmStaff=rhythmEditorEvents[index].staff||1;rhythmHistory.commit(before,rhythmSnapshot());renderRhythmScore('Digitación actualizada.');return true;
+      }});
+    }
+    UI.rhythmScore.addEventListener('scroll',()=>{const strip=document.querySelector('#rhythmTab .rhythm-tab-scroll');if(strip)strip.scrollLeft=UI.rhythmScore.scrollLeft;},{passive:true});
     const rhythmOverflowDialog=document.createElement('dialog');rhythmOverflowDialog.className='rhythm-overflow-dialog';rhythmOverflowDialog.setAttribute('aria-labelledby','rhythmOverflowTitle');
     rhythmOverflowDialog.innerHTML='<form method="dialog"><h3 id="rhythmOverflowTitle">La figura supera el compás</h3><p></p><div><button value="no">No</button><button value="yes">Sí, escribir con ligaduras</button></div></form>';document.body.appendChild(rhythmOverflowDialog);
     let rhythmOverflowPending=false;
@@ -1570,7 +1585,7 @@
     });
     rhythmListen.addEventListener('click',()=>{if(['playing','counting'].includes(exerciseState)){rhythmAudio.pause();return;}if(exerciseState==='paused'){rhythmAudio.resume();return;}if(exerciseState==='loading'){rhythmAudio.stop();return;}rhythmPlaybackTempo=tempo;rhythmAudio.play(rhythmEditorEvents,{tempo,meter:currentRhythmMeter(),capacity:rhythmCapacity(currentRhythmMeter()),bars:Number(UI.rhythmBars.value)||4,clef:UI.rhythmClef.value,instrument:rhythmSound.value,marks:rhythmMarks});});
     rhythmStop.addEventListener('click',()=>rhythmAudio.stop());
-    rhythmSound.addEventListener('change',()=>{rhythmAudio.stop();try{localStorage.setItem('crescendo-rhythm-sound',rhythmSound.value);}catch(_){}rhythmAudio.preload(rhythmSound.value);});
+    rhythmSound.addEventListener('change',()=>{renderRhythmTab();rhythmAudio.stop();try{localStorage.setItem('crescendo-rhythm-sound',rhythmSound.value);}catch(_){}rhythmAudio.preload(rhythmSound.value);});
     rhythmBpm.value=Math.round(tempo);rhythmBpm.addEventListener('input',()=>{const value=Number(rhythmBpm.value);if(value>=20&&value<=400){tempo=value;rhythmAudio.stop();updateBpmUI();}});rhythmBpm.addEventListener('change',()=>{tempo=Math.max(20,Math.min(400,Number(rhythmBpm.value)||80));rhythmBpm.value=Math.round(tempo);rhythmAudio.stop();updateBpmUI();});
     UI.bpmSld.addEventListener('input',()=>rhythmAudio.stop());
     document.addEventListener('visibilitychange',()=>{if(document.hidden)rhythmAudio.stop();});
