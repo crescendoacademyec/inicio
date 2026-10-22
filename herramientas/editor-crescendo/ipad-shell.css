@@ -1692,3 +1692,15 @@ html{--ipad-inspector-width:146px!important}.ipad-inspector-panel .ipad-side-con
 .guitar-tab-strip { overflow-x:auto; background:#fffdf8; color:#111; margin:-8px -8px 8px; }
 .guitar-tab-strip[hidden] { display:none; }
 .guitar-tab-strip svg { display:block; max-width:none; }
+/* Bowed strings: continuous ebony fingerboard, with teaching bands rather than metal frets. */
+#editorGuitarPanel.is-fretless .guitar-fretboard { background:linear-gradient(#161616,#34302c,#171717); }
+#editorGuitarPanel.is-fretless .guitar-fretboard button { border-right:0; }
+#editorGuitarPanel.is-fretless .guitar-fretboard button.finger-guide::before { content:""; position:absolute; top:0; bottom:0; left:50%; border-left:1px dashed #d7b86466; pointer-events:none; }
+#editorGuitarPanel.is-fretless .guitar-fretboard button.is-active::before { display:none; }
+#editorGuitarPanel.is-fretless .guitar-fretboard button.is-active { font-weight:700; background:#d5aa45; color:#111; }
+.guitar-fretboard button { background:linear-gradient(transparent calc(50% - var(--string-thickness,.8px)),#bdb5a5 50%,transparent calc(50% + var(--string-thickness,.8px))); }
+.editor-workbench.is-ipad-workbench.has-string-instrument .midi-keyboard-panel { max-height:57%; overflow:auto; flex:0 1 auto; min-height:0; }
+.editor-workbench.is-ipad-workbench.has-string-instrument .editor-stage { flex:1 1 0; min-height:0; }
+.guitar-fretboard { grid-template-columns:54px repeat(25,minmax(36px,1fr)); }
+.guitar-string-name { display:flex; align-items:center; position:sticky; left:0; z-index:1; background:#211c18; color:#eee; font:10px system-ui,sans-serif; padding-left:4px; }
+.is-fretless .guitar-string-name { background:#161616; }
