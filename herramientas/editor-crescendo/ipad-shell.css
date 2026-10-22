@@ -1209,7 +1209,7 @@ body.editor-page .editor-workbench.is-ipad-workbench .score-shell {
   align-items: stretch !important;
   display: grid !important;
   gap: 6px !important;
-  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
   padding: 0 !important;
   width: 100% !important;
 }
@@ -1611,3 +1611,20 @@ html{--ipad-inspector-width:170px!important}.ipad-inspector-content{padding-left
 .ipad-context-drawer .centered-figure-icon text{font-family:"MTF Improviso Light",serif!important}
 
 html{--ipad-inspector-width:146px!important}.ipad-inspector-panel .ipad-side-content{padding-left:6px!important;padding-right:6px!important}.ipad-context-drawer .duration-icons .centered-figure-icon{width:48px!important;height:48px!important;min-width:48px}.ipad-context-drawer .duration-icons .centered-figure-icon text{font-family:"MTF Improviso Light",serif!important;font-size:32px!important;transform-box:view-box;transform-origin:0 0}.ipad-context-drawer .duration-icons .palette-figures{height:56px!important;min-height:56px!important}
+
+/* Tres columnas dentro del mismo ancho de inspector. */
+.ipad-context-drawer #durationTools > button {
+  height: 48px !important;
+  min-height: 48px !important;
+  padding: 2px !important;
+}
+.ipad-context-drawer .duration-icons .centered-figure-icon {
+  width: 36px !important;
+  height: 36px !important;
+  min-width: 36px;
+}
+.ipad-context-drawer .duration-icons .figure-shortcut {
+  right: 3px;
+  bottom: 2px;
+  font-size: 8px !important;
+}
