@@ -445,9 +445,11 @@
   }
 
   function meterForMeasureIndex(measureIndex) {
-    const measure = (Array.isArray(state?.systems) && state.systems[0]?.measures?.[measureIndex]) ||
-      state.measures[measureIndex];
-    return normalizeMeter(measure?.meter || state.meter || DEFAULT_METER);
+    const measures = (Array.isArray(state?.systems) && state.systems[0]?.measures) || state.measures;
+    for (let index = Math.min(measureIndex, measures.length - 1); index >= 0; index -= 1) {
+      if (measures[index]?.meter) return normalizeMeter(measures[index].meter);
+    }
+    return normalizeMeter(state.meter || DEFAULT_METER);
   }
 
   function keySignatureForMeasureIndex(measureIndex) {
@@ -3566,7 +3568,31 @@
   }
 
   function splitEntryRhythmically(entry, absoluteStart) {
-    if (entry.tuplet) return [{ absoluteStart, entry, changed: false }];
+    if (entry.tuplet) {
+      const target = measureIndexAndTickFromAbsolute(absoluteStart);
+      const room = measureTicksForIndex(target.measureIndex) - target.tick;
+      if (entry.ticks <= room + EPSILON) return [{ absoluteStart, entry, changed: false }];
+      const source = JSON.parse(JSON.stringify(entry));
+      const parts = []; let cursor = absoluteStart, remaining = entry.ticks;
+      while (remaining > EPSILON) {
+        const position = measureIndexAndTickFromAbsolute(cursor);
+        const ticks = Math.min(remaining, measureTicksForIndex(position.measureIndex) - position.tick);
+        const segment = JSON.parse(JSON.stringify(source));
+        if (parts.length) segment.id = cloneEntryForPaste(source).id;
+        segment.ticks = ticks;
+        const ratio = Number(source.tuplet.actual) / Number(source.tuplet.normal);
+        const spelling = durationInfoByTicks(ticks * ratio);
+        if (spelling) {
+          segment.durationId = spelling.duration.id; segment.flags = spelling.duration.flags;
+          segment.dots = spelling.dots || 0; segment.dotted = segment.dots > 0;
+          segment.tuplet.unitDurationId = spelling.duration.id;
+        }
+        if (segment.type === "note") {segment.tieToNext = remaining > ticks + EPSILON || source.tieToNext === true;segment.tieStaffStep = tieStepForEntry(source);}
+        parts.push({ absoluteStart: cursor, entry: segment, changed: true });
+        cursor += ticks; remaining -= ticks;
+      }
+      return parts;
+    }
     const absoluteEnd = absoluteStart + entry.ticks;
     const boundaries = rhythmicSplitBoundaries(absoluteStart, absoluteEnd)
       .filter((boundary) => entry.forceDuration !== true || isMeasureBoundaryTick(boundary));
@@ -14405,12 +14431,26 @@
 
   function setMeterAtMeasure(meter, measureIndex = state.cursorMeasure) {
     if (!meter) return;
-    const entrySnapshots = scoreSystems().map((system, systemIndex) => (
-      withSystemContext(systemIndex, () => flattenScoreEntries().map((item) => ({
-        absTick: item.absTick,
-        entry: item.entry
-      })))
+    const systems = scoreSystems();
+    const activeIndex = activeSystemIndex();
+    const entrySnapshots = systems.map((system, systemIndex) => (
+      withSystemContext(systemIndex, () => flattenScoreEntries().map((item) => {
+        const entry = JSON.parse(JSON.stringify(item.entry));
+        if (entry.type === "note") {
+          const location = measureIndexAndTickFromAbsolute(item.absTick);
+          entryStaffSteps(item.entry).forEach(step => setEntryAccidental(entry, step,
+            effectiveEntryAccidental(item.entry, step) || diatonicAccidentalForMeasure(entryDiatonicStepForStaffStep(item.entry, step), location.measureIndex) || "natural"));
+        }
+        return { absTick: item.absTick, entry };
+      }))
     ));
+    const anchors = [...state.marks, ...state.textItems].map(item => ({
+      item,
+      positions: ["measureIndex", "startMeasureIndex", "endMeasureIndex"].filter(key => Number.isFinite(item[key])).map(key => ({
+        key, tickKey: key === "endMeasureIndex" ? "endTick" : "tickStart",
+        absolute: measureStartAbsoluteTick(item[key]) + (Number(item[key === "endMeasureIndex" ? "endTick" : "tickStart"]) || 0)
+      }))
+    }));
     saveHistory();
     measureIndex = Math.max(0, Number(measureIndex) || 0);
     ensureAllSystemsMeasure(measureIndex);
@@ -14425,13 +14465,24 @@
       });
     }
     syncActiveMeterToCursor();
-    scoreSystems().forEach((system, systemIndex) => {
+    systems.forEach((system, systemIndex) => {
       withSystemContext(systemIndex, () => {
         rebuildMeasuresFromAbsoluteItems(entrySnapshots[systemIndex] || [], system.measures.length);
         normalizeTernaryTiedUnitPairs();
         verifyAllMeasureDurations();
       });
+      // withSystemContext restores its previous array. Keep the active system on
+      // the rebuilt array before the next context or render synchronizes it.
+      state.measures = systems[activeIndex].measures;
     });
+    anchors.forEach(({item, positions}) => {
+      positions.forEach(({key, tickKey, absolute}) => {
+        const target = measureIndexAndTickFromAbsolute(absolute);
+        item[key] = target.measureIndex;
+        if (tickKey in item) item[tickKey] = target.tick;
+      });
+    });
+    syncActiveMeterToCursor();
     render();
   }
 

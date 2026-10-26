@@ -76,3 +76,9 @@ test('persisted clipped notes repair duration spelling without changing onset, p
  const c=fixture(),entry={...note('saved',12,4,3,2),durationId:'half',flags:0,forceDuration:true,accidental:'flat',chordSteps:[1,3,5]};
  const result=c.splitEntryRhythmically(entry,12);assert.equal(result[0].entry,entry);assert.equal(entry.durationId,'quarter');assert.equal(entry.ticks,4);assert.equal(entry.tickStart,12);assert.equal(entry.voice,2);assert.equal(entry.accidental,'flat');assert.deepEqual(entry.chordSteps,[1,3,5]);assert.equal(result[0].changed,true);assert.equal(c.splitEntryRhythmically(entry,12)[0].changed,false);
 });
+
+test('rebar splits a tuplet note at the new barline without losing sounding duration',()=>{
+ const c=fixture(),start=16-4/3,entry={...note('trip',start,8/3),tuplet:{actual:3,normal:2,unitDurationId:'quarter'}};
+ const parts=c.splitEntryRhythmically(entry,start);
+ assert.equal(parts.length,2);assert.ok(parts.every(p=>Math.abs(p.entry.ticks-4/3)<.0001));assert.equal(parts[0].entry.tieToNext,true);assert.equal(parts[1].entry.tieToNext,false);assert.equal(parts[0].entry.durationId,'eighth');assert.equal(parts[1].entry.tuplet.unitDurationId,'eighth');
+});

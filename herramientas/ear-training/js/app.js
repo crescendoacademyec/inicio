@@ -82,6 +82,7 @@
       <button data-action="mode" data-mode="practice" class="${state.mode==='practice'?'active':''}" ${state.challenge?'disabled':''}>Practicar</button>
       <button data-action="mode" data-mode="learn" class="${state.mode==='learn'?'active':''}" ${state.challenge?'disabled':''}>Aprender</button>
       <button data-action="mode" data-mode="progress" class="${state.mode==='progress'?'active':''}" ${state.challenge?'disabled':''}>Progreso</button>
+      <button data-action="mode" data-mode="settings" class="settings-tab ${state.mode==='settings'?'active':''}" aria-label="Configuración de práctica" title="Configuración de práctica" ${state.challenge?'disabled':''}><span aria-hidden="true">⚙</span></button>
     </div>`;
   }
 
@@ -100,6 +101,7 @@
     </section>`;
     if(state.mode==='practice') renderPractice();
     else if(state.mode==='learn') renderLearn();
+    else if(state.mode==='settings') renderSettings();
     else renderProgress();
   }
 
@@ -156,11 +158,15 @@
     return `<div class="challenge-box"><div class="challenge-row"><button class="primary-btn" data-action="start-challenge">Iniciar Challenge</button><span class="timer">${fmtTime(Number(S.getPref('challengeMinutes')||5)*60)}</span>${r&&r.wrong>0?`<button class="ghost-btn" data-action="practice-result-errors">Practicar errores (${r.wrong})</button>`:''}</div><p class="challenge-note">Cada Challenge guarda nivel, configuración exacta, respuestas, duración, porcentaje, racha y conceptos fallados.</p>${r?`<div class="summary-grid"><div class="metric">Aciertos<b>${r.correct}</b></div><div class="metric">Errores<b>${r.wrong}</b></div><div class="metric">Precisión<b>${r.pct}%</b></div><div class="metric">Racha máx<b>${r.streakMax}</b></div></div>`:''}</div>`;
   }
 
+  function renderSettings(){
+    let specific=''; if(state.level===1)specific=intervalConfig(); else if(state.level===2)specific=chordConfig(); else if(state.level===3)specific=level3Config();
+    document.getElementById('view').innerHTML=`<section class="settings-panel" aria-label="Configuración de práctica">${commonSettings()}${specific}</section>`;
+  }
+
   function renderPractice(){
     const view=document.getElementById('view');
     const errorBadge=state.errorPractice?`<div class="learn-note"><b>Modo revisión de errores:</b> se están generando preguntas solo con ${state.errorPractice.targetIds.length} concepto(s) fallado(s). <button class="mini-btn" data-action="stop-error-practice">Salir de revisión</button></div>`:'';
-    let specific=''; if(state.level===1)specific=intervalConfig(); else if(state.level===2)specific=chordConfig(); else if(state.level===3)specific=level3Config();
-    view.innerHTML=`${errorBadge}<details class="settings"><summary><span>Configuración de práctica</span><span>⚙</span></summary><div class="settings-panel">${commonSettings()}${specific}</div></details>
+    view.innerHTML=`${errorBadge}
       <div class="practice-grid"><div class="stage"><button id="playBtn" class="play-btn" data-action="play" aria-label="Escuchar ejercicio">▶<br><small>Escuchar</small></button><div id="stageHint" class="stage-hint">Espacio para reproducir</div></div><div id="options" class="options" role="group" aria-label="Respuestas"></div><div id="feedback" class="feedback" aria-live="polite">Escucha y selecciona una respuesta.</div><div class="practice-actions"><button id="nextBtn" class="ghost-btn" data-action="next" disabled>Siguiente · N</button></div></div>${challengeHtml()}`;
     newRound();
   }
@@ -402,7 +408,7 @@
       if(key==='instrument')audio.setInstrument(value);
       if(key==='volume')audio.setVolume(value);
       if(['intervalMode','register','chordVoicing','tonalReference','level3Type'].includes(key)&&state.mode==='practice'&&!state.challenge)newRound();
-      if(key==='level3Type'&&state.mode==='practice')renderApp();
+      if(key==='level3Type'&&['practice','settings'].includes(state.mode))renderApp();
     }
   });
 
