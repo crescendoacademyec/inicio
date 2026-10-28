@@ -90,6 +90,11 @@
       sharp5_7:{label:"7(#5)",menuLabel:"7(#5)",family:"tetrad",intervals:[0,4,8,10],suffix:"7(#5)",quality:"Cuatríada con 5ª aumentada (T-3-#5-b7)"}
     };
 
+    // Extend the existing Drop menus with the additional four-voice vocabulary.
+    for(const [key,def] of Object.entries(window.CrescendoStudyLab.CHORDS)){
+      if(def.tones.length!==4||Object.values(CHORD_TYPES).some(d=>d.intervals.map(n=>n%12).join(',')===def.tones.map(n=>n%12).join(',')))continue;
+      CHORD_TYPES['study_'+key]={label:def.label,menuLabel:def.suffix,family:'tetrad',intervals:def.tones,suffix:def.suffix,quality:def.label,study:true};
+    }
     const GUIDE_DOTS = [3,5,7,9,12,15,17,19,22];
     const INVERSION_LABELS = ["Fundamental","1ª inversión","2ª inversión","3ª inversión"];
 
@@ -234,7 +239,7 @@
       }catch(e){return{}}
     }
     function saveSettings(){
-      try{localStorage.setItem(SETTINGS_KEY,JSON.stringify({instrument:instrumentSel.value,tuning:tuningSel.value,capo:+capoSel.value,orientation:orientationSel.value,labelMode:labelModeSel.value,keySignature:keySignatureSel?.value||'none',pattern:patternSel.value,voicingRange:voicingRangeSel.value,root:rootSel.value,chord:chordTypeSel.value,scale:scaleSel.value,arpeggio:arpeggioSel.value,characteristic:toneVisibility.characteristic,pos:posSel.value,frets:visibleFrets,volume:+volumeSlider.value,soundType:soundTypeSel.value,metroBpm:+($("metroBpmValue")?.textContent||80),metroMeter:$("metroMeter")?.value||'4/4',metroPulse:$("metroPulse")?.value||'auto',countIn:$("scoreCountIn")?.value||'1',scoreClick:!!$("scoreMetroSync")?.checked,loopRepeats:+($("scoreLoopRepeats")?.value||0),loopBpmAdd:+($("scoreLoopBpmAdd")?.value||0),loopBpmEvery:+($("scoreLoopBpmEvery")?.value||1),fingeringView:scoreFingeringView?.value||'all',fingeringStrategy:scoreFingeringStrategy?.value||'phrase',phraseLength:+(scorePhraseLength?.value||8),techniqueMode:scoreTechniqueMode?.value||'musical'}))}catch(e){}
+      try{localStorage.setItem(SETTINGS_KEY,JSON.stringify({instrument:instrumentSel.value,tuning:tuningSel.value,capo:+capoSel.value,orientation:orientationSel.value,labelMode:labelModeSel.value,keySignature:keySignatureSel?.value||'none',pattern:patternSel.value,voicingRange:voicingRangeSel.value,root:rootSel.value,chord:chordTypeSel.value,scale:scaleSel.value,arpeggio:arpeggioSel.value,characteristic:toneVisibility.characteristic,pos:posSel.value,frets:labViewport?labViewport.visibleFrets:visibleFrets,volume:+volumeSlider.value,soundType:soundTypeSel.value,metroBpm:+($("metroBpmValue")?.textContent||80),metroMeter:$("metroMeter")?.value||'4/4',metroPulse:$("metroPulse")?.value||'auto',countIn:$("scoreCountIn")?.value||'1',scoreClick:!!$("scoreMetroSync")?.checked,loopRepeats:+($("scoreLoopRepeats")?.value||0),loopBpmAdd:+($("scoreLoopBpmAdd")?.value||0),loopBpmEvery:+($("scoreLoopBpmEvery")?.value||1),fingeringView:scoreFingeringView?.value||'all',fingeringStrategy:scoreFingeringStrategy?.value||'phrase',phraseLength:+(scorePhraseLength?.value||8),techniqueMode:scoreTechniqueMode?.value||'musical'}))}catch(e){}
     }
 
     // Poblar selects
@@ -542,6 +547,15 @@
     }
 
     function buildChordShapes(rootPc, def, voicing) {
+      if(def.study){
+        const shapes=[];
+        for(const template of expandedTemplates(voicing))for(let inversion=0;inversion<4;inversion++){
+          const shape=window.CrescendoStudyLab.solve({root:rootPc,tones:def.intervals,family:voicing.group==='Drop 3'?'drop3':'drop2',inversion,
+            pitches:activePitches().map(n=>n+activeInstrument().nutFret),maxFret:maxVisibleFrets(),strings:template.strings,anchor:5,limit:1})[0];
+          if(shape&&!shapes.some(s=>JSON.stringify(s.cells)===JSON.stringify(shape.cells)))shapes.push({inversion,cells:shape.cells.map(c=>({...c,role:window.CrescendoStudyLab.classify(c.midi,rootPc,def.intervals,Study.intervals(SCALE[scaleSel.value]||SCALE.mayor))}))});
+        }
+        return shapes;
+      }
       const stringCount = activePitches().length;
       const shapes = [];
       expandedTemplates(voicing).forEach(template => {
@@ -793,6 +807,7 @@
     }
 
 
+    let labFrame = null, labViewport = null;
     // Función draw (diapasón)
     function draw() {
       fitCanvas();
@@ -935,7 +950,7 @@
       // Variables para recoger las notas que se dibujan (para el pentagrama)
       let currentNotes = [];
 
-      if (chordMode) {
+      if (!labFrame && chordMode) {
         const chord = parseChordValue();
         if (chord) {
           const rootPc = window.CrescendoPitchSpelling.pc(rootSel.value);
@@ -964,7 +979,7 @@
             });
           });
         }
-      } else if (scaleMode) {
+      } else if (!labFrame && scaleMode) {
         const rootPc = window.CrescendoPitchSpelling.pc(rootSel.value);
         const pcs = studyIntervals().map(interval=>(rootPc+interval)%12);
         const spec = SPECIAL.includes(scaleSel.value);
@@ -1002,7 +1017,7 @@
             }
           }
         }
-      } else {
+      } else if (!labFrame) {
         // Modo exploración
         const selectedNotes = [];
         manualSelections.forEach(key => {
@@ -1052,14 +1067,30 @@
         }
       }
 
+      if(labFrame){
+        currentNotes=labFrame.cells.map(c=>({pc:((c.midi%12)+12)%12,midi:c.midi}));
+        const paint=(cell,reference=false)=>{
+          if(!toneVisibility[cell.role||'structural'])return;
+          const point=cellCenter(cell.fret,cell.string,boardX,fw,startY,stringGap);if(!point)return;
+          ctx.save();ctx.globalAlpha=reference ? 0.22 : 1;ctx.fillStyle=TONE_COLORS[cell.role||'structural'];
+          ctx.beginPath();ctx.arc(point.x,point.y,RAD,0,Math.PI*2);ctx.fill();
+          if(!reference){ctx.lineWidth=2;ctx.strokeStyle='#fff';ctx.stroke();}
+          if(toneVisibility.characteristic&&labFrame.characteristic?.includes(((cell.midi%12)+12)%12)){ctx.strokeStyle='#d58cff';ctx.lineWidth=3;ctx.beginPath();ctx.arc(point.x,point.y,RAD+4,0,Math.PI*2);ctx.stroke();}
+          ctx.fillStyle='#101010';ctx.font='900 10px Inter, sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+          ctx.fillText(labFrame.names?.[cell.midi]||spellPc(((cell.midi%12)+12)%12,rootSel.value),point.x,point.y);ctx.restore();
+        };
+        (labFrame.reference||[]).forEach(c=>paint(c,true));labFrame.cells.forEach(c=>paint(c));
+        cvs.dataset.labCells=JSON.stringify(labFrame.cells);cvs.setAttribute('aria-label',labFrame.label);
+      }else delete cvs.dataset.labCells;
+
       // Fase 3: posiciones posibles (anillo) y digitación recomendada (dorado sólido).
-      if(scoreCandidateCells.length && scoreFingeringView?.value==='all'){
+      if(!labFrame && scoreCandidateCells.length && scoreFingeringView?.value==='all'){
         scoreCandidateCells.forEach(c=>{
           const point=cellCenter(c.fret,c.string,boardX,fw,startY,stringGap); if(!point)return;
           ctx.save(); ctx.strokeStyle='rgba(212,168,79,.72)'; ctx.lineWidth=3; ctx.beginPath(); ctx.arc(point.x,point.y,RAD+4,0,Math.PI*2); ctx.stroke(); ctx.restore();
         });
       }
-      if(scoreRecommendedCells.length){
+      if(!labFrame && scoreRecommendedCells.length){
         scoreRecommendedCells.forEach((c,i)=>{
           const point=cellCenter(c.fret,c.string,boardX,fw,startY,stringGap); if(!point)return;
           const done=tutorCompletedKeys.has(scoreCellKey(c));
@@ -1070,7 +1101,7 @@
       }
 
       // Resaltado de la(s) nota(s) que suenan actualmente desde la partitura MusicXML
-      if (scoreHighlightMidis.size && !scoreRecommendedCells.length) {
+      if (!labFrame && scoreHighlightMidis.size && !scoreRecommendedCells.length) {
         scoreHighlightMidis.forEach(midi => {
           const pc = ((midi % 12) + 12) % 12;
           for (let s = 0; s < stringCount; s++) {
@@ -1108,6 +1139,7 @@
 
       fretLabel.textContent = roman(offset + 1);
       updateInfo();
+      if(labFrame){chordSymbolEl.textContent=labFrame.label;chordQualityEl.textContent='Estudio guiado · '+labFrame.cells.length+' nota'+(labFrame.cells.length===1?'':'s');}
     }
 
     function updateInfo() {
@@ -1187,3 +1219,26 @@
       offset = 0;syncStudyViewport();
       draw();
     }
+
+    // A small bridge keeps the study engine independent of canvas and audio internals.
+    window.CrescendoStudyBridge={
+      context(){
+        const chord=parseChordValue(),r=window.CrescendoPitchSpelling.pc(rootSel.value||'C');
+        return {root:Math.max(0,r),pitches:activePitches().map(p=>p+activeInstrument().nutFret),maxFret:maxVisibleFrets(),
+          scheme:patternSel.value,anchor:selectedStudyModel?(selectedStudyModel.minFret+selectedStudyModel.maxFret)/2:5,
+          scale:Study.intervals(SCALE[scaleSel.value]||SCALE.mayor),steps:SCALE[scaleSel.value]||SCALE.mayor,scaleKey:scaleSel.value||'mayor',
+          material:arpeggioSel.value?'arpeggio':chord?'chord':'scale',arpeggio:arpeggioSel.value,
+          materialLabel:arpeggioSel.value?Study.ARPEGGIOS[arpeggioSel.value].label:scaleSel.value?.replace(/_/g,' ')||'mayor',
+          collection:studyIntervals(),chord:chord?{tones:chord.def.intervals,suffix:chord.def.suffix,family:chord.voicing.group==='Drop 3'?'drop3':chord.voicing.group==='Drop 2'?'drop2':'closed',inversion:posSel.value.startsWith('inv')?posSel.value.slice(3):'all'}:null,
+          name:pc=>pc===r?(rootSel.value||'C'):window.CrescendoPitchSpelling.name(pc)};
+      },
+      show(frame){
+        if(!labViewport)labViewport={offset,visibleFrets};labFrame=frame;
+        const cells=[...frame.cells,...(frame.reference||[])],min=Math.min(...cells.map(c=>c.fret)),max=Math.max(...cells.map(c=>c.fret));
+        offset=Math.max(0,min-2);visibleFrets=Math.min(maxVisibleFrets()-offset,Math.max(4,max-offset+1));fretVal.textContent=visibleFrets;draw();
+      },
+      clear(){labFrame=null;if(labViewport){offset=labViewport.offset;visibleFrets=labViewport.visibleFrets;labViewport=null;}fretVal.textContent=visibleFrets;draw();},
+      play:playNote,
+      async ready(){ensureCtx();const started=Date.now();while(sfLoading&&Date.now()-started<6000)await new Promise(resolve=>setTimeout(resolve,100));},
+      stopScore(){if(typeof stopScorePlayback==='function')stopScorePlayback();else document.getElementById('scoreStopBtn')?.click();}
+    };
