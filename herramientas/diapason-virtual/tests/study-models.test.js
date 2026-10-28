@@ -1,0 +1,26 @@
+const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),M=require('../js/study-models');
+const source=fs.readFileSync(path.join(__dirname,'../js/fretboard.js'),'utf8'),SCALE=Function('return ('+source.match(/const SCALE = (\{[\s\S]*?\n    \});/)[1]+')')();
+const standard=[64,59,55,50,45,40],mod=n=>((n%12)+12)%12;
+const strings=model=>standard.map((_,s)=>model.cells.filter(c=>c.string===s).map(c=>c.fret).sort((a,b)=>a-b));
+test('C major model 1 matches the supplied diagram note by note, excluding other notes in its fret region',()=>{
+ const model=M.models({steps:SCALE.mayor,key:'mayor'})[0];
+ assert.deepEqual(strings(model),[[3,5],[3,5,6],[2,4,5],[2,3,5],[2,3,5],[3,5]]);
+ assert.equal(model.cells.length,16);assert.ok(!model.cells.some(c=>c.string===0&&c.fret===7));assert.ok(!model.cells.some(c=>c.string===5&&c.fret===1));
+});
+test('all five C major diagrams have distinct fingerings and preserve the supplied order',()=>{
+ const models=M.models({steps:SCALE.mayor,key:'mayor'});assert.equal(models.length,5);
+ assert.deepEqual(models.map(m=>strings(m)[5]),[[3,5],[5,7,8],[7,8,10],[10,12,13],[12,13,15]]);assert.equal(new Set(models.map(m=>JSON.stringify(strings(m)))).size,5);
+});
+test('all scales transpose to twelve roots with correct notes, no negative frets or empty models',()=>{
+ for(const [key,steps] of Object.entries(SCALE))for(let rootPc=0;rootPc<12;rootPc++)for(const pitches of [standard,standard.map(n=>n+5)]){
+  const collection=M.intervals(steps),models=M.models({key,steps,rootPc,pitches});
+  for(const m of models){assert.ok(m.cells.length,`${key} ${rootPc} ${m.id}`);assert.equal(new Set(m.cells.map(c=>c.string)).size,6);for(const c of m.cells){assert.ok(c.fret>=0&&c.fret<=22);assert.equal(pitches[c.string]+c.fret,c.midi);assert.ok(collection.includes(mod(c.midi-rootPc)),`${key} ${c.midi}`);}}
+ }
+});
+test('pentatonic and blues models retain five patterns and include every pitch class',()=>{for(const key of ['pentatonica_mayor','pentatonica_menor','pentatonica_dominante','blues','blues_mayor']){const expected=M.intervals(SCALE[key]);for(const m of M.models({steps:SCALE[key],key})){assert.deepEqual([...new Set(m.cells.map(c=>c.interval))].sort((a,b)=>a-b),expected);}}});
+test('3NPS uses seven actual ascending fingerings with exactly three notes on each string',()=>{for(let rootPc=0;rootPc<12;rootPc++){const models=M.models({steps:SCALE.mayor,key:'mayor',rootPc,scheme:'3nps'});assert.equal(models.length,7);for(const m of models){assert.equal(m.cells.length,18);for(let s=0;s<6;s++)assert.equal(m.cells.filter(c=>c.string===s).length,3);}}});
+test('Cmaj7 arpeggios reproduce the five regions of the reference, not all chord positions at once',()=>{const models=M.models({kind:'arpeggio',arpeggio:'maj7'});assert.deepEqual(strings(models[0]),[[3,7],[5],[4,5],[2,5],[2,3],[3]]);assert.deepEqual(strings(models[4]),[[12],[12,13],[12],[14],[14,15],[12,15]]);assert.ok(models.every(m=>m.cells.length<=10));});
+test('every arpeggio quality keeps its exact intervals at all roots',()=>{for(const [key,def] of Object.entries(M.ARPEGGIOS))for(let rootPc=0;rootPc<12;rootPc++)for(const m of M.models({kind:'arpeggio',arpeggio:key,rootPc})){assert.ok(m.cells.length);assert.deepEqual([...new Set(m.cells.map(c=>mod(c.midi-rootPc)))].sort((a,b)=>a-b),def.intervals);}});
+test('modal highlights identify color tones relative to the chosen tonic, including Locrian b2 and b5',()=>{for(const [key,expected] of Object.entries({dorico:[9],frigio:[1],lidio:[6],mixolidio:[10],eolico:[8],locrio:[6,1]}))assert.deepEqual(M.characteristic(key,M.intervals(SCALE[key])).map(n=>n.interval),expected);for(const [key,steps] of Object.entries(SCALE)){const ints=M.intervals(steps);assert.ok(M.characteristic(key,ints).every(n=>ints.includes(n.interval)));}assert.deepEqual(M.characteristic('pentatonica_mayor',M.intervals(SCALE.pentatonica_mayor)),[]);});
+test('reference models keep their octave relationship when transposing minor pentatonics and flat roots',()=>{assert.deepEqual(M.models({key:'pentatonica_menor',steps:SCALE.pentatonica_menor}).map(m=>m.cells.find(c=>c.string===5).fret),[6,8,11,13,15]);assert.deepEqual(M.models({key:'mayor',steps:SCALE.mayor,rootPc:10}).map(m=>m.cells.find(c=>c.string===5).fret),[1,3,5,8,10]);});
+test('modal note labels use diatonic spelling instead of enharmonic sharp defaults',()=>{const vm=require('node:vm'),html=fs.readFileSync(path.join(__dirname,'../index.html'),'utf8'),start=html.indexOf("    function spellPc("),end=html.indexOf('    function staffSpelling(',start),c={window:{CrescendoPitchSpelling:require('../../../shared/pitch-spelling')},Study:M,SCALE,scaleSel:{value:'dorico'},chordTypeSel:{value:''},arpeggioSel:{value:''},CHORD_TYPES:{},STAFF_LETTERS:['C','D','E','F','G','A','B'],STAFF_NATURAL_PC:{C:0,D:2,E:4,F:5,G:7,A:9,B:11}};vm.createContext(c);vm.runInContext(html.slice(start,end),c);assert.deepEqual([0,2,3,5,7,9,10].map(pc=>c.spellPc(pc,'C')),['C','D','Eb','F','G','A','Bb']);c.scaleSel.value='lidio';assert.equal(c.spellPc(6,'C'),'F#');assert.equal(c.spellPc(7,'Db'),'G');c.scaleSel.value='';c.arpeggioSel.value='dim7';assert.equal(c.spellPc(9,'C'),'Bbb');});

@@ -72,7 +72,7 @@
       jonico:[2,2,1,2,2,2,1], dorico:[2,1,2,2,2,1,2], frigio:[1,2,2,2,1,2,2], lidio:[2,2,2,1,2,2,1], mixolidio:[2,2,1,2,2,1,2], eolico:[2,1,2,2,1,2,2], locrio:[1,2,2,1,2,2,2],
       jonico_b6:[2,2,1,2,1,3,1], locrio_s2s6:[2,1,2,1,3,1,2], mixolidio_b2_s2_no4:[1,2,1,3,1,2,2], dorico_s4_s7:[2,1,3,1,2,2,1], mixolidio_b2:[1,3,1,2,2,1,2], lidio_s2_s5:[3,1,2,2,1,2,1],
       locrio_b7:[1,2,2,1,2,1,3], eolico_s7:[2,1,2,2,1,3,1], locrio_s6:[1,2,2,1,3,1,2], jonico_aumentado:[2,2,1,3,1,2,1], dorico_s4:[2,1,3,1,2,1,2], mixolidio_b2b6:[1,3,1,2,1,2,2], lidio_s2:[3,1,2,1,2,2,1], locrio_b4b7:[1,2,1,2,2,1,3], dorico_s7:[2,1,2,2,2,2,1], dorico_b2:[1,2,2,2,2,1,2], lidio_aumentado:[2,2,2,2,1,2,1], lidio_dominante:[2,2,2,1,2,1,2], mixolidio_b6:[2,2,1,2,1,2,2], locrio_s2:[2,1,2,1,2,2,2], alterado:[1,2,1,2,2,2,2],
-      pentatonica_mayor:[2,2,3,2,3], pentatonica_dominante:[2,2,3,3,2], blues:[3,2,1,1,3,2], por_tonos:[2,2,2,2,2,2],
+      pentatonica_mayor:[2,2,3,2,3], pentatonica_menor:[3,2,2,3,2], blues_mayor:[2,1,1,3,2,3], pentatonica_dominante:[2,2,3,3,2], blues:[3,2,1,1,3,2], por_tonos:[2,2,2,2,2,2],
       disminuida_HW:[1,2,1,2,1,2,1,2], disminuida_WH:[2,1,2,1,2,1,2,1]
     };
     const SPECIAL = ["pentatonica_mayor","blues","por_tonos"];
@@ -188,6 +188,8 @@
     const rootSel = $("root");
     const chordTypeSel = $("chordType");
     const scaleSel = $("scale");
+    const arpeggioSel = $("arpeggio");
+    const Study = window.CrescendoFretboardModels;
     const posSel = $("pos");
     const minus = $("minus");
     const plus = $("plus");
@@ -198,6 +200,8 @@
     const legendButtons = [...document.querySelectorAll("[data-tone-filter]")];
     const clearSelectionBtn = $("clearSelectionBtn");
     const clearAllBtn = $("clearAllBtn");
+    const explorationModeBtn = $("explorationModeBtn");
+    const ephemeralModeBtn = $("ephemeralModeBtn");
     const chordNameBox = $("chordNameBox");
     const chordSymbolEl = $("chordSymbol");
     const chordQualityEl = $("chordQualityLabel");
@@ -209,6 +213,7 @@
     const capoSel = $("capo");
     const orientationSel = $("orientation");
     const labelModeSel = $("labelMode");
+    const keySignatureSel = $("keySignature");
     const patternSel = $("pattern");
     const voicingRangeSel = $("voicingRange");
     const scoreFingeringView = $("scoreFingeringView");
@@ -229,7 +234,7 @@
       }catch(e){return{}}
     }
     function saveSettings(){
-      try{localStorage.setItem(SETTINGS_KEY,JSON.stringify({instrument:instrumentSel.value,tuning:tuningSel.value,capo:+capoSel.value,orientation:orientationSel.value,labelMode:labelModeSel.value,pattern:patternSel.value,voicingRange:voicingRangeSel.value,root:rootSel.value,chord:chordTypeSel.value,scale:scaleSel.value,pos:posSel.value,frets:visibleFrets,volume:+volumeSlider.value,soundType:soundTypeSel.value,metroBpm:+($("metroBpmValue")?.textContent||80),metroMeter:$("metroMeter")?.value||'4/4',metroPulse:$("metroPulse")?.value||'auto',countIn:$("scoreCountIn")?.value||'1',scoreClick:!!$("scoreMetroSync")?.checked,loopRepeats:+($("scoreLoopRepeats")?.value||0),loopBpmAdd:+($("scoreLoopBpmAdd")?.value||0),loopBpmEvery:+($("scoreLoopBpmEvery")?.value||1),fingeringView:scoreFingeringView?.value||'all',fingeringStrategy:scoreFingeringStrategy?.value||'phrase',phraseLength:+(scorePhraseLength?.value||8),techniqueMode:scoreTechniqueMode?.value||'musical'}))}catch(e){}
+      try{localStorage.setItem(SETTINGS_KEY,JSON.stringify({instrument:instrumentSel.value,tuning:tuningSel.value,capo:+capoSel.value,orientation:orientationSel.value,labelMode:labelModeSel.value,keySignature:keySignatureSel?.value||'none',pattern:patternSel.value,voicingRange:voicingRangeSel.value,root:rootSel.value,chord:chordTypeSel.value,scale:scaleSel.value,arpeggio:arpeggioSel.value,characteristic:toneVisibility.characteristic,pos:posSel.value,frets:visibleFrets,volume:+volumeSlider.value,soundType:soundTypeSel.value,metroBpm:+($("metroBpmValue")?.textContent||80),metroMeter:$("metroMeter")?.value||'4/4',metroPulse:$("metroPulse")?.value||'auto',countIn:$("scoreCountIn")?.value||'1',scoreClick:!!$("scoreMetroSync")?.checked,loopRepeats:+($("scoreLoopRepeats")?.value||0),loopBpmAdd:+($("scoreLoopBpmAdd")?.value||0),loopBpmEvery:+($("scoreLoopBpmEvery")?.value||1),fingeringView:scoreFingeringView?.value||'all',fingeringStrategy:scoreFingeringStrategy?.value||'phrase',phraseLength:+(scorePhraseLength?.value||8),techniqueMode:scoreTechniqueMode?.value||'musical'}))}catch(e){}
     }
 
     // Poblar selects
@@ -255,9 +260,23 @@
 
     // Estado
     let offset = 0;
-    const toneVisibility = {root:true, structural:true, tension:true, unavailable:true};
-    const blankMode = () => rootSel.value === "" || (chordTypeSel.value === "" && scaleSel.value === "");
+    const toneVisibility = {root:true, structural:true, tension:true, unavailable:true, characteristic:true};
+    arpeggioSel.add(new Option("— Ninguno —", ""));
+    Object.entries(Study.ARPEGGIOS).forEach(([value,definition])=>arpeggioSel.add(new Option(definition.label,value)));
+    let studyModels=[],selectedStudyModel=null;
+    function studyActive(){return !!rootSel.value && (!!scaleSel.value || !!arpeggioSel.value);}
+    function studyIntervals(){return arpeggioSel.value ? Study.ARPEGGIOS[arpeggioSel.value].intervals : Study.intervals(SCALE[scaleSel.value]||[]);}
+    function syncStudyViewport(){
+      if(!studyActive())return;
+      selectedStudyModel=studyModels.find(model=>model.id===posSel.value)||null;
+      if(!selectedStudyModel){offset=0;visibleFrets=maxVisibleFrets();}
+      else {offset=Math.max(0,selectedStudyModel.minFret-2);visibleFrets=Math.max(4,Math.min(maxVisibleFrets()-offset,Math.max(visibleFrets,selectedStudyModel.maxFret-offset)));}
+      fretVal.textContent=visibleFrets;
+    }
+    const blankMode = () => rootSel.value === "" || (chordTypeSel.value === "" && scaleSel.value === "" && arpeggioSel.value === "");
     const manualSelections = new Set();
+    const ephemeralTimers = new Map();
+    let ephemeralMode = false;
     let hoverCell = null;
     let audioCtx = null;
     let masterBus = null;
@@ -361,6 +380,7 @@
     }
 
     function buildPositions() {
+      if(!studyActive()){studyModels=[];selectedStudyModel=null;}
       if (rootSel.value && chordTypeSel.value) {
         const chord = parseChordValue();
         const current = posSel.value || "all";
@@ -373,13 +393,17 @@
         posSel.value = [...posSel.options].some(opt => opt.value === current) ? current : "all";
         return;
       }
-      const current = parseInt(posSel.value || 1);
-      posSel.length = 0;
-      const maxPosition = Math.min(12, maxVisibleFrets());
-      for (let f = 1; f <= maxPosition; f++) {
-        posSel.add(new Option(roman(f), f));
+      if(studyActive()){
+        const current=studyModels.length?posSel.value:"model1";
+        studyModels=Study.models({rootPc:window.CrescendoPitchSpelling.pc(rootSel.value),steps:SCALE[scaleSel.value]||[],key:scaleSel.value,kind:arpeggioSel.value?'arpeggio':'scale',arpeggio:arpeggioSel.value,pitches:activePitches().map(p=>p+activeInstrument().nutFret),maxFret:maxVisibleFrets(),scheme:patternSel.value});
+        posSel.replaceChildren();
+        studyModels.forEach(model=>posSel.add(new Option(model.label,model.id)));
+        posSel.add(new Option("Todo el diapasón","all"));
+        posSel.value=[...posSel.options].some(o=>o.value===current)?current:'model1';
+        return;
       }
-      posSel.value = String(Math.min(Math.max(current, 1), maxPosition));
+      posSel.replaceChildren(new Option("Todo el diapasón","all"));
+      posSel.value="all";
     }
 
     function roundedRectPath(x, y, w, h, r) {
@@ -426,6 +450,22 @@
           if (def.intervals.length !== sorted.length) continue;
           const target = def.intervals.map(iv => (root + iv) % 12).sort((a,b) => a - b);
           if (target.every((v,i) => v === sorted[i])) return { root, def };
+        }
+      }
+      return null;
+    }
+
+    function detectScale(pcs) {
+      const unique = [...new Set(pcs)];
+      if (unique.length < 5) return null;
+      const sorted = unique.slice().sort((a,b) => a - b);
+      for (let root = 0; root < 12; root++) {
+        for (const [key, steps] of Object.entries(SCALE)) {
+          if (steps.length !== sorted.length) continue;
+          const target = [root];
+          for (let index = 0; index < steps.length - 1; index++) target.push((target.at(-1) + steps[index]) % 12);
+          target.sort((a,b) => a - b);
+          if (target.every((value,index) => value === sorted[index])) return { root, key };
         }
       }
       return null;
@@ -585,13 +625,32 @@
       return { stop: () => { try { osc.stop(ctx.currentTime); } catch(e) {} } };
     }
 
+    function clearEphemeralTimers() {
+      ephemeralTimers.forEach(timer => clearTimeout(timer));
+      ephemeralTimers.clear();
+    }
+
+    function selectInteractionMode(mode) {
+      ephemeralMode = mode === 'ephemeral';
+      if (!ephemeralMode) clearEphemeralTimers();
+      explorationModeBtn.classList.toggle('active', !ephemeralMode);
+      ephemeralModeBtn.classList.toggle('active', ephemeralMode);
+      explorationModeBtn.setAttribute('aria-selected', String(!ephemeralMode));
+      ephemeralModeBtn.setAttribute('aria-selected', String(ephemeralMode));
+      draw();
+    }
+
+    explorationModeBtn.onclick = () => selectInteractionMode('exploration');
+    ephemeralModeBtn.onclick = () => selectInteractionMode('ephemeral');
+
     // Controles
     minus.onclick = () => { if (visibleFrets > 4) { visibleFrets--; refresh(); saveSettings(); } };
     plus.onclick = () => { if (visibleFrets < maxVisibleFrets()) { visibleFrets++; refresh(); saveSettings(); } };
-    posSel.onchange = () => { offset = (rootSel.value && chordTypeSel.value) ? 0 : parseInt(posSel.value) - 1; draw(); };
-    rootSel.onchange = () => { populateChordOptions(chordTypeSel.value); manualSelections.clear(); hoverCell = null; refresh(); };
-    chordTypeSel.onchange = () => { if (chordTypeSel.value !== "") scaleSel.value = ""; manualSelections.clear(); hoverCell = null; refresh(); };
-    scaleSel.onchange = () => { if (scaleSel.value !== "") chordTypeSel.value = ""; manualSelections.clear(); hoverCell = null; refresh(); saveSettings(); };
+    posSel.onchange = () => { offset=0;syncStudyViewport();draw(); };
+    rootSel.onchange = () => { populateChordOptions(chordTypeSel.value); manualSelections.clear(); hoverCell = null; if(keySignatureSel?.value==='auto')drawBaseStaff(); refresh(); };
+    chordTypeSel.onchange = () => { if (chordTypeSel.value !== "") {scaleSel.value = "";arpeggioSel.value="";} manualSelections.clear(); hoverCell = null; refresh(); };
+    scaleSel.onchange = () => { if (scaleSel.value !== "") {chordTypeSel.value = "";arpeggioSel.value="";posSel.value="model1";} manualSelections.clear(); hoverCell = null; if(keySignatureSel?.value==='auto')drawBaseStaff(); refresh(); saveSettings(); };
+    arpeggioSel.onchange=()=>{if(arpeggioSel.value){chordTypeSel.value="";scaleSel.value="";posSel.value="model1";}manualSelections.clear();hoverCell=null;refresh();saveSettings();};
     instrumentSel.addEventListener('change',saveSettings);
     soundTypeSel.addEventListener('change',saveSettings);
     rootSel.addEventListener('change',saveSettings);
@@ -599,6 +658,7 @@
     posSel.addEventListener('change',saveSettings);
     volumeSlider.addEventListener('input',saveSettings);
     [tuningSel,capoSel,orientationSel,labelModeSel,patternSel,voicingRangeSel].forEach(el=>el.addEventListener('change',()=>{manualSelections.clear();hoverCell=null;refresh();saveSettings()}));
+    keySignatureSel?.addEventListener('change',()=>{drawBaseStaff();draw();saveSettings();});
 
     function cellFromEvent(evt) {
       if (!blankMode()) return null;
@@ -675,20 +735,33 @@
       const wasSelected = manualSelections.has(key);
       if (wasSelected) {
         manualSelections.delete(key);
+        if (ephemeralTimers.has(key)) {
+          clearTimeout(ephemeralTimers.get(key));
+          ephemeralTimers.delete(key);
+        }
       } else {
         manualSelections.add(key);
         const pitches = activePitches();
         const midi = pitches[cell.s] + physicalFret(cell.displayFret);
         playNote(midi, 1.8);
+        if (ephemeralMode) {
+          const timer = setTimeout(() => {
+            ephemeralTimers.delete(key);
+            if (manualSelections.delete(key)) draw();
+          }, 1500);
+          ephemeralTimers.set(key, timer);
+        }
       }
       draw();
     });
 
-    clearSelectionBtn.onclick = () => { manualSelections.clear(); hoverCell = null; draw(); };
+    clearSelectionBtn.onclick = () => { clearEphemeralTimers(); manualSelections.clear(); hoverCell = null; draw(); };
     clearAllBtn.onclick = () => {
       rootSel.value = "";
       scaleSel.value = "";
+      arpeggioSel.value = "";
       populateChordOptions("");
+      clearEphemeralTimers();
       manualSelections.clear();
       hoverCell = null;
       refresh();
@@ -699,7 +772,7 @@
         const role = button.dataset.toneFilter;
         toneVisibility[role] = !toneVisibility[role];
         button.setAttribute("aria-pressed", String(toneVisibility[role]));
-        draw();
+        draw();saveSettings();
       };
     });
 
@@ -715,34 +788,10 @@
       const iv=((pc-rootPc)%12+12)%12;
       return mode==='intervals'?INTERVAL_LABELS[iv]:degreeLabel(pc,rootPc,pcs);
     }
-    function patternAllows(stringIdx,fret,pcs,rootPc){
-      const p=patternSel?.value||'free';
-      if(p==='free') return true;
-      if(p.startsWith('caged:')){
-        if(instrumentSel.value!=='guitar') return true;
-        const shape=p.split(':')[1];
-        const lowEpc=((activePitches()[5]%12)+12)%12;
-        const rootF=((rootPc-lowEpc)%12+12)%12;
-        const shift={C:-4,A:-2,G:0,E:2,D:4}[shape]||0;
-        let base=(rootF+shift)%12; if(base<0)base+=12;
-        const skew={C:[0,0,1,1,2,2],A:[0,1,1,1,2,2],G:[0,0,1,2,2,3],E:[0,0,1,1,1,2],D:[0,1,1,2,2,2]}[shape];
-        const start=base+(skew[stringIdx]||0);
-        return fret>=start && fret<=start+4;
-      }
-      if(p.startsWith('3nps:')){
-        if(!pcs || pcs.length!==7) return true;
-        const pos=Math.max(1,Math.min(7,+p.split(':')[1]||1));
-        const all=[];
-        for(let f=0;f<=TOTAL_FRETS;f++){const pc=(activePitches()[stringIdx]+physicalFret(f))%12;if(pcs.includes(pc))all.push(f)}
-        if(all.length<3)return true;
-        const rootAnchor=((rootPc-(activePitches().at(-1)%12)+12)%12);
-        const target=rootAnchor+(pos-1)*2;
-        let best=0,bestD=1e9;
-        for(let i=0;i<=all.length-3;i++){const d=Math.abs(all[i]-target);if(d<bestD){bestD=d;best=i}}
-        return all.slice(best,best+3).includes(fret);
-      }
-      return true;
+    function patternAllows(stringIdx,fret){
+      return !selectedStudyModel || selectedStudyModel.cells.some(cell=>cell.string===stringIdx&&cell.fret===fret);
     }
+
 
     // Función draw (diapasón)
     function draw() {
@@ -880,7 +929,8 @@
       // Dibujar círculos de notas
       const isBlank = blankMode();
       const chordMode = !isBlank && chordTypeSel.value !== "";
-      const scaleMode = !isBlank && scaleSel.value !== "";
+      const scaleMode = !isBlank && (scaleSel.value !== "" || arpeggioSel.value !== "");
+      if(!scaleMode){cvs.dataset.studyModel="";cvs.dataset.studyCells="[]";cvs.setAttribute("aria-label","Diapasón del instrumento seleccionado");}
 
       // Variables para recoger las notas que se dibujan (para el pentagrama)
       let currentNotes = [];
@@ -916,9 +966,12 @@
         }
       } else if (scaleMode) {
         const rootPc = window.CrescendoPitchSpelling.pc(rootSel.value);
-        const ints = SCALE[scaleSel.value];
-        const pcs = pcPattern(rootPc, ints);
+        const pcs = studyIntervals().map(interval=>(rootPc+interval)%12);
         const spec = SPECIAL.includes(scaleSel.value);
+        const characteristic = arpeggioSel.value ? [] : Study.characteristic(scaleSel.value,studyIntervals());
+        cvs.dataset.studyModel = selectedStudyModel?.label || "Todo el diapasón";
+        cvs.dataset.studyCells = JSON.stringify(selectedStudyModel?.cells || []);
+        cvs.setAttribute("aria-label",`${arpeggioSel.value?'Arpegio':'Escala'} ${rootSel.value} · ${cvs.dataset.studyModel}`);
         for (let s = 0; s < stringCount; s++) {
           const startFret = offset === 0 ? 0 : offset + 1;
           const endFret = offset + visibleFrets;
@@ -926,7 +979,7 @@
             const pc = (pitches[s] + physicalFret(displayFret)) % 12;
             if (!pcs.includes(pc)) continue;
             if (!patternAllows(s,displayFret,pcs,rootPc)) continue;
-            const role = toneRole(pc, rootPc, pcs, spec);
+            const role = arpeggioSel.value ? (pc===rootPc?"root":"structural") : toneRole(pc, rootPc, pcs, spec);
             if (!toneVisibility[role]) continue;
             const midi = pitches[s] + physicalFret(displayFret);
             currentNotes.push({ pc, midi });
@@ -944,6 +997,9 @@
             ctx.restore();
             ctx.fillStyle = "#161514";
             ctx.fillText(boardNoteLabel(pc,rootPc,pcs), x, y + 0.5);
+            if(toneVisibility.characteristic && characteristic.some(note=>(rootPc+note.interval)%12===pc)){
+              ctx.save();ctx.strokeStyle="#d58cff";ctx.lineWidth=3;ctx.shadowColor="#d58cff";ctx.shadowBlur=5;ctx.beginPath();ctx.arc(x,y,RAD+4,0,Math.PI*2);ctx.stroke();ctx.restore();
+            }
           }
         }
       } else {
@@ -955,6 +1011,11 @@
           selectedNotes.push({ pc: midi % 12, midi });
         });
         currentNotes = selectedNotes;
+        if(hoverCell){
+          const hoverMidi=pitches[hoverCell.s]+physicalFret(hoverCell.displayFret);
+          const hoverPc=((hoverMidi%12)+12)%12;
+          if(!currentNotes.some(n=>n.midi===hoverMidi))currentNotes.push({pc:hoverPc,midi:hoverMidi,hover:true});
+        }
 
         for (let s = 0; s < stringCount; s++) {
           const startFret = offset === 0 ? 0 : offset + 1;
@@ -1052,7 +1113,7 @@
     function updateInfo() {
       const isBlank = blankMode();
       const chordMode = !isBlank && chordTypeSel.value !== "";
-      const scaleMode = !isBlank && scaleSel.value !== "";
+      const scaleMode = !isBlank && (scaleSel.value !== "" || arpeggioSel.value !== "");
       const symbolEl = chordSymbolEl;
       const qualityEl = chordQualityEl;
 
@@ -1069,11 +1130,13 @@
         }
       } else if (scaleMode) {
         const rootPc = window.CrescendoPitchSpelling.pc(rootSel.value);
-        const scaleName = scaleSel.value.replace(/_/g, ' ');
-        symbolEl.textContent = `Escala: ${scaleName} · Tónica ${rootSel.value||NOTE[rootPc]}`;
-        const patternText=patternSel.value==='free'?'':` · ${patternSel.options[patternSel.selectedIndex].text}`;
-        const capoText=capoSemitones()?` · Capo ${capoSemitones()}`:'';
-        qualityEl.textContent = `Modo ${scaleName}${patternText}${capoText}`;
+        const scaleName = arpeggioSel.value ? Study.ARPEGGIOS[arpeggioSel.value].label : scaleSel.value.replace(/_/g, ' ');
+        symbolEl.textContent = `${arpeggioSel.value?'Arpegio':'Escala'}: ${rootSel.value} ${scaleName}`;
+        const modelText=selectedStudyModel?`${selectedStudyModel.label} · trastes ${selectedStudyModel.minFret}–${selectedStudyModel.maxFret}`:'Todo el diapasón';
+        const colors=arpeggioSel.value?[]:Study.characteristic(scaleSel.value,studyIntervals());
+        const colorText=colors.length?' · Nota'+(colors.length>1?'s':'')+' característica'+(colors.length>1?'s':'')+': '+colors.map(note=>`${note.degree} (${spellPc((rootPc+note.interval)%12,rootSel.value)})`).join(' · '):'';
+        qualityEl.textContent = `${modelText}${colorText}${capoSemitones()?` · Capo ${capoSemitones()}`:''}`;
+
       } else {
         if (manualSelections.size > 0) {
           const selectedNotes = [];
@@ -1085,28 +1148,34 @@
           });
           const selectedPcs = selectedNotes.map(n => n.pc);
           const detected = detectChord(selectedPcs);
+          const detectedScale = detected ? null : detectScale(selectedPcs);
           if (detected) {
             symbolEl.textContent = NOTE[detected.root] + detected.def.suffix;
             qualityEl.textContent = detected.def.quality;
+          } else if (detectedScale) {
+            const scaleName = detectedScale.key.replace(/_/g, ' ');
+            symbolEl.textContent = `Escala: ${NOTE[detectedScale.root]} ${scaleName}`;
+            qualityEl.textContent = "Las notas seleccionadas forman una escala";
           } else if (selectedNotes.length > 0) {
             symbolEl.textContent = `Notas: ${selectedNotes.map(n => NOTE[n.pc]).join(' ')}`;
-            qualityEl.textContent = "No se reconoce un acorde con estas notas";
+            qualityEl.textContent = "No se reconoce un acorde o escala con estas notas";
           } else {
-            symbolEl.textContent = "Modo exploración";
-            qualityEl.textContent = "Haz clic en los trastes para seleccionar notas";
+            symbolEl.textContent = "";
+            qualityEl.textContent = ephemeralMode ? "Borra cada nota 1,5 s después de tocarla" : "Haz clic en los trastes para seleccionar notas";
           }
         } else {
-          symbolEl.textContent = "Modo exploración";
-          qualityEl.textContent = "Haz clic en los trastes para seleccionar notas";
+          symbolEl.textContent = "";
+          qualityEl.textContent = ephemeralMode ? "Borra cada nota 1,5 s después de tocarla" : "Haz clic en los trastes para seleccionar notas";
         }
       }
     }
 
     function syncPatternAvailability(){
-      const pcs=scaleSel.value && SCALE[scaleSel.value] ? scalePitchClasses(rootSel.value, scaleSel.value) : [];
-      const heptatonic=pcs.length===7;
-      [...patternSel.options].forEach(o=>{ if(o.value.startsWith('3nps:')) o.disabled=!heptatonic; });
-      if(patternSel.value.startsWith('3nps:') && !heptatonic) patternSel.value='free';
+      const heptatonic=!arpeggioSel.value && scaleSel.value && Study.intervals(SCALE[scaleSel.value]).length===7;
+      const three=[...patternSel.options].find(o=>o.value==='3nps');if(three)three.disabled=!heptatonic;
+      if(patternSel.value==='3nps'&&!heptatonic)patternSel.value='free';
+      document.querySelector('label[for="pos"]').textContent=chordTypeSel.value?'Inversión':'Modelo';
+      voicingRangeSel.disabled=studyActive();
     }
 
     function refresh() {
@@ -1115,6 +1184,6 @@
       buildPositions();
       fretVal.textContent = visibleFrets;
       if (!posSel.value) posSel.selectedIndex = 0;
-      offset = (rootSel.value && chordTypeSel.value) ? 0 : parseInt(posSel.value || 1) - 1;
+      offset = 0;syncStudyViewport();
       draw();
     }
