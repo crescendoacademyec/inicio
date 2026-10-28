@@ -45,8 +45,6 @@
 .lab-motion h4{margin:0 0 8px;color:#f1cd79;font-size:.78rem}
 .lab-motion p{font-size:.73rem;line-height:1.5;margin:5px 0}
 .lab-tip{padding:10px 12px;background:#1c1c1c;border-left:3px solid #d4a84f;color:#ece5d7;font-size:.75rem;line-height:1.5;margin-bottom:0}
-#studyLabToggle{background:#121212;color:#fff;border:1px solid #555}
-#studyLabToggle[aria-expanded=true]{background:#d4a84f;color:#111}
 @media(max-width:700px){.study-lab{padding:12px}
 .lab-fields{grid-template-columns:repeat(2,minmax(0,1fr))}
 .lab-tables{flex-direction:column}
@@ -80,3 +78,15 @@
 .study-lab .staff-left{min-width:100px}
 .lab-workspace .lab-table-wrap{max-height:190px}
 }
+
+/* Shared pill shape and plum palette for the two view controls. */
+.fret-control-row .fret-tool-button{display:inline-flex;align-items:center;justify-content:center;gap:5px;flex:0 0 116px;width:116px;height:36px;min-height:36px;padding:6px 8px;box-sizing:border-box;border:1px solid transparent;border-radius:20px;background:#51405f;color:#fff;font:900 .7rem/1 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;white-space:nowrap;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.25);transition:transform .1s,filter .15s,background .15s}
+.fret-control-row .fret-tool-button span{font:inherit;letter-spacing:normal;text-transform:none}
+.fret-control-row .fret-tool-button svg{width:16px;height:16px;flex:0 0 16px}
+.fret-control-row .fret-tool-button[aria-expanded="true"],.fret-control-row .fret-tool-button[aria-pressed="true"]{background:#735a86;border-color:#bda0cb;color:#fff}
+.fret-control-row .fret-tool-button:hover{filter:brightness(1.12)}
+.fret-control-row .fret-tool-button:active{transform:scale(.96)}
+.fret-control-row .fret-tool-button:focus-visible{outline:2px solid #e2c5ef;outline-offset:3px}
+/* Override the site's gold selection rule only for these two view pills. */
+body .fret-control-row .fret-tool-button[aria-expanded="true"],body .fret-control-row .fret-tool-button[aria-pressed="true"]{background:#735a86!important;border-color:#bda0cb!important;color:#fff!important}
+body .fret-control-row .fret-tool-button[aria-pressed="true"] span{color:#fff!important}
