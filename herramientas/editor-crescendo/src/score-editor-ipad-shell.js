@@ -417,7 +417,7 @@
 
     const headerCenter = element("div", "ipad-header-center");
     const clearButton = createIconButton({ icon: "eraser", label: "Limpiar toda la escritura de ambos pentagramas" });
-    const saveButton = createIconButton({ icon: "save", label: "Guardar ejercicio", text: "Guardar", className: "ipad-header-action ipad-save-action" });
+    const saveButton = createIconButton({ icon: "save", label: "Guardar o exportar", text: "Exportar", className: "ipad-header-action ipad-save-action" });
     const undoProxy = createIconButton({ icon: "undo-2", label: "Deshacer" });
     const redoProxy = createIconButton({ icon: "redo-2", label: "Rehacer" });
     const playProxy = createIconButton({ icon: "play", label: "Reproducir o detener" });
@@ -460,6 +460,8 @@
     const toggleRight = createIconButton({ icon: "panel-right", label: "Mostrar u ocultar inspector" });
     const fullscreenProxy = createIconButton({ icon: "maximize", label: "Pantalla completa" });
     headerRight.append(createSoundSelector(true), saveStatus, keyboardToggle, toggleRight, fullscreenProxy);
+    saveStatus.classList.add("ipad-autosave-indicator");
+    saveStatus.setAttribute("role", "status");
     header.append(headerLeft, headerCenter, headerRight);
 
     const body = element("div", "ipad-workspace-body");
@@ -724,7 +726,37 @@
     proxyClick(redoProxy, "#redoButton");
     proxyClick(playProxy, "#playbackButton");
     proxyClick(metronomeProxy, "#metronomeButton");
-    proxyClick(saveButton, "#saveExerciseButton");
+    saveButton.addEventListener("click", () => {
+      const dialog = document.createElement("dialog");dialog.className="editor-export-dialog";dialog.setAttribute("aria-label","Guardar o exportar partitura");
+      dialog.innerHTML='<form><h2>Guardar o exportar</h2><label>Formato<select name="format"><option value="pdf">PDF</option><option value="png">Imagen PNG</option><option value="musicxml">MusicXML</option><option value="json">Proyecto editable (JSON)</option></select></label><label>Nombre<input name="filename" required autocomplete="off"></label><div class="export-folder"><button type="button" data-folder>Elegir carpeta</button><span data-folder-name>Descargas del navegador</span></div><p data-folder-help></p><div class="export-actions"><button type="button" data-cancel>Cancelar</button><button type="submit">Exportar</button></div></form>';
+      const name=dialog.querySelector('input'),format=dialog.querySelector('select');name.value=heading.querySelector('h1').textContent;
+      let directory=null;
+      const folder=dialog.querySelector('[data-folder]');
+      folder.disabled=!global.showDirectoryPicker;
+      dialog.querySelector('[data-folder-help]').textContent=global.showDirectoryPicker?'Puedes elegir una carpeta para guardar el archivo.':global.showSaveFilePicker?'Al exportar podrás elegir la carpeta en el diálogo del navegador.':'La carpeta se gestiona desde las opciones de descarga del navegador. Activa «Preguntar dónde guardar» para elegirla en cada exportación.';
+      folder.onclick=async()=>{try{directory=await global.showDirectoryPicker({mode:'readwrite'});dialog.querySelector('[data-folder-name]').textContent=directory.name;}catch(error){if(error.name!=='AbortError')dialog.querySelector('[data-folder-help]').textContent=error.message;}};
+      dialog.querySelector('[data-cancel]').onclick=()=>dialog.close();
+      dialog.querySelector('form').onsubmit=async event=>{
+        event.preventDefault();const selected=format.value,filename=global.CrescendoScoreFile.filename(name.value,selected);let fileHandle=null;
+        try{
+          if(!directory&&global.showSaveFilePicker)fileHandle=await global.showSaveFilePicker({suggestedName:filename});
+          saveButton.classList.add('is-active');
+          document.dispatchEvent(new CustomEvent('editor-export',{detail:{format:selected,filename,directory,fileHandle}}));dialog.close();
+        }catch(error){if(error.name!=='AbortError')dialog.querySelector('[data-folder-help]').textContent=error.message;}
+      };
+      dialog.onclose=()=>dialog.remove();document.body.appendChild(dialog);dialog.showModal();name.focus();name.select();
+    });
+    document.addEventListener('editor-export-finished',()=>saveButton.classList.remove('is-active'));
+    const measureControls=element('div','ipad-measure-controls');
+    const minusMeasure=createIconButton({icon:'minus',label:'Quitar el compás seleccionado'});
+    const measureCount=element('output','ipad-measure-count','8');measureCount.setAttribute('aria-label','Número de compases');
+    const plusMeasure=createIconButton({icon:'plus',label:'Añadir un compás al final'});
+    minusMeasure.replaceChildren(element('span','','−'));plusMeasure.replaceChildren(element('span','','+'));
+    minusMeasure.onclick=()=>document.dispatchEvent(new CustomEvent('editor-measures',{detail:{delta:-1}}));
+    plusMeasure.onclick=()=>document.dispatchEvent(new CustomEvent('editor-measures',{detail:{delta:1}}));
+    measureControls.setAttribute('aria-label','Compases');measureControls.append(element('span','','Compases'),minusMeasure,measureCount,plusMeasure);workspaceStatus.insertBefore(measureControls,sceneStatus);
+    document.addEventListener('editor-measure-count',event=>{measureCount.textContent=String(event.detail.count);minusMeasure.disabled=event.detail.count<=1;});
+    document.addEventListener('editor-autosaved',()=>{saveStatus.dataset.state='saved';saveStatus.title='Guardado automáticamente en este navegador';saveStatus.setAttribute('aria-label',saveStatus.title);});
     proxyClick(clearButton, "#clearScoreButton");
     proxyClick(fullscreenProxy, "#fullscreenButton");
 
@@ -917,18 +949,14 @@
       documentSubtitle.textContent = detail.description || "Partitura editable";
       const dirty = detail.dirty === true;
       const storageError = detail.storageError === true;
-      saveStatus.dataset.state = storageError ? "error" : dirty ? "dirty" : "saved";
+      saveStatus.dataset.state = storageError ? "error" : detail.autosavePending ? "saving" : "saved";
+      saveStatus.title = storageError ? "No se pudo guardar automáticamente" : detail.autosavePending ? "Guardando automáticamente…" : "Guardado automático en este navegador";
+      saveStatus.setAttribute("aria-label",saveStatus.title);
       const changeCount = Number(detail.unsavedChangeCount) || 0;
-      saveStatus.lastElementChild.textContent = storageError
-        ? "No se pudo guardar"
-        : dirty
-          ? (changeCount > 0 ? `${changeCount} cambio${changeCount === 1 ? "" : "s"} sin guardar` : "Cambios sin guardar")
-          : "Guardado";
+      saveStatus.lastElementChild.textContent = "";
       documentState.textContent = storageError
         ? (detail.status || "El almacenamiento local no está disponible.")
-        : dirty
-          ? "El borrador está protegido localmente, pero aún no forma parte de la biblioteca."
-          : (detail.status || "Documento guardado en la biblioteca.");
+        : "Guardado automático en este navegador. Puedes deshacer y rehacer los cambios.";
       if (detail.sceneMode) {
         const progress = Number.isFinite(detail.sceneIndex) && Number.isFinite(detail.sceneCount)
           ? ` · ${detail.sceneIndex + 1}/${detail.sceneCount}`

@@ -1735,3 +1735,22 @@ html{--ipad-inspector-width:146px!important}.ipad-inspector-panel .ipad-side-con
 .guitar-fretboard button.is-active,.guitar-fretboard button.is-playing{background:radial-gradient(circle at center,#d4a84f 0 12px,transparent 13px)!important;font:900 12px/1 system-ui,sans-serif;text-shadow:none}
 .guitar-fretboard button.is-playing{filter:brightness(1.18);box-shadow:none}
 .guitar-fretboard button::after,.guitar-fretboard button::before{display:none!important}
+
+/* Automatic drafts and explicit exports share the regular toolbar identity. */
+.ipad-save-action{background:var(--ipad-panel-2,#292929);border-color:var(--ipad-line,#414141);color:var(--ipad-text,#f5f2e9)}
+.ipad-save-action:hover{background:#393939;color:#fff}
+.ipad-save-action:active,.ipad-save-action.is-active{background:var(--ipad-accent);color:var(--ipad-accent-ink)}
+.ipad-autosave-indicator{width:18px;max-width:18px;min-height:18px;padding:0;justify-content:center;background:none!important;border:0;border-radius:50%;gap:0}
+.ipad-autosave-indicator>span:last-child{display:none}
+.ipad-measure-controls{display:flex;align-items:center;justify-content:center;gap:6px;padding:10px}
+.ipad-measure-count{min-width:44px;text-align:center;font-weight:700}
+.editor-export-dialog{background:#292929;color:#f5f2e9;border:1px solid #555;border-radius:12px;padding:24px;width:min(440px,90vw)}
+.editor-export-dialog::backdrop{background:#0009}
+.editor-export-dialog form{display:grid;gap:16px}.editor-export-dialog h2{margin:0;font-size:20px}
+.editor-export-dialog label{display:grid;gap:6px}.editor-export-dialog input,.editor-export-dialog select{width:100%;box-sizing:border-box;background:#181818;color:#fff;border:1px solid #666;border-radius:6px;padding:10px}
+.editor-export-dialog button{background:#3a3a3a;color:#fff;border:1px solid #666;border-radius:6px;padding:9px 12px;cursor:pointer}
+.editor-export-dialog button[type=submit]{background:var(--ipad-accent);color:#171411}.export-actions,.export-folder{display:flex;align-items:center;gap:12px}.export-actions{justify-content:flex-end}.editor-export-dialog p{font-size:12px;color:#d4d0c8;margin:0}.export-folder span{overflow-wrap:anywhere;font-size:13px}
+
+.ipad-score-status .ipad-measure-controls{padding:2px 8px;gap:5px}.ipad-measure-controls .ipad-icon-button{width:28px;min-width:28px;height:28px;min-height:28px;font-size:20px}.ipad-measure-controls .ipad-measure-count{min-width:28px}.ipad-score-status{gap:10px}
+
+.ipad-autosave-indicator[data-state=saving]{color:var(--ipad-accent)}

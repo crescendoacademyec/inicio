@@ -40,7 +40,7 @@
    add('rect',{class:'string-tab-surface',x:0,y:y-26,width,height:instrument.tuning.length*17+34,fill:'transparent'});
    add('text',{x:24,y:y-16,'font-size':10,fill:'#555'},instrument.name);
    const left=24,right=Math.max(...rowBoxes.map(box=>Number(box.getAttribute('x'))+Number(box.getAttribute('width')))),bottom=y+(instrument.tuning.length-1)*17;
-   instrument.labels.forEach((name,i)=>{const cy=y+i*17;add('line',{x1:left,x2:right,y1:cy,y2:cy,stroke:'#555','stroke-width':.8});});
+   instrument.labels.forEach((name,i)=>{const cy=y+i*17;add('line',{x1:left,x2:right,y1:cy,y2:cy,stroke:'#222','stroke-width':1});});
    ['T','A','B'].forEach((letter,i)=>add('text',{x:left+12,y:y+(instrument.tuning.length-1)*17/2-16+i*18,'font-family':'serif','font-size':20,fill:'#222','text-anchor':'middle'},letter));
    add('line',{class:'staff-tab-connector',x1:left,x2:left,y1:Number(top),y2:bottom,stroke:'#333','stroke-width':1});
    rowBoxes.forEach(box=>{const bar=Number(box.dataset.bar),end=Number(box.getAttribute('x'))+Number(box.getAttribute('width'));add('line',{x1:end,x2:end,y1:Number(top),y2:y+(instrument.tuning.length-1)*17,stroke:'#333',class:'staff-tab-connector'});

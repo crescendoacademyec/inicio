@@ -558,6 +558,7 @@
     midiAutoChordMode: false,
     midiCaptureStatus: "",
     playbackInstrument: InstrumentSounds.readPreference(),
+    staffView: ["guitar","requinto"].includes(InstrumentSounds.readPreference()) ? "treble" : "both",
     midiPlayback: {
       active: false,
       starting: false,
@@ -1394,6 +1395,7 @@
       selectedTextIds: state.selectedTextIds,
       selectedMarkIds: state.selectedMarkIds,
       activeSystemIndex: state.activeSystemIndex,
+      staffView: state.staffView || "both",
       zoom: state.zoom,
       compactLayout: state.compactLayout === true,
       playbackBpm: state.playbackBpm,
@@ -1436,11 +1438,13 @@
       if (saved) {
         canvasAutosaveDirty = false;
         if (documentStorageError) setStorageError(false);
+        document.dispatchEvent(new CustomEvent("editor-autosaved"));
       } else {
         setStorageError(true, Storage.errorMessage?.() || "No se pudo proteger el borrador local.");
       }
       return saved;
     } catch {
+      setStorageError(true, "No se pudo guardar automáticamente en este navegador.");
       return false;
     }
   }
@@ -1764,6 +1768,7 @@
       dirty: documentDirty,
       unsavedChangeCount,
       storageError: documentStorageError,
+      autosavePending: canvasAutosaveDirty,
       status,
       sceneMode: sceneNavigationMode,
       sceneIndex: activeSceneIndex,
@@ -2341,7 +2346,7 @@
     invalidateLayoutCache();
     const data = JSON.parse(snapshot);
     pointerInputPreview = null;
-    state.staffView = data.staffView || "both";
+    state.staffView = data.staffView || (["guitar","requinto"].includes(state.playbackInstrument) ? "treble" : "both");
     state.cursorMeasure = data.cursorMeasure;
     state.cursorTick = data.cursorTick;
     state.cursorStaffStep = Number.isFinite(data.cursorStaffStep) ? data.cursorStaffStep : 0;
@@ -4992,13 +4997,40 @@
     return true;
   }
 
+  function scoreFlow(layout = buildLayout()) {
+    const header = layout.starts[0] || staffLeft();
+    const rowHeight = Math.ceil(scoreStaffBottomY() + (stringInstrument() && guitarTabVisible ? stringInstrument().tuning.length * 17 + 100 : 95));
+    const rows = [];
+    for (let first = 0; first < layout.starts.length; first += 4) {
+      const last = Math.min(first + 3, layout.starts.length - 1);
+      const origin = first ? layout.starts[first] - header : 0;
+      const end = layout.starts[last] + layout.widths[last];
+      rows.push({first, last, origin, end, width:end-origin+24, y:rows.length*rowHeight});
+    }
+    return {rows, rowHeight, width:Math.max(1,...rows.map(row=>row.width)), height:Math.max(rowHeight,rows.length*rowHeight)};
+  }
+
+  function flowPlaybackPoint(x, absoluteTick) {
+    const layout = lastRenderedLayout || buildLayout(), flow = scoreFlow(layout);
+    const measure = measureIndexAndTickFromAbsolute(absoluteTick).measureIndex;
+    const row = flow.rows[Math.floor(measure / 4)] || flow.rows.at(-1);
+    return {x:x-row.origin, y:row.y};
+  }
+
   function svgPointFromEvent(event) {
     if (!svg.createSVGPoint) return null;
     const point = svg.createSVGPoint();
     point.x = event.clientX;
     point.y = event.clientY;
+    const rowViewport = event.target?.closest?.("svg[data-score-row]");
+    if(rowViewport){const rowMatrix=rowViewport.getScreenCTM();if(rowMatrix)return point.matrixTransform(rowMatrix.inverse());}
     const matrix = svg.getScreenCTM();
-    return matrix ? point.matrixTransform(matrix.inverse()) : null;
+    if (!matrix) return null;
+    const mapped = point.matrixTransform(matrix.inverse());
+    const flow = scoreFlow(lastRenderedLayout || buildLayout());
+    const row = flow.rows[Math.max(0, Math.min(flow.rows.length-1, Math.floor(mapped.y / flow.rowHeight)))];
+    mapped.x += row.origin; mapped.y -= row.y;
+    return mapped;
   }
 
   function staffStepForEntryPointer(entry, event) {
@@ -8102,6 +8134,12 @@
   }
 
   function svgPointToClient(point) {
+    const layout=lastRenderedLayout||buildLayout(), index=measureIndexFromX(layout,point.x);
+    const viewport=svg.querySelector(`svg[data-score-row="${Math.floor(index/4)}"]`);
+    if(viewport?.getScreenCTM()){
+      const local=svg.createSVGPoint();local.x=point.x;local.y=point.y;
+      return local.matrixTransform(viewport.getScreenCTM());
+    }
     const rect = svg.getBoundingClientRect();
     const viewBox = svg.viewBox.baseVal;
     const width = viewBox?.width || rect.width || 1;
@@ -10153,7 +10191,7 @@
     return `${title}.musicxml`;
   }
 
-  async function exportMusicXml() {
+  async function exportMusicXml(options = {}) {
     const model = buildMusicXmlExportModel();
     if (!model.measures.length) {
       await showEditorMessage("No hay compases visibles para exportar.");
@@ -10162,8 +10200,8 @@
     const xml = MusicXml.serialize(model);
     const validation = validateMusicXmlText(xml);
     const omissions = musicXmlOmissionSummary(Math.max(0, ...scoreSystems().map((system) => system.measures?.length || 0)));
-    const filename=await window.CrescendoScoreFile.ask({suggested:musicXmlExportFilename(),extension:"musicxml"});if(!filename)return false;
-    downloadTextFile(filename, xml, "application/vnd.recordare.musicxml+xml;charset=utf-8");
+    const filename=options.filename || await window.CrescendoScoreFile.ask({suggested:musicXmlExportFilename(),extension:"musicxml"});if(!filename)return false;
+    await saveExportBlob(new Blob([xml],{type:"application/vnd.recordare.musicxml+xml;charset=utf-8"}),filename,options);
     await showEditorMessage(musicXmlExportMessage(model, validation, omissions));
     return validation.ok;
   }
@@ -11368,10 +11406,11 @@
       line = el("line", { id: "playbackLine", class: "playback-line", "pointer-events": "none" });
       svg?.appendChild(line);
     }
-    line.setAttribute("x1", x);
-    line.setAttribute("x2", x);
-    line.setAttribute("y1", y1);
-    line.setAttribute("y2", y2);
+    const flowPoint = flowPlaybackPoint(x, absoluteTick);
+    line.setAttribute("x1", flowPoint.x);
+    line.setAttribute("x2", flowPoint.x);
+    line.setAttribute("y1", y1 + flowPoint.y);
+    line.setAttribute("y2", y2 + flowPoint.y);
     line.scrollIntoView({ behavior: "auto", block: "nearest", inline: "nearest" });
   }
 
@@ -11939,6 +11978,12 @@
     if (state.midiPlayback.active || state.midiPlayback.starting) stopMidiPlayback();
     state.midiPlayback.output?.clear?.();
     state.playbackInstrument = instrument;
+    if (instrument === "guitar" || instrument === "requinto") {
+      state.staffView = "treble";
+      setActiveSystemIndex(0);
+    }
+    invalidateLayoutCache();
+    canvasAutosaveDirty = true;
     render();
     InstrumentSounds.remember(instrument);
     state.midiPlayback.output = null;
@@ -12149,10 +12194,11 @@
       });
       svg?.appendChild(line);
     }
-    line.setAttribute("x1", x);
-    line.setAttribute("x2", x);
-    line.setAttribute("y1", y1);
-    line.setAttribute("y2", y2);
+    const flowPoint = flowPlaybackPoint(x, absoluteTick);
+    line.setAttribute("x1", flowPoint.x);
+    line.setAttribute("x2", flowPoint.x);
+    line.setAttribute("y1", y1 + flowPoint.y);
+    line.setAttribute("y2", y2 + flowPoint.y);
     line.scrollIntoView({ behavior: "auto", block: "nearest", inline: "nearest" });
   }
 
@@ -13836,7 +13882,7 @@
     group.addEventListener("pointerdown",event=>event.stopPropagation());
     group.addEventListener("click",event=>event.stopPropagation());
     for(let string=1;string<=instrument.tuning.length;string++) {
-      group.appendChild(el("line",{x1:0,x2:layout.starts.at(-1)+layout.widths.at(-1),y1:y+(string-1)*17,y2:y+(string-1)*17,stroke:"#555","stroke-width":.8}));
+      group.appendChild(el("line",{x1:0,x2:layout.starts.at(-1)+layout.widths.at(-1),y1:y+(string-1)*17,y2:y+(string-1)*17,class:"staff-line tab-staff-line",stroke:"#161514","stroke-width":staffLineWidth()}));
     }
     const bottom=y+(instrument.tuning.length-1)*17;
     group.appendChild(el("rect",{class:"string-tab-surface",x:0,y:y-26,width:layout.totalWidth,height:instrument.tuning.length*17+34,fill:"transparent"}));
@@ -13850,7 +13896,7 @@
         measure.entries.filter(entry=>entry.type==="note").forEach(entry=>{
           const positions=instrument.fingering(stringMidisForEntry(entry,measureIndex),savedStringFingering(entry));
           const x=cursorVisualXForMeasureTick(layout,measureIndex,entry.tickStart);
-          const open=window.CrescendoStringTab.column({svg:svg,container:group,x,y,instrument,positions,key:`crescendo:${instrument.id}:${entry.id}`,onApply:(p,string,fret,position)=>{
+          const open=window.CrescendoStringTab.column({svg:root.ownerSVGElement||svg,container:group,x,y,instrument,positions,key:`crescendo:${instrument.id}:${entry.id}`,onApply:(p,string,fret,position)=>{
             setActiveSystemIndex(tabSystemIndex);
             const step=entryStaffSteps(entry).find(step=>stringMidisForEntry(entry,measureIndex,[step])[0]===p.midi);
             if(!Number.isFinite(step))return "La nota ya cambió. Vuelve a seleccionarla.";
@@ -15085,7 +15131,7 @@
   }
 
   function defaultTouchMenuPoint() {
-    const rect = svg.getBoundingClientRect();
+    const rect = (scoreShell || svg).getBoundingClientRect();
     return {
       x: rect.left + Math.min(rect.width - 20, Math.max(20, rect.width / 2)),
       y: rect.top + Math.min(rect.height - 20, Math.max(20, rect.height / 2))
@@ -15093,7 +15139,7 @@
   }
 
   function defaultScoreClientPoint() {
-    const rect = svg.getBoundingClientRect();
+    const rect = (scoreShell || svg).getBoundingClientRect();
     return {
       x: rect.left + Math.min(rect.width - 20, Math.max(20, rect.width / 2)),
       y: rect.top + Math.min(rect.height - 20, Math.max(20, rect.height / 2))
@@ -18241,6 +18287,13 @@
       const extraPerMeasure = (targetTotalWidth - intrinsicTotalWidth) / widths.length;
       widths = widths.map((width) => width + extraPerMeasure);
     }
+    // Fill each four-bar system without changing any musical-time coordinates.
+    for (let first = 0; first < widths.length; first += 4) {
+      const count = Math.min(4,widths.length-first);
+      const used = widths.slice(first,first+count).reduce((sum,value)=>sum+value,0);
+      const extra = Math.max(0,targetTotalWidth-left-24-used) / count;
+      for(let index=first;index<first+count;index++)widths[index]+=extra;
+    }
     const starts = [];
     let x = left;
     widths.forEach((width) => {
@@ -21341,42 +21394,55 @@
       normalizeCursor();
       const layout = buildLayout();
       lastRenderedLayout = layout;
-      const width = Math.max(layout.totalWidth, scoreMinWidth());
-      const height = scoreHeight(layout);
+      const flow = scoreFlow(layout);
+      const width = flow.width, height = flow.height;
       svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
-      svg.setAttribute("width", String(width));
-      svg.setAttribute("height", String(height));
+      svg.setAttribute("width", String(width)); svg.setAttribute("height", String(height));
+      svg.style.minWidth = "0";svg.style.minHeight = "0";
       svg.style.width = `${width * (state.zoom || 1)}px`;
       svg.style.height = `${height * (state.zoom || 1)}px`;
       const visibleShellHeight = scoreShellVisibleHeightFor(height);
       if (scoreShell) scoreShell.style.height = `${visibleShellHeight}px`;
-      if (systemsCanvas) {
-        systemsCanvas.style.minHeight = `${visibleShellHeight}px`;
-        systemsCanvas.style.gridTemplateRows = `${visibleShellHeight}px`;
-      }
+      if (systemsCanvas) {systemsCanvas.style.minHeight = `${visibleShellHeight}px`;systemsCanvas.style.gridTemplateRows = `${visibleShellHeight}px`;}
       svg.innerHTML = "";
-
-      const root = el("g");
-      svg.appendChild(root);
-      root.addEventListener("pointerdown", beginDragSelection);
-      renderHitZones(root, layout);
-      scoreSystems().forEach((system, systemIndex) => {
-        if (!visibleSystemIndices().includes(systemIndex)) return;
-        withSystemContext(systemIndex, () => {
-          renderStaff(root, layout);
-          renderEntries(root, layout);
-          renderNotationMarks(root, layout);
-          renderGuitarTab(root, layout);
-          if (systemIndex === activeIndex) renderCursor(root, layout);
-          renderInputPreview(root, layout, systemIndex);
+      flow.rows.forEach((row, rowIndex) => {
+        const viewport = el("svg", {x:0,y:row.y,width:flow.width,height:flow.rowHeight,viewBox:`${row.origin} 0 ${flow.width} ${flow.rowHeight}`,overflow:"hidden","data-score-row":rowIndex});
+        svg.appendChild(viewport);
+        const root = el("g");viewport.appendChild(root);
+        root.addEventListener("pointerdown", beginDragSelection);
+        const clipId = `score-row-clip-${rowIndex}`;
+        const defs=el("defs"),clip=el("clipPath",{id:clipId});
+        clip.appendChild(el("rect",{x:rowIndex?layout.starts[row.first]:0,y:0,width:row.end-(rowIndex?layout.starts[row.first]:0)+2,height:flow.rowHeight}));defs.appendChild(clip);viewport.appendChild(defs);
+        root.setAttribute("clip-path",`url(#${clipId})`);
+        renderHitZones(root, layout);
+        scoreSystems().forEach((system, systemIndex) => {
+          if (!visibleSystemIndices().includes(systemIndex)) return;
+          withSystemContext(systemIndex, () => {
+            renderStaff(root, layout);renderEntries(root, layout);renderNotationMarks(root, layout);renderGuitarTab(root, layout);
+            if (systemIndex === activeIndex && state.cursorMeasure >= row.first && state.cursorMeasure <= row.last) renderCursor(root, layout);
+            renderInputPreview(root, layout, systemIndex);
+            if(rowIndex){
+              const heading=el("g",{transform:`translate(${row.origin} 0)`});viewport.appendChild(heading);
+              BasicRender.appendStaffLines(heading,{lineSteps:Array.from({length:5},(_,i)=>STAFF_LINE_TOP_STEP-i*2),visibleRuns:[{start:0,end:layout.starts[0]}],pitchY,strokeWidth:staffLineWidth()});
+              renderClefGlyph(heading,clefIdAtAbsoluteTick(measureStartAbsoluteTick(row.first),systemIndex),30+appearanceValue("clefOffsetX"),pitchYForSystem(0,systemIndex)+appearanceValue("clefOffsetY"),{className:"music-glyph clef",scale:appearanceValue("clefScale")});
+              renderKeySignature(heading,keySignatureForMeasureIndex(row.first));
+              renderTimeSignature(heading,meterForMeasureIndex(row.first));
+              const instrument=stringInstrument();
+              if(instrument&&guitarTabVisible){
+                const tabY=staffBottomY()+76,bottom=tabY+(instrument.tuning.length-1)*17;
+                for(let line=0;line<instrument.tuning.length;line++)heading.appendChild(el("line",{class:"staff-line tab-staff-line",x1:0,x2:layout.starts[0],y1:tabY+line*17,y2:tabY+line*17,"stroke-width":staffLineWidth()}));
+                ["T","A","B"].forEach((letter,i)=>heading.appendChild(textNode(20,tabY+(instrument.tuning.length-1)*17/2-16+i*18,letter,{"text-anchor":"middle",style:"font:20px serif;fill:#222"})));
+                heading.appendChild(textNode(12,tabY-16,instrument.name,{style:"font:bold 12px sans-serif;fill:#111"}));
+                heading.appendChild(el("line",{class:"staff-tab-connector",x1:0,x2:0,y1:staffTopY(),y2:bottom,stroke:"#333","stroke-width":1}));
+              }
+            }
+          });
         });
+        setActiveSystemIndex(activeIndex);
+        renderTextItems(root, layout);renderMeasureSelection(root, layout);renderDragSelection(root);
+        // Keep live event handlers for the visible row and avoid duplicate note IDs.
+        root.querySelectorAll('[data-entry-id],.string-tab-column').forEach(node=>{try{const box=node.getBBox();if(box.x+box.width<layout.starts[row.first]-1||box.x>row.end+1)node.remove();}catch{}});
       });
-      setActiveSystemIndex(activeIndex);
-      renderTextItems(root, layout);
-      renderMeasureSelection(root, layout);
-
-      renderDragSelection(root);
-      svg.appendChild(root);
       scheduleRestAlignment();
       updateCursorLabel();
       refreshDurationButtons();
@@ -21390,6 +21456,7 @@
       renderGuitarPanel();
       if (state.midiPlayback.active) updatePlaybackLine();
       scheduleCanvasAutosave();
+      document.dispatchEvent(new CustomEvent("editor-measure-count",{detail:{count:state.measures.length}}));
     } finally {
       renderInProgress = false;
       if (renderQueued) {
@@ -23323,15 +23390,37 @@
   document.addEventListener("keyup", updateShiftDragCursor);
   window.addEventListener("blur", clearShiftDragCursor);
   window.addEventListener("beforeunload", (event) => {
-    saveCanvasAutosaveNow();
+    if (saveCanvasAutosaveNow()) return;
     if (!documentDirty) return;
     event.preventDefault();
     event.returnValue = "";
   });
   document.addEventListener("keydown", handleKeydown);
 
+  async function saveExportBlob(blob,filename,options={}) {
+    const handle=options.fileHandle || (options.directory ? await options.directory.getFileHandle(filename,{create:true}) : null);
+    if(handle){const writer=await handle.createWritable();try{await writer.write(blob);await writer.close();}catch(error){await writer.abort?.();throw error;}return;}
+    const url=URL.createObjectURL(blob),link=document.createElement("a");link.href=url;link.download=filename;link.click();setTimeout(()=>URL.revokeObjectURL(url),30000);
+  }
+
+  document.addEventListener("editor-measures",event=>{
+    if(event.detail?.delta>0)appendMeasuresAtEnd(1);else removeSelectedMeasure();
+    requestAnimationFrame(()=>svg.querySelector(".cursor-line,.input-cursor")?.scrollIntoView({block:"nearest",inline:"nearest"}));
+  });
+  document.addEventListener("editor-export",async event=>{
+    const options=event.detail||{};
+    try{
+      saveCanvasAutosaveNow();
+      if(options.format==='musicxml')await exportMusicXml(options);
+      else if(options.format==='json')await saveExportBlob(new Blob([JSON.stringify(currentExerciseDocument(),null,2)],{type:'application/json'}),options.filename,options);
+      else {document.dispatchEvent(new CustomEvent('editor-export-image',{detail:options}));return;}
+      setExerciseStatus(`Exportado: ${options.filename}`);
+    }catch(error){showEditorMessage("No se pudo exportar: "+error.message);}
+    finally{if(!['pdf','png'].includes(options.format))document.dispatchEvent(new CustomEvent('editor-export-finished'));}
+  });
+
   document.addEventListener("editor-export-image", async event => {
-    const filename=await window.CrescendoScoreFile.ask({suggested:exerciseTitleInput?.value||"Partitura",extension:event.detail?.format==="pdf"?"pdf":"png"});if(!filename)return;
+    const filename=event.detail?.filename || await window.CrescendoScoreFile.ask({suggested:exerciseTitleInput?.value||"Partitura",extension:event.detail?.format==="pdf"?"pdf":"png"});if(!filename){document.dispatchEvent(new CustomEvent("editor-export-finished"));return;}
     try {
       await document.fonts.ready;
       const copy = svg.cloneNode(true), originals = [svg, ...svg.querySelectorAll("*")], clones = [copy, ...copy.querySelectorAll("*")];
@@ -23345,7 +23434,7 @@
       const bytes = new Uint8Array(await response.arrayBuffer());let binary = "";
       for(let i=0;i<bytes.length;i+=8192)binary+=String.fromCharCode(...bytes.subarray(i,i+8192));
       const defs=el("defs"),style=el("style");style.textContent=`@font-face{font-family:'MTF Improviso Light';src:url(data:font/otf;base64,${btoa(binary)}) format('opentype');}`;defs.appendChild(style);copy.prepend(defs);
-      const box={width:svg.viewBox.baseVal.width,height:Math.min(svg.viewBox.baseVal.height,scoreStaffBottomY()+(stringInstrument()&&guitarTabVisible?210:120))};copy.setAttribute("viewBox",`0 0 ${box.width} ${box.height}`);copy.setAttribute("width",box.width);copy.setAttribute("height",box.height);
+      const box={width:svg.viewBox.baseVal.width,height:svg.viewBox.baseVal.height};copy.setAttribute("viewBox",`0 0 ${box.width} ${box.height}`);copy.setAttribute("width",box.width);copy.setAttribute("height",box.height);
       const url=URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(copy)],{type:"image/svg+xml"}));
       try {
         const image=new Image();await new Promise((resolve,reject)=>{image.onload=resolve;image.onerror=reject;image.src=url;});
@@ -23354,9 +23443,11 @@
         const pdf=event.detail?.format==="pdf",blob=await new Promise(resolve=>canvas.toBlob(resolve,pdf?"image/jpeg":"image/png",.97));
         if(!blob)throw Error("No se pudo crear el archivo.");
         const result=pdf?new Blob([window.CrescendoRhythmExport.pdf(new Uint8Array(await blob.arrayBuffer()),canvas.width,canvas.height)],{type:"application/pdf"}):blob;
-        const link=document.createElement("a"),download=URL.createObjectURL(result);link.href=download;link.download=filename;link.click();setTimeout(()=>URL.revokeObjectURL(download),30000);
+        await saveExportBlob(result,filename,event.detail);
+        setExerciseStatus(`Exportado: ${filename}`);
       } finally {URL.revokeObjectURL(url);}
     } catch(error) {showEditorMessage("No se pudo exportar: "+(error.message||"error de imagen"));}
+    finally{document.dispatchEvent(new CustomEvent("editor-export-finished"));}
   });
 
   document.documentElement.dataset.jmlEditorBoot = "listeners-ready";
