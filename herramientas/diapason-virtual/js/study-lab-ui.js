@@ -20,14 +20,14 @@ const defaults={cycleMode:'transpose',degreeCycle:'1',diatonicVoices:'4',allKeys
 let cfg={...defaults},frames=[],index=0,timer=null,playing=false,voices=[],baseVoices=[],run=0,context=null,activeBaseKey=null;
 try{const saved=JSON.parse(localStorage.getItem('diapason-study-lab-v1')||'{}');for(const k of ['tempo','anchor','group'])if(k in saved)cfg[k]=saved[k];}catch(_){}
 if(!Number.isFinite(+cfg.anchor)||cfg.anchor<0||cfg.anchor>17)cfg.anchor=5;if(!['all','low','mid','high'].includes(cfg.group))cfg.group='all';if(!Number.isFinite(+cfg.tempo)||cfg.tempo<30||cfg.tempo>240)cfg.tempo=80;
-host.innerHTML=`<div class="lab-heading"><div><span class="lab-eyebrow">Estudio del instrumento</span><h2>De la posición a la música</h2></div><button type="button" id="labClose" aria-label="Cerrar estudio guiado">×</button></div>
+host.innerHTML=`<div class="lab-heading"><div><h2>Estudio guiado</h2></div><button type="button" id="labClose" aria-label="Cerrar estudio guiado">×</button></div>
 <div class="lab-topics" role="group" aria-label="Temas de estudio"></div>
 <div class="lab-files"><label>Nombre del ejercicio<input id="labTitle" maxlength="100" value="Estudio de diapasón"></label><button type="button" id="labSave">Guardar ejercicio</button><button type="button" id="labRestore">Recuperar último</button><button type="button" id="labOpen">Abrir archivo</button><button type="button" id="labExport" disabled>Exportar</button><input id="labProjectFile" type="file" accept=".json,application/json" hidden></div><div class="lab-description"><p id="labDescription"></p><small id="labSource"></small></div>
 <div class="lab-fields" id="labFields"></div>
 <div class="lab-actions"><button type="button" id="labGenerate" class="lab-primary">Preparar ejercicio</button><button type="button" id="labPlay" disabled>▶ Escuchar</button><button type="button" id="labPause" disabled>Ⅱ Pausa</button><button type="button" id="labStop" disabled>■ Detener</button><button type="button" id="labPrev" aria-label="Paso anterior" disabled>←</button><button type="button" id="labNext" aria-label="Paso siguiente" disabled>→</button><label>BPM <input type="number" id="labTempo" min="30" max="240" value="${cfg.tempo}"></label><label><input type="checkbox" id="labLoop"> Repetir</label><button type="button" id="labRelease" disabled>Volver a exploración</button></div>
 <p id="labStatus" class="lab-status" role="status">Elige un tema y prepara el ejercicio.</p>
 <div id="labResult" hidden><div id="labTimeline" class="lab-timeline" role="group" aria-label="Recorrido del ejercicio"></div><div class="lab-current"><div><h3 id="labCurrent"></h3><p id="labContext"></p></div><span id="labCounter"></span></div><div class="lab-tables"><div class="lab-table-wrap"><table><caption>Notas y digitación · alturas sonoras</caption><thead><tr><th>Nota</th><th>Intervalo</th><th>Función</th><th>Cuerda / traste</th></tr></thead><tbody id="labNotes"></tbody></table></div><div id="labMotion" class="lab-motion" hidden></div></div></div>
-<p class="lab-tip" id="labTip"></p><details id="labFullScore" class="lab-full-score" hidden open><summary>Partitura completa y tablatura</summary><p id="labScoreStatus" role="status"></p><div id="labScoreSurface" class="lab-score-surface"></div></details>`;
+<p class="lab-tip" id="labTip"></p><details id="labFullScore" class="lab-full-score" hidden><summary>Partitura completa y tablatura</summary><p id="labScoreStatus" role="status"></p><div id="labScoreSurface" class="lab-score-surface"></div></details>`;
 const $=id=>document.getElementById(id),topicButtons=new Map(),scoreView=new S.ScoreView(document.getElementById('labScoreSurface'));
 const PROJECT_KEY='diapason-study-project-v1';let saveTimer=null,autoTitle='Estudio de diapasón';
 // Keep the real instrument and Bravura staff next to the study controls.
@@ -38,10 +38,19 @@ const controlSide=document.createElement('div');controlSide.className='lab-contr
 const visualSide=document.createElement('div');visualSide.className='lab-visual-side';
 for(const selector of ['.lab-description','.lab-fields','.lab-actions','.lab-status','.lab-tip'])controlSide.append(host.querySelector(selector));
 visualSide.append($('labResult'));workspace.append(controlSide,visualSide);host.append(workspace,$('labFullScore'));
+function fold(label,className){const d=document.createElement('details'),summary=document.createElement('summary');d.className=className;summary.textContent=label;d.append(summary);return d;}
+const settings=fold('Ajustar ejercicio','lab-settings');settings.append(controlSide.querySelector('.lab-description'),$('labFields'),controlSide.querySelector('.lab-tip'),$('labGenerate'),$('labRelease'));controlSide.append(settings);
+const files=fold('Guardar, abrir o exportar','lab-project-tools');files.append(host.querySelector('.lab-files'));const savedHint=document.createElement('p');savedHint.textContent='El ejercicio se guarda automáticamente en este navegador.';files.append(savedHint);
+const free=fold('Crear un ejercicio libre','lab-free-study'),freeLabel=document.createElement('label');freeLabel.textContent='Tipo de ejercicio';const topicSelect=document.createElement('select');topicSelect.id='labTopicSwitch';for(const [key,topic] of Object.entries(TOPICS))topicSelect.add(new Option(topic.label,key));freeLabel.append(topicSelect);free.append(freeLabel);host.querySelector('.lab-topics').hidden=true;
+topicSelect.onchange=()=>{topicButtons.get(topicSelect.value)?.click();route.open=false;settings.open=true;};
+const noteDetails=fold('Notas, digitación y conducción de voces','lab-note-details'),tables=$('labResult').querySelector('.lab-tables');tables.before(noteDetails);noteDetails.append(tables);
+host.append(free,files,$('labFullScore'));
+$('labPause').hidden=true;
+
 
 const curriculum=window.CrescendoStudyCurriculum||[],route=document.createElement('details');route.className='lab-curriculum';route.open=true;
 route.innerHTML='<summary>Ruta de estudio · cuatro niveles de guitarra</summary><p>Orden de temas de Guitarra 1–4. Explicaciones y ejercicios interactivos propios; el repertorio de los libros se practica con tu ejemplar o una partitura autorizada.</p><div class="lab-route-selectors"><label>Nivel<select id="labLevel"></select></label><label>Unidad<select id="labUnit"></select></label></div><div class="lab-route-goal"><strong id="labUnitTitle"></strong><p id="labUnitGoal"></p><small id="labUnitSource"></small></div><div class="lab-route-actions"><button type="button" id="labUnitPrev">← Unidad anterior</button><button type="button" id="labUnitStart">Estudiar esta unidad</button><button type="button" id="labUnitNext">Unidad siguiente →</button><label><input type="checkbox" id="labUnitDone"> Practicada</label><span id="labRouteProgress"></span></div>';
-host.querySelector('.lab-topics').before(route);let routeLevel=0,routeUnit=0,routeStarted=false,routeDone={};
+workspace.before(route);let routeLevel=0,routeUnit=0,routeStarted=false,routeDone={};
 try{const saved=JSON.parse(localStorage.getItem('diapason-curriculum-v1')||'{}');routeLevel=Math.max(0,Math.min(curriculum.length-1,Number(saved.level)||0));routeUnit=Math.max(0,Math.min(curriculum[routeLevel].units.length-1,Number(saved.unit)||0));routeDone=saved.done&&typeof saved.done==='object'?saved.done:{};}catch(_){}
 function saveRoute(){try{localStorage.setItem('diapason-curriculum-v1',JSON.stringify({level:routeLevel,unit:routeUnit,done:routeDone}));}catch(_){} }
 function renderRoute(){
@@ -50,13 +59,14 @@ function renderRoute(){
  const count=curriculum.flatMap(l=>l.units).filter(u=>routeDone[u.id]).length;$('labRouteProgress').textContent=count+' / '+curriculum.flatMap(l=>l.units).length+' unidades practicadas';
 }
 async function loadUnit(){
- stop();release();const unit=curriculum[routeLevel].units[routeUnit],preset=unit.preset,c=B.context();
+ stop();release();route.open=true;free.open=false;files.open=false;settings.open=false;const unit=curriculum[routeLevel].units[routeUnit],preset=unit.preset,c=B.context();
  if(c.pitches.length!==6){Object.assign(c,{instrument:'guitar',instrumentLabel:'Guitarra',tuning:'standard',capo:0,pitches:[64,59,55,50,45,40]});}
  Object.assign(c,{scaleKey:preset.scale||'mayor',arpeggio:preset.arpeggio||'',chordValue:preset.chord||'',rootName:preset.rootName||(['1-penta-minor','1-blues-minor','1-cycle','1-motifs'].includes(unit.id)?'A':'C')});
  B.restoreContext(c);cfg={...defaults,tempo:cfg.tempo,...preset};cfg.kind=preset.kind;$('labTempo').value=cfg.tempo;$('labLoop').checked=false;renderFields();autoTitle=unit.title;$('labTitle').value=unit.title;routeStarted=true;generate(unit.title);saveRoute();
 }
-$('labLevel').onchange=()=>{routeLevel=Number($('labLevel').value);routeUnit=0;renderRoute();saveRoute();};$('labUnit').onchange=()=>{routeUnit=Number($('labUnit').value);renderRoute();saveRoute();};$('labUnitStart').onclick=loadUnit;
+$('labLevel').onchange=()=>{routeLevel=Number($('labLevel').value);routeUnit=0;renderRoute();saveRoute();loadUnit();};$('labUnit').onchange=()=>{routeUnit=Number($('labUnit').value);renderRoute();saveRoute();loadUnit();};$('labUnitStart').onclick=loadUnit;
 for(const [id,delta] of [['labUnitPrev',-1],['labUnitNext',1]])$(id).onclick=()=>{routeUnit+=delta;if(routeUnit<0){routeLevel--;routeUnit=curriculum[routeLevel].units.length-1;}if(routeUnit>=curriculum[routeLevel].units.length){routeLevel++;routeUnit=0;}renderRoute();loadUnit();};
+$('labUnitStart').textContent='Restablecer unidad';settings.append($('labUnitStart'));
 $('labUnitDone').onchange=()=>{routeDone[curriculum[routeLevel].units[routeUnit].id]=$('labUnitDone').checked;saveRoute();renderRoute();};renderRoute();
 
 for(const [key,t] of Object.entries(TOPICS)){const b=document.createElement('button');b.type='button';b.textContent=t.label;b.dataset.topic=key;b.setAttribute('aria-pressed','false');b.onclick=()=>{stop();release();cfg.kind=key;cfg.inversion='all';cfg.range='full';cfg.model='nearest';cfg.family=['open','hybrid'].includes(key)?'closed':'drop2';if(key==='outside')cfg.group='low';renderFields();};host.querySelector('.lab-topics').append(b);topicButtons.set(key,b);}
@@ -70,7 +80,7 @@ function select(key,label,items){
  el.onchange=()=>{stop();release();cfg[key]=el.value;if(['voices','quality','cycleMode','diatonicVoices','outsideArticulation','pattern','guideSource','voicingSource'].includes(key))renderFields();};wrap.append(el);$('labFields').append(wrap);
 }
 function renderFields(){
- $('labFields').replaceChildren();const kind=cfg.kind,t=TOPICS[kind];topicButtons.forEach((b,k)=>b.setAttribute('aria-pressed',String(k===kind)));$('labDescription').textContent=t.description;$('labSource').textContent=t.source;$('labTip').textContent=t.tip;
+ $('labFields').replaceChildren();const kind=cfg.kind,t=TOPICS[kind];topicButtons.forEach((b,k)=>b.setAttribute('aria-pressed',String(k===kind)));$('labDescription').textContent=t.description;$('labSource').textContent=t.source;$('labTip').textContent=t.tip;if(topicSelect)topicSelect.value=kind;
  if(kind==='cycles')select('cycleMode','Tipo de ciclo',options([['transpose','Transportar la misma estructura'],['diatonic','Grados de la escala']]));
  if(kind==='cycles'&&cfg.cycleMode!=='diatonic')select('cycle','Ciclo',options([[5,'Cuartas'],[7,'Quintas'],[2,'Tonos'],[3,'Terceras menores'],[4,'Terceras mayores'],[1,'Semitonos']]));
  if(['cycles','patterns','super','pairs','outside'].includes(kind)){select('pattern','Recorrido',patterns);select('rhythm','Ritmo',options([['triplets','Tresillos de corchea'],['sextuplets','Seis notas por pulso'],['dotted','Corchea con puntillo y semicorchea'],['even','Uniforme'],['syncopated','Dos corcheas y negra'],['motif','Negra, dos corcheas y negra']]));select('noteBeats','Figura del recorrido',options([[1,'Negras'],[.5,'Corcheas'],[.25,'Semicorcheas']]));}
@@ -129,7 +139,7 @@ function renderFields(){
  if(!['patterns','super'].includes(kind))select('beats','Duración de cada bloque',options([[4,'Cuatro tiempos'],[2,'Dos tiempos'],[1,'Un tiempo']]));
 }
 function stop(){run++;playing=false;clearTimeout(timer);timer=null;voices.forEach(v=>v?.stop?.());baseVoices.forEach(v=>v?.stop?.());voices=[];baseVoices=[];activeBaseKey=null;$('labPlay').textContent='▶ Escuchar';$('labPlay').setAttribute('aria-pressed','false');$('labPause').disabled=true;}
-function release(){frames=[];index=0;B.clear();if(!host.hidden)visualSide.prepend(boardRow);$('labResult').hidden=true;$('labFullScore').hidden=true;$('labExport').disabled=true;['labPlay','labPause','labStop','labPrev','labNext','labRelease'].forEach(id=>$(id).disabled=true);$('labStatus').textContent='Prepara el ejercicio para aplicar estos ajustes.';}
+function release(){frames=[];index=0;B.clear();if(!host.hidden)visualSide.prepend(boardRow);$('labResult').hidden=true;$('labFullScore').hidden=true;$('labExport').disabled=true;['labPlay','labPause','labStop','labPrev','labNext','labRelease'].forEach(id=>$(id).disabled=true);if(!host.hidden)$('labPlay').disabled=false;$('labStatus').textContent='Pulsa Escuchar para preparar el ejercicio con estos ajustes.';}
 function noteName(midi,frame){
  const rootName=context.name(frame.root),quality=E.CHORDS[cfg.quality];
  if(cfg.kind==='hybrid'&&midi===frame.cells[0].midi)return context.name(context.root);
@@ -157,7 +167,7 @@ function generate(unitTitle){
  try{
   frames=E.makeStudy(cfg,context,M);index=0;if(typeof unitTitle==='string'){$('labTitle').value=unitTitle;autoTitle=unitTitle;}else if($('labTitle').value===autoTitle){autoTitle=TOPICS[cfg.kind].label+' · '+context.name(context.root);$('labTitle').value=autoTitle;}
   frames.forEach(f=>{f.characteristic=['cycles','patterns'].includes(cfg.kind)?M.characteristic(context.scaleKey,context.scale).map(n=>E.mod((cfg.kind==='cycles'?f.root:context.root)+n.interval)):[];f.names={};for(const c of [...f.cells,...(f.reference||[])])f.names[c.midi]=noteName(c.midi,f);});
-  $('labResult').hidden=false;$('labResult').insertBefore(boardRow,$('labResult').querySelector('.lab-tables'));['labPlay','labStop','labPrev','labNext','labRelease'].forEach(id=>$(id).disabled=false);
+  $('labResult').hidden=false;$('labResult').insertBefore(boardRow,noteDetails);['labPlay','labStop','labPrev','labNext','labRelease'].forEach(id=>$(id).disabled=false);
   $('labStatus').textContent=`${frames.length} eventos listos. Usa Escuchar o las flechas para avanzar.${frames.warnings.length?' '+frames.warnings.join(' '):''}`;
   try{localStorage.setItem('diapason-study-lab-v1',JSON.stringify({tempo:cfg.tempo,anchor:cfg.anchor,group:cfg.group}));}catch(_){}
   renderTimeline();show();drawFullScore();saveProject(true);
@@ -165,7 +175,7 @@ function generate(unitTitle){
 }
 function renderTimeline(){
  const container=$('labTimeline');container.replaceChildren();let previous='';
- frames.forEach((f,i)=>{if(f.group&&f.group===previous)return;previous=f.group||'';const b=document.createElement('button');b.type='button';b.textContent=f.label;b.dataset.index=i;b.onclick=()=>{stop();index=i;show();};container.append(b);});
+ frames.forEach((f,i)=>{if(f.group&&f.group===previous)return;previous=f.group||'';const b=document.createElement('button');b.type='button';b.textContent=f.label;b.dataset.index=i;b.onclick=()=>{stop();index=i;show();};container.append(b);});container.hidden=container.childElementCount<2;
 }
 function show(){
  const f=frames[index];if(!f)return;B.show(f);$('labCurrent').textContent=f.label;$('labCounter').textContent=`${index+1} / ${frames.length}`;
@@ -193,11 +203,11 @@ async function play(){
  if(!frames.length)generate();if(!frames.length)return;
  stop();B.stopScore();playing=true;const token=run;$('labPlay').textContent='Cargando sonido…';
  await B.ready();if(!playing||token!==run)return;
- if(index===frames.length-1)index=0;$('labPlay').textContent='▶ Reproduciendo';$('labPlay').setAttribute('aria-pressed','true');$('labPause').disabled=false;$('labStatus').textContent='Reproduciendo el ejercicio.';tick(token);
+ if(index===frames.length-1)index=0;$('labPlay').textContent='Ⅱ Pausar';$('labPlay').setAttribute('aria-pressed','true');$('labPause').disabled=false;$('labStatus').textContent='Reproduciendo el ejercicio.';tick(token);
 }
 function close(){stop();release();boardHome.after(boardRow);host.hidden=true;toggle.setAttribute('aria-expanded','false');}
 toggle.onclick=()=>{if(!host.hidden){close();return;}host.hidden=false;visualSide.prepend(boardRow);toggle.setAttribute('aria-expanded','true');renderFields();if(!routeStarted&&!frames.length)loadUnit();};$('labClose').onclick=close;
-$('labGenerate').onclick=generate;$('labPlay').onclick=play;$('labPause').onclick=()=>{stop();$('labStatus').textContent='En pausa. Escuchar reanuda desde este evento.';};$('labStop').onclick=()=>{stop();index=0;show();$('labStatus').textContent='Detenido. Ejercicio al inicio.';};$('labRelease').onclick=()=>{stop();release();};$('labPrev').onclick=()=>{stop();index=Math.max(0,index-1);show();};$('labNext').onclick=()=>{stop();index=Math.min(frames.length-1,index+1);show();};
+$('labGenerate').onclick=generate;$('labPlay').onclick=()=>{if(playing)$('labPause').onclick();else play();};$('labPause').onclick=()=>{stop();$('labStatus').textContent='En pausa. Escuchar reanuda desde este evento.';};$('labStop').onclick=()=>{stop();index=0;show();$('labStatus').textContent='Detenido. Ejercicio al inicio.';};$('labRelease').onclick=()=>{stop();release();};$('labPrev').onclick=()=>{stop();index=Math.max(0,index-1);show();};$('labNext').onclick=()=>{stop();index=Math.min(frames.length-1,index+1);show();};
 $('labTempo').onchange=()=>{stop();cfg.tempo=Math.max(30,Math.min(240,Number($('labTempo').value)||80));$('labTempo').value=cfg.tempo;};$('labLoop').onchange=()=>cfg.loop=$('labLoop').checked;
 // An explicit change in the original controls returns ownership to normal exploration.
 document.querySelector('.panel').addEventListener('change',event=>{if(event.target.id==='volume'||event.target.id==='soundType')return;stop();release();},true);
@@ -220,7 +230,7 @@ async function restoreProject(project){
  cfg.tempo=Math.max(30,Math.min(240,Number(cfg.tempo)||80));cfg.anchor=Math.max(0,Math.min(17,Number(cfg.anchor)||0));
  frames=valid.frames;frames.warnings=[];index=Math.max(0,Math.min(frames.length-1,Number.isInteger(valid.index)?valid.index:0));
  host.hidden=false;toggle.setAttribute('aria-expanded','true');renderFields();$('labTitle').value=String(valid.title||'Estudio recuperado').slice(0,100);$('labTempo').value=cfg.tempo;$('labLoop').checked=!!cfg.loop;
- $('labResult').hidden=false;$('labResult').insertBefore(boardRow,$('labResult').querySelector('.lab-tables'));['labPlay','labStop','labPrev','labNext','labRelease'].forEach(id=>$(id).disabled=false);renderTimeline();show();await drawFullScore();$('labStatus').textContent='Ejercicio recuperado con sus notas, digitaciones y ajustes.';
+ $('labResult').hidden=false;$('labResult').insertBefore(boardRow,noteDetails);['labPlay','labStop','labPrev','labNext','labRelease'].forEach(id=>$(id).disabled=false);renderTimeline();show();await drawFullScore();$('labStatus').textContent='Ejercicio recuperado con sus notas, digitaciones y ajustes.';
 }
 $('labSave').onclick=()=>saveProject();$('labRestore').onclick=async()=>{try{const text=localStorage.getItem(PROJECT_KEY);if(!text)throw Error('Todavía no hay un ejercicio guardado en este navegador.');const project=JSON.parse(text),position=JSON.parse(localStorage.getItem(PROJECT_KEY+'-position')||'null');if(position){project.index=position.index;Object.assign(project.config,{tempo:position.tempo,loop:position.loop});}await restoreProject(project);}catch(error){$('labStatus').textContent=error.message;}};
 $('labOpen').onclick=()=>$('labProjectFile').click();$('labProjectFile').onchange=async()=>{const file=$('labProjectFile').files[0];if(!file)return;try{if(file.size>10*1024*1024)throw Error('El proyecto supera el tamaño permitido de 10 MB.');await restoreProject(JSON.parse(await file.text()));saveProject(true);}catch(error){$('labStatus').textContent='No se pudo abrir el proyecto: '+error.message;}finally{$('labProjectFile').value='';}};

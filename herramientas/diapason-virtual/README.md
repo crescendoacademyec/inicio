@@ -72,3 +72,11 @@ Exportar ofrece PDF multipágina, páginas PNG dentro de un ZIP, MusicXML y proy
 La auditoría añadió ciclos diatónicos de segundas a séptimas, tríadas abiertas/cerradas, tétradas, doce tonalidades, pares, cuartas combinadas con Drop 2, guía fija superior o inferior, motivos personalizados y células de 5/6/7 notas. Se corrigieron las inversiones de híbridos y cuartales y la reanudación del acompañamiento.
 
 `tests/study-complete.test.js` verifica los nuevos recorridos, todos los presets de las 49 unidades, digitaciones de referencia, conservación exacta de tiempos en MusicXML, proyectos y estructura binaria de PDF/ZIP.
+
+## Organización de controles
+
+La fila principal muestra instrumento, fundamental, contenido y modelo. El selector Contenido alterna entre escala/modo, arpegio y acorde, conservando los controles originales y sus valores. Afinación, capo, orientación, etiquetas, digitación, cuerdas, tonalidad, trastes, volumen y limpieza se agrupan en Ajustes del instrumento y visualización.
+
+En Estudio guiado, cambiar nivel o unidad prepara el ejercicio sin iniciar el audio. Escuchar/Pausar comparte botón. Ajustar ejercicio, Crear un ejercicio libre, archivos, tabla de notas y partitura completa se despliegan a petición. El visor de referencia y su asistente también están plegados inicialmente. Las funciones y los proyectos guardados se conservan.
+
+`js/workspace-layout.js` reorganiza los elementos existentes sin sustituir los selectores ni sus manejadores musicales. Reacciona a los cambios de contexto del recorrido, el banco y los proyectos para mantener visible el contenido activo.
