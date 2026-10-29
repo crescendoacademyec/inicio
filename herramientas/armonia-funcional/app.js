@@ -3166,7 +3166,7 @@ const TOPIC_PRACTICE_BANK = {
 function renderTopicPractice(section) {
   const bank = TOPIC_PRACTICE_BANK[section.id] || [];
   if (!bank.length) return "";
-  return `<section class="topic-practice panel" data-topic-practice="${escapeAttr(section.id)}">
+  return `<section class="topic-practice panel" data-ci-notation-only data-topic-practice="${escapeAttr(section.id)}">
     <header class="topic-practice-head">
       <div>
         <p class="kicker">Comprueba lo aprendido</p>

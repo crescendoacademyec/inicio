@@ -3,7 +3,7 @@ function setup(){const c={window:{}};vm.createContext(c);for(const f of ['course
 test('every authored staff example shares its exact sounding pitches with the instrument group',()=>{
  const w=setup(),X=w.CourseExamples;
  for(const [course,specs] of Object.entries(X.catalogs))for(const [key,s] of Object.entries(specs)){
-  if(!s.notes&&!s.compare)continue;const html=X.render(course,key);assert.doesNotMatch(html,/NaN|undefined|Infinity/);assert.match(html,/data-ci-group/);
+  if(!s.notes&&!s.compare)continue;const html=X.render(course,key);assert.doesNotMatch(html,/NaN|undefined|Infinity/);if(s.instrument===false){assert.doesNotMatch(html,/data-ci-group|data-ci-source/);assert.match(html,/ce-score/);continue;}assert.match(html,/data-ci-group/);
   const encoded=[...html.matchAll(/data-ci-source="([^"]+)"/g)];assert.ok(encoded.length);
   for(const m of encoded){const notes=JSON.parse(m[1].replace(/&quot;/g,'"').replace(/&amp;/g,'&'));assert.ok(notes.length);assert.ok(notes.every(n=>Number.isFinite(n.midi)&&n.midi>=0&&n.midi<=127));}
  }

@@ -85,7 +85,7 @@ function fretboard(notes,instrument='guitar',{kind}={}){
 function legend(){return '<div class="ci-legend">'+Object.entries({root:'Fundamental',chordTone:'Sonido estructural',tension:'Tensión disponible',avoid:'Nota de paso / evitar en reposo'}).map(([role,label])=>'<span><i style="background:'+ROLE_COLORS[role]+'"></i>'+label+'</span>').join('')+'</div>';}
 function fromXML(xml){
  const doc=new global.DOMParser().parseFromString(xml,'application/xml'),notes=[];
- doc.querySelectorAll('note pitch').forEach(p=>{const letter=p.querySelector('step')?.textContent,oct=Number(p.querySelector('octave')?.textContent),alter=Number(p.querySelector('alter')?.textContent||0),pc={C:0,D:2,E:4,F:5,G:7,A:9,B:11}[letter];if(pc===undefined)return;notes.push({midi:(oct+1)*12+pc+alter,label:{C:'Do',D:'Re',E:'Mi',F:'Fa',G:'Sol',A:'La',B:'Si'}[letter]+(alter>0?'♯'.repeat(alter):'♭'.repeat(-alter))});});
+ doc.querySelectorAll('note pitch').forEach(p=>{const note=p.parentElement;if(note.getAttribute('print-object')==='no'||['#fff','#ffffff','#fffdf8','white','transparent'].includes((note.getAttribute('color')||'').toLowerCase()))return;const letter=p.querySelector('step')?.textContent,oct=Number(p.querySelector('octave')?.textContent),alter=Number(p.querySelector('alter')?.textContent||0),pc={C:0,D:2,E:4,F:5,G:7,A:9,B:11}[letter];if(pc===undefined)return;notes.push({midi:(oct+1)*12+pc+alter,label:{C:'Do',D:'Re',E:'Mi',F:'Fa',G:'Sol',A:'La',B:'Si'}[letter]+(alter>0?'♯'.repeat(alter):'♭'.repeat(-alter))});});
  return normalize(notes);
 }
 function notation(notes){
@@ -146,7 +146,8 @@ function mount(){
    if(!score&&!container.querySelector('.ce-score')){
     const html=notation(notes);if(html){const host=doc.createElement('section');host.className='ci-score';host.innerHTML=html;container.prepend(host);}
    }
-   if(!notes.length&&!score&&!explicit)return;
+   if(!notes.length){container.querySelectorAll('[data-ci-generated]').forEach(el=>el.remove());container.classList.add('ci-score-only');return;}
+   container.classList.remove('ci-score-only');
    views(container,notes);
   });
   doc.querySelectorAll('[data-lab="strings-field"],[data-progression="strings"]').forEach(el=>{(el.closest('label')||el).dataset.ciView='guitar';});

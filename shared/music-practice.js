@@ -90,7 +90,7 @@
       else if([0xE050,0xE062,0xE05C].includes(code)){events=[{kind:'rest',beats:4}];options.clef=code===0xE062?'bass':code===0xE05C?'alto':'treble';}
       else if(code>=0xE260&&code<=0xE264){const alter={0xE260:-1,0xE261:0,0xE262:1,0xE263:2,0xE264:-2}[code];events=[{...rootNote('G'),alter,midi:67+alter,beats:1,accidental:alter===0?'natural':undefined}];}
       else if(code===0xE4C0)events=[{beats:1,fermata:true}];
-      if(events){host.classList.remove('music-glyph','rest-glyph-cell');host.innerHTML=sequence(events,options);}
+      if(events){if(index>=0||code>=0xE4E3&&code<=0xE4E9||[0xE050,0xE062,0xE05C,0xE4C0].includes(code))host.dataset.ciNotationOnly='';host.classList.remove('music-glyph','rest-glyph-cell');host.innerHTML=sequence(events,options);}
     });
     const samples={
       'Plica hacia arriba':[{note:'E4',stem:'up'}],
@@ -107,7 +107,7 @@
     };
     document.querySelectorAll('.symbol-guide .notation-text').forEach(host=>{
       const title=host.parentElement.querySelector('span')?.textContent,events=samples[title];
-      if(events){host.classList.remove('notation-text');host.innerHTML=sequence(events,{compact:true});return;}
+      if(events){host.dataset.ciNotationOnly='';host.classList.remove('notation-text');host.innerHTML=sequence(events,{compact:true});return;}
       let xml=musicXML([rootNote('G')]);
       const bars={'Barra de compás':'<bar-style>regular</bar-style>','Doble barra':'<bar-style>light-light</bar-style>','Inicio de repetición':'<repeat direction="forward"/>','Fin de repetición':'<repeat direction="backward"/>','Casillas':'<ending number="1" type="stop"/><repeat direction="backward"/>'};
       if(bars[title]){
@@ -124,6 +124,7 @@
         xml=musicXML([]).replace('</attributes>','<measure-style><multiple-rest>4</multiple-rest></measure-style></attributes>').replace('<note print-object="no">','<note>');
         xml=xml.replace('</measure>','</measure>'+[2,3,4].map(i=>`<measure number="${i}"><note><rest measure="yes"/><duration>4</duration><type>whole</type></note></measure>`).join(''));
       }else return;
+      if(title!=='Gran pentagrama')host.dataset.ciNotationOnly='';
       host.classList.remove('notation-text');host.innerHTML=`<div class="cp-staff cp-compact" data-cp-xml="${esc(xml)}" role="img" aria-label="${esc(title)}">Preparando ejemplo…</div>`;
     });
   }
