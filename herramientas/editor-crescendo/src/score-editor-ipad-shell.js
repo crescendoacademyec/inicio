@@ -40,13 +40,12 @@
       '<rect x="6" y="4" width="4" height="16" rx="1"/>',
       '<rect x="14" y="4" width="4" height="16" rx="1"/>'
     ].join(""),
-    piano: [
-      '<rect x="3" y="4" width="18" height="16" rx="2"/>',
-      '<path d="M3 10h18"/>',
-      '<path d="M7 10v10"/>',
-      '<path d="M11 10v10"/>',
-      '<path d="M15 10v10"/>'
-    ].join(""),
+    piano: '<rect x="3" y="5" width="18" height="14" rx="1.5"/><path d="M7.5 12v7M12 12v7M16.5 12v7"/><path fill="currentColor" stroke="none" d="M6.2 5h2.5v7H6.2zM10.7 5h2.5v7h-2.5zM15.2 5h2.5v7h-2.5z"/>',
+    guitar: '<g stroke-width="1.5"><path d="M12 8c-1.3-1.3-3.2-1.5-4.4-.4-.7.7-.8 1.6-.5 2.4-2.1.1-3.7 1.6-4 3.6-.4 2.8 1.9 5.5 4.8 5.4 2.2-.1 3.8-1.7 4-3.9.8.3 1.7.2 2.4-.5 1.1-1.2.9-3.1-.4-4.4l6-6-2-2-6 6Z"/><circle cx="9" cy="13" r="1.6"/><path d="m6 17 2 2m3-8 8-8m-2 1 2 2"/></g>',
+    requinto: '<g stroke-width="1.5"><path d="M11.5 10c-1.2-1.2-2.7-1.4-3.6-.4-.5.5-.6 1.2-.3 1.9-1.8.1-3.1 1.3-3.4 3-.4 2.5 1.5 4.8 4 4.7 1.8-.1 3.3-1.5 3.5-3.3.7.3 1.4.2 1.9-.3 1-1 .8-2.5-.4-3.7l7-7-2-2-6.7 7.1Z"/><circle cx="9" cy="14" r="1.3"/><path d="m6.5 17 2 2m3.5-6 7-8m-1.5.5 2 2"/></g>',
+    bass: '<g stroke-width="1.5"><path d="m12 11 7-8 2 2-7 8c1.4 1.4 1.1 3.7-.3 5.2-1.9 2-5.4 3-7.4 1-2.1-2.1-.9-5.6 1.1-7.5l1.3-1.2-.6 3 2.5.3L12 11Z"/><path d="m7 17 2 2m1-5 2 2m-.5-3.5 1 1M18 3l1-1 3 3-1 1"/></g>',
+    ukulele: '<g stroke-width="1.5"><rect x="10.5" y="2" width="3" height="3" rx=".7"/><path d="M11 5v5c-2-1-4 0-4 2 0 1 .8 1.7 1.5 2C6.5 15 6 16 6 18c0 2.4 2.7 4 6 4s6-1.6 6-4c0-2-.5-3-2.5-4 .7-.3 1.5-1 1.5-2 0-2-2-3-4-2V5"/><circle cx="12" cy="14" r="1.6"/><path d="M9.5 19h5M9 3h1.5M13.5 3H15M11 7h2"/></g>',
+    violin: '<g stroke-width="1.5"><path d="M11 7V3a1 1 0 0 1 2 0v4m-3 0h4M9 8c-2 0-3 2-2 4l2 2-2 2c-2 3 .5 6 5 6s7-3 5-6l-2-2 2-2c1-2 0-4-2-4"/><path d="M11 7v12m2-12v12m-3-1h4M8.5 16l1-1m5 1-1-1M22 3l-4 18"/></g>',
     maximize: [
       '<path d="M8 3H5a2 2 0 0 0-2 2v3"/>',
       '<path d="M21 8V5a2 2 0 0 0-2-2h-3"/>',
@@ -456,7 +455,21 @@
     const saveStatus = element("span", "ipad-save-status");
     saveStatus.dataset.state = "saved";
     saveStatus.append(element("span", "ipad-status-dot"), element("span", "", "Guardado"));
-    const keyboardToggle = createIconButton({ icon: "piano", label: "Mostrar u ocultar teclado MIDI" });
+    const keyboardToggle = createIconButton({ icon: "piano", label: "Mostrar u ocultar el piano" });
+    keyboardToggle.id = "instrumentViewToggle";
+    keyboardToggle.setAttribute("aria-controls", "midiKeyboardPanel");
+    let visibleInstrument = global.JMLScoreInstruments.readPreference();
+    function syncInstrumentToggle(instrument = visibleInstrument) {
+      visibleInstrument = global.JMLScoreInstruments.normalize(instrument);
+      const name = global.JMLScoreInstruments.instruments[visibleInstrument].name.toLocaleLowerCase("es");
+      const target = visibleInstrument === "piano" ? "el piano" : `el diapasón de ${name}`;
+      keyboardToggle.replaceChildren(icon(visibleInstrument));
+      keyboardToggle.dataset.instrument = visibleInstrument;
+      keyboardToggle.title = `${state.keyboardVisible ? "Ocultar" : "Mostrar"} ${target}`;
+      keyboardToggle.setAttribute("aria-label", `Mostrar u ocultar ${target}`);
+    }
+    document.addEventListener("editor-instrument-select", event => syncInstrumentToggle(event.detail?.instrument));
+    syncInstrumentToggle();
     const toggleRight = createIconButton({ icon: "panel-right", label: "Mostrar u ocultar inspector" });
     const fullscreenProxy = createIconButton({ icon: "maximize", label: "Pantalla completa" });
     headerRight.append(createSoundSelector(true), saveStatus, keyboardToggle, toggleRight, fullscreenProxy);
@@ -838,6 +851,7 @@
       window.dispatchEvent(new CustomEvent("crescendo:keyboard-visibility", { detail: { visible } }));
       root.dataset.keyboardVisible = String(visible);
       keyboardToggle.setAttribute("aria-pressed", visible ? "true" : "false");
+      syncInstrumentToggle();
       saveLayoutPreferences(state);
       window.dispatchEvent(new Event("resize"));
     }
