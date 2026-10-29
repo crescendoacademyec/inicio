@@ -124,16 +124,19 @@ function mount(){
   });
   // Piano-only diagrams also acquire their own score and the other instrument views.
   doc.querySelectorAll('[data-ci-source]').forEach(sourceEl=>{
+   if(sourceEl.closest('[data-ci-notation-only]'))return;
    if(sourceEl.closest('[data-ci-group]'))return;
    const wrapper=doc.createElement('div');wrapper.className='ci-group';wrapper.dataset.ciGroup='';
    sourceEl.before(wrapper);wrapper.appendChild(sourceEl);sourceEl.dataset.ciView='piano';
   });
   doc.querySelectorAll('.cp-staff').forEach(score=>{
    if(score.closest('[data-ci-notation-only]'))return;
+   if(doc.body.classList.contains('theory-reading-page')&&score.closest('.symbol-guide:not(.grand-reference)'))return;
    if(score.closest('[data-ci-group]'))return;
    const wrapper=doc.createElement('div');wrapper.className='ci-group';wrapper.dataset.ciGroup='';score.before(wrapper);wrapper.appendChild(score);
   });
   doc.querySelectorAll('[data-ci-group]').forEach(container=>{
+   if(container.closest('[data-ci-notation-only]'))return;
    // A nested example owns its notes; a surrounding comparison keeps its own layout.
    const own=el=>el.closest('[data-ci-group]')===container;
    const explicit=container.matches('[data-ci-source]')?container:[...container.querySelectorAll('[data-ci-source]')].find(own);

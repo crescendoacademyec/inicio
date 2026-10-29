@@ -643,7 +643,7 @@ function handImageHotspots(clef){
 }
 function mountReadingLab(el){
   el.innerHTML=`<div>
-    <section class="lab-card staff-map-card">
+    <section class="lab-card staff-map-card" data-ci-notation-only>
       <div class="diagram-label">Mapa de notas en el pentagrama</div>
       <p class="staff-reference-copy">Observa dónde se escribe cada nota. Selecciona una clave y pulsa una nota: se reproduce, queda resaltada y muestra su posición exacta.</p>
       <div class="controls-row"><label>Mostrar <select data-reference-clef><option value="treble">Clave de sol</option><option value="bass">Clave de fa</option><option value="both" selected>Ambas claves</option></select></label></div>
@@ -1329,7 +1329,7 @@ function mountNoteTrainer(root,onResult){
     <label>Notas a practicar <select data-nt-accidentals><option value="natural">Solo naturales</option><option value="sharps">Solo sostenidos</option><option value="flats">Solo bemoles</option><option value="both">Sostenidos y bemoles</option><option value="all">Naturales, sostenidos y bemoles</option></select></label>
   </div>
   <p data-nt-chromatic-guide hidden>Do = C en esta práctica, como en Piano Virtual. Ti = B; Si = G♯. Identifica la sílaba según la escritura de la nota, no solo su sonido. Este modo usa las alteraciones de la tabla introductoria (sin E♯, B♯, C♭ ni F♭).</p>
-  <div class="trainer-question-card">
+  <div class="trainer-question-card" data-ci-notation-only>
     <div data-nt-staff data-ci-notation-only></div>
     <p class="trainer-prompt" data-nt-prompt>¿Qué nota es?</p>
     <div class="trainer-answer-grid" data-nt-answers></div>
@@ -1418,7 +1418,7 @@ function mountRhythmTrainer(root,onResult){
     <label>Compás <select data-rt-meter><option value="4">4/4</option><option value="3">3/4</option><option value="2">2/4</option></select></label>
     <label>Dificultad <select data-rt-level><option value="1">Nivel 1</option><option value="2">Nivel 2</option><option value="3">Nivel 3</option></select></label>
   </div>
-  <div class="trainer-question-card">
+  <div class="trainer-question-card" data-ci-notation-only>
     <div class="rhythm-scoreline" data-rt-scoreline></div>
     <p class="trainer-prompt">¿Cuántos pulsos ocupa el patrón completo?</p>
     <div class="trainer-answer-grid" data-rt-answers></div>
@@ -1459,7 +1459,7 @@ function mountRhythmTrainer(root,onResult){
 function mountIntervalTrainer(root,onResult){
   const body=root.querySelector("[data-trainer-body]");
   body.innerHTML=`<div class="trainer-controls"><label>Dificultad <select data-it-level><option value="1">Consonancias básicas</option><option value="2">Todos los intervalos simples</option></select></label></div>
-  <div class="trainer-question-card"><div data-it-staff></div><p class="trainer-prompt">Identifica el intervalo.</p><div class="trainer-answer-grid" data-it-answers></div><p class="feedback" data-it-feedback aria-live="polite"></p></div>
+  <div class="trainer-question-card" data-ci-notation-only><div data-it-staff></div><p class="trainer-prompt">Identifica el intervalo.</p><div class="trainer-answer-grid" data-it-answers></div><p class="feedback" data-it-feedback aria-live="polite"></p></div>
   <div class="trainer-footer"><button class="ghost-btn" data-it-hear>▶ Escuchar</button><button class="primary-btn" data-it-next>Nuevo intervalo</button></div>`;
   let current=null,rootName="C",answered=false;
   function allowed(){return body.querySelector("[data-it-level]").value==="1"?INTERVALS.filter(i=>["m3","M3","P4","P5","m6","M6","P8"].includes(i.id)):INTERVALS.filter(i=>i.id!=="P1")}
@@ -1485,7 +1485,7 @@ function mountIntervalTrainer(root,onResult){
 function mountScaleTrainer(root,onResult){
   const body=root.querySelector("[data-trainer-body]");
   body.innerHTML=`<div class="trainer-controls"><label>Modo de pregunta <select data-st-mode><option value="pattern">Por patrón</option><option value="notes">Por notas</option></select></label></div>
-  <div class="trainer-question-card"><div data-st-question></div><p class="trainer-prompt">¿Qué escala es?</p><div class="trainer-answer-grid" data-st-answers></div><p class="feedback" data-st-feedback aria-live="polite"></p></div>
+  <div class="trainer-question-card" data-ci-notation-only><div data-st-question></div><p class="trainer-prompt">¿Qué escala es?</p><div class="trainer-answer-grid" data-st-answers></div><p class="feedback" data-st-feedback aria-live="polite"></p></div>
   <div class="trainer-footer"><button class="ghost-btn" data-st-hear>▶ Escuchar</button><button class="primary-btn" data-st-next>Nueva escala</button></div>`;
   let current=null,rootName="C",answered=false;
   function render(){
@@ -1510,7 +1510,7 @@ function mountScaleTrainer(root,onResult){
 function mountKeyTrainer(root,onResult){
   const body=root.querySelector("[data-trainer-body]");
   body.innerHTML=`<div class="trainer-controls"><label>Tipo <select data-kt-mode><option value="signature">Por armadura</option><option value="notes">Por notas</option></select></label></div>
-  <div class="trainer-question-card"><div data-kt-question></div><p class="trainer-prompt">¿Qué tonalidad mayor es?</p><div class="trainer-answer-grid" data-kt-answers></div><p class="feedback" data-kt-feedback aria-live="polite"></p></div>
+  <div class="trainer-question-card" data-ci-notation-only><div data-kt-question></div><p class="trainer-prompt">¿Qué tonalidad mayor es?</p><div class="trainer-answer-grid" data-kt-answers></div><p class="feedback" data-kt-feedback aria-live="polite"></p></div>
   <div class="trainer-footer"><button class="ghost-btn" data-kt-hear>▶ Escuchar escala</button><button class="primary-btn" data-kt-next>Nueva tonalidad</button></div>`;
   let current="C",answered=false;
   function render(){
@@ -1552,7 +1552,7 @@ function mountAppliedReading(level){
   const mount=document.createElement("section");
   mount.className="applied-reading panel";
   mount.innerHTML=`<header class="applied-reading-head"><div><p class="kicker">LECTURA APLICADA</p><h3>${escapeHtml(config.title)}</h3><p>${escapeHtml(config.focus)}</p></div><span>${escapeHtml(config.meter)} · ${config.bpm} BPM</span></header>
-    <div class="solfege-score-wrap"><div class="scroll-x" data-applied-staff>${phraseStaffSVG(phrase,{clef:"treble",meter:config.meter})}</div></div>
+    <div data-ci-notation-only class="solfege-score-wrap"><div class="scroll-x" data-applied-staff>${phraseStaffSVG(phrase,{clef:"treble",meter:config.meter})}</div></div>
     <p class="count-in-display" data-count-in-display aria-live="polite">Cuenta previa · preparada</p>
     <div class="solfege-actions"><button class="primary-btn" type="button" data-applied-play>▶ Cuenta y lee</button><button class="ghost-btn" type="button" data-applied-hear>▶ Escuchar sin cuenta</button></div>
     <div class="applied-reading-check"><p>Antes de reproducir: ¿cuál es la primera nota?</p><div data-applied-answers></div><p class="feedback" data-applied-feedback aria-live="polite"></p></div>`;
@@ -1621,7 +1621,7 @@ function navigationPracticeHTML(){
 }
 function interpretationGuideHTML(){return `<div class="interpretation-guide"><b>Guía de lectura expresiva</b><span><em>p</em> empieza contenido</span><span><em>&lt;</em> crece hacia el punto alto</span><span><em>legato</em> une la línea</span><span><em>rit.</em> prepara el final</span><p>Aplica una intención por repetición: primero pulso, luego articulación y por último fraseo.</p></div>`}
 function grandStaffHTML(upper,lower,meter){
-  return `<div class="grand-score" aria-label="Gran pentagrama con claves de sol y fa"><span class="grand-brace">{</span><div class="grand-score-lines"><div>${phraseStaffSVG(upper,{clef:"treble",meter})}</div><div>${phraseStaffSVG(lower,{clef:"bass",meter})}</div></div></div>`;
+  return `<div class="grand-score" data-ci-notation-only aria-label="Gran pentagrama con claves de sol y fa"><span class="grand-brace">{</span><div class="grand-score-lines"><div>${phraseStaffSVG(upper,{clef:"treble",meter})}</div><div>${phraseStaffSVG(lower,{clef:"bass",meter})}</div></div></div>`;
 }
 function shuffledQuestion(question,correctAnswer,distractors){
   const answers=shuffle([correctAnswer,...distractors]);
@@ -1670,7 +1670,7 @@ function mountTrackPractice(level){
     let pattern=randomItem(IRREGULAR_METERS);
     const render=()=>{
       const question=shuffledQuestion(`¿Cuál es la agrupación que muestra este ${pattern.meter}?`,pattern.label,IRREGULAR_METERS.filter(item=>item.meter===pattern.meter&&item.label!==pattern.label).map(item=>item.label).slice(0,3));
-      mount.innerHTML=`<div class="lab-card track-practice"><header><p class="kicker">MÉTRICA IRREGULAR · GENERADA</p><h3>${escapeHtml(level.title)}</h3><p>Escoge el compás y la agrupación que quieres practicar. El metrónomo acentúa cada inicio de grupo.</p></header><div class="irregular-controls"><label>Compás <select data-irregular-meter>${[...new Set(IRREGULAR_METERS.map(item=>item.meter))].map(meter=>`<option value="${meter}" ${meter===pattern.meter?"selected":""}>${meter}</option>`).join("")}</select></label><label>Agrupación <select data-irregular-group>${IRREGULAR_METERS.filter(item=>item.meter===pattern.meter).map(item=>`<option value="${item.label}" ${item.label===pattern.label?"selected":""}>${item.label}</option>`).join("")}</select></label></div>${irregularMeterHTML(pattern)}<div class="solfege-actions"><button class="primary-btn" type="button" data-irregular-play>▶ Escuchar y contar</button><button class="ghost-btn" type="button" data-irregular-new>↻ Nuevo patrón</button></div>${makeQuestion(question.question,question.answers)}`;
+      mount.innerHTML=`<div class="lab-card track-practice" data-ci-notation-only><header><p class="kicker">MÉTRICA IRREGULAR · GENERADA</p><h3>${escapeHtml(level.title)}</h3><p>Escoge el compás y la agrupación que quieres practicar. El metrónomo acentúa cada inicio de grupo.</p></header><div class="irregular-controls"><label>Compás <select data-irregular-meter>${[...new Set(IRREGULAR_METERS.map(item=>item.meter))].map(meter=>`<option value="${meter}" ${meter===pattern.meter?"selected":""}>${meter}</option>`).join("")}</select></label><label>Agrupación <select data-irregular-group>${IRREGULAR_METERS.filter(item=>item.meter===pattern.meter).map(item=>`<option value="${item.label}" ${item.label===pattern.label?"selected":""}>${item.label}</option>`).join("")}</select></label></div>${irregularMeterHTML(pattern)}<div class="solfege-actions"><button class="primary-btn" type="button" data-irregular-play>▶ Escuchar y contar</button><button class="ghost-btn" type="button" data-irregular-new>↻ Nuevo patrón</button></div>${makeQuestion(question.question,question.answers)}`;
       mount.querySelector("[data-irregular-meter]").addEventListener("change",event=>{pattern=randomItem(IRREGULAR_METERS.filter(item=>item.meter===event.target.value));render()});
       mount.querySelector("[data-irregular-group]").addEventListener("change",event=>{pattern=IRREGULAR_METERS.find(item=>item.meter===pattern.meter&&item.label===event.target.value)||pattern;render()});
       mount.querySelector("[data-irregular-new]").addEventListener("click",()=>{pattern=randomItem(IRREGULAR_METERS);render()});
@@ -1681,7 +1681,7 @@ function mountTrackPractice(level){
   if(cfg.type==="polyrhythm"){
     let top=3,bottom=2;
     const gcd=(a,b)=>b?gcd(b,a%b):a,render=()=>{const steps=(top*bottom)/gcd(top,bottom);const row=(count,name)=>`<div><b>${count}</b><div class="poly-track" style="grid-template-columns:repeat(${count},1fr)">${Array.from({length:count},(_,i)=>`<span data-poly="${name}-${i}">${i+1}</span>`).join("")}</div></div>`;
-      mount.innerHTML=`<div class="lab-card track-practice"><header><p class="kicker">POLIRRITMIA · ${top}:${bottom}</p><h3>${escapeHtml(level.title)}</h3><p>Elige una relación habitual o crea tu propia combinación de ataques dentro del mismo ciclo.</p></header><div class="poly-controls"><label>Relación <select data-poly-preset><option value="3:2">3:2</option><option value="4:3">4:3</option><option value="5:4">5:4</option><option value="custom">Personalizada</option></select></label><label>Capa superior <input data-poly-top type="number" min="2" max="8" value="${top}"></label><label>Capa inferior <input data-poly-bottom type="number" min="2" max="8" value="${bottom}"></label></div><div class="polyrhythm-grid">${row(top,"top")}${row(bottom,"bottom")}<div class="poly-subdivision">Ciclo común: ${steps} subdivisiones</div></div><div class="solfege-actions"><button class="primary-btn" type="button" data-poly-play>▶ Metrónomo ${top}:${bottom}</button><button class="ghost-btn" type="button" data-poly-new>↻ Nueva combinación</button></div>${makeQuestion(`En ${top}:${bottom}, ${top} ataques ocupan el mismo tiempo que:`,[` ${bottom} ataques de la otra capa`,` ${top+1} ataques`,`Una corchea`,`Dos compases`])}</div>`;
+      mount.innerHTML=`<div class="lab-card track-practice" data-ci-notation-only><header><p class="kicker">POLIRRITMIA · ${top}:${bottom}</p><h3>${escapeHtml(level.title)}</h3><p>Elige una relación habitual o crea tu propia combinación de ataques dentro del mismo ciclo.</p></header><div class="poly-controls"><label>Relación <select data-poly-preset><option value="3:2">3:2</option><option value="4:3">4:3</option><option value="5:4">5:4</option><option value="custom">Personalizada</option></select></label><label>Capa superior <input data-poly-top type="number" min="2" max="8" value="${top}"></label><label>Capa inferior <input data-poly-bottom type="number" min="2" max="8" value="${bottom}"></label></div><div class="polyrhythm-grid">${row(top,"top")}${row(bottom,"bottom")}<div class="poly-subdivision">Ciclo común: ${steps} subdivisiones</div></div><div class="solfege-actions"><button class="primary-btn" type="button" data-poly-play>▶ Metrónomo ${top}:${bottom}</button><button class="ghost-btn" type="button" data-poly-new>↻ Nueva combinación</button></div>${makeQuestion(`En ${top}:${bottom}, ${top} ataques ocupan el mismo tiempo que:`,[` ${bottom} ataques de la otra capa`,` ${top+1} ataques`,`Una corchea`,`Dos compases`])}</div>`;
       const preset=mount.querySelector("[data-poly-preset]");preset.value=["3:2","4:3","5:4"].includes(`${top}:${bottom}`)?`${top}:${bottom}`:"custom";
       preset.addEventListener("change",event=>{if(event.target.value!=="custom"){[top,bottom]=event.target.value.split(":").map(Number);render()}});["top","bottom"].forEach(name=>mount.querySelector(`[data-poly-${name}]`).addEventListener("change",event=>{if(name==="top")top=Number(event.target.value);else bottom=Number(event.target.value);render()}));
       mount.querySelector("[data-poly-play]").addEventListener("click",async()=>{stopAllAudio();const token=AUDIO.seq,cells=[...mount.querySelectorAll("[data-poly]")];for(let step=0;step<steps;step++){if(token!==AUDIO.seq)return;cells.forEach(cell=>cell.classList.remove("active"));if(step%(steps/top)===0){mount.querySelector(`[data-poly="top-${step/(steps/top)}"]`).classList.add("active");playTone(84,{duration:.07,volume:.13})}if(step%(steps/bottom)===0){mount.querySelector(`[data-poly="bottom-${step/(steps/bottom)}"]`).classList.add("active");playTone(72,{duration:.07,volume:.13})}await new Promise(resolve=>setTimeout(resolve,Math.max(95,720/steps)))}cells.forEach(cell=>cell.classList.remove("active"))});
@@ -1691,7 +1691,7 @@ function mountTrackPractice(level){
   if(cfg.type==="tonal-change"||cfg.type==="navigation"){
     const change=cfg.type==="tonal-change";
     const question=change?shuffledQuestion("Después de la nueva armadura, ¿qué nota queda alterada en Re mayor?","Do♯",["Do♮","Si♭","Fa♮"]):shuffledQuestion("Tras D.S., ¿a qué marca se vuelve?","Al signo",["Al inicio absoluto","A Fine","Directamente a la Coda"]);
-    mount.innerHTML=`<div class="lab-card track-practice"><header><p class="kicker">${change?"MODULACIÓN Y CROMATISMO":"RECORRIDO DE PARTITURA"}</p><h3>${escapeHtml(level.title)}</h3><p>${change?"Distingue una alteración local del cambio de armadura que modifica la lectura posterior.":"Sigue visualmente el recorrido antes de tocar: marca, repetición, salto y final."}</p></header>${change?tonalChangePracticeHTML():navigationPracticeHTML()}<div class="solfege-actions"><button class="primary-btn" type="button" data-track-hear>▶ ${change?"Escuchar centros tonales":"Escuchar pulso de la ruta"}</button><button class="ghost-btn" type="button" data-track-new>↻ Nuevo ejemplo</button></div>${makeQuestion(question.question,question.answers)}</div>`;
+    mount.innerHTML=`<div class="lab-card track-practice" data-ci-notation-only><header><p class="kicker">${change?"MODULACIÓN Y CROMATISMO":"RECORRIDO DE PARTITURA"}</p><h3>${escapeHtml(level.title)}</h3><p>${change?"Distingue una alteración local del cambio de armadura que modifica la lectura posterior.":"Sigue visualmente el recorrido antes de tocar: marca, repetición, salto y final."}</p></header>${change?tonalChangePracticeHTML():navigationPracticeHTML()}<div class="solfege-actions"><button class="primary-btn" type="button" data-track-hear>▶ ${change?"Escuchar centros tonales":"Escuchar pulso de la ruta"}</button><button class="ghost-btn" type="button" data-track-new>↻ Nuevo ejemplo</button></div>${makeQuestion(question.question,question.answers)}</div>`;
     mount.querySelector("[data-track-hear]").addEventListener("click",()=>change?playSequence([55,59,62,67,50,54,57,62],300):playSequence([79,76,79,84],420));
     mount.querySelector("[data-track-new]").addEventListener("click",()=>mountTrackPractice(level));
     mount.querySelectorAll("[data-track-answer]").forEach(button=>button.addEventListener("click",()=>resolveTrackCheck(mount,{selected:Number(button.dataset.trackAnswer),correctIndex:question.correct,explain:change?"La nueva armadura de Re mayor afecta Fa♯ y Do♯; un becuadro previo solo afecta su compás.":"D.S. significa Dal Segno: vuelve al signo y continúa hasta la indicación de Coda o Fine.",levelId:level.id})));return;
@@ -1703,12 +1703,11 @@ function mountTrackPractice(level){
     const contour=delta>2?"Salto ascendente":delta>0?"Grado conjunto ascendente":delta<-2?"Salto descendente":"Grado conjunto descendente";
     const dictationQuestion=shuffledQuestion("Después de escuchar, ¿cómo comienza la frase nueva?",contour,["Repetición exacta","Dos notas simultáneas","Silencio inicial"]);
     const question=cfg.type==="dictation"?dictationQuestion:noteQuestion;
-    const noInstrumentMap=["l2-fluidez-sol","l2-clave-fa","l2-dictado","l2-primera-vista","l3-capstone"].includes(level.id);
-    const instrumentMap=noInstrumentMap?"":`<div class="visual-two track-instrument-map"><section class="visual-box"><div class="diagram-label">Piano · notas de la frase</div>${pianoHTML("C",visualTones)}</section><section class="visual-box"><div class="diagram-label">Diapasón · posiciones</div><div class="scroll-x">${guitarScaleSVG("C",visualTones)}</div></section></div>`;
-    const scoreHTML=`<div class="solfege-score-wrap ${cfg.type==="dictation"?"dictation-hidden":""}" data-dictation-score><div class="scroll-x">${phraseStaffSVG(phrase,{clef:cfg.clef||"treble",meter:cfg.meter})}</div></div>`;
+    const instrumentMap=""; // Reading and dictation are practiced from notation alone.
+    const scoreHTML=`<div data-ci-notation-only class="solfege-score-wrap ${cfg.type==="dictation"?"dictation-hidden":""}" data-dictation-score><div class="scroll-x">${phraseStaffSVG(phrase,{clef:cfg.clef||"treble",meter:cfg.meter})}</div></div>`;
     const rubric=level.id==="l2-primera-vista"?`<fieldset class="reading-rubric"><legend>Autoevaluación de la lectura</legend>${["Pulso continuo","Alturas precisas","Ritmo claro","Recuperación tras un error"].map(item=>`<label><input type="checkbox" data-rubric> ${item}</label>`).join("")}<p data-rubric-feedback>Elige una meta concreta para la siguiente lectura.</p></fieldset>`:"";
     const interpretation=level.id==="l3-capstone"?interpretationGuideHTML():"";
-    mount.innerHTML=`<div class="lab-card track-practice"><header><p class="kicker">PRÁCTICA GUIADA · GENERADA</p><h3>${escapeHtml(level.title)}</h3><p>${cfg.type==="dictation"?"Escucha primero; responde y después revela el modelo para comparar.":"Observa el contorno, recibe la cuenta previa y mantén el pulso."}</p></header>${scoreHTML}${interpretation}${instrumentMap}<p class="count-in-display" data-count-in-display aria-live="polite">Cuenta previa · preparada</p><div class="solfege-actions"><button class="primary-btn" type="button" data-track-read>▶ Cuenta y lee</button><button class="ghost-btn" type="button" data-track-hear>▶ Escuchar modelo</button><button class="ghost-btn" type="button" data-track-new>↻ Nueva práctica</button></div>${makeQuestion(question.question,question.answers)}${rubric}</div>`;
+    mount.innerHTML=`<div class="lab-card track-practice" data-ci-notation-only><header><p class="kicker">PRÁCTICA GUIADA · GENERADA</p><h3>${escapeHtml(level.title)}</h3><p>${cfg.type==="dictation"?"Escucha primero; responde y después revela el modelo para comparar.":"Observa el contorno, recibe la cuenta previa y mantén el pulso."}</p></header>${scoreHTML}${interpretation}${instrumentMap}<p class="count-in-display" data-count-in-display aria-live="polite">Cuenta previa · preparada</p><div class="solfege-actions"><button class="primary-btn" type="button" data-track-read>▶ Cuenta y lee</button><button class="ghost-btn" type="button" data-track-hear>▶ Escuchar modelo</button><button class="ghost-btn" type="button" data-track-new>↻ Nueva práctica</button></div>${makeQuestion(question.question,question.answers)}${rubric}</div>`;
     mount.querySelector("[data-track-read]").addEventListener("click",()=>playPhrase(mount,phrase,cfg.bpm,cfg.meter));
     mount.querySelector("[data-track-hear]").addEventListener("click",()=>playSequence(phrase.map(event=>midiFromNamed(event.note)),Math.round(60000/cfg.bpm)));
     mount.querySelector("[data-track-new]").addEventListener("click",()=>mountTrackPractice(level));
@@ -1718,7 +1717,7 @@ function mountTrackPractice(level){
   }
   if(cfg.type==="grand"){
     const upper=trackPhrase(generateTrackNotes(cfg.upper),cfg.meter),lower=trackPhrase(generateTrackNotes(cfg.lower),cfg.meter);
-    mount.innerHTML=`<div class="lab-card track-practice"><header><p class="kicker">LECTURA POLIFÓNICA · GENERADA</p><h3>${escapeHtml(level.title)}</h3><p>Lee cada voz por separado y después observa los puntos de coincidencia vertical.</p></header>${grandStaffHTML(upper,lower,cfg.meter)}<p class="count-in-display" data-count-in-display aria-live="polite">Cuenta previa · preparada</p><div class="solfege-actions"><button class="primary-btn" type="button" data-track-upper>▶ Leer voz superior</button><button class="ghost-btn" type="button" data-track-lower>▶ Leer voz inferior</button><button class="ghost-btn" type="button" data-track-both>▶ Escuchar ambas</button><button class="ghost-btn" type="button" data-track-new>↻ Nueva práctica</button></div><p class="feedback">Empieza a un tempo donde puedas mantener ambas voces sin detener el pulso.</p></div>`;
+    mount.innerHTML=`<div class="lab-card track-practice" data-ci-notation-only><header><p class="kicker">LECTURA POLIFÓNICA · GENERADA</p><h3>${escapeHtml(level.title)}</h3><p>Lee cada voz por separado y después observa los puntos de coincidencia vertical.</p></header>${grandStaffHTML(upper,lower,cfg.meter)}<p class="count-in-display" data-count-in-display aria-live="polite">Cuenta previa · preparada</p><div class="solfege-actions"><button class="primary-btn" type="button" data-track-upper>▶ Leer voz superior</button><button class="ghost-btn" type="button" data-track-lower>▶ Leer voz inferior</button><button class="ghost-btn" type="button" data-track-both>▶ Escuchar ambas</button><button class="ghost-btn" type="button" data-track-new>↻ Nueva práctica</button></div><p class="feedback">Empieza a un tempo donde puedas mantener ambas voces sin detener el pulso.</p></div>`;
     mount.querySelector("[data-track-upper]").addEventListener("click",()=>playPhrase(mount,upper,cfg.bpm,cfg.meter));
     mount.querySelector("[data-track-lower]").addEventListener("click",()=>playPhrase(mount,lower,cfg.bpm,cfg.meter));
     mount.querySelector("[data-track-both]").addEventListener("click",async()=>{
@@ -1742,9 +1741,9 @@ function mountTrackPractice(level){
     const notes=isKey?[]:generateTrackNotes(["G4","A4","B4","D5","C5","B4","A4","G4"]);
     const phrase=trackPhrase(notes,meter);
     const question=isKey?shuffledQuestion("¿Qué tonalidad mayor corresponde a la armadura mostrada?",keyExample.name,["Do mayor","La menor","Mi♭ mayor"]):generatedTrackQuestion(level,cfg);
-    const notation=isKey?keySignaturePracticeHTML(keyExample):`<div class="solfege-score-wrap"><div class="scroll-x">${phraseStaffSVG(phrase,{clef:"treble",meter})}</div></div>`;
+    const notation=isKey?keySignaturePracticeHTML(keyExample):`<div data-ci-notation-only class="solfege-score-wrap"><div class="scroll-x">${phraseStaffSVG(phrase,{clef:"treble",meter})}</div></div>`;
     const actions=isKey?`<div class="solfege-actions"><button class="primary-btn" type="button" data-track-hear>▶ Escuchar escala</button><button class="ghost-btn" type="button" data-track-new>↻ Nueva armadura</button></div>`:`<p class="count-in-display" data-count-in-display aria-live="polite">Cuenta previa · preparada</p><div class="solfege-actions"><button class="primary-btn" type="button" data-track-read>▶ Cuenta y lee</button><button class="ghost-btn" type="button" data-track-hear>▶ Escuchar modelo</button><button class="ghost-btn" type="button" data-track-new>↻ Nueva práctica</button></div>`;
-    mount.innerHTML=`<div class="lab-card track-practice"><header><p class="kicker">LECTURA GUIADA · GENERADA</p><h3>${escapeHtml(level.title)}</h3><p>${isKey?"Identifica la armadura, nombra la tonalidad mayor y después relaciona su relativa menor.":"Marca la agrupación antes de entrar: el pentagrama se lee desde el pulso, no desde figuras aisladas."}</p></header>${notation}${actions}${makeQuestion(question.question,question.answers)}</div>`;
+    mount.innerHTML=`<div class="lab-card track-practice" data-ci-notation-only><header><p class="kicker">LECTURA GUIADA · GENERADA</p><h3>${escapeHtml(level.title)}</h3><p>${isKey?"Identifica la armadura, nombra la tonalidad mayor y después relaciona su relativa menor.":"Marca la agrupación antes de entrar: el pentagrama se lee desde el pulso, no desde figuras aisladas."}</p></header>${notation}${actions}${makeQuestion(question.question,question.answers)}</div>`;
     if(!isKey)mount.querySelector("[data-track-read]").addEventListener("click",()=>playPhrase(mount,phrase,68,meter));
     mount.querySelector("[data-track-hear]").addEventListener("click",()=>isKey?playSequence(tones(keyExample.root,SCALES[0].tokens).map(t=>rootMidi(keyExample.root,4)+t.semi),330):playSequence(phrase.map(event=>midiFromNamed(event.note)),440));
     mount.querySelector("[data-track-new]").addEventListener("click",()=>mountTrackPractice(level));
@@ -1752,7 +1751,7 @@ function mountTrackPractice(level){
     return;
   }
   const question=generatedTrackQuestion(level,cfg);
-  mount.innerHTML=`<div class="lab-card track-practice"><header><p class="kicker">COMPROBACIÓN ACTIVA · GENERADA</p><h3>${escapeHtml(level.title)}</h3><p>Responde y lee la explicación antes de continuar.</p></header>${makeQuestion(question.question,question.answers)}<div class="solfege-actions"><button class="ghost-btn" type="button" data-track-new>↻ Nueva práctica</button></div></div>`;
+  mount.innerHTML=`<div class="lab-card track-practice" data-ci-notation-only><header><p class="kicker">COMPROBACIÓN ACTIVA · GENERADA</p><h3>${escapeHtml(level.title)}</h3><p>Responde y lee la explicación antes de continuar.</p></header>${makeQuestion(question.question,question.answers)}<div class="solfege-actions"><button class="ghost-btn" type="button" data-track-new>↻ Nueva práctica</button></div></div>`;
   mount.querySelector("[data-track-new]").addEventListener("click",()=>mountTrackPractice(level));
   mount.querySelectorAll("[data-track-answer]").forEach(button=>button.addEventListener("click",()=>resolveTrackCheck(mount,{selected:Number(button.dataset.trackAnswer),correctIndex:question.correct,explain:question.explain||cfg.explain,levelId:level.id})));
 }
@@ -1897,7 +1896,7 @@ function mountMelodySolfege(root){
     <label>Dificultad <select data-ms-level><option value="1">1 · cinco notas</option><option value="2">2 · una octava</option><option value="3">3 · rango ampliado</option></select></label>
     <label>BPM <input type="range" min="50" max="120" value="80" data-ms-bpm><span data-ms-bpm-label>80</span></label>
   </div>
-  <div class="solfege-score-wrap"><div class="scroll-x" data-ms-staff data-ci-notation-only></div></div>
+  <div data-ci-notation-only class="solfege-score-wrap"><div class="scroll-x" data-ms-staff data-ci-notation-only></div></div>
   <p class="count-in-display" data-count-in-display aria-live="polite">Cuenta previa · 1 2 3 4</p>
   <div class="solfege-actions">
     <button class="primary-btn" data-ms-play>▶ Reproducir</button>
@@ -2009,7 +2008,7 @@ function mountContourSolfege(root){
     <label>Dificultad <select data-cs-level><option value="1">1 · movimientos cortos</option><option value="2">2 · incluye saltos</option></select></label>
     <label>BPM <input type="range" min="50" max="110" value="72" data-cs-bpm><span data-cs-bpm-label>72</span></label>
   </div>
-  <div class="solfege-score-wrap"><div class="scroll-x" data-cs-staff></div></div>
+  <div data-ci-notation-only class="solfege-score-wrap"><div class="scroll-x" data-cs-staff></div></div>
   <div class="contour-cards" data-cs-contour></div>
   <p class="count-in-display" data-count-in-display aria-live="polite">Cuenta previa · 1 2 3 4</p>
   <div class="solfege-actions"><button class="primary-btn" data-cs-play>▶ Escuchar frase</button><button class="ghost-btn" data-cs-new>Nueva frase</button></div>`;
@@ -2516,7 +2515,7 @@ const EXPRESSION_TRAINER_QUESTIONS = [
 
 function mountExpressionTrainer(root,onResult){
   const body=root.querySelector("[data-trainer-body]");
-  body.innerHTML=`<div class="trainer-question-card">
+  body.innerHTML=`<div class="trainer-question-card" data-ci-notation-only>
     <div class="expression-trainer-icons">
       <span>𝆏</span><span>♩.</span><span>≋</span><span>A–B–A</span>
     </div>
@@ -2771,7 +2770,7 @@ function startReadingEvaluation(){
   runner.classList.remove("hidden");
   runner.innerHTML=`<section class="reading-evaluation"><div class="eval-runner-head"><div><span>Lectura práctica guiada</span><b>Frase de 2 compases · 4/4</b></div></div>
     <p>Esta prueba no simula medir tu voz: úsala para comprobar una lectura real. Escucha la cuenta previa, entra con el pulso y marca honestamente lo que lograste.</p>
-    <div class="solfege-score-wrap"><div class="scroll-x">${phraseStaffSVG(phrase,{clef:"treble",meter:"4/4"})}</div></div>
+    <div data-ci-notation-only class="solfege-score-wrap"><div class="scroll-x">${phraseStaffSVG(phrase,{clef:"treble",meter:"4/4"})}</div></div>
     <p class="count-in-display" data-count-in-display aria-live="polite">Cuenta previa · preparada</p>
     <div class="solfege-actions"><button type="button" class="primary-btn" data-reading-eval-play>▶ Cuenta y reproduce</button><button type="button" class="ghost-btn" data-reading-eval-hear>▶ Escuchar referencia</button></div>
     <div class="reading-evaluation-list"><label><input type="checkbox" data-reading-check="pulse"> Entré después de la cuenta previa y mantuve el pulso.</label><label><input type="checkbox" data-reading-check="names"> Nombré las notas sin detenerme.</label><label><input type="checkbox" data-reading-check="shape"> Reconocí que la frase sube y vuelve a Do.</label></div>

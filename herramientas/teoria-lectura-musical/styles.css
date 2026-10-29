@@ -1425,3 +1425,12 @@ body .grand-reference>b{width:100%;display:block}
 .reference-grid>.grand-reference{width:100%;max-width:none;box-sizing:border-box}
 @media(max-width:600px){.reference-grid:has(>.grand-reference){grid-template-columns:1fr}}
 body .reference-grid>.symbol-guide.grand-reference{grid-column:1/-1!important}
+
+/* Compact paired explanations; reading exercises never need an instrument map. */
+@media(min-width:701px){
+ body.theory-reading-page .concept-example .ci-group{grid-template-columns:minmax(0,1.1fr) minmax(0,1fr)!important;align-items:center}
+ .trainer-question-card:has(>[data-nt-staff]){display:grid;grid-template-columns:minmax(180px,.8fr) minmax(260px,1.2fr);column-gap:20px;align-items:center}
+ .trainer-question-card>[data-nt-staff]{grid-column:1;grid-row:1/span 3;min-width:0}
+ .trainer-question-card:has(>[data-nt-staff])>:not([data-nt-staff]){grid-column:2}
+ .trainer-question-card>[data-nt-staff] .cp-staff{margin:0;min-height:180px}
+}

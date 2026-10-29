@@ -577,4 +577,10 @@ delete X.catalogs.production['estudio-1:0'].steps;
 X.catalogs.production['estudio-1:0'].diagram={type:'conversion',label:'Señal analógica continua y muestras de amplitud cuantizada después de la conversión A/D'};
 
 X.productionIllustrationAt={"sonido-1": 2, "sonido-2": 0, "sonido-3": 0, "sonido-4": 1, "estudio-1": 0, "estudio-2": 0, "estudio-3": 0, "estudio-4": 0, "preproduccion-1": 0, "preproduccion-2": 0, "preproduccion-3": 0, "preproduccion-4": 0, "grabacion-1": 0, "grabacion-2": 0, "grabacion-3": 0, "grabacion-4": 0, "edicion-1": 0, "edicion-2": 0, "edicion-3": 0, "edicion-4": 0, "midi-1": 0, "midi-2": 0, "midi-3": 0, "midi-4": 0, "mezcla-1": 0, "mezcla-2": 0, "mezcla-3": 0, "mezcla-4": 0, "profundidad-1": 0, "profundidad-2": 0, "profundidad-3": 1, "profundidad-4": 0, "mastering-1": 0, "mastering-2": 0, "mastering-3": 0, "mastering-4": 1, "medios-1": 0, "medios-2": 0, "medios-3": 0, "medios-4": 0, "profesion-1": 0, "profesion-2": 0, "profesion-3": 0, "profesion-4": 0, "proyecto-1": 0, "proyecto-2": 0, "proyecto-3": 0, "proyecto-4": 0};
+// Pure reading concepts use notation; keyboards remain for pitch relationships.
+for(const key of ['Tres grandes ejes para empezar','Motivo y frase','Contorno melódico','Grados conjuntos y saltos','Repetición y secuencia','Notas estructurales y notas de paso','Notas melódicas secundarias','Reconocer antes de contar','Anclas visuales','Vertical y horizontal a la vez','Mira antes de reaccionar','Jerarquía de voces','Acordes no sustituyen voces']){
+ const spec=X.catalogs.reading[key];
+ if(spec){spec.instrument=false;if(spec.compare)spec.compare=spec.compare.map(c=>({...c,instrumentContext:{...c.instrumentContext,instrument:false}}));}
+}
+
 })(typeof window==='undefined'?globalThis:window);
