@@ -1164,7 +1164,7 @@
         const rootPc = window.CrescendoPitchSpelling.pc(rootSel.value);
         const scaleName = arpeggioSel.value ? Study.ARPEGGIOS[arpeggioSel.value].label : scaleSel.value.replace(/_/g, ' ');
         symbolEl.textContent = `${arpeggioSel.value?'Arpegio':'Escala'}: ${rootSel.value} ${scaleName}`;
-        const modelText=selectedStudyModel?`${selectedStudyModel.label} · trastes ${selectedStudyModel.minFret}–${selectedStudyModel.maxFret}`:'Todo el diapasón';
+        const modelText=selectedStudyModel?`${selectedStudyModel.label} · trastes ${selectedStudyModel.minFret}–${selectedStudyModel.maxFret} · ${selectedStudyModel.source}`:'Todo el diapasón';
         const colors=arpeggioSel.value?[]:Study.characteristic(scaleSel.value,studyIntervals());
         const colorText=colors.length?' · Nota'+(colors.length>1?'s':'')+' característica'+(colors.length>1?'s':'')+': '+colors.map(note=>`${note.degree} (${spellPc((rootPc+note.interval)%12,rootSel.value)})`).join(' · '):'';
         qualityEl.textContent = `${modelText}${colorText}${capoSemitones()?` · Capo ${capoSemitones()}`:''}`;
@@ -1224,7 +1224,7 @@
     window.CrescendoStudyBridge={
       context(){
         const chord=parseChordValue(),r=window.CrescendoPitchSpelling.pc(rootSel.value||'C');
-        return {root:Math.max(0,r),pitches:activePitches().map(p=>p+activeInstrument().nutFret),maxFret:maxVisibleFrets(),
+        return {root:Math.max(0,r),rootName:rootSel.value||'C',instrument:instrumentSel.value,instrumentLabel:activeInstrument().label,tuning:tuningSel.value,capo:capoSemitones(),soundType:soundTypeSel.value,chordValue:chordTypeSel.value,modelId:posSel.value,pitches:activePitches().map(p=>p+activeInstrument().nutFret),maxFret:maxVisibleFrets(),
           scheme:patternSel.value,anchor:selectedStudyModel?(selectedStudyModel.minFret+selectedStudyModel.maxFret)/2:5,
           scale:Study.intervals(SCALE[scaleSel.value]||SCALE.mayor),steps:SCALE[scaleSel.value]||SCALE.mayor,scaleKey:scaleSel.value||'mayor',
           material:arpeggioSel.value?'arpeggio':chord?'chord':'scale',arpeggio:arpeggioSel.value,
@@ -1238,6 +1238,18 @@
         offset=Math.max(0,min-2);visibleFrets=Math.min(maxVisibleFrets()-offset,Math.max(4,max-offset+1));fretVal.textContent=visibleFrets;draw();
       },
       clear(){labFrame=null;if(labViewport){offset=labViewport.offset;visibleFrets=labViewport.visibleFrets;labViewport=null;}fretVal.textContent=visibleFrets;draw();},
+      restoreContext(c){
+        const instrument=INSTRUMENTS[c.instrument],tuning=(TUNINGS[c.instrument]||[]).find(t=>t.value===c.tuning),capo=Number(c.capo)||0;
+        if(!instrument||!tuning||capo<0||capo>12||tuning.pitches.map(n=>n+capo+instrument.nutFret).some((n,i)=>n!==c.pitches[i]))throw Error('La afinación guardada no corresponde a un instrumento compatible.');
+        instrumentSel.value=c.instrument;instrumentSel.dispatchEvent(new Event('change',{bubbles:true}));
+        tuningSel.value=c.tuning;tuningSel.dispatchEvent(new Event('change',{bubbles:true}));capoSel.value=String(capo);capoSel.dispatchEvent(new Event('change',{bubbles:true}));
+        chordTypeSel.value='';arpeggioSel.value='';
+        rootSel.value=c.rootName||NOTE[c.root];rootSel.dispatchEvent(new Event('change',{bubbles:true}));
+        scaleSel.value=SCALE[c.scaleKey]?c.scaleKey:'mayor';scaleSel.dispatchEvent(new Event('change',{bubbles:true}));
+        if(c.arpeggio&&Study.ARPEGGIOS[c.arpeggio]){arpeggioSel.value=c.arpeggio;arpeggioSel.dispatchEvent(new Event('change',{bubbles:true}));}
+        if(c.chordValue&&parseChordValue(c.chordValue)){chordTypeSel.value=c.chordValue;chordTypeSel.dispatchEvent(new Event('change',{bubbles:true}));}
+        if([...soundTypeSel.options].some(o=>o.value===c.soundType)){soundTypeSel.value=c.soundType;soundTypeSel.dispatchEvent(new Event('change',{bubbles:true}));}
+      },
       play:playNote,
       async ready(){ensureCtx();const started=Date.now();while(sfLoading&&Date.now()-started<6000)await new Promise(resolve=>setTimeout(resolve,100));},
       stopScore(){if(typeof stopScorePlayback==='function')stopScorePlayback();else document.getElementById('scoreStopBtn')?.click();}

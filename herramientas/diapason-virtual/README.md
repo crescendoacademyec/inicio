@@ -38,7 +38,7 @@ Sube `index.html`, `css/`, `js/` y cualquier recurso adicional que ya use tu rep
 - Verificación: `node --test herramientas/diapason-virtual/tests/*.test.js` y `node herramientas/diapason-virtual/tests/validate.js`.
 
 ## Estudio guiado
-- El botón **Estudio guiado** abre nueve apartados: ciclos, motivos/patrones, tríadas abiertas, superposiciones, armonía cuartal, acordes híbridos, voicings con tensiones, conducción de voces y estructuras outside.
+- El botón **Estudio guiado** abre doce apartados: pares de estructuras, cuartas + Drop 2, voz guía libre, ciclos, motivos/patrones, tríadas abiertas, superposiciones, armonía cuartal, acordes híbridos, voicings con tensiones, conducción de voces y estructuras outside.
 - `js/study-lab-engine.js` es el motor musical independiente de la interfaz. Calcula posiciones compactas de una nota por cuerda desde las alturas de la afinación activa. Valida rango, cuerdas e inversión real del bajo; informa cuando una combinación no cabe, sin inventar notas ni borrar voces.
 - Los ciclos usan su período real: cuartas/quintas recorren doce raíces, terceras mayores tres y terceras menores cuatro. Los recorridos melódicos pueden seguir terceras, grupos de 3/4 o un motivo 1–3–2–4, con figuras y motivos rítmicos configurables.
 - Los bloques cuartales son diatónicos; las tríadas abiertas separan la voz central una octava. Los híbridos mantienen un bajo independiente por debajo de la tríada. La conducción de voces propone enlaces entre digitaciones compactas cercanas y muestra los movimientos y notas comunes.
@@ -47,3 +47,28 @@ Sube `index.html`, `css/`, `js/` y cualquier recurso adicional que ya use tu rep
 - Los arpegios **1–4–5** y **1–2–5** también están disponibles en el selector principal. Los menús Drop 2/3 incluyen nuevas fórmulas de cuatro voces con séptimas, sextas y tensiones; el panel de estudio añade bloques de cinco voces cuando el instrumento y la posición lo permiten.
 - Ejercicios y diagramas originales calculados; referencias de temas: Guitarra 1 pp.6–18; Guitarra 2 pp.36–48; Guitarra 3 pp.13–29 y 43–60; Guitarra 4 pp.11–43. No se distribuyen páginas ni repertorio de los libros.
 - Pruebas adicionales: `tests/study-lab.test.js` verifica los nueve temas en doce tonalidades para guitarra/requinto, orden real de voces Drop, bajo de híbridos, cuartas diatónicas, ritmos, grupos de cuerdas, afinaciones alternativas, capo y ukelele.
+
+## Recorrido de los cuatro niveles
+
+`js/study-curriculum.js` organiza 49 unidades en el orden de temas de los ejemplares aportados: 13 del nivel 1, 9 del nivel 2, 15 del nivel 3 y 12 del nivel 4. Cada unidad tiene objetivo, referencia de página y una preparación ejecutable. La ruta recuerda nivel, unidad y unidades practicadas en este navegador, permite avanzar entre niveles y convive con la exploración libre. Los objetivos que comparan varias calidades o modos se completan mediante los selectores del ejercicio y del diapasón.
+
+La cobertura es del recorrido temático, con explicaciones y ejercicios generados originales. No equivale a reproducir todas las partituras, ejemplos, videos o repertorio de los cuatro libros. Las unidades de aplicación requieren el ejemplar o un MusicXML propio/autorizado.
+
+- Nivel 1: pentatónicas y blues, ciclos, motivos, superposiciones, tríadas, ii–V–I, arpegios, mayor y Drop 2.
+- Nivel 2: Drop 3, arpegios de tétradas, modos mayores y nota característica, tríadas abiertas, ciclos diatónicos y pares.
+- Nivel 3: menores melódica/armónica y modos, tonos enteros, cuartas, disminuidas, sextas y tensiones en Drop 2/3.
+- Nivel 4: 7♭5 y maj7♭5, sus, híbridos, bloques Drop de referencia, ciclos menores, mayor armónica, voz guía y outside.
+
+`js/reference-models.js` separa digitaciones cotejadas con sus diagramas de las derivadas por alteración o adaptación de instrumento. La app muestra esa procedencia en lugar de presentar cada modelo calculado como una copia exacta. Incluye los cuatro órdenes de voces de Drop 2&3 y doble Drop 3 de Guitarra 4 p.20.
+
+## Partitura y proyectos completos
+
+`js/study-score.js` produce la partitura Bravura del ejercicio entero, con ritmo, ligaduras al cruzar compás y TAB de la digitación elegida. Usa tiempos racionales de doce subdivisiones por negra para conservar tresillos y seisillos. La representación conserva la altura escrita del instrumento y la altura sonora para audio y TAB.
+
+Guardar/recuperar conserva notas, cuerdas, trastes, configuración, instrumento y posición de estudio. El archivo JSON permite trasladar el proyecto; al importarlo se valida que sus alturas correspondan a la afinación. El progreso de la ruta se conserva por separado.
+
+Exportar ofrece PDF multipágina, páginas PNG dentro de un ZIP, MusicXML y proyecto JSON. Se pide nombre; la carpeta se puede elegir cuando el navegador permite acceso a directorios. En los demás casos se utiliza la descarga del navegador. PDF/PNG contienen la partitura completa; MusicXML incluye la digitación.
+
+La auditoría añadió ciclos diatónicos de segundas a séptimas, tríadas abiertas/cerradas, tétradas, doce tonalidades, pares, cuartas combinadas con Drop 2, guía fija superior o inferior, motivos personalizados y células de 5/6/7 notas. Se corrigieron las inversiones de híbridos y cuartales y la reanudación del acompañamiento.
+
+`tests/study-complete.test.js` verifica los nuevos recorridos, todos los presets de las 49 unidades, digitaciones de referencia, conservación exacta de tiempos en MusicXML, proyectos y estructura binaria de PDF/ZIP.

@@ -1,4 +1,5 @@
 (function(root){'use strict';
+ const References=typeof module!=='undefined'?require('./reference-models'):root.CrescendoReferenceModels;
  const mod=n=>((n%12)+12)%12,STANDARD=[64,59,55,50,45,40],MAJOR=[0,2,4,5,7,9,11];
  // Frets in C, first string to sixth. These are individual fingerings, never fret windows.
  // Source: user-supplied Guitarra 1 p.20; Guitarra 3 pp.5,31.
@@ -62,13 +63,20 @@
  }
  function models({rootPc=0,steps=[],key='',kind='scale',arpeggio='maj7',pitches=STANDARD,maxFret=22,scheme='free'}={}){
   const collection=kind==='arpeggio'?ARPEGGIOS[arpeggio]?.intervals:intervals(steps);if(!collection?.length)return [];
-  let templates=MAJOR_MODELS,reference=MAJOR,referenceRoot=0,target=collection;
+  let templates=MAJOR_MODELS,reference=MAJOR,referenceRoot=0,target=collection,provenance='Derivado de Guitarra 1, p. 20';
   if(kind==='arpeggio'){templates=ARP_MODELS;reference=[0,4,7,11];}
   else if(key==='menor_melodica'){templates=MELODIC_MODELS;reference=[0,2,3,5,7,9,11];}
   else if(key==='menor_armonica'){templates=HARMONIC_MODELS;reference=[0,2,3,5,7,8,11];}
   else if(key==='pentatonica_menor'||key==='blues'){referenceRoot=9;reference=[0,3,5,7,10];templates=MAJOR_MODELS.map(t=>t.map((fs,s)=>fs.filter(f=>reference.includes(mod(STANDARD[s]+f-9)))));target=[0,3,5,7,10];}
   else if(['pentatonica_mayor','pentatonica_dominante','blues_mayor'].includes(key)){reference=[0,2,4,7,9];templates=MAJOR_MODELS.map(t=>t.map((fs,s)=>fs.filter(f=>reference.includes(mod(STANDARD[s]+f)))));target=key==='pentatonica_dominante'?[0,2,4,7,10]:reference;}
   const isSix=pitches.length===6;
+  const exact=kind==='arpeggio'?References?.[arpeggio]:null;
+  if(exact&&isSix&&scheme==='free'){templates=exact.models;reference=collection;referenceRoot=exact.root;target=collection;provenance=exact.source+(exact.derived?' · derivado según referencia':' · cotejado');}
+  else if(kind==='arpeggio'&&arpeggio==='maj7')provenance='Guitarra 2, p. 11 · cotejado';
+  else if(kind==='arpeggio')provenance='Derivado de Guitarra 2, p. 11';
+  else if(['mayor','jonico','menor_melodica','menor_armonica','pentatonica_mayor','pentatonica_menor'].includes(key))provenance=(key==='menor_melodica'?'Guitarra 3, p. 5':key==='menor_armonica'?'Guitarra 3, p. 31':key==='pentatonica_mayor'?'Guitarra 1, p. 10':key==='pentatonica_menor'?'Guitarra 1, p. 4':'Guitarra 1, p. 20')+' · cotejado';
+  if(!isSix)provenance='Adaptado a '+pitches.length+' cuerdas';
+  if(scheme==='3nps')provenance='Digitación calculada · tres notas por cuerda';
   let modelRoot=rootPc;
   if(isSix&&scheme!=='3nps'&&templates[0]){
     const first=transpose(templates[0],reference,referenceRoot,target,rootPc,pitches,maxFret,true);
@@ -76,7 +84,7 @@
     const shift=shifts.find(shift=>first.length&&first.every(c=>c.fret+shift>=0&&c.fret+shift<=maxFret));
     modelRoot+=shift||0;
   }
-  const count=scheme==='3nps'&&collection.length===7?7:!isSix&&kind==='arpeggio'?collection.length:key==='por_tonos'?1:key.startsWith('disminuida_')?2:5;
+  const count=exact&&isSix&&scheme==='free'?templates.length:scheme==='3nps'&&collection.length===7?7:!isSix&&kind==='arpeggio'?collection.length:key==='por_tonos'?1:key.startsWith('disminuida_')?2:5;
   const result=[];
   for(let i=0;i<count;i++){
    let cells;
@@ -85,7 +93,7 @@
    else cells=transpose(templates[i],reference,referenceRoot,target,modelRoot,pitches,maxFret);
    if(['blues','blues_mayor'].includes(key)&&cells.length){const extra=key==='blues'?6:3,min=Math.min(...cells.map(c=>c.fret)),max=Math.min(maxFret,Math.max(...cells.map(c=>c.fret))+1);for(let string=0;string<pitches.length;string++)for(let fret=min;fret<=max;fret++)if(mod(pitches[string]+fret-rootPc)===extra)cells.push({string,fret,midi:pitches[string]+fret,interval:extra});}
    cells.sort((a,b)=>b.string-a.string||a.fret-b.fret);
-   result.push({id:'model'+(i+1),label:'Modelo '+(i+1),cells,minFret:cells.length?Math.min(...cells.map(c=>c.fret)):0,maxFret:cells.length?Math.max(...cells.map(c=>c.fret)):0});
+   result.push({id:'model'+(i+1),label:'Modelo '+(i+1),source:provenance,cells,minFret:cells.length?Math.min(...cells.map(c=>c.fret)):0,maxFret:cells.length?Math.max(...cells.map(c=>c.fret)):0});
   }
   return result;
  }

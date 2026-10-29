@@ -10932,7 +10932,8 @@
 
   const RECORDING_DB_NAME = "jml-score-recordings";
   const RECORDING_STORE = "blobs";
-  let activeRecordingController = null;
+  let activeRecordingController = null, activeRecordingKey = '', recordingLoading = null, recordingDock = null;
+  const RecordingSync = window.CrescendoRecordingSync;
 
   function openRecordingDb() {
     return new Promise((resolve, reject) => {
@@ -10986,40 +10987,16 @@
     return crypto.randomUUID ? crypto.randomUUID() : `rec-${Date.now()}-${Math.random()}`;
   }
 
-  function parseYouTubeId(value) {
-    const text = String(value || "").trim();
-    if (!text) return null;
-    if (/^[\w-]{11}$/.test(text)) return text;
-    try {
-      const url = new URL(text);
-      if (url.hostname.includes("youtu.be")) {
-        return url.pathname.replace("/", "") || null;
-      }
-      if (url.hostname.includes("youtube.com")) {
-        if (url.pathname.startsWith("/shorts/")) return url.pathname.split("/")[2] || null;
-        if (url.pathname.startsWith("/embed/")) return url.pathname.split("/")[2] || null;
-        return url.searchParams.get("v");
-      }
-    } catch {
-      // No es una URL válida; ya se intentó como id directo arriba.
-    }
-    return null;
-  }
+  function parseYouTubeId(value) { return RecordingSync.youtubeId(value); }
 
   function loadYouTubeIframeApi() {
-    if (window.YT?.Player) return Promise.resolve(window.YT);
-    if (window.__jmlYouTubeApiPromise) return window.__jmlYouTubeApiPromise;
-    window.__jmlYouTubeApiPromise = new Promise((resolve) => {
-      const previousCallback = window.onYouTubeIframeAPIReady;
-      window.onYouTubeIframeAPIReady = () => {
-        previousCallback?.();
-        resolve(window.YT);
-      };
-      const script = document.createElement("script");
-      script.src = "https://www.youtube.com/iframe_api";
-      document.head.appendChild(script);
-    });
-    return window.__jmlYouTubeApiPromise;
+    if(window.YT?.Player)return Promise.resolve(window.YT);
+    if(window.__jmlYouTubeApiPromise)return window.__jmlYouTubeApiPromise;
+    window.__jmlYouTubeApiPromise=new Promise((resolve,reject)=>{
+      const previous=window.onYouTubeIframeAPIReady,timer=setTimeout(()=>{window.__jmlYouTubeApiPromise=null;reject(Error("YouTube no respondió. Comprueba tu conexión e inténtalo de nuevo."));},15000);
+      window.onYouTubeIframeAPIReady=()=>{clearTimeout(timer);previous?.();resolve(window.YT);};
+      const script=document.createElement('script');script.src='https://www.youtube.com/iframe_api';script.onerror=()=>{clearTimeout(timer);window.__jmlYouTubeApiPromise=null;reject(Error('No se pudo cargar el reproductor de YouTube.'));};document.head.append(script);
+    });return window.__jmlYouTubeApiPromise;
   }
 
   function createFileMediaController(url, isVideo) {
@@ -11031,19 +11008,22 @@
     if (isVideo) mediaEl.style.maxHeight = "220px";
     return {
       element: mediaEl,
-      ready: new Promise((resolve) => {
+      ready: new Promise((resolve, reject) => {
+        mediaEl.addEventListener("error",()=>reject(Error("El navegador no puede reproducir este archivo. Prueba un audio MP3, WAV o M4A compatible.")),{once:true});
         if (mediaEl.readyState >= 1) resolve();
         else mediaEl.addEventListener("loadedmetadata", () => resolve(), { once: true });
       }),
       getCurrentTime: () => mediaEl.currentTime || 0,
       getDuration: () => (Number.isFinite(mediaEl.duration) ? mediaEl.duration : 0),
+      getRate: () => mediaEl.playbackRate || 1,
       isPlaying: () => !mediaEl.paused && !mediaEl.ended,
       play: () => mediaEl.play(),
       pause: () => mediaEl.pause(),
       seek: (seconds) => { mediaEl.currentTime = Math.max(0, seconds); },
+      setRate: rate => { mediaEl.playbackRate=rate;mediaEl.preservesPitch=true; },
       onPlay: (callback) => mediaEl.addEventListener("play", callback),
       onPause: (callback) => { mediaEl.addEventListener("pause", callback); mediaEl.addEventListener("ended", callback); },
-      destroy: () => { mediaEl.pause(); mediaEl.removeAttribute("src"); mediaEl.load(); }
+      destroy: () => { mediaEl.pause(); mediaEl.removeAttribute("src"); mediaEl.load();URL.revokeObjectURL(url); }
     };
   }
 
@@ -11051,17 +11031,19 @@
     const YT = await loadYouTubeIframeApi();
     return new Promise((resolve) => {
       let player = null;
-      let readyResolve;
-      const readyPromise = new Promise((res) => { readyResolve = res; });
+      let readyResolve,readyReject;
+      const readyPromise = new Promise((res,rej) => { readyResolve = res;readyReject=rej; });
+      const readyTimer=setTimeout(()=>readyReject(Error("YouTube no pudo preparar el video. Puede que el propietario no permita insertarlo.")),20000);
       const playCallbacks = [];
       const pauseCallbacks = [];
       player = new YT.Player(containerEl, {
         width: "100%",
         height: "220",
         videoId,
-        playerVars: { playsinline: 1, rel: 0 },
+        playerVars: { playsinline: 1, rel: 0, origin:window.location.origin, widget_referrer:window.location.href },
         events: {
-          onReady: () => { readyResolve(); },
+          onReady: () => { clearTimeout(readyTimer);player.getIframe()?.setAttribute("referrerpolicy","strict-origin-when-cross-origin");readyResolve(); },
+          onError: event => { clearTimeout(readyTimer);const message=[101,150].includes(event.data)?"El propietario no permite reproducir este video dentro de la plataforma.":event.data===153?"YouTube no permite este reproductor en el navegador actual. Abre el editor desde la web pública.":"No se pudo reproducir este video de YouTube ("+event.data+").";recordingStatusMessage.textContent=message;recordingDock?.status&&(recordingDock.status.textContent=message);readyReject(Error(message));pauseCallbacks.forEach(cb=>cb()); },
           onStateChange: (event) => {
             if (event.data === YT.PlayerState.PLAYING) playCallbacks.forEach((cb) => cb());
             else if (event.data === YT.PlayerState.PAUSED || event.data === YT.PlayerState.ENDED) pauseCallbacks.forEach((cb) => cb());
@@ -11074,12 +11056,14 @@
         getCurrentTime: () => { try { return player.getCurrentTime() || 0; } catch { return 0; } },
         getDuration: () => { try { return player.getDuration() || 0; } catch { return 0; } },
         isPlaying: () => { try { return player.getPlayerState() === YT.PlayerState.PLAYING; } catch { return false; } },
+        getRate: () => { try { return player.getPlaybackRate() || 1; } catch { return 1; } },
+        setRate: rate => {const allowed=player.getAvailablePlaybackRates();if(!allowed.includes(rate))throw Error("Este video no admite esa velocidad.");player.setPlaybackRate(rate);},
         play: () => player.playVideo(),
         pause: () => player.pauseVideo(),
         seek: (seconds) => player.seekTo(Math.max(0, seconds), true),
         onPlay: (callback) => playCallbacks.push(callback),
         onPause: (callback) => pauseCallbacks.push(callback),
-        destroy: () => { try { player.destroy(); } catch { /* noop */ } }
+        destroy: () => { clearTimeout(readyTimer);try { player.destroy(); } catch { /* noop */ } }
       });
     });
   }
@@ -11122,51 +11106,23 @@
     return state.measures?.length || 0;
   }
 
-  function recordingTimeForMeasure(measureIndex) {
-    const rec = state.recording;
-    if (!rec) return 0;
-    const override = rec.overrides?.[String(measureIndex)];
-    if (Number.isFinite(override)) return override;
-    const tick = measureStartAbsoluteTick(measureIndex);
-    return (rec.onsetOffset || 0) + playbackMsForTick(tick) / 1000;
+  function recordingSyncModel(recording=state.recording,strict=false){
+    const starts=Array.from({length:recordingMeasureCount()+1},(_,i)=>measureStartAbsoluteTick(i)),events=playbackTempoEvents(),baseTime=tick=>playbackMsForTick(tick,events)/1000;
+    let points;try{points=RecordingSync.anchors(recording||{},starts,baseTime);}catch(error){if(strict)throw error;recordingStatusMessage.textContent=error.message;points=RecordingSync.anchors({...recording,overrides:{}},starts,baseTime);}return {starts,baseTime,points};
   }
-
-  function recordingSyncAnchors() {
-    const total = recordingMeasureCount();
-    const anchors = [];
-    for (let index = 0; index < total; index += 1) {
-      anchors.push({ measureIndex: index, tick: measureStartAbsoluteTick(index), time: recordingTimeForMeasure(index) });
-    }
-    return anchors;
-  }
-
-  function recordingTickForTime(timeSeconds) {
-    const anchors = recordingSyncAnchors();
-    if (!anchors.length) return 0;
-    if (timeSeconds <= anchors[0].time) return anchors[0].tick;
-    for (let index = 0; index < anchors.length - 1; index += 1) {
-      const a = anchors[index];
-      const b = anchors[index + 1];
-      if (timeSeconds >= a.time && timeSeconds <= b.time) {
-        const span = Math.max(EPSILON, b.time - a.time);
-        const ratio = (timeSeconds - a.time) / span;
-        return a.tick + ratio * (b.tick - a.tick);
-      }
-    }
-    return anchors[anchors.length - 1].tick;
-  }
-
-  function setRecordingSyncOverride(measureIndex, timeSeconds) {
-    if (!state.recording) return;
-    if (!state.recording.overrides) state.recording.overrides = {};
-    state.recording.overrides[String(measureIndex)] = Math.max(0, Number(timeSeconds) || 0);
-    setDocumentDirty(true);
-    emitEditorState();
+  function recordingTimeForMeasure(measureIndex){const model=recordingSyncModel();return RecordingSync.timeForTick(model.starts[measureIndex]||0,model.points,model.baseTime);}
+  function recordingSyncAnchors(){const model=recordingSyncModel();return model.starts.map((tick,measureIndex)=>({measureIndex,tick,time:RecordingSync.timeForTick(tick,model.points,model.baseTime)}));}
+  function recordingTickForTime(timeSeconds){const model=recordingSyncModel();return RecordingSync.tickForTime(timeSeconds,model.points,model.baseTime,model.starts.at(-1)||0);}
+  function setRecordingSyncOverride(measureIndex,timeSeconds){
+    if(!state.recording)return false;
+    const time=Number(timeSeconds);if(!Number.isFinite(time)||time<0||!Number.isInteger(measureIndex)||measureIndex<0||measureIndex>=recordingMeasureCount())throw Error('Selecciona un compás y un tiempo válidos.');
+    const next={...state.recording,overrides:{...(state.recording.overrides||{}),[String(measureIndex)]:time}};recordingSyncModel(next,true);
+    saveHistory();state.recording.overrides=next.overrides;setDocumentDirty(true);scheduleCanvasAutosave();emitEditorState();renderRecordingPanel();return true;
   }
 
   function clearRecordingSyncOverrides() {
     if (!state.recording) return;
-    state.recording.overrides = {};
+    saveHistory();state.recording.overrides = {};scheduleCanvasAutosave();
     setDocumentDirty(true);
     emitEditorState();
   }
@@ -11264,7 +11220,9 @@
     });
   }
 
-  function formatRecordingTime(seconds) {
+  function formatRecordingTime(seconds) { return RecordingSync.formatTime(seconds); }
+
+  function legacyFormatRecordingTime(seconds) {
     const safe = Math.max(0, Number(seconds) || 0);
     const minutes = Math.floor(safe / 60);
     const secs = Math.floor(safe % 60);
@@ -11272,43 +11230,29 @@
   }
 
   async function destroyActiveRecordingController() {
-    stopRecordingPlayback();
+    stopRecordingPlayback();recordingLoading=null;activeRecordingKey='';
     if (activeRecordingController) {
       try { activeRecordingController.destroy(); } catch { /* noop */ }
       activeRecordingController = null;
     }
   }
 
-  async function ensureRecordingController() {
-    const rec = state.recording;
-    if (!rec) return null;
-    if (activeRecordingController) return activeRecordingController;
-    const mount = document.getElementById("recordingPlayerMount");
-    if (!mount) return null;
-    mount.replaceChildren();
-    if (rec.kind === "youtube") {
-      const container = document.createElement("div");
-      mount.appendChild(container);
-      activeRecordingController = await createYouTubeMediaController(rec.youtubeId, container);
-    } else {
-      const blob = await loadRecordingBlob(rec.blobId);
-      if (!blob) {
-        recordingStatusMessage.textContent = "No se encontró el archivo guardado en este navegador. Vuelve a subirlo.";
-        return null;
-      }
-      const url = URL.createObjectURL(blob);
-      const controller = createFileMediaController(url, (rec.mimeType || "").startsWith("video"));
-      mount.appendChild(controller.element);
-      activeRecordingController = controller;
-    }
-    await activeRecordingController.ready;
-    if (!rec.duration) {
-      rec.duration = activeRecordingController.getDuration() || 0;
-      setDocumentDirty(true);
-    }
-    activeRecordingController.onPlay(() => startRecordingPlaybackAnimation());
-    activeRecordingController.onPause(() => stopRecordingPlaybackAnimation());
-    return activeRecordingController;
+  function recordingKey(rec=state.recording){return rec?(rec.kind==='youtube'?'yt:'+rec.youtubeId:'file:'+rec.blobId):'';}
+  async function ensureRecordingController(){
+    const rec=state.recording;if(!rec)return null;const key=recordingKey(rec);
+    if(activeRecordingController&&activeRecordingKey===key){await activeRecordingController.ready;return activeRecordingController;}
+    if(recordingLoading)return recordingLoading;
+    const work=(async()=>{
+      const mount=document.getElementById('recordingPlayerMount');if(!mount)return null;mount.replaceChildren();let controller;
+      if(rec.kind==='youtube'){const container=document.createElement('div');mount.append(container);controller=await createYouTubeMediaController(rec.youtubeId,container);}
+      else{const blob=await loadRecordingBlob(rec.blobId);if(!blob)throw Error('No se encontró el audio guardado en este navegador. Vuelve a cargar el archivo.');controller=createFileMediaController(URL.createObjectURL(blob),(rec.mimeType||'').startsWith('video'));mount.append(controller.element);}
+      activeRecordingController=controller;activeRecordingKey=key;
+      try{await controller.ready;if(recordingKey()!==key){controller.destroy();return null;}
+        rec.duration=controller.getDuration()||rec.duration||0;canvasAutosaveDirty=true;scheduleCanvasAutosave();
+        controller.onPlay(()=>{if(state.midiPlayback.active)stopMidiPlayback();startRecordingPlaybackAnimation();});controller.onPause(()=>stopRecordingPlaybackAnimation());
+        document.dispatchEvent(new CustomEvent('editor-recording-changed'));return controller;
+      }catch(error){controller.destroy();if(activeRecordingController===controller){activeRecordingController=null;activeRecordingKey='';}recordingStatusMessage.textContent=error.message;recordingDock?.status&&(recordingDock.status.textContent=error.message);return null;}
+    })();recordingLoading=work;try{return await work;}finally{if(recordingLoading===work)recordingLoading=null;}
   }
 
   async function attachRecordingFile(file) {
@@ -11322,10 +11266,10 @@
       return;
     }
     recordingStatusMessage.textContent = "Detectando el inicio del audio...";
-    const onsetOffset = file.type.startsWith("audio") || file.type.startsWith("video")
-      ? await detectAudioOnsetSeconds(file)
+    const onsetOffset = (file.type.startsWith("audio") || file.type.startsWith("video"))
+      && file.size<20*1024*1024 ? await detectAudioOnsetSeconds(file)
       : 0;
-    state.recording = {
+    saveHistory();state.recording = {
       kind: "file",
       blobId,
       fileName: file.name,
@@ -11347,7 +11291,7 @@
       return;
     }
     await destroyActiveRecordingController();
-    state.recording = {
+    saveHistory();state.recording = {
       kind: "youtube",
       youtubeId,
       duration: 0,
@@ -11363,8 +11307,7 @@
   async function removeRecording() {
     const rec = state.recording;
     await destroyActiveRecordingController();
-    if (rec?.kind === "file" && rec.blobId) await deleteRecordingBlob(rec.blobId);
-    state.recording = null;
+    saveHistory();state.recording = null; // Blob remains available to undo and local project versions.
     setDocumentDirty(true);
     renderRecordingPanel();
   }
@@ -11378,6 +11321,7 @@
   }
 
   function stopRecordingPlayback() {
+    activeRecordingController?.pause();
     stopRecordingPlaybackAnimation();
     removePlaybackLine();
   }
@@ -11394,8 +11338,8 @@
     state.recordingPlayback.animationFrame = requestAnimationFrame(step);
   }
 
-  function updateRecordingPlaybackLine() {
-    if (!activeRecordingController || !state.recordingPlayback.active) return;
+  function updateRecordingPlaybackLine(force=false) {
+    if (!activeRecordingController || (!force&&!state.recordingPlayback.active)) return;
     const currentTime = activeRecordingController.getCurrentTime();
     const absoluteTick = recordingTickForTime(currentTime);
     const x = playbackLineXForTick(absoluteTick, lastRenderedLayout || buildLayout());
@@ -11411,7 +11355,7 @@
     line.setAttribute("x2", flowPoint.x);
     line.setAttribute("y1", y1 + flowPoint.y);
     line.setAttribute("y2", y2 + flowPoint.y);
-    line.scrollIntoView({ behavior: "auto", block: "nearest", inline: "nearest" });
+    if(state.recording?.followScore!==false)line.scrollIntoView({ behavior: "auto", block: "nearest", inline: "nearest" });
   }
 
   async function toggleRecordingPlayback() {
@@ -11420,7 +11364,7 @@
     const controller = await ensureRecordingController();
     if (!controller) return;
     if (controller.isPlaying()) controller.pause();
-    else controller.play();
+    else await controller.play();
   }
 
   let recordingStatusMessage = { textContent: "" };
@@ -11463,7 +11407,7 @@
     fileInput.addEventListener("change", () => {
       const file = fileInput.files?.[0];
       fileInput.value = "";
-      if (file) attachRecordingFile(file);
+      if (file) attachRecordingFile(file).catch(error=>recordingStatusMessage.textContent=error.message);
     });
 
     const orLabel = document.createElement("span");
@@ -11480,12 +11424,12 @@
     youtubeButton.type = "button";
     youtubeButton.textContent = "Agregar";
     youtubeButton.addEventListener("click", () => {
-      if (youtubeInput.value.trim()) attachRecordingFromYouTube(youtubeInput.value.trim());
+      if (youtubeInput.value.trim()) attachRecordingFromYouTube(youtubeInput.value.trim()).catch(error=>recordingStatusMessage.textContent=error.message);
       youtubeInput.value = "";
     });
     youtubeInput.addEventListener("keydown", (event) => {
       if (event.key === "Enter" && youtubeInput.value.trim()) {
-        attachRecordingFromYouTube(youtubeInput.value.trim());
+        attachRecordingFromYouTube(youtubeInput.value.trim()).catch(error=>recordingStatusMessage.textContent=error.message);
         youtubeInput.value = "";
       }
     });
@@ -11513,7 +11457,7 @@
     playToggleButton.type = "button";
     playToggleButton.id = "recordingPlayToggleButton";
     playToggleButton.textContent = "Reproducir con la partitura";
-    playToggleButton.addEventListener("click", () => toggleRecordingPlayback());
+    playToggleButton.addEventListener("click", () => toggleRecordingPlayback().catch(error=>recordingStatusMessage.textContent=error.message));
     const reonsetButton = document.createElement("button");
     reonsetButton.type = "button";
     reonsetButton.id = "recordingReonsetButton";
@@ -11550,6 +11494,8 @@
     const activeState = document.getElementById("recordingActiveState");
     if (!emptyState || !activeState) return;
     const rec = state.recording;
+    if(activeRecordingController&&activeRecordingKey!==recordingKey(rec))void destroyActiveRecordingController();
+    document.dispatchEvent(new CustomEvent('editor-recording-changed'));
     emptyState.hidden = !!rec;
     activeState.hidden = !rec;
     if (recordingStatusMessage) recordingStatusMessage.textContent = "";
@@ -11582,16 +11528,13 @@
         timeInput.className = "recording-sync-time-input";
         timeInput.value = formatRecordingTime(recordingTimeForMeasure(index));
         timeInput.addEventListener("change", () => {
-          const parts = timeInput.value.split(":").map((part) => Number(part.trim()));
-          const seconds = parts.length === 2 && parts.every(Number.isFinite)
-            ? parts[0] * 60 + parts[1]
-            : Number(timeInput.value);
-          if (Number.isFinite(seconds)) setRecordingSyncOverride(index, seconds);
-          renderRecordingPanel();
+          const seconds=RecordingSync.parseTime(timeInput.value);try{if(seconds===null)throw Error('Escribe un tiempo en segundos o minutos:segundos.');setRecordingSyncOverride(index,seconds);}catch(error){recordingStatusMessage.textContent=error.message;timeInput.value=formatRecordingTime(recordingTimeForMeasure(index));}
         });
         const isOverridden = Number.isFinite(rec.overrides?.[String(index)]);
         if (isOverridden) row.classList.add("is-overridden");
-        row.append(label, timeInput);
+        const go=document.createElement('button');go.type='button';go.textContent='Ir';go.onclick=async()=>{const controller=await ensureRecordingController();controller?.seek(recordingTimeForMeasure(index));updateRecordingPlaybackLine(true);};
+        const unlink=document.createElement('button');unlink.type='button';unlink.textContent='×';unlink.title='Quitar marcador del compás';unlink.disabled=!isOverridden;unlink.onclick=()=>{saveHistory();delete state.recording.overrides[String(index)];setDocumentDirty(true);scheduleCanvasAutosave();renderRecordingPanel();};
+        row.append(label, timeInput,go,unlink);
         syncList.appendChild(row);
       }
     }
@@ -23459,6 +23402,16 @@
   renderMidiFigureStrip();
   renderMidiKeyboard();
   editorShell = IpadShell.setup();
+  recordingDock=RecordingSync.mount({
+    recording:()=>state.recording,currentTime:()=>activeRecordingController?.getCurrentTime()||0,duration:()=>activeRecordingController?.getDuration()||state.recording?.duration||0,playing:()=>!!activeRecordingController?.isPlaying(),measureCount:recordingMeasureCount,selectedMeasure:selectedMeasureIndex,measureTime:recordingTimeForMeasure,
+    toggle:toggleRecordingPlayback,pause:()=>{activeRecordingController?.pause();stopRecordingPlaybackAnimation();},
+    seek:async time=>{const controller=await ensureRecordingController();if(!controller)return;controller.seek(Math.max(0,Math.min(time,controller.getDuration()||Infinity)));updateRecordingPlaybackLine(true);},
+    rate:async rate=>{const controller=await ensureRecordingController();controller?.setRate(rate);},
+    playbackRate:()=>activeRecordingController?.getRate?.()||1,
+    link:setRecordingSyncOverride,
+    follow:value=>{if(state.recording){state.recording.followScore=value;canvasAutosaveDirty=true;scheduleCanvasAutosave();}},
+    loop:(point,time)=>{if(!state.recording)return;if(point==='clear'){delete state.recording.loopA;delete state.recording.loopB;}else if(point==='a'){state.recording.loopA=time;delete state.recording.loopB;}else{if(!Number.isFinite(state.recording.loopA)||time<=state.recording.loopA)throw Error('Marca primero A y luego B en un instante posterior.');state.recording.loopB=time;}canvasAutosaveDirty=true;scheduleCanvasAutosave();}
+  });
   setupMeasureMouse();
   initializeDefaultMidiInput();
   document.documentElement.dataset.jmlEditorBoot = "midi-ready";
