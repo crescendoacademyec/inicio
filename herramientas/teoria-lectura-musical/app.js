@@ -1330,7 +1330,7 @@ function mountNoteTrainer(root,onResult){
   </div>
   <p data-nt-chromatic-guide hidden>Do = C en esta práctica, como en Piano Virtual. Ti = B; Si = G♯. Identifica la sílaba según la escritura de la nota, no solo su sonido. Este modo usa las alteraciones de la tabla introductoria (sin E♯, B♯, C♭ ni F♭).</p>
   <div class="trainer-question-card">
-    <div data-nt-staff></div>
+    <div data-nt-staff data-ci-notation-only></div>
     <p class="trainer-prompt" data-nt-prompt>¿Qué nota es?</p>
     <div class="trainer-answer-grid" data-nt-answers></div>
     <p class="feedback" data-nt-feedback aria-live="polite"></p>
@@ -1897,7 +1897,7 @@ function mountMelodySolfege(root){
     <label>Dificultad <select data-ms-level><option value="1">1 · cinco notas</option><option value="2">2 · una octava</option><option value="3">3 · rango ampliado</option></select></label>
     <label>BPM <input type="range" min="50" max="120" value="80" data-ms-bpm><span data-ms-bpm-label>80</span></label>
   </div>
-  <div class="solfege-score-wrap"><div class="scroll-x" data-ms-staff></div></div>
+  <div class="solfege-score-wrap"><div class="scroll-x" data-ms-staff data-ci-notation-only></div></div>
   <p class="count-in-display" data-count-in-display aria-live="polite">Cuenta previa · 1 2 3 4</p>
   <div class="solfege-actions">
     <button class="primary-btn" data-ms-play>▶ Reproducir</button>

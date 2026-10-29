@@ -115,6 +115,7 @@ function mount(){
   scheduled=false;
   // Existing groups preserve their real voicings, selected inversions and event handlers.
   doc.querySelectorAll(legacyGroups).forEach(container=>{
+   if(container.closest('[data-ci-notation-only]'))return;
    if(container.closest('[data-ci-view]')||container.querySelector('[data-ci-group]')||container.querySelector(legacyGroups))return;
    if(!container.querySelector('.cp-staff,[data-ci-source]'))return;
    const pianoCount=container.querySelectorAll(pianoSelector).length;
@@ -128,6 +129,7 @@ function mount(){
    sourceEl.before(wrapper);wrapper.appendChild(sourceEl);sourceEl.dataset.ciView='piano';
   });
   doc.querySelectorAll('.cp-staff').forEach(score=>{
+   if(score.closest('[data-ci-notation-only]'))return;
    if(score.closest('[data-ci-group]'))return;
    const wrapper=doc.createElement('div');wrapper.className='ci-group';wrapper.dataset.ciGroup='';score.before(wrapper);wrapper.appendChild(score);
   });
