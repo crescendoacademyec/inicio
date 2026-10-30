@@ -916,9 +916,9 @@
     align-items:end;
   }
   /* Fila 3: Trastes + Tonalidad + acciones/Modo exploración/Volumen. */
-  .panel > .field:nth-child(17){grid-column:7;grid-row:2;}
-  .panel > .field:nth-child(18){grid-column:8;grid-row:2;}
-  .panel > .field:nth-child(19){grid-column:1;grid-row:3;}
+  .panel > .field.bass-control-keySignature{grid-column:7;grid-row:2;}
+  .panel > .field.bass-control-minus{grid-column:8;grid-row:2;}
+  .panel > .field.bass-control-bassCustomProgression{grid-column:1;grid-row:3;}
   .panel > .field-frets{
     grid-column:2 / -1;
     grid-row:3;
@@ -959,8 +959,8 @@
     overflow:hidden;
     text-overflow:ellipsis;
   }
-  .panel > .field:nth-child(17) .btnBox,
-  .panel > .field:nth-child(18) select{width:100%;min-width:0;}
+  .panel > .field.bass-control-keySignature .btnBox,
+  .panel > .field.bass-control-minus select{width:100%;min-width:0;}
 }
 
 @media (min-width:861px) and (max-width:1180px){
@@ -1035,24 +1035,24 @@
 .sound-controls{align-items:center;display:grid;gap:2px 8px;grid-template-columns:78px auto;grid-template-rows:auto auto}.sound-controls label{grid-column:1;grid-row:1}.sound-controls #volume{grid-column:1;grid-row:2;width:78px}.sound-controls .string-sound-menu{grid-column:2;grid-row:1 / span 2}
 @media (min-width:861px){
   .panel{grid-template-columns:repeat(9,minmax(0,1fr))}
-  .panel > .field:nth-child(1){grid-column:1;grid-row:1}
-  .panel > .field:nth-child(3){grid-column:2;grid-row:1}
-  .panel > .field:nth-child(4){grid-column:3;grid-row:1}
-  .panel > .field:nth-child(5){grid-column:4;grid-row:1}
-  .panel > .field:nth-child(6){grid-column:5;grid-row:1}
-  .panel > .field:nth-child(7){grid-column:6;grid-row:1}
-  .panel > .field:nth-child(8){grid-column:7;grid-row:1}
-  .panel > .field:nth-child(15){grid-column:8;grid-row:1}
-  .panel > .field:nth-child(9){grid-column:1;grid-row:2}
-  .panel > .field:nth-child(10){grid-column:2;grid-row:2}
-  .panel > .field:nth-child(11){grid-column:3;grid-row:2}
-  .panel > .field:nth-child(12){grid-column:4;grid-row:2}
-  .panel > .field:nth-child(13){grid-column:5;grid-row:2}
-  .panel > .field:nth-child(14){grid-column:6;grid-row:2}
-  .panel > .field:nth-child(17){grid-column:7;grid-row:2}
-  .panel > .field:nth-child(16){grid-column:8;grid-row:2}
-  .panel > .field:nth-child(18){grid-column:3;grid-row:3}
-  .panel > .field:nth-child(19){grid-column:1/3;grid-row:3}
+  .panel > .field.bass-control-instrument{grid-column:1;grid-row:1}
+  .panel > .field.bass-control-tuning{grid-column:2;grid-row:1}
+  .panel > .field.bass-control-capo{grid-column:3;grid-row:1}
+  .panel > .field.bass-control-orientation{grid-column:4;grid-row:1}
+  .panel > .field.bass-control-labelMode{grid-column:5;grid-row:1}
+  .panel > .field.bass-control-root{grid-column:6;grid-row:1}
+  .panel > .field.bass-control-chordType{grid-column:7;grid-row:1}
+  .panel > .field.bass-control-rightHandPattern{grid-column:8;grid-row:1}
+  .panel > .field.bass-control-scale{grid-column:1;grid-row:2}
+  .panel > .field.bass-control-pos{grid-column:2;grid-row:2}
+  .panel > .field.bass-control-bassFrettingMode{grid-column:3;grid-row:2}
+  .panel > .field.bass-control-pattern{grid-column:4;grid-row:2}
+  .panel > .field.bass-control-voicingRange{grid-column:5;grid-row:2}
+  .panel > .field.bass-control-bassExercise{grid-column:6;grid-row:2}
+  .panel > .field.bass-control-keySignature{grid-column:7;grid-row:2}
+  .panel > .field.bass-control-exerciseDirection{grid-column:8;grid-row:2}
+  .panel > .field.bass-control-minus{grid-column:3;grid-row:3}
+  .panel > .field.bass-control-bassCustomProgression{grid-column:1/3;grid-row:3}
   .panel > .bass-custom-progression-field{min-width:165px}
   .panel > .bass-custom-progression-field label{white-space:nowrap;font-size:.58rem}
   .panel > .bass-custom-progression-field input{width:100%;min-width:0;box-sizing:border-box}
@@ -1139,30 +1139,26 @@
 
     <!-- Panel de controles -->
     <section class="panel" aria-label="Controles del bajo virtual">
-      <div class="field">
+      <div class="field bass-control-instrument">
         <label for="instrument">Instrumento</label>
         <select id="instrument"></select>
       </div>
-      <div class="field" hidden>
-        <label id="soundTypeLabel" for="soundType">Articulación</label>
-        <select id="soundType"></select>
-      </div>
-      <div class="field">
+      <div class="field bass-control-tuning">
         <label for="tuning">Afinación</label>
         <select id="tuning"></select>
       </div>
-      <div class="field">
+      <div class="field bass-control-capo">
         <label for="capo">Capo</label>
         <select id="capo"></select>
       </div>
-      <div class="field">
+      <div class="field bass-control-orientation">
         <label for="orientation">Orientación</label>
         <select id="orientation">
           <option value="right">Diestro</option>
           <option value="left">Zurdo</option>
         </select>
       </div>
-      <div class="field">
+      <div class="field bass-control-labelMode">
         <label for="labelMode">Mostrar</label>
         <select id="labelMode">
           <option value="notes">Notas</option>
@@ -1170,23 +1166,23 @@
           <option value="degrees">Grados</option>
         </select>
       </div>
-      <div class="field">
+      <div class="field bass-control-root">
         <label for="root">Fundamental</label>
         <select id="root"></select>
       </div>
-      <div class="field">
+      <div class="field bass-control-chordType">
         <label for="chordType">Arpegio / acorde</label>
         <select id="chordType"></select>
       </div>
-      <div class="field">
+      <div class="field bass-control-scale">
         <label for="scale">Escala / Modo</label>
         <select id="scale"></select>
       </div>
-      <div class="field">
+      <div class="field bass-control-pos">
         <label for="pos">Posición / Traste</label>
         <select id="pos"></select>
       </div>
-      <div class="field">
+      <div class="field bass-control-bassFrettingMode">
         <label for="bassFrettingMode">Mano izquierda</label>
         <select id="bassFrettingMode">
           <option value="auto" selected>Automática · según registro</option>
@@ -1194,7 +1190,7 @@
           <option value="124">Compacta · 1-2-4</option>
         </select>
       </div>
-      <div class="field">
+      <div class="field bass-control-pattern">
         <label for="pattern">Patrón</label>
         <select id="pattern">
           <option value="free">Libre</option>
@@ -1210,7 +1206,7 @@
           </optgroup>
         </select>
       </div>
-      <div class="field">
+      <div class="field bass-control-voicingRange">
         <label for="voicingRange">Registro / cuerdas</label>
         <select id="voicingRange">
           <option value="all">Todas</option>
@@ -1219,7 +1215,7 @@
           <option value="high">Agudas</option>
         </select>
       </div>
-      <div class="field">
+      <div class="field bass-control-bassExercise">
         <label for="bassExercise">Ejercicio</label>
         <select id="bassExercise">
           <option value="none">Ninguno</option>
@@ -1249,7 +1245,7 @@
           </optgroup>
         </select>
       </div>
-      <div class="field">
+      <div class="field bass-control-rightHandPattern">
         <label for="rightHandPattern">Mano derecha</label>
         <select id="rightHandPattern">
           <option value="free">Libre</option>
@@ -1258,7 +1254,7 @@
           <option value="pick">Púa · ↓–↑</option>
         </select>
       </div>
-      <div class="field">
+      <div class="field bass-control-exerciseDirection">
         <label for="exerciseDirection">Dirección</label>
         <select id="exerciseDirection">
           <option value="asc">Ascendente</option>
@@ -1266,7 +1262,7 @@
           <option value="updown">Sube y baja</option>
         </select>
       </div>
-      <div class="field field-key-signature">
+      <div class="field bass-control-keySignature field-key-signature">
         <label for="keySignature">Tonalidad</label>
         <select id="keySignature" title="Armadura independiente de la escala o acorde">
           <option value="auto">Automática</option>
@@ -1288,11 +1284,11 @@
           <option value="-7">C♭ mayor / A♭ menor · 7♭</option>
         </select>
       </div>
-      <div class="field">
+      <div class="field bass-control-minus">
         <label>Trastes</label>
         <div class="btnBox"><button id="minus">−</button><span id="fretVal">16</span><button id="plus">＋</button></div>
       </div>
-      <div class="field bass-custom-progression-field">
+      <div class="field bass-control-bassCustomProgression bass-custom-progression-field">
         <label for="bassCustomProgression">Progresión personalizada</label>
         <input id="bassCustomProgression" type="text" placeholder="Dm7 | G7 | Cmaj7" aria-label="Escribe una progresión de acordes">
       </div>
@@ -1498,6 +1494,7 @@
   <script src="../../shared/pitch-spelling.js?v=20261022-1"></script>
   <script src="../cuerdas-frotadas/js/live-staff.js?v=20261022-enharmonics-1"></script>
   <script src="../../shared/rhythm-engine.js?v=20260918-locking-in"></script>
+  <script src="js/sound-menu.js?v=20261030-direct-1"></script>
   <script>
     // ======================================================================
     // 1. CÓDIGO COMPLETO DEL REQUINTO VIRTUAL (diapasón, escalas, acordes)
@@ -1666,9 +1663,8 @@
     const chordSymbolEl = $("chordSymbol");
     const chordQualityEl = $("chordQualityLabel");
     const volumeSlider = $("volume");
-    const soundTypeSel = $("soundType");
-    const soundTypeLabel = $("soundTypeLabel");
     const soundSourceIndicator = $("soundSourceIndicator");
+    const soundMenu = BassSoundMenu.create({controls:document.querySelector('.sound-controls'),source:soundSourceIndicator,onChange:()=>{loadCurrentSound();saveSettings();}});
     const tuningSel = $("tuning");
     const capoSel = $("capo");
     const orientationSel = $("orientation");
@@ -1703,7 +1699,7 @@
       }catch(e){return{}}
     }
     function saveSettings(){
-      try{localStorage.setItem(SETTINGS_KEY,JSON.stringify({instrument:instrumentSel.value,tuning:tuningSel.value,capo:+capoSel.value,orientation:orientationSel.value,labelMode:labelModeSel.value,keySignature:keySignatureSel?.value||'none',pattern:patternSel.value,bassFrettingMode:bassFrettingModeSel?.value||'auto',voicingRange:voicingRangeSel.value,root:rootSel.value,chord:chordTypeSel.value,scale:scaleSel.value,pos:posSel.value,frets:visibleFrets,volume:+volumeSlider.value,soundType:soundTypeSel.value,metroBpm:+($("metroBpmValue")?.textContent||80),metroMeter:$("metroMeter")?.value||'4/4',metroPulse:$("metroPulse")?.value||'auto',metroPlacement:$("metroPlacement")?.value||'all',countIn:$("scoreCountIn")?.value||'1',scoreClick:!!$("scoreMetroSync")?.checked,loopRepeats:+($("scoreLoopRepeats")?.value||0),loopBpmAdd:+($("scoreLoopBpmAdd")?.value||0),loopBpmEvery:+($("scoreLoopBpmEvery")?.value||1),fingeringView:scoreFingeringView?.value||'all',fingeringStrategy:scoreFingeringStrategy?.value||'phrase',phraseLength:+(scorePhraseLength?.value||8),techniqueMode:scoreTechniqueMode?.value||'musical',bassExercise:bassExerciseSel?.value||'none',rightHandPattern:rightHandPatternSel?.value||'free',exerciseDirection:exerciseDirectionSel?.value||'asc'}))}catch(e){}
+      try{localStorage.setItem(SETTINGS_KEY,JSON.stringify({instrument:instrumentSel.value,tuning:tuningSel.value,capo:+capoSel.value,orientation:orientationSel.value,labelMode:labelModeSel.value,keySignature:keySignatureSel?.value||'none',pattern:patternSel.value,bassFrettingMode:bassFrettingModeSel?.value||'auto',voicingRange:voicingRangeSel.value,root:rootSel.value,chord:chordTypeSel.value,scale:scaleSel.value,pos:posSel.value,frets:visibleFrets,volume:+volumeSlider.value,soundType:soundMenu.value,metroBpm:+($("metroBpmValue")?.textContent||80),metroMeter:$("metroMeter")?.value||'4/4',metroPulse:$("metroPulse")?.value||'auto',metroPlacement:$("metroPlacement")?.value||'all',countIn:$("scoreCountIn")?.value||'1',scoreClick:!!$("scoreMetroSync")?.checked,loopRepeats:+($("scoreLoopRepeats")?.value||0),loopBpmAdd:+($("scoreLoopBpmAdd")?.value||0),loopBpmEvery:+($("scoreLoopBpmEvery")?.value||1),fingeringView:scoreFingeringView?.value||'all',fingeringStrategy:scoreFingeringStrategy?.value||'phrase',phraseLength:+(scorePhraseLength?.value||8),techniqueMode:scoreTechniqueMode?.value||'musical',bassExercise:bassExerciseSel?.value||'none',rightHandPattern:rightHandPatternSel?.value||'free',exerciseDirection:exerciseDirectionSel?.value||'asc'}))}catch(e){}
     }
 
     // Poblar selects
@@ -1741,7 +1737,7 @@
     let audioCtx = null;
     let masterBus = null;
     let sfPlayer = null;
-    let sfLoading = false;
+    let soundLoadRequest = 0;
 
     // Funciones de sonido (SoundFont)
     function ensureCtx() {
@@ -1768,14 +1764,13 @@
     }
 
     function loadSoundFont(instrumentName) {
-      if (sfLoading) return;
-      sfLoading = true;
+      const request = ++soundLoadRequest;
       setSourceIndicator('🎸 cargando...', 'loading');
       const ctx = ensureCtx();
       Soundfont.instrument(ctx, instrumentName, { destination: masterBus })
         .then(instrument => {
+          if(request!==soundLoadRequest)return;
           sfPlayer = instrument;
-          sfLoading = false;
           const options = getSoundOptionsForInstrument(instrumentSel.value);
           const option = options.find(o => o.value === instrumentName);
           const label = option ? option.label : instrumentName;
@@ -1783,7 +1778,7 @@
           console.log('SoundFont cargado:', instrumentName);
         })
         .catch(err => {
-          sfLoading = false;
+          if(request!==soundLoadRequest)return;
           sfPlayer = null;
           setSourceIndicator('⚡ Fallback (oscilador)', 'osc');
           console.warn('Error al cargar SoundFont, usando oscilador:', err);
@@ -1794,23 +1789,13 @@
       return SOUND_OPTIONS[instrumentKey] || [{ value: 'electric_bass_finger', label: INSTRUMENTS[instrumentKey].label + ' (fallback)' }];
     }
 
-    function updateSoundTypeOptions(instrumentKey) {
-      const options = getSoundOptionsForInstrument(instrumentKey);
-      soundTypeSel.length = 0;
-      options.forEach(opt => {
-        soundTypeSel.add(new Option(opt.label, opt.value));
-      });
-      if (options.length > 0) {
-        soundTypeSel.value = options[0].value;
-        loadSoundFont(options[0].value);
-      }
-      const instrumentLabels = { bass4: 'Bajo 4 cuerdas', bass5: 'Bajo 5 cuerdas' };
-      soundTypeLabel.textContent = 'Timbre ' + (instrumentLabels[instrumentKey] || '');
+    function updateSoundTypeOptions(instrumentKey,preferred) {
+      soundMenu.setOptions(getSoundOptionsForInstrument(instrumentKey),preferred);
+      loadCurrentSound();
     }
 
     function loadCurrentSound() {
-      const value = soundTypeSel.value;
-      if (value) loadSoundFont(value);
+      if (soundMenu.value) loadSoundFont(soundMenu.value);
     }
 
     // Listeners de instrumento
@@ -1823,7 +1808,6 @@
       refresh();
     });
 
-    soundTypeSel.addEventListener('change', loadCurrentSound);
 
     // Funciones canvas
     function fitCanvas() {
@@ -2090,7 +2074,6 @@
     chordTypeSel.onchange = () => { if (chordTypeSel.value !== "") scaleSel.value = ""; manualSelections.clear(); hoverCell = null; bassExerciseRoute=[]; bassExerciseRunning=false; refresh(); updateBassExercisePanel(); };
     scaleSel.onchange = () => { if (scaleSel.value !== "") chordTypeSel.value = ""; manualSelections.clear(); hoverCell = null; bassExerciseRoute=[]; bassExerciseRunning=false; if(keySignatureSel?.value==='auto')drawBaseStaff(); refresh(); updateBassExercisePanel(); saveSettings(); };
     instrumentSel.addEventListener('change',saveSettings);
-    soundTypeSel.addEventListener('change',saveSettings);
     rootSel.addEventListener('change',saveSettings);
     chordTypeSel.addEventListener('change',saveSettings);
     posSel.addEventListener('change',saveSettings);
@@ -4183,8 +4166,7 @@
       if(s.pattern&&[...patternSel.options].some(o=>o.value===s.pattern))patternSel.value=s.pattern;
       if(bassFrettingModeSel&&['auto','ofpf','124'].includes(s.bassFrettingMode))bassFrettingModeSel.value=s.bassFrettingMode;
       if(['all','low','mid','high'].includes(s.voicingRange))voicingRangeSel.value=s.voicingRange;
-      updateSoundTypeOptions(instrumentSel.value);
-      if(s.soundType&&[...soundTypeSel.options].some(o=>o.value===s.soundType)){soundTypeSel.value=s.soundType;loadCurrentSound()}
+      updateSoundTypeOptions(instrumentSel.value,s.soundType);
       if(typeof s.volume==='number')volumeSlider.value=s.volume;
       if(typeof s.frets==='number')visibleFrets=Math.max(4,Math.min(maxVisibleFrets(),s.frets));
       if(s.root&&[...rootSel.options].some(o=>o.value===s.root))rootSel.value=s.root;
@@ -4228,6 +4210,5 @@
 }));
 
 </script>
-<script src="../../shared/string-sound-menu.js?v=20261006-name-only"></script>
 </body>
 </html>
