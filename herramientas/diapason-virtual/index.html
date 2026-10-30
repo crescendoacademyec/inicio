@@ -1023,11 +1023,17 @@
 .fret-control-row .sound-controls{display:flex;align-items:center;flex:0 0 auto}.fret-control-row .sound-controls .string-sound-menu{grid-column:auto;grid-row:auto}
 .staff-left[hidden]{display:none!important}.top-row.staff-hidden .board-wrap{flex:1 1 100%;min-width:0}
 </style>
-<link rel="stylesheet" href="css/study-lab.css?v=20261029-ux-4">
+<link rel="stylesheet" href="css/study-lab.css?v=20261030-visible-controls-1">
 </head>
 <body>
   <header class="topbar">
-    <h1 class="brand"><span>Diapasón Virtual</span></h1>
+    <div class="header-brand-group">
+      <h1 class="brand"><span>Diapasón Virtual</span></h1>
+      <div class="interaction-mode-picker" role="tablist" aria-label="Modo de interacción">
+            <button id="explorationModeBtn" class="mode-toggle-btn active" type="button" role="tab" aria-selected="true">Exploración</button>
+            <button id="ephemeralModeBtn" class="mode-toggle-btn" type="button" role="tab" aria-selected="false" title="Las notas seleccionadas desaparecen después de 1,5 segundos">Efímero</button>
+          </div>
+    </div>
     <div class="header-metronome" aria-label="Metrónomo">
       <button class="metro-play" id="metroToggle" aria-label="Iniciar metrónomo" type="button" title="Iniciar / detener metrónomo">▶</button>
       <div class="metro-bpm"><span class="metro-label">BPM</span><div class="metro-stepper"><button id="metroDown" type="button" aria-label="Bajar BPM">−</button><span id="metroBpmValue">80</span><button id="metroUp" type="button" aria-label="Subir BPM">+</button></div></div>
@@ -1191,10 +1197,6 @@
             <span>Pentagrama</span>
             <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path opacity=".4" d="M3 5h18M3 8h18M3 11h18M3 14h18M3 17h18"/><path d="M10 16V7l7-2v9"/><ellipse cx="7.5" cy="17" rx="2.5" ry="1.7" fill="currentColor" stroke="none"/><ellipse cx="14.5" cy="15" rx="2.5" ry="1.7" fill="currentColor" stroke="none"/></svg>
           </button>
-          <div class="interaction-mode-picker" role="tablist" aria-label="Modo de interacción">
-            <button id="explorationModeBtn" class="mode-toggle-btn active" type="button" role="tab" aria-selected="true">Exploración</button>
-            <button id="ephemeralModeBtn" class="mode-toggle-btn" type="button" role="tab" aria-selected="false" title="Las notas seleccionadas desaparecen después de 1,5 segundos">Efímero</button>
-          </div>
           <div id="chordNameBox">
             <span id="chordSymbol"></span>
             <span id="chordQualityLabel"></span>
@@ -3953,7 +3955,7 @@
 <script src="js/study-curriculum.js?v=20261029-ux-4"></script>
 <script src="js/study-score.js?v=20261029-ux-4"></script>
 <script src="js/study-lab-ui.js?v=20261029-ux-4"></script>
-<script src="js/workspace-layout.js?v=20261029-ux-4"></script>
+<script src="js/workspace-layout.js?v=20261030-visible-controls-1"></script>
 <script src="js/staff-visibility.js?v=20261028-1"></script>
 <script src="../../shared/string-sound-menu.js?v=20261006-name-only"></script>
 </body>
