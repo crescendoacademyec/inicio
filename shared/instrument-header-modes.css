@@ -1,0 +1,9 @@
+/* Compact interaction modes beside the instrument app title. */
+.topbar{grid-template-columns:minmax(0,1fr) auto auto}
+.header-brand-group{display:flex;align-items:center;gap:14px;flex-wrap:wrap;min-width:0}
+.header-brand-group .brand{white-space:nowrap}
+.header-brand-group .interaction-mode-picker{padding:3px;gap:0}
+.header-brand-group .mode-toggle-btn{min-height:26px;padding:5px 10px;font-size:.6rem;line-height:1.2}
+.header-brand-group .interaction-mode-picker #explorationModeBtn{padding:5px 10px}
+@media(max-width:1050px){.topbar{grid-template-columns:minmax(0,1fr) auto}.header-brand-group{grid-column:1;grid-row:1}.topbar .header-metronome{grid-column:1/-1;grid-row:2}}
+@media(max-width:760px){.header-brand-group{justify-content:center}.topbar .header-brand-group .brand{justify-content:center}}

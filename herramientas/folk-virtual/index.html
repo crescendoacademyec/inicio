@@ -930,10 +930,17 @@
 <link rel="stylesheet" href="../../shared/header-metronome.css?v=20260925-beat-stop">
 <link rel="stylesheet" href="../../shared/string-sound-menu.css?v=20261019-black-1">
   <link rel="stylesheet" href="../../shared/crescendo-identity.css?v=20261005-instrument-ui">
+<link rel="stylesheet" href="../../shared/instrument-header-modes.css?v=20261030-1">
 </head>
 <body>
   <header class="topbar">
-    <h1 class="brand"><span>Folk Virtual</span></h1>
+    <div class="header-brand-group">
+      <h1 class="brand"><span>Folk Virtual</span></h1>
+      <div class="interaction-mode-picker" role="tablist" aria-label="Modo de interacción">
+            <button id="explorationModeBtn" class="mode-toggle-btn active" type="button" role="tab" aria-selected="true">Exploración</button>
+            <button id="ephemeralModeBtn" class="mode-toggle-btn" type="button" role="tab" aria-selected="false" title="Las notas seleccionadas desaparecen después de 1,5 segundos">Efímero</button>
+          </div>
+    </div>
     <div class="header-metronome" aria-label="Metrónomo">
       <button class="metro-play" id="metroToggle" aria-label="Iniciar metrónomo" type="button" title="Iniciar / detener metrónomo">▶</button>
       <div class="metro-bpm"><span class="metro-label">BPM</span><div class="metro-stepper"><button id="metroDown" type="button" aria-label="Bajar BPM">−</button><span id="metroBpmValue">80</span><button id="metroUp" type="button" aria-label="Subir BPM">+</button></div></div>
@@ -1089,10 +1096,6 @@
         <div class="fret-control-row">
           <button id="clearAllBtn" type="button">Limpiar ajustes</button>
           <button id="clearSelectionBtn" type="button">Limpiar trastes</button>
-          <div class="interaction-mode-picker" role="tablist" aria-label="Modo de interacción">
-            <button id="explorationModeBtn" class="mode-toggle-btn active" type="button" role="tab" aria-selected="true">Exploración</button>
-            <button id="ephemeralModeBtn" class="mode-toggle-btn" type="button" role="tab" aria-selected="false" title="Las notas seleccionadas desaparecen después de 1,5 segundos">Efímero</button>
-          </div>
           <div id="chordNameBox">
             <span id="chordSymbol"></span>
             <span id="chordQualityLabel"></span>
