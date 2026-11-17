@@ -10,12 +10,73 @@
     levelIndex: 0,
     view: "home",
     topicIndex: 0,
-    studiedTopics: {},   // { "n1-0": true, ... }
+    studiedTopics: {},   // claves estables, por ejemplo n1-1.1
     practiceChecks: {},
     curriculumEvidence: {},
-    curriculumVersion: 2,
+    curriculumVersion: 3,
+    route: "complete",
+    taskChecks: {},
+    studyDates: {},
     quiz: null           // Incluye una copia ordenada de las preguntas de cada intento nuevo.
   };
+
+  var learning = window.JazzLearning;
+  function safeText(value){return String(value==null?'':value).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+  function topicKey(level,index){return learning.id(level,level.topics[index]);}
+  function routeIndices(level){return learning.indices(level,state.route);}
+  function routeQuestions(level){return learning.questions(level,state.route);}
+  function ensureRouteTopic(){
+    if(!routeIndices(currentLevel()).length)state.levelIndex=LEVELS.findIndex(function(l){return routeIndices(l).length;});
+    var visible=routeIndices(currentLevel());if(!visible.includes(state.topicIndex))state.topicIndex=visible[0];
+  }
+  function setRoute(route){
+    if(state.quiz&&!state.quiz.submitted){document.querySelectorAll('[data-jazz-route]').forEach(function(el){el.value=state.route;});return;}
+    state.route=['essential','expanded','complete'].includes(route)?route:'complete';ensureRouteTopic();saveState();renderAll();
+  }
+  function renderTask(level,topic){
+    var key=learning.id(level,topic),task=learning.tasks[key];if(!task)return '';
+    var saved=state.taskChecks[key]||{},answers=saved.answers||[];
+    return '<section class="jazz-applied-task" data-learning-task="'+safeText(key)+'"><h4>Construye y comprueba</h4><p>'+safeText(task.prompt)+'</p><div class="jazz-task-fields">'+task.fields.map(function(f,i){return '<label>'+safeText(f[0])+'<select data-task-field="'+i+'"><option value="">Elige una respuesta</option>'+f[1].map(function(value){return '<option'+(answers[i]===value?' selected':'')+'>'+safeText(value)+'</option>';}).join('')+'</select></label>';}).join('')+'</div><button type="button" class="primary-btn" data-check-task>Comprobar</button><p data-task-feedback aria-live="polite">'+(saved.checked?taskFeedback(learning.gradeTask(key,answers)):'')+'</p></section>';
+  }
+  function taskFeedback(result){return result.correct+'/'+result.total+' decisiones correctas. '+safeText(result.explanation);}
+  function wireLearningTasks(scope){
+    scope.querySelectorAll('[data-learning-task]').forEach(function(host){
+      var key=host.dataset.learningTask;
+      function values(){return Array.from(host.querySelectorAll('[data-task-field]'),function(el){return el.value;});}
+      host.querySelectorAll('[data-task-field]').forEach(function(el){el.addEventListener('change',function(){state.taskChecks[key]={answers:values(),checked:false};host.querySelector('[data-task-feedback]').textContent='';saveState();});});
+      host.querySelector('[data-check-task]').addEventListener('click',function(){
+        var answers=values(),result=learning.gradeTask(key,answers);state.taskChecks[key]={answers:answers,checked:true};
+        if(result.correct===result.total)state.studyDates[key]=Date.now();
+        host.querySelector('[data-task-feedback]').innerHTML=taskFeedback(result);saveState();
+      });
+    });
+  }
+  function projectExample(level){
+    var plans={
+      1:{key:'Do mayor',bpm:72,task:'Compases 1–4: canta las dos voces superiores, toca los bajos y transporta después a Fa.',chords:[['Dm7','D3','F4','C5'],['G7','G2','F4','B4'],['Cmaj7','C3','E4','B4'],['Cmaj7','C3','E4','B4']]},
+      2:{key:'Re menor',bpm:66,task:'Compases 1–4: localiza Do♯→Re. Repite el fragmento y conserva la dirección de las notas guía.',chords:[['Em7(b5)','E3','G4','Bb4','D5'],['A7(b9)','A2','G4','Bb4','C#5'],['Dm7','D3','F4','A4','C5'],['Dm7','D3','F4','A4','C5']]},
+      3:{key:'Do mayor',bpm:72,task:'Compases 1–4: conserva la voz superior Mi–Sol–Fa–Si y propón otro soporte; justifica sus notas largas.',chords:[['Cmaj7','C3','G4','B4','E5'],['A7','A2','C#4','E4','G5'],['Dm7','D3','A4','C5','F5'],['G7','G2','D4','F4','B4']]},
+      4:{key:'Re dórico',bpm:64,task:'Compases 1–4: compara los bloques cuartales. Desarrolla un motivo y añade cuatro compases de retorno a Re.',chords:[['Dm11','D3','G4','C5','F5','A5'],['Dm11','D3','G4','C5','F5','A5'],['Ebm11','Eb3','Ab4','Db5','Gb5','Bb5'],['Ebm11','Eb3','Ab4','Db5','Gb5','Bb5']]},
+      5:{key:'Do mayor',bpm:72,task:'Compases 1–4: improvisa con una sola idea y una llegada clara. Graba dos vueltas, escucha el pulso y anota una mejora.',chords:[['Dm7','D3','F4','C5'],['G7','G2','F4','B4'],['Cmaj7','C3','E4','B4'],['Cmaj7','C3','E4','B4']]}
+    };
+    var plan=plans[level.id],P=window.CrescendoPractice,events=[];
+    if(P)plan.chords.forEach(function(chord,bar){chord.slice(1).forEach(function(note,i){events.push({note:note,beats:4,bar:bar,staff:i===0?2:1,chord:i>1,label:i===1?chord[0]:''});});});
+    return '<section class="jazz-project-example"><h4>Fragmento original de Crescendo · cuatro compases</h4><p>'+safeText(plan.key)+' · 4/4 · negra = '+plan.bpm+' BPM. '+safeText(plan.task)+'</p><p>'+plan.chords.map(function(c,i){return (i+1)+': '+safeText(c[0]);}).join(' | ')+'</p>'+(P?'<div class="tv-table-wrap">'+P.sequence(events,{clef:'grand',meter:'4/4',labels:true})+'</div>':'')+'<p class="small-note">Este fragmento es un modelo de práctica, no una transcripción de los standards sugeridos.</p></section>';
+  }
+
+  function projectRubric(level){
+    var evidence=state.curriculumEvidence[level.slug+'-project']||{};
+    return projectExample(level)+'<section class="jazz-rubric"><h4>Rúbrica de autoevaluación o revisión docente</h4><p>No es una calificación automática de tu interpretación. Escucha una toma y registra qué evidencia sostiene cada decisión.</p>'+[['pulse','Pulso y forma'],['notes','Notas y conducción'],['intent','Fraseo, escucha y resolución']].map(function(pair){return '<label>'+pair[1]+'<select data-project-rubric="'+pair[0]+'"><option value="">Sin revisar</option>'+['Necesito ayuda','Lo consigo con apoyo','Lo consigo y puedo explicarlo'].map(function(text,i){return '<option value="'+i+'"'+(String(evidence[pair[0]])===String(i)?' selected':'')+'>'+text+'</option>';}).join('')+'</select></label>';}).join('')+'<label>Evidencia y siguiente paso<textarea data-project-reflection maxlength="1200" placeholder="Indica el fragmento, tempo, una decisión que funcionó y qué vas a mejorar.">'+safeText(evidence.reflection||'')+'</textarea></label></section>';
+  }
+  function wireProjectRubric(scope){
+    scope.querySelectorAll('[data-project-rubric],[data-project-reflection]').forEach(function(el){el.addEventListener('change',function(){var key=currentLevel().slug+'-project';state.curriculumEvidence[key] ||= {};state.curriculumEvidence[key][el.dataset.projectRubric||'reflection']=el.value;saveState();});});
+  }
+  function renderReminders(){
+    var host=document.getElementById('jazzReviewReminders');if(!host)return;
+    var due=LEVELS.flatMap(function(level){return routeIndices(level).filter(function(i){var key=topicKey(level,i);return state.studiedTopics[key]&&Date.now()-Number(state.studyDates[key]||0)>2*86400000;}).map(function(i){return {level:level,index:i};});}).slice(0,3);
+    host.hidden=!due.length;host.innerHTML=due.length?'<h3>Repaso breve</h3><p>Vuelve a una idea estudiada hace al menos dos días o registrada en tu progreso anterior. Intenta construir otro ejemplo antes de consultar la solución.</p>'+due.map(function(item,i){return '<button type="button" class="ghost-btn" data-review-reminder="'+i+'">'+safeText(item.level.topics[item.index].title)+'</button>';}).join(''):'';
+    host.querySelectorAll('[data-review-reminder]').forEach(function(button){button.addEventListener('click',function(){if(state.quiz&&!state.quiz.submitted)return;var item=due[Number(button.dataset.reviewReminder)];state.levelIndex=LEVELS.indexOf(item.level);state.topicIndex=item.index;state.view='theory';saveState();renderAll();});});
+  }
 
   function currentLevel() {
     return LEVELS[state.levelIndex];
@@ -24,6 +85,7 @@
   // ---------- Persistencia local ----------
   function saveState() {
     try {
+      state.topicId=topicKey(currentLevel(),state.topicIndex);
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     } catch (e) { /* almacenamiento no disponible: continuar sin persistir */ }
   }
@@ -32,16 +94,13 @@
     try {
       var raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) return;
-      var saved = JSON.parse(raw);
-      state.levelIndex = Number.isInteger(saved.levelIndex) && saved.levelIndex >= 0 && saved.levelIndex < LEVELS.length ? saved.levelIndex : 0;
-      // La versión 2 añade una estación de preparación al inicio de cada nivel.
-      // Conserva al estudiante en el mismo tema que estaba viendo antes del cambio.
-      state.topicIndex = Math.min(currentLevel().topics.length - 1, Math.max(0,
-        (saved.topicIndex || 0) + ((saved.curriculumVersion || 1) < 2 ? 1 : 0)));
-      state.studiedTopics = saved.studiedTopics || {};
-      state.practiceChecks = saved.practiceChecks || {};
-      state.curriculumEvidence = saved.curriculumEvidence || {};
-      state.curriculumVersion = 2;
+      var saved = learning.migrate(JSON.parse(raw));
+      state.levelIndex=saved.levelIndex;state.topicIndex=saved.topicIndex;state.route=saved.route;
+      state.studiedTopics=saved.studiedTopics;state.practiceChecks=saved.practiceChecks;state.studyDates=saved.studyDates;
+      state.curriculumEvidence=saved.curriculumEvidence&&typeof saved.curriculumEvidence==='object'?saved.curriculumEvidence:{};
+      state.taskChecks=saved.taskChecks&&typeof saved.taskChecks==='object'?saved.taskChecks:{};
+      state.curriculumVersion=3;
+      ensureRouteTopic();
       if (saved.quiz && saved.quiz.startedAt && LEVELS.some(function (level) { return level.slug === saved.quiz.levelSlug; })) {
         state.quiz = saved.quiz;
         if (!Array.isArray(state.quiz.questionSnapshot)) {
@@ -58,6 +117,7 @@
     var grid = document.getElementById("levelsOverviewGrid");
     grid.innerHTML = "";
     LEVELS.forEach(function (lvl, idx) {
+      if(!routeIndices(lvl).length)return;
       var card = document.createElement("button");
       card.type = "button";
       card.className = "level-card" + (idx === state.levelIndex ? " active" : "");
@@ -65,11 +125,11 @@
         '<span class="level-card-num">Nivel ' + lvl.id + '</span>' +
         '<h4>' + lvl.name + '</h4>' +
         '<p>' + lvl.subtitle + '</p>' +
-        '<span class="level-card-meta">' + lvl.topics.length + ' temas · ' + lvl.quiz.length + ' preguntas</span>';
+        '<span class="level-card-meta">' + routeIndices(lvl).length + ' temas · ' + routeQuestions(lvl).length + ' preguntas</span>';
       card.addEventListener("click", function () {
         if (state.quiz && !state.quiz.submitted) return;
         state.levelIndex = idx;
-        state.topicIndex = 0;
+        state.topicIndex = routeIndices(lvl)[0];
         saveState();
         renderAll();
       });
@@ -209,14 +269,15 @@
     var lvl = currentLevel();
     document.getElementById("moduleLabel").textContent = "Nivel " + lvl.id + " · " + lvl.name;
     document.getElementById("moduleIntro").textContent = lvl.subtitle;
-    document.getElementById("topicCount").textContent = lvl.topics.length;
-    document.getElementById("questionCount").textContent = lvl.quiz.length;
+    document.getElementById("topicCount").textContent = routeIndices(lvl).length;
+    document.getElementById("questionCount").textContent = routeQuestions(lvl).length;
     var subtitleEl = document.getElementById("levelSubtitle");
     var subtitleText = "Nivel " + lvl.id + " · " + lvl.name + " — " + lvl.subtitle;
     if (subtitleEl) {
       subtitleEl.textContent = subtitleText;
       subtitleEl.title = subtitleText;
     }
+    renderReminders();
     renderLevelsOverview();
   }
 
@@ -232,7 +293,9 @@
     scope.querySelectorAll(".jazz-curriculum-mount").forEach(function (mount) {
       var level = Number(mount.dataset.curriculumLevel);
       var kind = mount.dataset.curriculumKind;
-      var guide = CURRICULUM[level];
+      var guide = Object.assign({},CURRICULUM[level]);
+      if(state.route==='essential'&&level===2)guide.project='Construye, canta y toca iiø–V–i en dos tonalidades, sin añadir sustituciones.';
+      if(state.route==='essential'&&level===5)guide.project='Graba cuatro compases con pulso claro, un motivo y una llegada a una nota guía.';
       if (!guide) return;
       var key = "n" + level + "-" + kind;
       var evidence = state.curriculumEvidence[key] || {};
@@ -242,6 +305,7 @@
         }).join("") + '</div><p class="small-note">Si una afirmación aún no se cumple, úsala como meta breve antes de pasar al siguiente tema.</p></section>';
       } else {
         mount.innerHTML = '<section class="curriculum-card curriculum-project"><p class="kicker">Evidencia aplicada</p><h4>Proyecto de cierre</h4><p>' + guide.project + '</p><p><b>Repertorio sugerido:</b> ' + guide.repertoire + '</p><div class="curriculum-checks"><label><input type="checkbox" data-evidence="' + key + '" data-evidence-step="analysis"' + (evidence.analysis ? ' checked' : '') + '> <span>Anoté función, forma y decisiones armónicas.</span></label><label><input type="checkbox" data-evidence="' + key + '" data-evidence-step="sound"' + (evidence.sound ? ' checked' : '') + '> <span>Lo canté o lo toqué a un tempo controlable.</span></label><label><input type="checkbox" data-evidence="' + key + '" data-evidence-step="review"' + (evidence.review ? ' checked' : '') + '> <span>Escuché el resultado y escribí una mejora concreta.</span></label></div></section>';
+        mount.innerHTML += projectRubric(LEVELS.find(function(item){return item.id===Number(mount.dataset.curriculumLevel);}));
       }
     });
     scope.querySelectorAll("[data-evidence]").forEach(function (input) {
@@ -251,14 +315,14 @@
         state.curriculumEvidence[key][input.dataset.evidenceStep] = input.checked;
         saveState();
         var index = currentLevel().topics.findIndex(function (topic) { return topic.curriculumRole === key.split("-")[1]; });
-        if (index >= 0) updateTopicProgress(currentLevel().slug + "-" + index);
+        if (index >= 0) updateTopicProgress(topicKey(currentLevel(),index));
       });
     });
   }
 
   function renderTopicClosure(level, topic, index) {
     if (topic.curriculumRole) return "";
-    var key = level.slug + "-" + index;
+    var key = topicKey(level,index);
     var checks = state.practiceChecks[key] || {};
     return '<aside class="topic-transfer"><p class="kicker">Cierre activo</p><h4>Escucha, canta, toca y aplica</h4><p>Antes de marcar <b>' + topic.title + '</b> como estudiado, convierte la idea en una decisión musical.</p><div class="curriculum-checks"><label><input type="checkbox" data-practice="' + key + '" data-practice-step="hear"' + (checks.hear ? ' checked' : '') + '> <span>Escuché o identifiqué el recurso en contexto.</span></label><label><input type="checkbox" data-practice="' + key + '" data-practice-step="sing"' + (checks.sing ? ' checked' : '') + '> <span>Canté las fundamentales, notas guía o tensión principal.</span></label><label><input type="checkbox" data-practice="' + key + '" data-practice-step="apply"' + (checks.apply ? ' checked' : '') + '> <span>Lo toqué o escribí en una tonalidad distinta.</span></label></div></aside>';
   }
@@ -277,7 +341,7 @@
 
   function topicProgressLabel(level, index) {
     var topic = level.topics[index];
-    var key = level.slug + "-" + index;
+    var key = topicKey(level,index);
     var studied = !!state.studiedTopics[key];
     var checks = topic.curriculumRole
       ? state.curriculumEvidence[level.slug + "-" + topic.curriculumRole] || {}
@@ -286,14 +350,14 @@
       : topic.curriculumRole === "project" ? ["analysis", "sound", "review"]
       : ["hear", "sing", "apply"];
     var completed = steps.every(function (step) { return !!checks[step]; });
-    var progress = completed ? (topic.curriculumRole === "entry" ? "Diagnóstico completo"
-      : topic.curriculumRole === "project" ? "Proyecto completo" : "Práctica completa") : "";
+    var progress = completed ? (topic.curriculumRole === "entry" ? "Diagnóstico autoevaluado"
+      : topic.curriculumRole === "project" ? "Proyecto autoevaluado" : "Práctica declarada") : "";
     return [studied ? "Estudiado" : "Pendiente", progress].filter(Boolean).join(" · ");
   }
 
   function updateTopicProgress(key) {
     var level = currentLevel();
-    var index = Number(key.split("-")[1]);
+    var index = level.topics.findIndex(function(topic){return learning.id(level,topic)===key;});
     if (!Number.isInteger(index) || !level.topics[index]) return;
     var label = document.querySelector('#jazzTopicNav [data-topic-index="' + index + '"] small');
     if (label) label.textContent = topicProgressLabel(level, index);
@@ -311,7 +375,8 @@
     nav.innerHTML = "";
 
     lvl.topics.forEach(function (topic, idx) {
-      var key = lvl.slug + "-" + idx;
+      if(!routeIndices(lvl).includes(idx))return;
+      var key = topicKey(lvl,idx);
       var isOpen = idx === state.topicIndex;
       var isStudied = !!state.studiedTopics[key];
       var link = document.createElement("button");
@@ -336,10 +401,12 @@
       var body = document.createElement("div");
       body.className = "topic-body";
       if (isOpen) {
-        body.innerHTML = topic.html.replace(/<\/p>/i, function(end){return end+(window.CourseExamples?.render("jazz",topic.title)||"");}) + (TOPIC_VISUALS[topic.title] ? '<div class="theory-visual-mount" data-viz="' + TOPIC_VISUALS[topic.title] + '"></div>' : '') + renderTopicClosure(lvl, topic, idx);
+        body.innerHTML = topic.html.replace(/<\/p>/i, function(end){return end+(window.CourseExamples?.render("jazz",topic.title)||"");}) + (TOPIC_VISUALS[topic.title] ? '<div class="theory-visual-mount" data-viz="' + TOPIC_VISUALS[topic.title] + '"></div>' : '') + renderTask(lvl,topic) + renderTopicClosure(lvl, topic, idx);
         populateGeneratedDiagrams(body);
         renderCurriculumMounts(body);
         wireTopicPractice(body);
+        wireLearningTasks(body);
+        wireProjectRubric(body);
         window.CrescendoJazzPiano?.attach(body, topic.title);
         window.CrescendoBagaLab?.mount(body);
       }
@@ -351,16 +418,16 @@
     });
 
     var studyBtn = document.getElementById("studyToggleBtn");
-    var currentKey = lvl.slug + "-" + state.topicIndex;
+    var currentKey = topicKey(lvl,state.topicIndex);
     studyBtn.textContent = state.studiedTopics[currentKey] ? "Desmarcar como estudiado" : "Marcar tema como estudiado";
-    document.getElementById("prevTopicBtn").disabled = state.topicIndex === 0;
-    document.getElementById("nextTopicBtn").disabled = state.topicIndex === lvl.topics.length - 1;
+    document.getElementById("prevTopicBtn").disabled = state.topicIndex === routeIndices(lvl)[0];
+    document.getElementById("nextTopicBtn").disabled = state.topicIndex === routeIndices(lvl).at(-1);
   }
 
   function stepTopic(delta) {
     var lvl = currentLevel();
-    var next = state.topicIndex + delta;
-    if (next < 0 || next >= lvl.topics.length) return;
+    var indices=routeIndices(lvl),position=indices.indexOf(state.topicIndex),next=indices[position+delta];
+    if (next === undefined) return;
     state.topicIndex = next;
     saveState();
     renderTheory();
@@ -368,8 +435,9 @@
 
   function toggleStudy() {
     var lvl = currentLevel();
-    var key = lvl.slug + "-" + state.topicIndex;
+    var key = topicKey(lvl,state.topicIndex);
     state.studiedTopics[key] = !state.studiedTopics[key];
+    state.studyDates[key]=Date.now();
     saveState();
     renderTheory();
   }
@@ -386,14 +454,15 @@
         prompt: question.prompt,
         options: order.map(function (original) { return question.options[original]; }),
         correctIndex: order.indexOf(question.correctIndex),
-        explanation: question.explanation
+        explanation: question.explanation,
+        studyTopicId: question.studyTopicId
       };
     });
   }
 
   function quizQuestions() {
     return state.quiz && Array.isArray(state.quiz.questionSnapshot)
-      ? state.quiz.questionSnapshot : currentLevel().quiz;
+      ? state.quiz.questionSnapshot : routeQuestions(currentLevel());
   }
 
   function startQuiz() {
@@ -407,15 +476,17 @@
     }
 
     var lvl = currentLevel();
+    var selectedQuestions=shuffledQuestions(routeQuestions(lvl));
     state.quiz = {
+      learningRevision:3,
       levelSlug: lvl.slug,
       levelId: lvl.id,
       levelName: lvl.name,
       student: name,
       course: course,
       date: date,
-      answers: new Array(lvl.quiz.length).fill(null),
-      questionSnapshot: shuffledQuestions(lvl.quiz),
+      answers: new Array(selectedQuestions.length).fill(null),
+      questionSnapshot: selectedQuestions,
       submitted: false,
       startedAt: Date.now()
     };
@@ -497,8 +568,8 @@
   function updateAnsweredCount() {
     var lvl = currentLevel();
     var answered = state.quiz.answers.filter(function (a) { return a !== null; }).length;
-    document.getElementById("answeredCount").textContent = answered + "/" + lvl.quiz.length + " respondidas";
-    var pct = Math.round((answered / lvl.quiz.length) * 100);
+    document.getElementById("answeredCount").textContent = answered + "/" + quizQuestions().length + " respondidas";
+    var pct = Math.round((answered / quizQuestions().length) * 100);
     document.getElementById("quizBar").style.width = pct + "%";
   }
 
@@ -541,7 +612,7 @@
     else circle.classList.add("grade-low");
 
     var reviewList = document.getElementById("reviewList");
-    reviewList.innerHTML = "<h3>Revisión de respuestas</h3>";
+    reviewList.innerHTML = "<h3>Revisión de respuestas</h3>"+(state.quiz.learningRevision===3?"":"<p>Este intento conserva la versión inicial de sus preguntas. La teoría y los nuevos intentos incluyen las correcciones actuales.</p>");
     quizQuestions().forEach(function (item, idx) {
       var userAns = state.quiz.answers[idx];
       var isCorrect = userAns === item.correctIndex;
@@ -549,10 +620,16 @@
       row.className = "review-row " + (isCorrect ? "review-correct" : "review-wrong");
       var userText = userAns === null ? "(sin responder)" : item.options[userAns];
       row.innerHTML =
-        '<p class="review-q">' + (idx + 1) + ". " + item.prompt + '</p>' +
-        '<p class="review-a">Respuesta: <b>' + userText + '</b>' + (isCorrect ? "" : ' · Correcta: <b>' + item.options[item.correctIndex] + '</b>') + '</p>';
+        '<p class="review-q">' + (idx + 1) + ". " + safeText(item.prompt) + '</p>' +
+        '<p class="review-a">Respuesta: <b>' + safeText(userText) + '</b>' + (isCorrect ? "" : ' · Correcta: <b>' + safeText(item.options[item.correctIndex]) + '</b>') + '</p>' +
+        '<p class="review-explanation"><b>Por qué:</b> '+safeText(item.explanation||'Consulta el tema actualizado y comprueba las notas en el instrumento.')+'</p>' +
+        (item.studyTopicId?'<button class="ghost-btn" type="button" data-review-topic="'+safeText(item.studyTopicId)+'">Repasar este concepto</button>':'');
       reviewList.appendChild(row);
     });
+    reviewList.querySelectorAll('[data-review-topic]').forEach(function(button){button.addEventListener('click',function(){
+      var level=res.lvl,index=level.topics.findIndex(function(t){return learning.id(level,t)===button.dataset.reviewTopic;});if(index<0)return;
+      if(!learning.indices(level,state.route).includes(index))state.route='complete';state.levelIndex=LEVELS.indexOf(level);state.topicIndex=index;state.view='theory';saveState();renderAll();
+    });});
   }
 
   function downloadCsv() {
@@ -593,6 +670,7 @@
 
   // ---------- Render general ----------
   function renderAll() {
+    document.querySelectorAll('[data-jazz-route]').forEach(function(el){el.value=state.route;});
     renderHome();
     renderTheory();
     renderQuiz();
@@ -606,6 +684,7 @@
 
   // ---------- Listeners ----------
   function bindEvents() {
+    document.querySelectorAll('[data-jazz-route]').forEach(function(el){el.addEventListener('change',function(){setRoute(el.value);});});
     document.querySelectorAll(".nav-btn").forEach(function (btn) {
       btn.addEventListener("click", function () {
         var view = btn.getAttribute("data-view");
@@ -623,7 +702,8 @@
     document.getElementById("resetTopicsBtn").addEventListener("click", function () {
       if (!confirm("¿Reiniciar el progreso de estudio de este nivel?")) return;
       var lvl = currentLevel();
-      lvl.topics.forEach(function (_, idx) { delete state.studiedTopics[lvl.slug + "-" + idx]; });
+      lvl.topics.forEach(function (_, idx) { var key=topicKey(lvl,idx);delete state.studiedTopics[key];delete state.practiceChecks[key];delete state.taskChecks[key];delete state.studyDates[key]; });
+      delete state.curriculumEvidence[lvl.slug+'-entry'];delete state.curriculumEvidence[lvl.slug+'-project'];
       saveState(); renderTheory();
     });
 
@@ -643,6 +723,7 @@
     if (Number.isInteger(directTopic) && directTopic >= 1 && directTopic <= currentLevel().topics.length) state.topicIndex = directTopic - 1;
     var directView = location.hash.match(/^#(home|theory|improv|library|quiz)View$/);
     if (directView) state.view = directView[1];
+    if(!routeIndices(currentLevel()).includes(state.topicIndex))state.route="complete";
     bindEvents();
     renderAll();
   });

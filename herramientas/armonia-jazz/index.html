@@ -20,7 +20,7 @@
 <title>Armonía Jazz | Crescendo Academy</title>
   <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="../../shared/header-icons.css?v=20260919-flat-logo-v2">
-<link rel="stylesheet" href="./styles.css?v=20261019-chord-rows-2">
+<link rel="stylesheet" href="./styles.css?v=20261117-jazz-audit-1">
 <link rel="stylesheet" href="../../shared/music-practice.css">
 <script defer src="../../shared/course-sound.js?v=20261019-dropdown-1"></script>
 <link rel="stylesheet" href="../../shared/course-sound.css?v=20261019-dropdown-1">
@@ -29,25 +29,26 @@
 <link rel="stylesheet" href="../../shared/practice-lab.css">
 <script defer src="../../shared/practice-lab.js?v=20260928-timbres"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/soundfont-player@0.12.0/dist/soundfont-player.min.js"></script>
-<script defer src="./data.js?v=20261019-concepts-1"></script>
+<script defer src="./data.js?v=20261117-jazz-audit-1"></script>
 <script defer src="../../shared/piano-voicings.js"></script>
 <script defer src="./piano-bank.js"></script>
 <script defer src="./baga-lab.js?v=20261019-instruments-1"></script>
 <script defer src="./chords-ref.js?v=20261019-positions-4"></script>
-<script defer src="./instrument-lab.js?v=20261019-positions-4"></script>
+<script defer src="./instrument-lab.js?v=20261117-jazz-audit-1"></script>
 <script defer src="./blues-form.js"></script>
-<script defer src="./theory-visuals.js?v=20261019-chord-rows-2"></script>
+<script defer src="./theory-visuals.js?v=20261117-jazz-audit-1"></script>
 <link rel="stylesheet" href="../../shared/course-instruments.css?v=20261029-purpose-audit-1">
 <script defer src="../../shared/course-instruments.js?v=20261029-purpose-audit-1"></script>
 <script defer src="../../shared/concept-examples.js?v=20261019-visual-maps-1"></script>
-<script defer src="../../shared/concept-example-catalog.js?v=20261019-visual-maps-1"></script>
+<script defer src="../../shared/concept-example-catalog.js?v=20261117-jazz-audit-1"></script>
 <script defer src="./chord-scale-dictionary.js?v=20261019-positions-4"></script>
 <script defer src="./ata-library-index.js"></script>
 <script defer src="./ata-library.js"></script>
 <script defer src="../../shared/rhythm-engine.js?v=20260918-locking-in"></script>
 <script defer src="./improvisation-engine.js?v=20260919-full-generators"></script>
 <script defer src="./improvisation.js?v=20261029-purpose-audit-1"></script>
-<script defer src="./app.js?v=20261029-purpose-audit-1"></script>
+<script defer src="./learning-design.js?v=20261117-jazz-audit-1"></script>
+<script defer src="./app.js?v=20261117-jazz-audit-1"></script>
 <link rel="stylesheet" href="../../shared/course-actions.css">
 <link rel="stylesheet" href="./piano-bank.css">
 <link rel="stylesheet" href="./baga-lab.css">
@@ -58,6 +59,7 @@
 <link rel="stylesheet" href="../../shared/course-header.css?v=20261029-1">
 </head>
 <body class="jazz-course">
+<a class="jazz-skip-link" href="#mainContent">Saltar al contenido</a>
   <div class="page-bg" aria-hidden="true"></div>
 
   <header class="course-header" aria-label="Crescendo Academy · Armonía jazz">
@@ -86,7 +88,7 @@
     </div>
   </header>
 
-  <main>
+  <main id="mainContent" tabindex="-1">
     <div id="lockBanner" class="panel lock-banner hidden">
       <b>Modo cuestionario activo.</b> El módulo teórico está bloqueado hasta entregar. Si se recarga la página, el intento se reabre automáticamente.
     </div>
@@ -95,7 +97,7 @@
     <section id="homeView" class="view">
       <div class="hero">
         <div class="hero-copy">
-          <p id="moduleLabel" class="module-label">Nivel 1 · Fundamentos</p>
+          <h1 id="moduleLabel" class="module-label">Nivel 1 · Fundamentos</h1>
           <p id="moduleIntro" class="hero-summary">Cifrado jazz, campo armónico mayor, ii-V-I y voicings básicos.</p>
           <div class="hero-actions">
             <button id="goTheoryBtn" class="primary-btn" type="button">Entrar al módulo teórico</button>
@@ -111,13 +113,14 @@
         </aside>
       </div>
 
+      <section class="jazz-route-panel"><label class="jazz-route-label">Recorrido de estudio<select data-jazz-route><option value="essential">Esencial · empieza aquí</option><option value="expanded">Ampliación · funciones y voicings</option><option value="complete">Completo · incluye profundización</option></select></label><p>Elige según tus bases. La ruta esencial prioriza pulso, oído, acordes y ii–V–I; puedes ampliar el material sin borrar tu progreso. Si estás comenzando, trabaja una idea por sesión y pide ayuda a tu docente cuando la necesites.</p></section><section id="jazzReviewReminders" class="jazz-route-panel" hidden></section>
       <section class="course-template-roadmap" aria-label="Mapa de estudio de Armonía Jazz">
         <div><p class="kicker">Mapa de estudio</p><h3>Fundamentos → voicings → lenguaje → composición → improvisación</h3></div>
         <p>Selecciona un nivel para actualizar la unidad activa, sus objetivos y la práctica recomendada.</p>
       </section>
 
       <div class="levels-overview course-template-levels">
-        <h3>Los 5 niveles de Armonía Jazz</h3>
+        <h3>Niveles del recorrido seleccionado</h3>
         <div class="levels-grid" id="levelsOverviewGrid"></div>
       </div>
 
@@ -155,6 +158,7 @@
         <button class="ghost-btn" id="nextTopicBtn" data-topic-step="1">Tema siguiente</button>
         <button class="ghost-btn" id="resetTopicsBtn" type="button">Reiniciar progreso</button>
       </div>
+      <label class="jazz-route-label">Recorrido de estudio<select data-jazz-route><option value="essential">Esencial · empieza aquí</option><option value="expanded">Ampliación · funciones y voicings</option><option value="complete">Completo · incluye profundización</option></select></label>
       <div class="course-topic-layout"><nav id="jazzTopicNav" aria-label="Temas del nivel"></nav><div id="topicsList" class="topics-list"></div></div>
     </section>
 
@@ -168,6 +172,7 @@
         </div>
       </div>
 
+      <p>El cuestionario comprueba comprensión conceptual. La ejecución y la escucha se revisan por separado con las tareas y la rúbrica del proyecto.</p>
       <div id="quizStartPanel" class="quiz-start">
         <div class="panel">
           <h3>Datos del estudiante</h3>

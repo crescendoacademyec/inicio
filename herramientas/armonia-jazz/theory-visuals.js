@@ -42,6 +42,7 @@
     if (/m7♭5|m7b5|ø/.test(suffix)) return [0,3,6,10];
     if (/dim|°/.test(suffix)) return [0,3,6,9];
     if (/m\(maj7\)/.test(suffix)) return [0,3,7,11];
+    if (/m6/.test(suffix)) return [0,3,7,9];
     if (/m7/.test(suffix)) return [0,3,7,10];
     if (/maj7/.test(suffix)) return [0,4,7,11];
     if (/7/.test(suffix)) return [0,4,7,10];
@@ -246,8 +247,74 @@
   VISUALS.aaba = { type: "form", title: "Forma AABA y rhythm changes", note: "La forma organiza la escucha: dos A afirman el material, B contrasta y A regresa.", bars: [S(0,"maj7","I","A1"),S(9,"7","VI7","A1"),S(2,"m7","ii7","A1"),S(7,"7","V7","A1"),S(0,"maj7","I","A2"),S(9,"7","VI7","A2"),S(2,"m7","ii7","A2"),S(7,"7","V7","A2"),S(4,"7","III7","B"),S(9,"7","VI7","B"),S(2,"7","II7","B"),S(7,"7","V7","B"),S(0,"maj7","I","A3"),S(9,"7","VI7","A3"),S(2,"m7","ii7","A3"),S(7,"7","V7","A3")] };
   VISUALS.composition = { type: "form", title: "Diseño de una forma para componer", note: "Piensa la composición como recorrido: motivo, contraste, desarrollo y retorno.", bars: [S(0,"maj7","A","Motivo"),S(5,"maj7","A","Respuesta"),S(2,"m7","B","Contraste"),S(7,"7","B","Tensión"),S(0,"maj7","A'","Retorno"),S(9,"m7","A'","Variación"),S(2,"m7","C","Puente"),S(7,"7","C","Preparación")] };
 
+  function mod12(n) { return ((n % 12) + 12) % 12; }
+  function spelledPitch(root, offset, degree) {
+    var letters='CDEFGAB', naturals=[0,2,4,5,7,9,11], start=letters.indexOf(NOTES[mod12(root)][0]);
+    var index=(start+degree)%7, delta=mod12(root+offset-naturals[index]);
+    if(delta>6)delta-=12;
+    return letters[index]+(delta<0?'♭'.repeat(-delta):'♯'.repeat(delta));
+  }
+  function compoundModel(root, row) {
+    var upperPc=mod12(root+row.upper.offset), upperName=spelledPitch(root,row.upper.offset,row.upper.degree)+row.upper.suffix;
+    var midis=suffixIntervals(row.upper.suffix).map(function(n){return 60+root+row.upper.offset+n;});
+    var lowerName;
+    if(row.lower) {
+      lowerName=spelledPitch(root,row.lower.offset,row.lower.degree)+row.lower.suffix;
+      midis=midis.concat(suffixIntervals(row.lower.suffix).map(function(n){return 48+root+row.lower.offset+n;}));
+    } else {
+      lowerName=spelledPitch(root,row.bass.offset,row.bass.degree);
+      var bass=48+root+row.bass.offset;
+      midis=midis.filter(function(n){return mod12(n)!==mod12(bass);});midis.unshift(bass);
+    }
+    return {upperName:upperName,lowerName:lowerName,label:upperName+(row.lower?' sobre ':'/')+lowerName,
+      midis:midis.sort(function(a,b){return a-b;}),notes:symbolNotes(upperPc,row.upper.suffix)+(row.lower?' + '+symbolNotes(root+row.lower.offset,row.lower.suffix):' · bajo '+lowerName)};
+  }
+  var COMPOUNDS=[
+    {name:'Inversión',upper:{offset:2,degree:1,suffix:'7'},bass:{offset:6,degree:3},use:'La tercera del acorde está en el bajo.'},
+    {name:'Híbrido',upper:{offset:0,degree:0,suffix:''},bass:{offset:2,degree:1},use:'El bajo no pertenece a la tríada superior.'},
+    {name:'Poliacorde',upper:{offset:2,degree:1,suffix:''},lower:{offset:0,degree:0,suffix:'maj7'},use:'Dos acordes completos; no es una barra que indique solo el bajo.'}
+  ];
+  function renderCompounds(host) {
+    var root=0;
+    function paint() {
+      host.innerHTML='<section class="theory-viz"><h4>Acordes compuestos: estructura y bajo</h4>'+tonicControl(root)+'<div class="tv-table-wrap"><table class="tv-table"><thead><tr><th>Tipo</th><th>Cifrado</th><th>Notas</th><th>Aplicación</th></tr></thead><tbody>'+COMPOUNDS.map(function(row,index){
+        var model=compoundModel(root,row);
+        var cipher=row.lower?'<span class="tv-polychord" role="img" aria-label="'+esc(model.label)+'"><span>'+esc(model.upperName)+'</span><span>'+esc(model.lowerName)+'</span></span>':esc(model.label);
+        return '<tr><th>'+esc(row.name)+'</th><td>'+cipher+'</td><td>'+esc(model.notes)+'</td><td>'+esc(row.use)+' <button type="button" data-compound-play="'+index+'">Escuchar</button></td></tr>';
+      }).join('')+'</tbody></table></div><p class="small-note">El cifrado, las notas y el audio se transportan juntos. La estructura apilada muestra dos acordes; la barra de una inversión nombra una nota de bajo.</p></section>';
+      host.querySelector('.tv-tonic').addEventListener('change',function(e){root=Number(e.target.value);paint();});
+      host.querySelectorAll('[data-compound-play]').forEach(function(button){button.addEventListener('click',function(){playNotes(compoundModel(root,COMPOUNDS[Number(button.dataset.compoundPlay)]).midis);});});
+    }
+    paint();
+  }
+  var MIRROR_SOURCES={
+    triad:{label:'Tríada I mayor',steps:[{offset:0,suffix:'',mirrorOffset:0,mirrorSuffix:'m'}]},
+    dominant:{label:'V7',steps:[{offset:7,suffix:'7',mirrorOffset:5,mirrorSuffix:'m6'}]},
+    cadence:{label:'ii–V–I',steps:[{offset:2,suffix:'m7',mirrorOffset:7,mirrorSuffix:'m7'},{offset:7,suffix:'7',mirrorOffset:5,mirrorSuffix:'m6'},{offset:0,suffix:'maj7',mirrorOffset:8,mirrorSuffix:'maj7'}]}
+  };
+  function mirrorPitch(p,root) { return mod12(2*root+7-p); }
+  function mirrorModel(root,kind) {
+    return (MIRROR_SOURCES[kind]||MIRROR_SOURCES.dominant).steps.map(function(step){
+      var source=suffixIntervals(step.suffix).map(function(n){return 48+root+step.offset+n;});
+      var reflected=source.map(function(n){return 60+mirrorPitch(n,root);}).sort(function(a,b){return a-b;});
+      return {source:source,reflected:reflected,sourceLabel:chord(root+step.offset,step.suffix),reflectedLabel:chord(root+step.mirrorOffset,step.mirrorSuffix)};
+    });
+  }
+  function renderMirror(host) {
+    var root=0,kind='dominant';
+    function paint() {
+      var model=mirrorModel(root,kind);
+      host.innerHTML='<section class="theory-viz"><h4>Armonía negativa: reflejar cada altura</h4>'+tonicControl(root)+'<label>Original<select data-mirror-kind>'+Object.keys(MIRROR_SOURCES).map(function(id){return '<option value="'+id+'"'+(kind===id?' selected':'')+'>'+MIRROR_SOURCES[id].label+'</option>';}).join('')+'</select></label><p>Midiendo p desde la tónica, el reflejo es <b>7 − p (módulo 12)</b>. Las doce correspondencias fijan el eje antes de nombrar los acordes.</p><div class="tv-mirror-map">'+Array.from({length:12},function(_,p){return '<span>'+esc(NOTES[mod12(root+p)])+' ↔ '+esc(NOTES[mod12(root+7-p)])+'</span>';}).join('')+'</div><div class="tv-table-wrap"><table class="tv-table"><thead><tr><th>Original</th><th>Notas originales</th><th>Reflejo</th><th>Notas reflejadas</th></tr></thead><tbody>'+model.map(function(item){return '<tr><td>'+esc(item.sourceLabel)+'</td><td>'+esc(item.source.map(function(n){return NOTES[mod12(n)];}).join(' · '))+'</td><td>'+esc(item.reflectedLabel)+'</td><td>'+esc(item.reflected.map(function(n){return NOTES[mod12(n)];}).join(' · '))+'</td></tr>';}).join('')+'</tbody></table></div><button type="button" data-mirror-play="source">Escuchar original</button><button type="button" data-mirror-play="reflected">Escuchar reflejo</button><p class="small-note">Se muestran clases de altura con grafías enarmónicas y se reordena su registro para escucharlas. El espejo de alturas no garantiza una sustitución funcional apropiada: comprueba melodía y conducción.</p></section>';
+      host.querySelector('.tv-tonic').addEventListener('change',function(e){root=Number(e.target.value);paint();});
+      host.querySelector('[data-mirror-kind]').addEventListener('change',function(e){kind=e.target.value;paint();});
+      host.querySelectorAll('[data-mirror-play]').forEach(function(button){button.addEventListener('click',async function(){stopAudio();var token=AUDIO.token;for(var i=0;i<model.length;i++){if(token!==AUDIO.token)return;await playNotes(model[i][button.dataset.mirrorPlay],{duration:.8,stop:false});await new Promise(function(resolve){setTimeout(resolve,900);});}});});
+    }
+    paint();
+  }
+
   function mount(root, kind) {
     if (!root || root.dataset.mounted) return;
+    if (kind === "compound" || kind === "negative") { root.dataset.mounted="true"; if(kind === "compound") renderCompounds(root); else renderMirror(root); return; }
     var config = VISUALS[kind];
     if (!config) return;
     root.dataset.mounted = "true";
@@ -257,5 +324,5 @@
     else if (config.type === "bebop") renderBebop(root, config);
     else renderProgression(root, config);
   }
-  global.TheoryVisuals = { mount: mount, playNotes: playNotes, symbolNotes: symbolNotes };
+  global.TheoryVisuals = { mount: mount, playNotes: playNotes, symbolNotes: symbolNotes, mirrorPitch: mirrorPitch, mirrorModel: mirrorModel, compoundModel: compoundModel, compounds: COMPOUNDS };
 })(window);

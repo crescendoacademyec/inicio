@@ -556,3 +556,23 @@ body .csd-example .ci-group{grid-template-columns:minmax(0,1fr) minmax(0,1.2fr)!
 @media(max-width:560px){body .csd-example .ci-group{grid-template-columns:1fr!important}}
 
 .csd-visuals .csd-example .ce-score>svg{min-width:0!important}
+/* Recorridos y práctica aplicada. */
+.jazz-skip-link{position:absolute;top:-80px;left:12px;z-index:200;background:#f4d48c;color:#111;padding:12px;}
+.jazz-skip-link:focus{top:12px;}
+.jazz-route-panel,.jazz-applied-task,.jazz-rubric{border:1px solid #665737;border-radius:12px;padding:18px;margin:18px 0;background:#242117;}
+.jazz-route-label,.jazz-task-fields label,.jazz-rubric label{display:grid;gap:8px;margin:12px 0;max-width:650px;}
+.jazz-route-label select,.jazz-task-fields select,.jazz-rubric select,.jazz-rubric textarea{width:100%;min-width:0;padding:12px;background:#1c1b17;color:#fff9ed;border:1px solid #756749;border-radius:8px;font:inherit;}
+.jazz-task-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:12px;}
+.jazz-rubric textarea{min-height:100px;resize:vertical;}
+.tv-polychord{display:inline-grid;text-align:center;}
+.tv-polychord>span:first-child{border-bottom:1px solid currentColor;}
+.tv-mirror-map{display:flex;flex-wrap:wrap;gap:10px;margin:18px 0;}
+.tv-mirror-map>span{padding:6px 10px;border:1px solid #6b5a36;border-radius:6px;}
+.course-theory-layout>*,.theory-layout>*{min-width:0;}
+button:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid #f4d48c;outline-offset:3px;}
+@media(max-width:640px){
+  body.jazz-course #theoryView>.theory-actions-top{position:static;inset:auto;width:100%;box-shadow:none;margin:12px 0;}
+  .jazz-route-panel,.jazz-applied-task,.jazz-rubric{padding:12px;}
+}
+
+.course-topic-layout>*{min-width:0;}

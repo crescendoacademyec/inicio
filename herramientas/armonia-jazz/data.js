@@ -13,6 +13,7 @@ const LEVELS = [
     subtitle: "Cifrado jazz, campo armónico mayor, ii-V-I y voicings básicos.",
     topics: [
       {
+        id: "n1-1.1",
         title: "1.1 Cifrado de acordes jazz",
         html: `
           <p>El jazz usa un sistema de cifrado que describe la <b>fundamental</b> y la <b>calidad</b> del acorde
@@ -30,6 +31,7 @@ const LEVELS = [
         `
       },
       {
+        id: "n1-1.1b",
         title: "1.1b Laboratorio de acordes, escalas y arpegios",
         html: `
           <p>Estudia <b>una idea a la vez</b>: elige la familia, la tónica y una posición. El mismo contenido se
@@ -39,6 +41,7 @@ const LEVELS = [
         `
       },
       {
+        id: "n1-1.2",
         title: "1.2 Campo armónico mayor con tétradas",
         html: `
           <p>Al armonizar cada grado de la escala mayor con cuatro sonidos (tétradas diatónicas), obtenemos
@@ -62,6 +65,7 @@ const LEVELS = [
         `
       },
       {
+        id: "n1-1.3",
         title: "1.3 El ii-V-I mayor",
         html: `
           <p>La progresión <b>ii-V-I</b> es la célula más importante del jazz. En Do mayor es
@@ -83,6 +87,7 @@ const LEVELS = [
         `
       },
       {
+        id: "n1-1.4",
         title: "1.4 Extensiones diatónicas básicas",
         html: `
           <p>Las <b>tensiones</b> (9, 11 y 13) son extensiones de la tétrada que agregan color sin cambiar
@@ -103,6 +108,7 @@ const LEVELS = [
         `
       },
       {
+        id: "n1-1.5",
         title: "1.5 Voicings shell: guide tones",
         html: `
           <p>Un <b>shell voicing</b> reduce el acorde a sus dos notas más importantes: la <b>3ª</b> y la <b>7ª</b>
@@ -114,8 +120,7 @@ const LEVELS = [
             <li>G7 → 3ª=B, 7ª=F</li>
             <li>Cmaj7 → 3ª=E, 7ª=B</li>
           </ul>
-          <p>Fíjate cómo la 7ª de un acorde se convierte en la 3ª del siguiente (F→F, B→B): esto se llama
-          <b>conducción de voces (voice leading)</b> y es la razón por la que el ii-V-I suena tan natural.</p>
+          <p>En Dm7–G7–Cmaj7, una voz hace <b>Do4→Si3→Si3</b>: la séptima de Dm7 baja a la tercera de G7 y luego se conserva como séptima de Cmaj7. Otra hace <b>Fa4→Fa4→Mi4</b>: tercera de Dm7, séptima de G7 y tercera de Cmaj7. Las notas comunes muestran tercera→séptima; las resoluciones Do→Si y Fa→Mi muestran séptima→tercera.</p>
           <p>Los shells según la calidad del acorde (fundamental + 3ª + 7ª, mostrados aquí en Do):</p>
           <div class="progression-mount" data-progression='[
             {"symbol":"Maj7 shell","formula":[0,4,11],"rootPc":0},
@@ -125,6 +130,7 @@ const LEVELS = [
         `
       },
       {
+        id: "n1-1.6",
         title: "1.6 Inversiones y bajo (slash chords)",
         html: `
           <p>Cuando la nota más grave de un acorde no es la fundamental, se usa la notación de <b>acorde con bajo</b>
@@ -135,11 +141,12 @@ const LEVELS = [
         `
       },
       {
+        id: "n1-1.7",
         title: "1.7 Relación básica acorde-escala",
         html: `
           <p>Antes de estudiar los modos a fondo (Nivel 2), conviene entender la idea más simple: sobre cada
           acorde diatónico se puede improvisar usando <b>la escala mayor de la tonalidad</b>, empezando
-          conceptualmente desde la fundamental de ese acorde. Esto ya te da el "modo" correcto sin necesidad
+          conceptualmente desde la fundamental de ese acorde. Esto permite reconocer una colección acorde–escala inicial, sin necesidad
           de memorizar nombres todavía.</p>
           <ul>
             <li><b>Imaj7</b> → escala mayor de la tonalidad (ej. C mayor sobre Cmaj7 en Do mayor).</li>
@@ -154,6 +161,7 @@ const LEVELS = [
         `
       },
       {
+        id: "n1-1.8",
         title: "1.8 Lectura de lead sheets y el Real Book",
         html: `
           <p>Un <b>lead sheet</b> (hoja guía) es la forma estándar de anotar un tema de jazz: solo lleva la
@@ -194,6 +202,7 @@ const LEVELS = [
         `
       },
       {
+        id: "n1-1.9",
         title: "1.9 Funciones armónicas: tónico, subdominante y dominante",
         html: `
           <p>Todo acorde diatónico (y muchos prestados) cumple, en el fondo, uno de solo <b>tres roles</b>
@@ -214,6 +223,7 @@ const LEVELS = [
         `
       },
       {
+        id: "n1-1.9b",
         title: "1.9b Ritmo armónico y peso métrico",
         html: `
           <p>El <b>ritmo armónico</b> indica cuántos pulsos dura cada acorde y en qué parte del compás cambia. Un mismo ii–V–I puede sentirse estable con un acorde por compás o mucho más activo con dos acordes por compás.</p>
@@ -222,6 +232,7 @@ const LEVELS = [
         `
       },
       {
+        id: "n1-1.9c",
         title: "1.9c Relación melodía–armonía y notas disponibles",
         html: `
           <p>Una nota melódica puede ser <b>nota del acorde</b>, <b>tensión disponible</b> o <b>nota de aproximación</b>. La clasificación depende del acorde que suena debajo y de la posición rítmica de la nota.</p>
@@ -230,12 +241,13 @@ const LEVELS = [
         `
       },
       {
+        id: "n1-1.10",
         title: "1.10 Repertorio recomendado del Real Book — Nivel 1",
         html: `
           <p>Para empezar a leer y tocar standards, elige temas con forma clara y armonía mayormente diatónica.
           Este orden va de lo más simple a lo un poco más retador dentro del nivel:</p>
           <ol class="repertoire-list">
-            <li><b>C Jam Blues</b> — blues de dos acordes, ideal para tu primera lectura de chart.</li>
+            <li><b>C Jam Blues</b> — melodía de dos notas sobre una forma de blues de doce compases; comienza por el motivo antes de acompañar toda la forma.</li>
             <li><b>Now's the Time</b> — blues clásico de bebop, forma de 12 compases sin sorpresas.</li>
             <li><b>Straight No Chaser</b> — blues con un giro cromático simple, buena introducción al color bebop.</li>
             <li><b>Blue Monk</b> — blues con acentos rítmicos característicos, forma muy predecible.</li>
@@ -291,6 +303,7 @@ const LEVELS = [
     subtitle: "Campo armónico menor, dominantes secundarios, sustitución tritonal y modos.",
     topics: [
       {
+        id: "n2-2.1",
         title: "2.1 Campo armónico menor",
         html: `
           <p>La escala menor tiene tres formas (natural, armónica y melódica), y cada una genera un campo
@@ -300,7 +313,7 @@ const LEVELS = [
             <li><b>V7</b> se toma de la menor armónica (necesita la sensible, 7º grado elevado).</li>
             <li><b>iim7b5</b> aparece tanto en natural como en armónica.</li>
           </ul>
-          <p>Campo armónico "hibrido" típico en jazz menor (Do menor): <b>Cm(maj7) — Dm7b5 — Ebmaj7#5 — Fm7
+          <p>Campo armónico de la menor armónica (un material que se combina con otros en jazz menor) (Do menor): <b>Cm(maj7) — Dm7b5 — Ebmaj7#5 — Fm7
           — G7 — Abmaj7 — B°7</b>.</p>
           <div class="progression-mount" data-progression='[
             {"symbol":"Cm(maj7) (i)","formula":[0,3,7,11],"rootPc":0},
@@ -314,6 +327,7 @@ const LEVELS = [
         `
       },
       {
+        id: "n2-2.2",
         title: "2.2 El ii-V-i menor",
         html: `
           <p>El equivalente menor del ii-V-I es <b>iim7b5 — V7(b9) — im7</b>. En Do menor:
@@ -328,6 +342,7 @@ const LEVELS = [
         `
       },
       {
+        id: "n2-2.3",
         title: "2.3 Dominantes secundarios",
         html: `
           <p>Un <b>dominante secundario</b> es un acorde de 7ª de dominante que no pertenece al campo armónico
@@ -337,14 +352,11 @@ const LEVELS = [
           A7 resuelve naturalmente a Dm7 igual que G7 resuelve a Cmaj7.</p>
           <p>Los dominantes secundarios son la forma más común de introducir cromatismo y color sin salir
           realmente de la tonalidad.</p>
-          <p><b>Tensiones mayores vs. menores:</b> qué tensión le pones a un dominante secundario depende de
-          la calidad del acorde diatónico al que resuelve. Los que resuelven a un acorde <b>mayor</b>
-          (V7/IV, V7/V) usan tensiones "mayores" naturales: <b>9 y 13</b>. Los que resuelven a un acorde
-          <b>menor</b> (V7/ii, V7/iii, V7/vi) usan tensiones "menores": <b>9 y b13</b>, porque esas tensiones
-          deben ser diatónicas al acorde de destino, no al dominante en sí.</p>
+          <p><b>Elegir tensiones:</b> la calidad del destino orienta, pero no obliga a una única escala. 9 y 13 pueden acompañar una resolución mayor; 9 y ♭13 son una posibilidad hacia menor. También pueden elegirse ♭9 o ♯9 según melodía, función, estilo y conducción. Por ejemplo, A7(♭9)→Dm usa Si♭ que puede bajar a La. Comprueba las notas reales y su resolución; no deduzcas todas las tensiones solo del nombre del acorde de llegada.</p>
         `
       },
       {
+        id: "n2-2.4",
         title: "2.4 Sustitución tritonal",
         html: `
           <p>Todo acorde de 7ª de dominante puede sustituirse por otro dominante cuya fundamental está a
@@ -365,6 +377,7 @@ const LEVELS = [
         `
       },
       {
+        id: "n2-2.5",
         title: "2.5 Modos y relación acorde-escala",
         html: `
           <p>Cada grado de la escala mayor genera un <b>modo</b>, y cada modo tiene una "personalidad" sonora
@@ -379,11 +392,11 @@ const LEVELS = [
             <tr><td>vi</td><td>Eólico</td><td>vim7</td></tr>
             <tr><td>vii</td><td>Locrio</td><td>viim7b5</td></tr>
           </table>
-          <p>Improvisar "modalmente" significa usar el modo correspondiente a cada acorde en vez de pensar
-          solo en la escala mayor de origen.</p>
+          <p>Relacionar cada acorde con una colección puede ayudar a elegir sus notas características. Eso no significa que cada cambio de acorde establezca una nueva tónica: el jazz modal organiza y prolonga un centro modal, y no se define únicamente por asignar una escala a cada símbolo.</p>
         `
       },
       {
+        id: "n2-2.6",
         title: "2.6 El blues de 12 compases",
         html: `
           <p>El blues es una forma de <b>12 compases</b>. Cambia la tonalidad, compara variantes y alterna entre
@@ -392,6 +405,7 @@ const LEVELS = [
         `
       },
       {
+        id: "n2-2.7",
         title: "2.7 ii-V encadenados y ciclo de quintas",
         html: `
           <p>Muchos standards encadenan varios ii-V seguidos, cada uno resolviendo (o no) antes de saltar al
@@ -401,6 +415,7 @@ const LEVELS = [
         `
       },
       {
+        id: "n2-2.8",
         title: "2.8 Campo armónico completo: menor armónica y menor melódica",
         html: `
           <p>Además de la menor natural, la <b>menor armónica</b> y la <b>menor melódica</b> generan su propio
@@ -427,6 +442,7 @@ const LEVELS = [
         `
       },
       {
+        id: "n2-2.9",
         title: "2.9 Acordes disminuidos de paso y de función común",
         html: `
           <p>El acorde disminuido (°7) tiene dos usos armónicos muy frecuentes en jazz:</p>
@@ -434,14 +450,9 @@ const LEVELS = [
             <li><b>Disminuido de paso (passing diminished)</b> — conecta cromáticamente dos acordes diatónicos
             separados por un tono, ocupando el espacio entre ellos. Ejemplo: <b>Cmaj7 — C#°7 — Dm7</b>
             (el C#°7 conecta I y ii por movimiento cromático ascendente).</li>
-            <li><b>Disminuido de función común (common-tone diminished)</b> — comparte varias notas con el
-            acorde que decora, actuando casi como una versión "coloreada" del mismo. Ejemplo: un °7 construido
-            medio tono arriba de la fundamental de un acorde mayor frecuentemente funciona como su V7b9
-            sin fundamental.</li>
+            <li><b>Disminuido de nota común:</b> adorna y prolonga un acorde conservando su fundamental como nota común. En C→C°7→C, Do se mantiene y las otras voces se aproximan por grados a Mi y Sol. No equivale automáticamente a una función dominante.</li>
           </ul>
-          <p>Todo acorde °7 puede analizarse, de hecho, como un <b>V7(b9) sin fundamental</b>: por eso los
-          cuatro acordes disminuidos existentes (C°7, C#°7, D°7, D#°7) son en realidad solo <b>tres</b> sonoridades
-          distintas que se repiten cada menor tercera.</p>
+          <p>Las alturas de C♯°7 (Do♯–Mi–Sol–Si♭) pueden reinterpretarse como A7(♭9) sin La y resolver hacia Dm. Esa lectura depende del destino y la conducción. En temperamento igual hay <b>tres colecciones distintas</b> de séptima disminuida por clase de altura; transponer una por tercera menor repite sus notas con otra escritura.</p>
           <div class="progression-mount" data-progression='[
             {"symbol":"Cmaj7 (I)","formula":[0,4,7,11],"rootPc":0},
             {"symbol":"C#°7 (paso cromático)","formula":[1,4,7,10],"rootPc":1},
@@ -450,6 +461,7 @@ const LEVELS = [
         `
       },
       {
+        id: "n2-2.10",
         title: "2.10 Tipos de cadencia: auténtica, plagal, semicadencia y deceptiva",
         html: `
           <p>Una <b>cadencia</b> es el punto de llegada armónico de una frase. Ya conoces la más fuerte
@@ -480,6 +492,7 @@ const LEVELS = [
         `
       },
       {
+        id: "n2-2.10b",
         title: "2.10b Modos completos de la menor melódica",
         html: `
           <p>La menor melódica genera siete colores que deben relacionarse con su acorde y no memorizarse como nombres aislados.</p>
@@ -487,6 +500,7 @@ const LEVELS = [
         `
       },
       {
+        id: "n2-2.10c",
         title: "2.10c Escala mayor armónica y cuatro centros tonales",
         html: `
           <p>La <b>mayor armónica</b> se obtiene bajando el sexto grado de la escala mayor: 1–2–3–4–5–♭6–7. Completa los cuatro materiales tonales de referencia: mayor, mayor armónica, menor armónica y menor melódica.</p>
@@ -495,6 +509,7 @@ const LEVELS = [
         `
       },
       {
+        id: "n2-2.11",
         title: "2.11 Repertorio recomendado del Real Book — Nivel 2",
         html: `
           <p>En este nivel busca temas con dominantes secundarios, ii-V encadenados y ii-V-i menor:</p>
@@ -542,9 +557,9 @@ const LEVELS = [
       q("El ciclo de quintas mueve las fundamentales por...", ["2ª mayor ascendente", "5ª descendente", "4ª descendente", "3ª menor"], 1),
       q("En el campo armónico de la menor melódica, ¿qué calidad tiene el grado IV?", ["Maj7", "m7", "7 (dominante)", "m7b5"], 2),
       q("¿Cuántos acordes m7b5 distintos aparecen en el campo armónico de la menor melódica?", ["Ninguno", "Uno", "Dos", "Tres"], 2),
-      q("Un acorde °7 puede analizarse funcionalmente como...", ["Un ii-V completo", "Un V7(b9) sin fundamental", "Un acorde tónico", "Un sus4"], 1),
+      q("Si C♯°7 resuelve hacia Dm, ¿qué dominante sin fundamental puede representar?", ["Un ii-V completo", "Un A7(b9) sin fundamental", "Un acorde tónico", "Un sus4"], 1),
       q("¿Cuál es la resolución deceptiva más clásica de un V7 en mayor?", ["Al ii", "Al vi", "Al IV", "Al iii"], 1),
-      q("Un dominante secundario que resuelve a un acorde menor (V7/ii, V7/iii, V7/vi) usa como tensiones...", ["9 y 13 naturales", "9 y b13", "Solo b9", "Ninguna tensión"], 1),
+      q("Una posible elección de tensiones para un dominante que resuelve hacia menor es...", ["9 y 13 naturales", "9 y b13", "Solo b9", "Ninguna tensión"], 1),
       q("¿Cuál es el cuarto modo de la menor melódica?", ["Lidio dominante", "Dórico", "Jónico aumentado", "Frigio dominante"], 0),
       q("¿Qué fórmula corresponde a la escala mayor armónica?", ["1-2-3-4-5-b6-7", "1-2-b3-4-5-6-7", "1-b2-3-4-5-b6-b7", "1-2-3-#4-5-6-7"], 0)
     ]
@@ -560,6 +575,7 @@ const LEVELS = [
     subtitle: "Intercambio modal, reharmonización, turnarounds y análisis de standards.",
     topics: [
       {
+        id: "n3-3.1",
         title: "3.1 Intercambio modal",
         html: `
           <p>El <b>intercambio modal</b> (modal interchange / borrowed chords) consiste en usar acordes del
@@ -577,6 +593,7 @@ const LEVELS = [
         `
       },
       {
+        id: "n3-3.2",
         title: "3.2 Dominantes sustitutos extendidos",
         html: `
           <p>Además del subV7 básico, existen dominantes alterados con tensiones específicas para reforzar
@@ -590,6 +607,7 @@ const LEVELS = [
         `
       },
       {
+        id: "n3-3.3",
         title: "3.3 Técnicas básicas de reharmonización",
         html: `
           <p>Reharmonizar significa cambiar los acordes de una melodía sin alterar la melodía misma.
@@ -610,6 +628,7 @@ const LEVELS = [
         `
       },
       {
+        id: "n3-3.4",
         title: "3.4 Turnarounds",
         html: `
           <p>Un <b>turnaround</b> es una progresión corta (normalmente 2 compases) que "regresa" hacia la
@@ -621,6 +640,7 @@ const LEVELS = [
         `
       },
       {
+        id: "n3-3.5",
         title: "3.5 Forma AABA y rhythm changes",
         html: `
           <p>Muchos standards siguen la forma <b>AABA</b> de 32 compases (8+8+8+8). Un caso paradigmático
@@ -631,6 +651,7 @@ const LEVELS = [
         `
       },
       {
+        id: "n3-3.6",
         title: "3.6 Escalas simétricas sobre dominantes alterados",
         html: `
           <p>Sobre dominantes con tensiones alteradas se usan escalas <b>simétricas</b> (que se repiten por
@@ -648,12 +669,13 @@ const LEVELS = [
           <p><b>Construcción práctica de un V7alt:</b> la forma más simple y confiable de armar (o recordar)
           un V7alt es esta regla: <b>V7alt = escala menor melódica construida un semitono arriba de la
           fundamental del dominante</b>. Ejemplo sobre <b>G7alt</b>: usa las notas de <b>Ab menor melódica</b>
-          (Ab-Bb-B-Db-Eb-F-G) — automáticamente obtienes la 3ª (B), la 7ª (F) y las cuatro tensiones alteradas
-          (b9=Ab, #9=Bb, #11=Db, b13=Eb) sin tener que calcular cada tensión por separado.</p>
+          (Ab–Bb–Cb–Db–Eb–F–G; Do♭ suena como Si) — automáticamente obtienes la 3ª (B), la 7ª (F) y las cuatro tensiones alteradas
+          (♭9=Ab, ♯9=A♯, ♯11=C♯, ♭13=Eb; La♯/Si♭ y Do♯/Re♭ son equivalentes sonoros con distinta función escrita) sin tener que calcular cada tensión por separado.</p>
           <div class="progression-mount" data-progression='[{"symbol":"G7alt (= Ab menor melódica)","formula":[7,8,10,11,1,3,5],"rootPc":7}]'></div>
         `
       },
       {
+        id: "n3-3.6b",
         title: "3.6b La escala y los acordes octatónicos",
         html: `
           <div id="octatonicChordMount"></div>
@@ -661,6 +683,7 @@ const LEVELS = [
         `
       },
       {
+        id: "n3-3.7",
         title: "3.7 Voicings sin fundamental (rootless) — sistema A/B",
         html: `
           <p>En piano y guitarra de acompañamiento (comping), el bajo casi siempre lo cubre otro instrumento
@@ -680,16 +703,15 @@ const LEVELS = [
         `
       },
       {
+        id: "n3-3.8",
         title: "3.8 Clichés de línea (line clichés)",
         html: `
           <p>Un <b>cliché de línea</b> es un movimiento cromático (ascendente o descendente) de una sola voz
           interna mientras el resto del acorde permanece estático o casi estático — un recurso melódico dentro
           de la armonía, muy usado en baladas y turnarounds.</p>
-          <p>Ejemplo clásico descendente sobre Cmaj7: <b>Cmaj7 — Cmaj7(#5) — C6 — Cmaj7(#5)</b>, donde la voz
-          superior baja cromáticamente G-G#-A-G# mientras las demás notas se mantienen. Ejemplo ascendente
-          sobre Cm: <b>Cm — Cm(maj7) — Cm7 — Cm6</b> (7ª que sube desde 5ª hasta 6ª).</p>
+          <p>Un cliché menor <b>descendente</b> es Cm→Cm(maj7)→Cm7→Cm6, con <b>Do5–Si4–Si♭4–La4</b> como voz móvil y Do–Mi♭–Sol como soporte. El Do inicial puede duplicarse para mantener fija la fundamental. Como ejemplo <b>ascendente</b>, C→C+→C6(no5) mueve Sol4–Sol♯4–La4, manteniendo Do y Mi. La última disposición omite la quinta: no se mantiene una séptima mayor que el símbolo C6 no exige.</p>
           <div class="progression-mount" data-progression='[
-            {"symbol":"Cm","formula":[0,3,7],"rootPc":0},
+            {"symbol":"Cm","formula":[0,3,7,12],"rootPc":0,"voicingIntervals":[0,3,7,12],"voicingDegrees":["1","b3","5","8"]},
             {"symbol":"Cm(maj7)","formula":[0,3,7,11],"rootPc":0},
             {"symbol":"Cm7","formula":[0,3,7,10],"rootPc":0},
             {"symbol":"Cm6","formula":[0,3,7,9],"rootPc":0}
@@ -697,51 +719,43 @@ const LEVELS = [
         `
       },
       {
+        id: "n3-3.9",
         title: "3.9 Ciclo de Coltrane y sustituciones por terceras mayores",
         html: `
           <p>John Coltrane popularizó (en temas como "Giant Steps") un sistema de reharmonización que divide
           la octava en <b>tres tonalidades equidistantes por 3ª mayor</b> (el "ciclo de Coltrane" o "sistema
           de tres tonos"), en vez del ciclo de quintas tradicional.</p>
-          <p>En la práctica, cada uno de los tres centros tonales se prepara con su propio <b>ii-V</b> (no
-          solo con un dominante suelto). El análisis real de "Giant Steps" sobre un ii-V-I tradicional
-          quedaría así: <b>Dm7 — Eb7 | Abmaj7 — B7 | Emaj7 — G7 | Cmaj7</b> — cada tónica (Ab, E, C) llega
-          precedida por su dominante, y las tres tónicas están a 3ª mayor de distancia entre sí.</p>
+          <p>Cada centro puede prepararse con su dominante o con un ii–V. Este es un <b>ejemplo pedagógico de rearmonización</b>, no una transcripción literal de Giant Steps: <b>Dm7–Eb7 | Abmaj7–B7 | Emaj7–G7 | Cmaj7</b>. La♭, Mi y Do están separados por terceras mayores y llegan precedidos por sus dominantes. No todos esos destinos necesitan un ii adicional.</p>
           <p>Esta técnica se usa hoy como recurso de reharmonización avanzada sobre ii-V-I tradicionales,
           sustituyendo el V7 único por una cadena de dos dominantes (o dos ii-V) por terceras mayores.</p>
         `
       },
       {
+        id: "n3-3.10",
         title: "3.10 Constant structure (CSCP)",
         html: `
           <p>El <b>constant structure</b> (o "movimiento estructural constante") consiste en encadenar varios
-          acordes de <b>la misma calidad</b> (todos maj7, o todos m7) moviéndose por un intervalo simétrico,
+          acordes de <b>la misma calidad</b> (todos maj7, o todos m7) conservando su estructura interna; los intervalos entre fundamentales pueden ser regulares o variados,
           sin lógica de tensión-resolución — el interés está en el color y el movimiento paralelo, no en la
           función.</p>
-          <p>Ejemplo con tétradas maj7 por terceras mayores (dividiendo la octava en 4 partes iguales):<br>
+          <p>Ejemplo con tétradas maj7 por terceras menores (dividiendo la octava en 4 partes iguales):<br>
           <code>Cmaj7 — Ebmaj7 — Gbmaj7 — Amaj7</code></p>
-          <p>Ejemplo con pares de ii-V menores moviéndose por terceras menores:<br>
-          <code>Cm7 Dm7 | Fm7 Gm7 | Bbm7 Cm7 | Ebm7 Fm7</code></p>
+          <p>Otro ejemplo de estructura menor constante con fundamentales por cuartas (no son pares ii–V):<br>
+          <code>Cm7 — Fm7 — Bbm7 — Ebm7</code></p>
           <p>Es un recurso más de color contemporáneo (Nivel 4) que de función tonal tradicional — encaja
-          bien junto al ciclo de Coltrane como otra forma de organizar movimiento simétrico.</p>
+          bien junto al ciclo de Coltrane aunque conservar una calidad no exige simetría. Para contrastar, las terceras mayores dividen la octava en tres partes: Cmaj7–Emaj7–Abmaj7.</p>
         `
       },
       {
+        id: "n3-3.11",
         title: "3.11 Modulación: directa y por acorde pivote",
         html: `
           <p>Modular es cambiar de tonalidad dentro de una pieza. Hay dos formas principales de hacerlo:</p>
-          <ul>
-            <li><b>Modulación directa</b> — el cambio de centro tonal es inmediato, sin preparación: el
-            siguiente ii-V ya pertenece a la nueva tonalidad. Ejemplo: <b>Cmaj7 | Dm7 G7 | Bbmaj7</b>
-            (el Dm7-G7 resuelve directo a Bb, no a Do).</li>
-            <li><b>Modulación por acorde pivote</b> — se usa un acorde de transición (normalmente un dominante
-            secundario de la tonalidad de origen que también funciona como preparación de la nueva) para
-            suavizar el cambio. Ejemplo: <b>Cmaj7 | Dm7 G7 | Cmaj7 | Em7 A7 | Dmaj7</b> — el Em7-A7 funciona
-            como iii-VI en Do, pero también como ii-V hacia Re, preparando la nueva tonalidad antes de
-            llegar a ella.</li>
-          </ul>
+          <ul><li><b>Modulación directa:</b> cambia el centro sin un acorde común preparatorio. Ejemplo de frases: Cmaj7 | G7 Cmaj7 || B♭maj7 | Cm7 F7 | B♭maj7. El salto inicia la nueva sección en Si♭ y el ii–V–I posterior lo confirma.</li><li><b>Modulación por acorde pivote:</b> un acorde pertenece a los dos campos. En Cmaj7 | Am7 | D7 | Gmaj7, Am7 es vi7 de Do y ii7 de Sol; D7 prepara y Gmaj7 confirma la nueva tónica. Prolonga Sol y cierra otra frase para distinguir modulación de una tonicización breve.</li></ul>
         `
       },
       {
+        id: "n3-3.11b",
         title: "3.11b Cromatismo modal y sustitución escalar",
         html: `
           <p>Una <b>sustitución escalar</b> conserva el acorde pero cambia el conjunto de tensiones para obtener otro color. Sobre un dominante pueden contrastarse mixolidia, lidia dominante, disminuida y alterada según su función y resolución.</p>
@@ -750,6 +764,7 @@ const LEVELS = [
         `
       },
       {
+        id: "n3-3.11c",
         title: "3.11c Rearmonización desde la melodía",
         html: `
           <p>Para reharmonizar desde una nota melódica, enumera los acordes en los que esa nota puede funcionar como fundamental, nota estructural o tensión disponible. Después filtra las opciones por función y conducción de bajo.</p>
@@ -758,6 +773,7 @@ const LEVELS = [
         `
       },
       {
+        id: "n3-3.12",
         title: "3.12 Repertorio recomendado del Real Book — Nivel 3",
         html: `
           <p>En este nivel busca bebop, rhythm changes, temas modales y baladas con reharmonización densa:</p>
@@ -807,7 +823,7 @@ const LEVELS = [
       q("¿Por qué intervalo se dividen las tonalidades en el ciclo de Coltrane?", ["5ª justa", "4ª justa", "3ª mayor", "2ª menor"], 2),
       q("¿Qué instrumento asume normalmente la fundamental cuando se usan voicings rootless?", ["El piano", "El contrabajo", "La guitarra", "Ninguno, se omite siempre"], 1),
       q("¿Qué caracteriza a una modulación directa?", ["Se usa un acorde pivote para prepararla", "El cambio de tonalidad es inmediato, sin preparación", "Nunca cambia de tonalidad realmente", "Solo ocurre en baladas"], 1),
-      q("En el 'constant structure', los acordes se encadenan...", ["Por función tensión-resolución", "Todos de la misma calidad, movidos por un intervalo simétrico", "Solo con dominantes secundarios", "Siempre en ciclo de quintas"], 1),
+      q("En el 'constant structure', los acordes se encadenan...", ["Por función tensión-resolución", "Conservan la misma calidad; las distancias pueden ser regulares o variadas", "Solo con dominantes secundarios", "Siempre en ciclo de quintas"], 1),
       q("Una sustitución escalar cambia principalmente...", ["El color de tensiones sobre un acorde", "La afinación del instrumento", "La métrica del tema", "El nombre del compositor"], 0),
       q("Al reharmonizar desde la melodía, una nota puede actuar como...", ["Nota estructural o tensión", "Solo fundamental", "Solo nota de paso", "Únicamente séptima"], 0)
     ]
@@ -823,6 +839,7 @@ const LEVELS = [
     subtitle: "Armonía cuartal, estructuras superiores, armonía no funcional y composición.",
     topics: [
       {
+        id: "n4-4.1",
         title: "4.1 Armonía cuartal y quintal",
         html: `
           <p>En lugar de construir acordes apilando terceras, la <b>armonía cuartal</b> los construye
@@ -835,11 +852,12 @@ const LEVELS = [
         `
       },
       {
+        id: "n4-4.2",
         title: "4.2 Estructuras superiores y polichords",
         html: `
           <p>Una <b>estructura superior (upper structure)</b> es una tríada tocada sobre las tensiones de
-          un acorde, generalmente un dominante. Se cifra como fracción: <b>G7(9,#11,13)</b> puede tocarse
-          como <b>D/G7</b> (tríada de D sobre G7), aportando 9, #11 y 13 de forma clara y "pianística".</p>
+          un acorde, generalmente un dominante. Se cifra con dos acordes apilados, distinguiéndola de una barra que indique solo el bajo: <b>G7(9,#11,13)</b> puede tocarse
+          como <b>A sobre G7</b> (La–Do♯–Mi sobre el soporte Sol–Si–Fa de G7), aportando 9, #11 y 13 de forma clara y "pianística". Si el soporte se transporta a C7, la tríada equivalente es Re mayor (Re–Fa♯–La), como muestra el ejemplo comparativo.</p>
           <p>Berklee sistematiza <b>13 estructuras superiores posibles</b> sobre un dominante, según en qué
           grado y con qué calidad de tríada se construyan. Aquí las 13, desarrolladas en detalle sobre C7,
           con el acorde completo resultante en piano:</p>
@@ -853,6 +871,7 @@ const LEVELS = [
         `
       },
       {
+        id: "n4-4.3",
         title: "4.3 Armonía no funcional y pandiatonicismo",
         html: `
           <p>La <b>armonía no funcional</b> se aleja de la lógica tensión-resolución del ii-V-I: los acordes
@@ -864,6 +883,7 @@ const LEVELS = [
         `
       },
       {
+        id: "n4-4.4",
         title: "4.4 Escalas modales contemporáneas",
         html: `
           <p>Más allá de los 7 modos de la escala mayor, la armonía contemporánea usa modos derivados de
@@ -871,7 +891,7 @@ const LEVELS = [
           <ul>
             <li><b>Lidio aumentado</b> (3er modo de la menor melódica) — sobre acordes maj7(#5)</li>
             <li><b>Lidio dominante</b> (4º modo de la menor melódica) — sobre V7(#11)</li>
-            <li><b>Locrio ##2 / Locrio natural 9</b> (6º modo de la menor melódica) — sobre m7b5 en contexto menor</li>
+            <li><b>Locrio ♮2 / locrio ♯2 respecto al locrio</b> (6º modo de la menor melódica) — sobre m7b5 en contexto menor</li>
             <li><b>Alterada / Superlocria</b> (7º modo de la menor melódica) — sobre V7alt</li>
           </ul>
           <p>Comprender que todos estos modos provienen de <b>una sola escala madre</b> (la menor melódica)
@@ -879,6 +899,7 @@ const LEVELS = [
         `
       },
       {
+        id: "n4-4.5",
         title: "4.5 Fundamentos de composición jazz",
         html: `
           <p>Componer un tema de jazz implica decisiones de <b>forma</b> (AABA, blues, forma libre),
@@ -890,6 +911,7 @@ const LEVELS = [
         `
       },
       {
+        id: "n4-4.6",
         title: "4.6 Drop voicings para piano y guitarra (drop 2, drop 3, drop 2&4, drop 2&3)",
         html: `
           <p>Los <b>drop voicings</b> parten siempre de la <b>posición cerrada (close voicing)</b> — las 4 notas
@@ -900,23 +922,20 @@ const LEVELS = [
             en piano es la base teórica de la que parten todos los drops.</li>
             <li><b>Drop 2</b> — se baja la <b>segunda voz</b> desde arriba una octava. Es el voicing más
             idiomático tanto en piano (mano izquierda o ambas manos) como en <b>guitarra</b>, porque el
-            resultado cae naturalmente sobre las cuerdas 6-4 o 5-2 sin estiramientos imposibles. Es el drop
+            resultado puede distribuirse entre cuatro cuerdas, por ejemplo 6–5–4–3 o 5–4–3–2; comprueba inversión, registro y comodidad. Es el drop
             más usado en comping de guitarra jazz.</li>
             <li><b>Drop 3</b> — se baja la <b>tercera voz</b> desde arriba una octava. Genera un salto más
             amplio entre la voz grave y el resto; en piano suena bien a dos manos, en guitarra es menos
             idiomático (requiere más apertura de mano) pero se usa para texturas específicas.</li>
             <li><b>Drop 2 &amp; 4</b> — se bajan la 2ª y la 4ª voz (la más grave) una octava. En piano crea una
-            distribución muy equilibrada a dos manos; en guitarra es prácticamente imposible de tocar en
-            un acorde de 4 notas en una sola posición, por lo que se reserva para arreglos a dos guitarras
-            o piano.</li>
+            distribución amplia a dos manos. En guitarra algunas inversiones son viables: C3–G3–E4–B4 se obtiene en cuerdas 5–4–2–1, trastes 3–5–5–7. Prueba lentamente; otra inversión o registro puede requerir un cambio de digitación.</li>
             <li><b>Drop 2 &amp; 3</b> — se bajan la 2ª y 3ª voz una octava. Menos común, produce una sonoridad
             más "cerrada por arriba, abierta por abajo"; útil en arreglos de sección de metales.</li>
           </ul>
           <p><b>Aplicación práctica:</b></p>
           <ul>
             <li><b>Guitarra</b> — el drop 2 es, por lejos, el voicing de comping más usado: encaja en los
-            "4 sets de cuerdas" estándar (6-5-4-3, 5-4-3-2, 4-3-2-1) permitiendo tocar cualquier acorde en
-            cualquier inversión de forma cómoda y desplazable por el mástil.</li>
+            tres juegos consecutivos de cuatro cuerdas (6-5-4-3, 5-4-3-2, 4-3-2-1) que ofrecen formas desplazables; cada inversión debe comprobarse en el instrumento.</li>
             <li><b>Piano</b> — el drop 2 y el drop 2&4 son la base del "voicing a 4 voces" para mano izquierda
             o para acordes a dos manos; se combinan con las tensiones (9, #11, 13) sustituyendo la fundamental
             o la 5ª, tal como viste en los voicings rootless del Nivel 3.</li>
@@ -935,12 +954,12 @@ const LEVELS = [
           <p><b>Articulación:</b> prueba la mano derecha más ligera o staccato y la voz grave más sostenida. La línea inferior puede convertirse en una contramelodía, pero durante el comping conviene dejar espacio al solista y evitar que los cromatismos interiores compitan con su frase.</p>
           <p><a class="soft-btn" href="../piano-virtual/index.html?bank=drop2">Abrir el laboratorio Drop 2 melódico en Piano Virtual →</a></p>
           <p><b>Formas reales en el diapasón:</b> aquí tienes el drop 2 (raíz en el bajo) de los 8 tipos de
-          tétrada más comunes, calculado con raíz en Do y organizado por 6ª y 5ª cuerda — exactamente como
-          pediste, para que veas la forma concreta en vez de solo leerla:</p>
+          tétrada más comunes, calculado con raíz en Do y organizado por 6ª y 5ª cuerda — para que veas la forma concreta en vez de solo leerla:</p>
           <div id="dropVoicingMount"></div>
         `
       },
       {
+        id: "n4-4.7",
         title: "4.7 Armonía modal compositiva (acordes estáticos, color por escala)",
         html: `
           <p>En el jazz modal (Miles Davis, "So What"; John Coltrane, "Impressions") la armonía no avanza por
@@ -952,12 +971,12 @@ const LEVELS = [
           escala mayor.</p>
           <p>Recursos típicos: voicings cuartales (Nivel 4.1), pedales de bajo (siguiente tema) y cambios de
           color por desplazamiento del mismo voicing a otra fundamental sin cambiar de función.</p>
-          <p>El famoso voicing de "So What" (Bill Evans): cuartas apiladas desde un tono por debajo de la
-          fundamental, con una 3ª mayor arriba del todo — sobre Dm7 son las notas E-A-D-G-B:</p>
-          <div class="progression-mount" data-progression='[{"symbol":"Voicing \"So What\" sobre Dm7","formula":[4,9,2,7,11],"rootPc":2}]'></div>
+          <p>Un voicing <b>So What</b> combina tres cuartas justas y una tercera mayor. Compara <b>Mi–La–Re–Sol–Si</b> con <b>Re–Sol–Do–Fa–La</b>. Mi está un tono <b>por encima</b> de Re. Sobre un Re grave, la primera disposición aporta 9, 5, 1, 11 y 13 sin Fa; la segunda contiene la tercera menor Fa y puede oírse como Dm11. El bajo y la frase explican su función: no hay una única disposición de Dm7.</p>
+          <div class="progression-mount" data-progression='[{"symbol":"Color dórico sobre Re","formula":[4,9,14,19,23],"rootPc":2,"voicingIntervals":[2,7,12,17,21],"voicingDegrees":["2","5","8","11","13"]},{"symbol":"Dm11 · disposición So What","formula":[2,7,12,17,21],"rootPc":2,"voicingIntervals":[0,5,10,15,19],"voicingDegrees":["1","4","b7","b10","12"]}]'></div>
         `
       },
       {
+        id: "n4-4.8",
         title: "4.8 Pedal de bajo y pedal armónico",
         html: `
           <p>Un <b>pedal</b> es una nota (generalmente en el bajo) que se sostiene o repite mientras la
@@ -975,20 +994,20 @@ const LEVELS = [
         `
       },
       {
+        id: "n4-4.9",
         title: "4.9 Armonía negativa",
         html: `
           <p>La <b>armonía negativa</b> es una técnica de reharmonización (popularizada recientemente por
           músicos como Jacob Collier, aunque con raíces teóricas en Ernst Levy) que "refleja" cada acorde de
           una progresión respecto a un eje tonal (normalmente entre la tónica y la dominante), generando su
           acorde espejo.</p>
-          <p>El efecto práctico: un acorde mayor tiende a reflejarse como su relativo menor "espejado" y un
-          V7 tiende a convertirse en un acorde de subdominante menor con función equivalente — una manera
-          sistemática de generar reharmonizaciones coherentes en vez de improvisarlas por prueba y error.</p>
+          <p><b>Un espejo verificable:</b> representa Do=0, Do♯=1, …, Si=11 y, para el eje Do–Sol, usa <b>p → 7 − p (módulo 12)</b>. Do–Mi–Sol se refleja en Sol–Mi♭–Do: Do menor, no su relativo La menor. G7 (Sol–Si–Re–Fa) se refleja en Do–La♭–Fa–Re, las clases de altura de Fm6. Se reordena el registro para tocarlo y se analiza después su función, sin suponer que toda inversión de alturas conserva una función equivalente.</p>
           <p>Es una herramienta más de <b>color y variación</b>, no una regla obligatoria: se usa cuando el
           resultado suena musicalmente convincente, igual que cualquier otra técnica de reharmonización.</p>
         `
       },
       {
+        id: "n4-4.10",
         title: "4.10 Acordes de función especial",
         html: `
           <p>En el blues y en muchos standards, ciertos acordes dominantes <b>no funcionan como dominantes
@@ -1016,6 +1035,7 @@ const LEVELS = [
         `
       },
       {
+        id: "n4-4.11",
         title: "4.11 Acordes compuestos: sobre bajo, inversión, híbrido y acorde sobre acorde",
         html: `
           <p>La notación de "acorde con bajo" (slash chord) puede significar cosas muy distintas según el
@@ -1026,8 +1046,7 @@ const LEVELS = [
             acorde como algo distinto. Ejemplo: <b>Fmaj7/G</b> suena, y se reescucha, como <b>G7sus4(9,13)</b>
             — el oído toma a G como la verdadera fundamental.</li>
             <li><b>Inversión real</b> — el bajo es una nota que ya pertenece al acorde escrito, solo que no es
-            la fundamental. Ejemplo: <b>D7/F#</b> son literalmente las mismas notas que <b>F#m7b5(b13)</b> —
-            depende de qué fundamental "elijas escuchar".</li>
+            la fundamental. Ejemplo: <b>D7/F#</b> contiene Fa♯–La–Do–Re: es D7 en primera inversión. F♯m7♭5(♭13) incluiría además Mi; no son el mismo conjunto de notas.</li>
             <li><b>Híbrido</b> — el bajo no encaja limpiamente ni como inversión ni como estructura superior
             clara; genera una sonoridad ambigua a propósito. Ejemplo: <b>C/D</b> (tríada de Do sobre bajo de
             Re) — ni es un acorde de D con función clara, ni una inversión de C.</li>
@@ -1038,6 +1057,7 @@ const LEVELS = [
         `
       },
       {
+        id: "n4-4.12",
         title: "4.12 Conducción de voces básica para arreglo",
         html: `
           <p>Cuando escribes para varias voces (piano a 4 voces, dos guitarras, sección de metales), unas
@@ -1045,8 +1065,7 @@ const LEVELS = [
           evitan que tus voicings suenen "sucios" al moverse de un acorde a otro:</p>
           <ul>
             <li><b>Evita quintas y octavas paralelas</b> entre las mismas dos voces — dos voces que se mueven
-            en paralelo a distancia de 5ª o de 8ª pierden independencia y "vacían" el sonido (por eso el drop 2
-            y el drop 3 reparten las voces de forma que esto casi nunca ocurra naturalmente).</li>
+            en paralelo a distancia de 5ª o de 8ª pierden independencia y "vacían" el sonido cuando se busca independencia. Drop 2 y Drop 3 no lo evitan automáticamente: si mueves en paralelo dos disposiciones, pueden aparecer quintas u octavas paralelas.</li>
             <li><b>Prioriza el movimiento contrario u oblicuo</b> entre la voz más grave y la más aguda: si el
             bajo baja, que la melodía suba (o se quede quieta) siempre que puedas.</li>
             <li><b>Resuelve las notas sensibles</b> (7º grado, y las tensiones alteradas como b9 o #11) por
@@ -1062,6 +1081,7 @@ const LEVELS = [
         `
       },
       {
+        id: "n4-4.12b",
         title: "4.12b Triad pairs y permutaciones",
         html: `
           <p>Un <b>triad pair</b> combina dos tríadas sin notas comunes tomadas de una misma escala. Alternarlas produce seis sonidos organizados, contornos claros y un vocabulario menos lineal que subir y bajar la escala.</p>
@@ -1069,6 +1089,7 @@ const LEVELS = [
         `
       },
       {
+        id: "n4-4.12c",
         title: "4.12c Armonización desde la voz superior y ostinato",
         html: `
           <p>En un arreglo, la nota de la melodía debe quedar claramente en la <b>voz superior</b>. Desde ella se construye hacia abajo una disposición que conserve función, registro y movimiento cómodo entre voces.</p>
@@ -1077,6 +1098,7 @@ const LEVELS = [
         `
       },
       {
+        id: "n4-4.13",
         title: "4.13 Repertorio recomendado del Real Book — Nivel 4",
         html: `
           <p>Para este nivel, temas con ciclo de Coltrane, armonía modal no funcional avanzada y vocabulario
@@ -1104,7 +1126,7 @@ const LEVELS = [
     quiz: [
       q("¿Cómo se construyen los voicings de armonía cuartal?", ["Apilando terceras", "Apilando cuartas", "Apilando quintas", "Apilando segundas"], 1),
       q("¿Qué pianista es asociado clásicamente con el sonido cuartal?", ["Bill Evans", "McCoy Tyner", "Oscar Peterson", "Art Tatum"], 1),
-      q("Sobre G7, ¿qué tríada como estructura superior aporta 9, #11 y 13?", ["Tríada de D", "Tríada de A", "Tríada de C", "Tríada de F"], 0),
+      q("Sobre G7, ¿qué tríada como estructura superior aporta 9, #11 y 13?", ["Tríada de D", "Tríada de A", "Tríada de C", "Tríada de F"], 1),
       q("¿Qué caracteriza a la armonía no funcional?", ["Uso estricto de ii-V-I", "Encadenar acordes sin lógica de tensión-resolución tradicional", "Solo usar tríadas mayores", "Solo modular por semitono"], 1),
       q("El pandiatonicismo usa...", ["Solo notas alteradas", "Notas de una escala diatónica sin alterar, libremente combinadas", "Solo acordes disminuidos", "Cromatismo total"], 1),
       q("¿De qué escala madre provienen el lidio dominante y la alterada?", ["Mayor", "Menor armónica", "Menor melódica", "Menor natural"], 2),
@@ -1139,16 +1161,18 @@ const LEVELS = [
     subtitle: "Pentatónicas, ritmo, bebop, notas objetivo y aplicación musical sobre formas de jazz.",
     topics: [
       {
+        id: "n5-5.1",
         title: "5.1 Pentatónicas, blues y superposiciones",
         html: `
           <p>La pentatónica menor contiene 1–♭3–4–5–♭7; la mayor contiene 1–2–3–5–6. Las escalas blues añaden la <b>blue note</b>: #4/♭5 en la menor y ♭3 en la mayor.</p>
           <p>Superponer una pentatónica permite destacar tensiones sin abandonar una forma melódica reconocible. Sobre Dm7, D menor pentatónica ofrece 1, ♭3, 4, 5 y ♭7; E menor pentatónica añade 9, 11 y 13 y produce un color dórico.</p>
           <p>Practica cada material como motivo, no como una escala ascendente y descendente.</p>
-          <p>La <b>pentatónica menor 6</b> contiene 1–2–♭3–5–6. Además de m6 y m(maj7), puede superponerse sobre un m7♭5 desde su sexta y sobre un maj7♯11 desde su ♭3. Comprueba siempre la melodía y la función antes de tratar una relación como regla.</p>
+          <p>La <b>pentatónica menor 6</b> contiene 1–2–♭3–5–6. Ejemplos con las dos fundamentales explícitas: Re menor 6 pentatónica (Re–Mi–Fa–La–Si) sobre Bm7♭5 contiene sus cuatro notas y añade Mi como 11. La menor 6 pentatónica (La–Si–Do–Mi–Fa♯) sobre Cmaj7(♯11) aporta 13, 7, 1, 3 y ♯11. En el primer caso Si es la sexta de la pentatónica de Re; en el segundo Do es la tercera menor de la pentatónica de La. Comprueba siempre la melodía y la función antes de tratar una relación como regla.</p>
           <div id="minorSixPentatonicMount"></div>
         `
       },
       {
+        id: "n5-5.2",
         title: "5.2 Swing, articulación y anticipación",
         html: `
           <p>El swing no es simplemente escribir tresillos: nace de la relación entre subdivisión, acento, duración y colocación. Las corcheas pueden acercarse o alejarse de la proporción ternaria según el tempo.</p>
@@ -1157,6 +1181,7 @@ const LEVELS = [
         `
       },
       {
+        id: "n5-5.3",
         title: "5.3 Cromatismo y vocabulario bebop",
         html: `
           <p>El lenguaje bebop coloca normalmente notas estructurales en tiempos fuertes y utiliza cromatismos en posiciones débiles. La <b>bebop dominante</b> añade 7 natural a la mixolidia; la <b>bebop mayor</b> añade ♯5/♭6 a la escala mayor; y la <b>bebop menor</b> añade ♭6 a la menor melódica ascendente.</p>
@@ -1165,6 +1190,7 @@ const LEVELS = [
         `
       },
       {
+        id: "n5-5.4",
         title: "5.4 Notas objetivo y líneas de guide tones",
         html: `
           <p>Las terceras y séptimas muestran con máxima claridad la función de los acordes. En Dm7–G7–Cmaj7, C baja a B y luego permanece; F permanece y luego baja a E.</p>
@@ -1173,6 +1199,7 @@ const LEVELS = [
         `
       },
       {
+        id: "n5-5.5",
         title: "5.5 Desarrollo motívico y permutaciones",
         html: `
           <p>Un motivo breve puede desarrollarse mediante repetición, secuencia, inversión de contorno, desplazamiento rítmico, aumentación, disminución y fragmentación.</p>
@@ -1181,6 +1208,7 @@ const LEVELS = [
         `
       },
       {
+        id: "n5-5.6",
         title: "5.6 Improvisación sobre ii–V–I y turnarounds",
         html: `
           <p>Estudia el ii–V–I por capas: fundamentales, arpegios, notas guía, escalas, cromatismos y finalmente motivos. El objetivo no es cambiar de escala mecánicamente, sino atravesar los acordes con una línea continua.</p>
@@ -1189,6 +1217,7 @@ const LEVELS = [
         `
       },
       {
+        id: "n5-5.7",
         title: "5.7 Triad pairs, cuartas y recursos outside",
         html: `
           <p>Los triad pairs, arpegios superpuestos y células cuartales ofrecen formas claras de organizar tensiones. Un recurso <b>outside</b> crea contraste al desplazar temporalmente el material y regresar a notas objetivo inequívocas.</p>
@@ -1197,6 +1226,7 @@ const LEVELS = [
         `
       },
       {
+        id: "n5-5.8",
         title: "5.8 Entrenamiento auditivo y práctica sobre standards",
         html: `
           <p>Escucha antes de nombrar. Compara tónica, preparación y dominante; después distingue ii–V–I mayor y menor, dominante secundario, sustitución tritonal, backdoor y resolución deceptiva.</p>
@@ -1205,6 +1235,7 @@ const LEVELS = [
         `
       },
       {
+        id: "n5-5.9",
         title: "5.9 Glosario práctico de interpretación jazz",
         html: `
           <p><b>Changes</b> son los cambios de acordes de un tema; <b>head</b> es su melodía principal; <b>comping</b> es el acompañamiento rítmico-armónico que sostiene al solista.</p>
@@ -1214,6 +1245,7 @@ const LEVELS = [
         `
       },
       {
+        id: "n5-5.10",
         title: "5.10 Referencia rápida de escalas y voicings",
         html: `
           <p>Esta referencia reúne el material que suele quedar disperso: elige acordes, voicings o escalas, transpón la tónica y compáralos en pentagrama, piano y diapasón.</p>
@@ -1222,6 +1254,7 @@ const LEVELS = [
         `
       },
       {
+        id: "n5-5.11",
         title: "5.11 Walking bass y construcción de líneas",
         html: `
           <p>El <b>walking bass</b> convierte la armonía en una línea continua de negras. No consiste en recorrer mecánicamente una escala: cada pulso tiene peso, función y dirección hacia el acorde siguiente.</p>

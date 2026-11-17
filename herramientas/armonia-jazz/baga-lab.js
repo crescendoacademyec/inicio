@@ -4,6 +4,7 @@
   if(!api||!P||typeof LEVELS==="undefined")return;
 
   LEVELS[2].topics.push({
+    id:"n3-3.13",
     title:"3.13 Sistema Baga A/B: enlace rootless, drops y melodía",
     html:`<p><b>Baga A/B</b> es el nombre pedagógico usado en el método estudiado para dos familias de disposiciones sin fundamental. No designa una calidad de acorde nueva ni equivale siempre a un m7(9): en un ii–V–I mayor combina <b>iim9, V13 e I6/9</b>.</p>
       <div class="baga-formulas"><div><b>ii · Baga A</b><span>♭3–5–♭7–9</span></div><div><b>V · Baga A</b><span>♭7–9–3–13</span></div><div><b>I · Baga A</b><span>3–5–6–9</span></div><div><b>ii · Baga B</b><span>♭7–9–♭3–5</span></div><div><b>V · Baga B</b><span>3–13–♭7–9</span></div><div><b>I · Baga B</b><span>6–9–3–5</span></div></div>

@@ -3,6 +3,7 @@
   const api=window.CrescendoPianoVoicings;
   // Append, never insert: persisted topic progress uses array indices.
   LEVELS[1].topics.push({
+    id:"n2-2.12",
     title:'2.12 Laboratorio de piano: sextas, disminuidos y enlaces',
     html:`<p>Un <b>acorde</b> define relaciones entre notas; un <b>voicing</b> decide sus octavas, omisiones y reparto entre las manos. Aprende primero la fórmula y después una posición cómoda.</p>
       <h4>Tres formas básicas</h4><ul><li><b>Mayor sexta:</b> 1–3–5–6. En C: C–E–G–A.</li><li><b>Menor sexta:</b> 1–♭3–5–6. En C: C–E♭–G–A. La sexta sigue siendo mayor.</li><li><b>Disminuido de séptima:</b> 1–♭3–♭5–♭♭7. En C: C–E♭–G♭–B♭♭, no una sexta escrita como A.</li></ul>
