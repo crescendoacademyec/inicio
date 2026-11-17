@@ -24,7 +24,7 @@ window.APP_DATA = {
             },
             {
               "term": "Nombre general y específico",
-              "body": "El nombre general indica el número de grados conjuntos entre las notas: primera, segunda, tercera, cuarta, quinta, sexta, séptima, etc. El nombre específico indica la cualidad: mayor, menor, justo, aumentado, disminuido, super aumentado o super disminuido."
+              "body": "El nombre general cuenta los nombres de nota incluyendo ambos extremos (Do–Re–Mi: tercera): primera, segunda, tercera, cuarta, quinta, sexta, séptima, etc. El nombre específico indica la cualidad: mayor, menor, justo, aumentado, disminuido, super aumentado o super disminuido."
             },
             {
               "term": "Escala mayor natural",
@@ -78,7 +78,7 @@ window.APP_DATA = {
           "items": [
             {
               "term": "Acorde",
-              "body": "En la armonía estudiada en este curso, un acorde se entiende principalmente como un conjunto de tres o más notas organizadas por terceras. En la práctica, su disposición puede alterar ese orden y también se estudian estructuras suspendidas."
+              "body": "En este curso llamamos acorde a una combinación de tres o más notas con identidad armónica. Muchos se construyen por terceras, pero también hay estructuras suspendidas y otras construcciones. La disposición indica cómo se reparten esas notas entre voces y registros; no cambia por sí sola la fundamental."
             },
             {
               "term": "Escalas comunes",
@@ -125,7 +125,7 @@ window.APP_DATA = {
             },
             {
               "term": "Bajo",
-              "body": "El bajo generalmente contiene las fundamentales de los acordes y no se enlaza."
+              "body": "El bajo también tiene conducción de voces: puede usar fundamentales, inversiones, notas comunes y movimientos melódicos. En los primeros ejercicios mantenemos fundamentales en el bajo y practicamos primero el enlace de las voces superiores."
             },
             {
               "term": "Duplicaciones y supresiones",
@@ -156,7 +156,7 @@ window.APP_DATA = {
             },
             {
               "term": "Tonalidad mayor",
-              "body": "Está basada en las escalas natural mayor y mayor armónica."
+              "body": "La escala mayor natural es la referencia diatónica de la tonalidad mayor. También pueden aparecer notas cromáticas y acordes prestados. La mayor armónica (1, 2, 3, 4, 5, b6, 7) es un recurso particular de color, no una segunda escala obligatoria para toda tonalidad mayor."
             },
             {
               "term": "Tonalidad menor",
@@ -234,9 +234,9 @@ window.APP_DATA = {
           "section": "I. Escalas e intervalos",
           "type": "multipleChoice",
           "prompt": "Seleccione la explicación correcta del nombre general y el nombre específico de un intervalo.",
-          "sampleAnswer": "El nombre general indica el número de grados conjuntos entre las notas. El nombre específico indica la cualidad: mayor, menor, justo, aumentado, disminuido, etc.",
+          "sampleAnswer": "El nombre general cuenta nombres de nota incluyendo ambos extremos. El nombre específico indica la cualidad: mayor, menor, justo, aumentado, disminuido, etc.",
           "choices": [
-            "El nombre general indica el número de grados conjuntos y el nombre específico indica la cualidad del intervalo.",
+            "El nombre general cuenta nombres de nota incluyendo ambos extremos; el específico indica la cualidad del intervalo.",
             "El nombre general indica la cualidad y el nombre específico indica el número de grados conjuntos.",
             "El nombre general indica consonancia o disonancia y el nombre específico indica si el intervalo es melódico o armónico.",
             "El nombre general indica el registro y el nombre específico indica la dirección ascendente o descendente."
@@ -462,11 +462,11 @@ window.APP_DATA = {
           "section": "II. Acordes, estructuras y extensiones",
           "type": "multipleChoice",
           "prompt": "Seleccione la definición correcta de acorde.",
-          "sampleAnswer": "Un acorde es un conjunto de tres o más notas dispuestas por terceras.",
+          "sampleAnswer": "Un acorde combina notas con identidad armónica; su construcción puede ser por terceras o de otro tipo, como los suspendidos.",
           "choices": [
-            "Un conjunto de tres o más notas dispuestas por terceras.",
+            "Una combinación de notas con identidad armónica, construida por terceras o de otro tipo, como los suspendidos.",
             "Un conjunto de dos notas organizadas por grados conjuntos.",
-            "Un conjunto de tres o más notas dispuestas por segundas.",
+            "Todos los acordes deben estar dispuestos por segundas.",
             "Una sucesión de notas ordenadas por alturas dentro de una escala."
           ],
           "answer": 0
@@ -575,7 +575,7 @@ window.APP_DATA = {
           "id": 18,
           "section": "II. Acordes, estructuras y extensiones",
           "type": "multiSelect",
-          "prompt": "En acordes mayores con séptima menor, ¿qué extensiones alteradas o especiales pueden usarse aunque el acorde tenga quinta justa?",
+          "prompt": "En el modelo de este curso: en acordes mayores con séptima menor, ¿qué extensiones alteradas o especiales pueden usarse aunque el acorde tenga quinta justa?",
           "sampleAnswer": "Novena menor, novena aumentada y treceava menor.",
           "choices": [
             "Novena menor",
@@ -639,10 +639,10 @@ window.APP_DATA = {
           "section": "II. Acordes, estructuras y extensiones",
           "type": "multipleChoice",
           "prompt": "¿Qué función cumple normalmente el bajo en relación con las fundamentales de los acordes? ¿El bajo se enlaza?",
-          "sampleAnswer": "El bajo generalmente tiene las fundamentales de los acordes y no se enlaza.",
+          "sampleAnswer": "El bajo también se enlaza; en este ejercicio comenzamos con fundamentales y trabajamos primero las voces superiores.",
           "choices": [
-            "El bajo generalmente contiene las fundamentales de los acordes y no se enlaza.",
-            "El bajo generalmente contiene las fundamentales de los acordes y también se enlaza como una voz interna.",
+            "El bajo también tiene conducción de voces: puede usar fundamentales, inversiones, notas comunes y movimientos melódicos. En los primeros ejercicios mantenemos fundamentales en el bajo y practicamos primero el enlace de las voces superiores.",
+            "El bajo solo admite fundamentales y está exento de conducción de voces.",
             "El bajo generalmente contiene las quintas de los acordes y no se enlaza.",
             "El bajo generalmente contiene las fundamentales, pero debe moverse siempre por grado conjunto."
           ],
@@ -652,7 +652,7 @@ window.APP_DATA = {
           "id": 23,
           "section": "II. Acordes, estructuras y extensiones",
           "type": "selectBlanks",
-          "prompt": "En acordes mayores y menores: a) ¿Qué nota no se debe duplicar? b) ¿Qué nota se puede suprimir?",
+          "prompt": "En el modelo de este curso: en acordes mayores y menores: a) ¿Qué nota no se debe duplicar? b) ¿Qué nota se puede suprimir?",
           "labels": [
             "a) No se debe duplicar",
             "b) Se puede suprimir"
@@ -674,7 +674,7 @@ window.APP_DATA = {
           "id": 24,
           "section": "II. Acordes, estructuras y extensiones",
           "type": "selectBlanks",
-          "prompt": "En acordes suspendidos: a) ¿Qué nota no se debe duplicar? b) ¿Qué nota se puede suprimir?",
+          "prompt": "En el modelo de este curso: en acordes suspendidos: a) ¿Qué nota no se debe duplicar? b) ¿Qué nota se puede suprimir?",
           "labels": [
             "a) No se debe duplicar",
             "b) Se puede suprimir"
@@ -696,7 +696,7 @@ window.APP_DATA = {
           "id": 25,
           "section": "II. Acordes, estructuras y extensiones",
           "type": "selectBlanks",
-          "prompt": "En acordes aumentados y disminuidos: a) ¿Qué nota no se debe duplicar? b) ¿Qué nota se puede suprimir?",
+          "prompt": "En el modelo de este curso: en acordes aumentados y disminuidos: a) ¿Qué nota no se debe duplicar? b) ¿Qué nota se puede suprimir?",
           "labels": [
             "a) No se debe duplicar",
             "b) Se puede suprimir"
@@ -782,10 +782,10 @@ window.APP_DATA = {
           "id": 30,
           "section": "III. Tonalidad, funciones armónicas y rearmonización",
           "type": "multipleChoice",
-          "prompt": "¿En qué escalas está basada la tonalidad mayor?",
-          "sampleAnswer": "La tonalidad mayor está basada en las escalas natural mayor y mayor armónica.",
+          "prompt": "¿Cuál es la referencia diatónica de una tonalidad mayor?",
+          "sampleAnswer": "La escala mayor natural es su referencia diatónica; pueden añadirse recursos cromáticos y préstamos según el contexto.",
           "choices": [
-            "Natural mayor y mayor armónica.",
+            "La escala mayor natural.",
             "Natural menor y menor armónica.",
             "Natural mayor y menor melódica.",
             "Mayor armónica y modo frigio."
@@ -810,7 +810,7 @@ window.APP_DATA = {
           "id": 32,
           "section": "III. Tonalidad, funciones armónicas y rearmonización",
           "type": "multipleChoice",
-          "prompt": "Los acordes tónicos son aquellos que tienen:",
+          "prompt": "En el modelo de este curso: los acordes tónicos son aquellos que tienen:",
           "choices": [
             "La cuarta de la escala. Grados: II y IV.",
             "La tercera de la escala. Grados: I, III y VI.",
@@ -824,7 +824,7 @@ window.APP_DATA = {
           "id": 33,
           "section": "III. Tonalidad, funciones armónicas y rearmonización",
           "type": "multipleChoice",
-          "prompt": "Los acordes subdominantes son aquellos que tienen:",
+          "prompt": "En el modelo de este curso: los acordes subdominantes son aquellos que tienen:",
           "choices": [
             "La tercera de la escala. Grados: I, III y VI.",
             "La cuarta de la escala. Grados: II y IV.",
@@ -838,7 +838,7 @@ window.APP_DATA = {
           "id": 34,
           "section": "III. Tonalidad, funciones armónicas y rearmonización",
           "type": "multipleChoice",
-          "prompt": "Los acordes dominantes son aquellos que tienen simultáneamente:",
+          "prompt": "En el modelo de este curso: los acordes dominantes son aquellos que tienen simultáneamente:",
           "choices": [
             "La cuarta de la escala. Grados: II y IV.",
             "La cuarta de la escala y la sensible tonal. Grados: V7 y VII°.",
@@ -995,7 +995,7 @@ window.APP_DATA = {
           "id": 44,
           "section": "IV. Preguntas de aplicación",
           "type": "multipleChoice",
-          "prompt": "Si dos acordes consecutivos tienen una nota común, ¿qué debe hacerse con esa nota al enlazarlos?",
+          "prompt": "En el modelo de este curso: si dos acordes consecutivos tienen una nota común, ¿qué debe hacerse con esa nota al enlazarlos?",
           "sampleAnswer": "Debe mantenerse en la misma voz, es decir, con el mismo índice de altura.",
           "choices": [
             "Mantenerla en la misma voz, con el mismo índice de altura.",
@@ -1121,7 +1121,7 @@ window.APP_DATA = {
           "id": 56,
           "section": "Verdadero o falso",
           "type": "trueFalse",
-          "prompt": "Un acorde está formado por tres o más notas dispuestas por terceras.",
+          "prompt": "Los acordes estudiados pueden construirse por terceras o como estructuras suspendidas; su disposición puede variar.",
           "answer": true,
           "sampleAnswer": "V"
         },
@@ -1145,7 +1145,7 @@ window.APP_DATA = {
           "id": 59,
           "section": "Verdadero o falso",
           "type": "trueFalse",
-          "prompt": "En acordes mayores y menores se puede duplicar libremente la tercera.",
+          "prompt": "En el modelo de este curso: en acordes mayores y menores se puede duplicar libremente la tercera.",
           "answer": false,
           "sampleAnswer": "F"
         },
@@ -1153,7 +1153,7 @@ window.APP_DATA = {
           "id": 60,
           "section": "Verdadero o falso",
           "type": "trueFalse",
-          "prompt": "El bajo normalmente contiene las fundamentales y no se enlaza.",
+          "prompt": "El bajo también tiene conducción de voces y puede usar inversiones para crear una línea melódica.",
           "answer": true,
           "sampleAnswer": "V"
         },
@@ -1177,7 +1177,7 @@ window.APP_DATA = {
           "id": 63,
           "section": "Verdadero o falso",
           "type": "trueFalse",
-          "prompt": "Los acordes dominantes tienen la cuarta de la escala y la sensible tonal.",
+          "prompt": "En el modelo de este curso: los acordes dominantes tienen la cuarta de la escala y la sensible tonal.",
           "answer": true,
           "sampleAnswer": "V"
         },
@@ -1185,7 +1185,7 @@ window.APP_DATA = {
           "id": 64,
           "section": "Verdadero o falso",
           "type": "trueFalse",
-          "prompt": "La rearmonización simple permite cambiar acordes de la misma función tonal.",
+          "prompt": "En el modelo de este curso: la rearmonización simple permite cambiar acordes de la misma función tonal.",
           "answer": true,
           "sampleAnswer": "V"
         }
@@ -1343,7 +1343,7 @@ window.APP_DATA = {
             },
             {
               "term": "Regla de b9",
-              "body": "La b9 solo se agrega a acordes con 3 y b7, o con 4 y b7."
+              "body": "En el modelo de este curso, la b9 se practica sobre dominantes con 3 y b7 o con 4 y b7. Es una pauta de color, no una prohibición universal para otros contextos."
             },
             {
               "term": "Regla de 9",
@@ -1467,11 +1467,11 @@ window.APP_DATA = {
             },
             {
               "term": "Omisión en acordes disminuidos y aumentados",
-              "body": "En acordes disminuidos y aumentados se puede suprimir la tercera."
+              "body": "En los voicings reducidos de este método se puede omitir la tercera de un acorde disminuido o aumentado si el contexto o las otras voces conservan su identidad; esas notas aisladas pueden admitir otro análisis."
             },
             {
               "term": "Notas no suprimibles",
-              "body": "La 6ª y la 7ª no deben suprimirse porque funcionan como soporte del acorde y definen parte esencial de su cifrado."
+              "body": "En las realizaciones completas de este modelo conservamos la 6ª o la 7ª indicada para mantener el soporte y el color del cifrado. En un arreglo, otra voz del conjunto puede aportar esa información."
             },
             {
               "term": "Omisión en acordes con 11",
@@ -1529,7 +1529,7 @@ window.APP_DATA = {
             },
             {
               "term": "Reglas de color extendido",
-              "body": "Como resumen de color extendido: la #9 normalmente pertenece a acordes con 3 y b7; la 11 funciona con b3 sin 4 suspendida; la #11 aparece sobre todo con 3M; y la 13 requiere una 9ª cualquiera."
+              "body": "Como resumen de color extendido: la #9 normalmente pertenece a acordes con 3 y b7; la 11 funciona con b3 sin 4 suspendida; la #11 aparece sobre todo con 3M; y la fórmula de referencia de 13 presupone una 9, que puede omitirse del voicing si no está indicada explícitamente."
             },
             {
               "term": "Omisiones y soportes",
@@ -3001,8 +3001,8 @@ window.APP_DATA = {
           "options": [],
           "answers": {
             "F7(b9)b13": "F A C Eb Gb B opcional Db",
-            "A9(b13)": "A C# E G B D# F",
-            "Eb7(#9)b13": "Eb G Bb Db F# A Cb",
+            "A9(b13)": "A C# E G B F",
+            "Eb7(#9)b13": "Eb G Bb Db F# Cb",
             "B°7(b13)": "B D F Ab C# opcional E opcional G",
             "F#øb13": "F# A C E G# opcional B opcional D",
             "D7sus4(9)b13": "D G A C E Bb",
@@ -3011,7 +3011,7 @@ window.APP_DATA = {
             "Bb9(b5)b13": "Bb D Fb Ab C Gb",
             "E7(#9)b5(b13)": "E G# Bb D F## C"
           },
-          "sampleAnswer": "F7(b9)b13: F A C Eb Gb B opcional Db; A9(b13): A C# E G B D# F; Eb7(#9)b13: Eb G Bb Db F# A Cb; B°7(b13): B D F Ab C# opcional E opcional G; F#øb13: F# A C E G# opcional B opcional D; D7sus4(9)b13: D G A C E Bb; Ab7sus4(b9)b13: Ab Db Eb Gb Bbb Fb; G7(b5)b9(b13): G B Db F Ab Eb; Bb9(b5)b13: Bb D Fb Ab C Gb; E7(#9)b5(b13): E G# Bb D F## C",
+          "sampleAnswer": "F7(b9)b13: F A C Eb Gb B opcional Db; A9(b13): A C# E G B F; Eb7(#9)b13: Eb G Bb Db F# Cb; B°7(b13): B D F Ab C# opcional E opcional G; F#øb13: F# A C E G# opcional B opcional D; D7sus4(9)b13: D G A C E Bb; Ab7sus4(b9)b13: Ab Db Eb Gb Bbb Fb; G7(b5)b9(b13): G B Db F Ab Eb; Bb9(b5)b13: Bb D Fb Ab C Gb; E7(#9)b5(b13): E G# Bb D F## C",
           "optionsByItem": {
             "F7(b9)b13": [
               "F A C Eb Gb B opcional Db",
@@ -3020,16 +3020,16 @@ window.APP_DATA = {
               "F Ab C Eb Gb B opcional Db"
             ],
             "A9(b13)": [
-              "A C# E G B D# F",
-              "A C E G B D# F",
-              "A C# E G Bb D# F",
+              "A C# E G B F",
+              "A C E G B F",
+              "A C# E G Bb F",
               "A C# E G B D F"
             ],
             "Eb7(#9)b13": [
-              "Eb G Bb Db F# A Cb",
-              "Eb Gb Bb Db F# A Cb",
-              "Eb G Bb D F# A Cb",
-              "Eb G Bb Db F A Cb"
+              "Eb G Bb Db F# Cb",
+              "Eb Gb Bb Db F# Cb",
+              "Eb G Bb D F# Cb",
+              "Eb G Bb Db F Cb"
             ],
             "B°7(b13)": [
               "B D F Ab C# opcional E opcional G",
@@ -3525,7 +3525,7 @@ window.APP_DATA = {
           "id": 66,
           "section": "X. Reglas de omisión de notas",
           "type": "multipleChoice",
-          "prompt": "En acordes mayores, menores y suspendidos, ¿qué nota se puede suprimir?",
+          "prompt": "En el modelo de este curso: en acordes mayores, menores y suspendidos, ¿qué nota se puede suprimir?",
           "choices": [
             "La tercera.",
             "La 6ª o la 7ª.",
@@ -3539,7 +3539,7 @@ window.APP_DATA = {
           "id": 67,
           "section": "X. Reglas de omisión de notas",
           "type": "multipleChoice",
-          "prompt": "En acordes disminuidos y aumentados, ¿qué nota se puede suprimir?",
+          "prompt": "En el modelo de este curso: en acordes disminuidos y aumentados, ¿qué nota se puede suprimir?",
           "choices": [
             "La quinta justa.",
             "La 6ª o la 7ª.",
@@ -3553,7 +3553,7 @@ window.APP_DATA = {
           "id": 68,
           "section": "X. Reglas de omisión de notas",
           "type": "multipleChoice",
-          "prompt": "¿Qué notas nunca se pueden suprimir?",
+          "prompt": "En el modelo de este curso: ¿Qué notas conservamos para mantener el soporte del cifrado?",
           "choices": [
             "La 6ª y la 7ª.",
             "La quinta justa y la novena.",
@@ -3975,7 +3975,7 @@ window.APP_DATA = {
           "id": 102,
           "section": "XII. Verdadero o falso",
           "type": "trueFalse",
-          "prompt": "La b9 se agrega libremente a cualquier acorde.",
+          "prompt": "En el modelo de este curso: la b9 se agrega libremente a cualquier acorde.",
           "answer": false,
           "sampleAnswer": "F"
         },
@@ -3999,7 +3999,7 @@ window.APP_DATA = {
           "id": 105,
           "section": "XII. Verdadero o falso",
           "type": "trueFalse",
-          "prompt": "La 11 se agrega a acordes con b3 que no tengan 4 suspendida.",
+          "prompt": "En el modelo de este curso: la 11 se agrega a acordes con b3 que no tengan 4 suspendida.",
           "answer": true,
           "sampleAnswer": "V"
         },
@@ -4007,7 +4007,7 @@ window.APP_DATA = {
           "id": 106,
           "section": "XII. Verdadero o falso",
           "type": "trueFalse",
-          "prompt": "La #11 se agrega principalmente a acordes con b3.",
+          "prompt": "En el modelo de este curso: la #11 se agrega principalmente a acordes con b3.",
           "answer": false,
           "sampleAnswer": "F"
         },
@@ -4039,7 +4039,7 @@ window.APP_DATA = {
           "id": 110,
           "section": "XII. Verdadero o falso",
           "type": "trueFalse",
-          "prompt": "En acordes mayores, menores y suspendidos, la tercera puede suprimirse libremente.",
+          "prompt": "En el modelo de este curso: en acordes mayores, menores y suspendidos, la tercera puede suprimirse libremente.",
           "answer": false,
           "sampleAnswer": "F"
         },
@@ -4047,7 +4047,7 @@ window.APP_DATA = {
           "id": 111,
           "section": "XII. Verdadero o falso",
           "type": "trueFalse",
-          "prompt": "En acordes disminuidos y aumentados, se puede suprimir la tercera.",
+          "prompt": "En el modelo de este curso: en acordes disminuidos y aumentados, se puede suprimir la tercera.",
           "answer": true,
           "sampleAnswer": "V"
         },
@@ -4055,7 +4055,7 @@ window.APP_DATA = {
           "id": 112,
           "section": "XII. Verdadero o falso",
           "type": "trueFalse",
-          "prompt": "La 6ª y la 7ª pueden suprimirse libremente.",
+          "prompt": "En el modelo de este curso: la 6ª y la 7ª pueden suprimirse libremente.",
           "answer": false,
           "sampleAnswer": "F"
         },
@@ -6046,7 +6046,7 @@ window.APP_DATA = {
           "items": [
             {
               "term": "Evitar triadas graves cerradas",
-              "body": "Evite las triadas cerradas por debajo de C3, tanto en estado fundamental como en inversión (F/C).",
+              "body": "Para buscar claridad en estos ejercicios de piano, prefiera separar las tríadas que comienzan debajo de C3, tanto en estado fundamental como en inversión (F/C). El límite depende del timbre, la dinámica y el efecto buscado; no es una prohibición de usar acordes densos en el grave.",
               "diagram": {
                 "range": {
                   "from": "C2",

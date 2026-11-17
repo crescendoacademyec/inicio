@@ -2337,3 +2337,19 @@ select:focus-visible,input:focus-visible,textarea:focus-visible{
 .theory-widget-reharm [data-reharm-viewer]>section{min-width:0}
 .theory-widget-reharm [data-reharm-viewer] svg{max-width:100%;height:auto}
 .theory-widget-reharm [data-reharm-viewer]:not([data-view="all"]){max-width:360px}
+
+/* Guided study and readable feedback. */
+h1.module-label {font-size:clamp(1.5rem,3vw,2.4rem);line-height:1.2;text-transform:none;letter-spacing:normal;}
+.learning-path-panel,.lesson-guide {padding:18px;border:1px solid var(--line,#6b5a39);border-radius:12px;background:#252219;margin:16px 0;}
+.learning-path-control {max-width:440px;margin:12px 0 20px;}
+.lesson-guide p {margin:8px 0;line-height:1.6;}
+.concept-list details.concept-item {display:block;}
+.concept-list details.concept-item summary {font-weight:700;color:#e3bd6d;cursor:pointer;padding:12px 0;font-size:1.1rem;}
+@media(max-width:640px) {
+  body.functional-course #theoryDetail .theory-section>.theory-actions {position:static;inset:auto;width:100%;margin:0 0 18px;box-shadow:none;}
+  .learning-path-panel,.lesson-guide {padding:12px;}
+  .course-header {padding-block:12px;}
+}
+.theory-layout > *, .concept-list > *, .theory-section {min-width:0;}
+.concept-list details.concept-item summary {overflow-wrap:anywhere;}
+@media(max-width:960px) {.theory-layout{grid-template-columns:minmax(0,1fr);}}

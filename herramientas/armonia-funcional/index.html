@@ -21,7 +21,7 @@
   <title>Armonía funcional: aspectos esenciales | Crescendo Academy</title>
   <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="../../shared/header-icons.css?v=20260919-flat-logo-v2">
-<link rel="stylesheet" href="./styles.css?v=20261008-learning-sequence-v2">
+<link rel="stylesheet" href="./styles.css?v=20261117-functional-audit-1">
 <link rel="stylesheet" href="../../shared/music-practice.css">
 <script defer src="../../shared/course-sound.js?v=20261019-dropdown-1"></script>
 <link rel="stylesheet" href="../../shared/course-sound.css?v=20261019-dropdown-1">
@@ -30,13 +30,13 @@
 <link rel="stylesheet" href="../../shared/practice-lab.css">
 <script defer src="../../shared/practice-lab.js?v=20260928-timbres"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/soundfont-player@0.12.0/dist/soundfont-player.min.js"></script>
-  <script defer="" src="./data.js?v=20261019-foundations-1"></script>
+  <script defer="" src="./data.js?v=20261117-functional-audit-1"></script>
   <script defer="" src="./chords-ref.js?v=20261019-positions-4"></script>
 <link rel="stylesheet" href="../../shared/course-instruments.css?v=20261029-purpose-audit-1">
-<script defer src="../../shared/course-instruments.js?v=20261029-purpose-audit-1"></script>
+<script defer src="../../shared/course-instruments.js?v=20261117-functional-audit-1"></script>
 <script defer src="../../shared/concept-examples.js?v=20261019-visual-maps-1"></script>
 <script defer src="../../shared/concept-example-catalog.js?v=20261019-visual-maps-1"></script>
-<script defer="" src="./app.js?v=20261029-purpose-audit-1"></script>
+<script defer="" src="./app.js?v=20261117-functional-audit-1"></script>
 <link rel="stylesheet" href="../../shared/course-actions.css">
 <link rel="stylesheet" href="../../shared/course-interactions.css?v=20260927">
   <link rel="stylesheet" href="../../shared/crescendo-identity.css?v=20261019-selected-text-1">
@@ -80,7 +80,7 @@
     <section id="homeView" class="view">
       <div class="hero">
         <div class="hero-copy">
-          <p id="moduleLabel" class="module-label">Nivel 1 · Conocimientos esenciales</p>
+          <h1 id="moduleLabel" class="module-label">Nivel 1 · Conocimientos esenciales</h1>
           <p id="moduleIntro" class="hero-summary">Escalas, intervalos, acordes básicos y función tonal.</p>
           <div class="hero-actions">
             <button id="goTheoryBtn" class="primary-btn" type="button">Entrar al módulo teórico</button>
@@ -99,6 +99,8 @@
           </div>
         </aside>
       </div>
+      <div class="learning-path-panel"><label class="field learning-path-control">Recorrido de estudio<select data-learning-path><option value="essential">Esencial · para comenzar</option><option value="complete">Completo · incluye profundización</option></select></label><p>Empieza por la ruta esencial si aún estás construyendo tus bases. Abre el recorrido completo para estudiar colores y disposiciones avanzadas; tu progreso se conserva.</p></div>
+      <section id="reviewReminders" class="lesson-guide" hidden></section>
       <section class="course-template-roadmap" aria-label="Mapa de estudio de Armonía funcional">
         <div><p class="kicker">Mapa de estudio</p><h3>Escalas → funciones → progresiones → extensiones → voicings → rearmonización</h3></div>
         <p>Elige un nivel para ver los temas, preguntas y práctica que corresponden a esa etapa.</p>
@@ -121,6 +123,7 @@
         </div>
         <button id="resetStudyBtn" class="ghost-btn" type="button">Reiniciar progreso</button>
       </div>
+      <label class="field learning-path-control">Recorrido de estudio<select data-learning-path><option value="essential">Esencial · para comenzar</option><option value="complete">Completo · incluye profundización</option></select></label>
       <div class="theory-layout">
         <aside id="topicGrid" class="topic-grid" aria-label="Índice de temas"><button class="topic-link  active" data-topic-select="nivel-3-registros-zonas" type="button">
       <span class="topic-link-number">1</span>
@@ -829,6 +832,7 @@
         </div>
       </div>
 
+      <p>El cuestionario comprueba conceptos y construcción de acordes. La interpretación y la escucha musical se trabajan además en las actividades y con tu docente.</p>
       <div id="quizStartPanel" class="quiz-start">
         <div class="panel">
           <h3>Datos del estudiante</h3>

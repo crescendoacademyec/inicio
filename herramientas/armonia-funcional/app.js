@@ -54,6 +54,14 @@ const MODULE_3_PIANO_PROMPTS = {
   54: "Seleccione G13(#11)."
 };
 const MODULE_3_QUESTION_OVERRIDES = {
+  1: {
+    prompt: "Seleccione un Re entre C2 y D3 como fundamental grave de Dm7.",
+    acceptMode: "pitchClass", layout: { allMin: 36, allMax: 50 }
+  },
+  2: {
+    prompt: "Seleccione un Fa entre C2 y F3 como fundamental grave de F7.",
+    acceptMode: "pitchClass", layout: { allMin: 36, allMax: 53 }
+  },
   3: {
     prompt: "Seleccione las notas guía de C7 en registro medio.",
     answers: ["E3", "A#3"],
@@ -126,6 +134,14 @@ const MODULE_3_QUESTION_OVERRIDES = {
       totalMaxSpan: 11
     }
   },
+  27: {
+    acceptMode: "pitchClass",
+    layout: { bassPitchClass: 5, bassMax: 47, upperMin: 48, minGapAboveBass: 7 }
+  },
+  28: {
+    acceptMode: "pitchClass",
+    layout: { bassPitchClass: 5, bassMax: 47, upperMin: 48, minGapAboveBass: 7 }
+  },
   35: {
     answers: ["E3", "G#3", "B3"],
     sampleAnswer: "E3, G#3 y B3."
@@ -185,24 +201,36 @@ const MODULE_3_QUESTION_OVERRIDES = {
   47: {
     answers: ["A2", "C4", "G4"],
     acceptedAnswers: [["A2", "G3", "C4"]],
-    sampleAnswer: "A2, C4 y G4."
+    sampleAnswer: "Por ejemplo A2, C4 y G4. Se aceptan otras octavas con La grave y Do/Sol por encima.",
+    acceptMode: "pitchClass",
+    layout: { bassPitchClass: 9, bassMax: 48, upperMin: 48, minGapAboveBass: 8 }
   },
   48: {
     acceptedAnswers: [["G2", "F3", "B3"]],
-    sampleAnswer: "G2, B3 y F4; también G2, F3 y B3."
+    sampleAnswer: "Por ejemplo G2, B3 y F4; también G2, F3 y B3 u otras octavas equivalentes.",
+    acceptMode: "pitchClass",
+    layout: { bassPitchClass: 7, bassMax: 48, upperMin: 48, minGapAboveBass: 8 }
   },
   49: {
     keyboardRange: { from: "C2", to: "C6" },
     answers: ["A2", "C#4", "G4", "E5"],
     acceptedAnswers: [["A2", "G3", "C#4", "E4"]],
-    sampleAnswer: "A2, C#4, G4 y E5."
+    sampleAnswer: "Por ejemplo A2, C#4, G4 y E5; conserva La grave y Mi como voz superior.",
+    acceptMode: "pitchClass",
+    layout: { bassPitchClass: 9, bassMax: 48, upperMin: 48, minGapAboveBass: 8, topPitchClass: 4 }
+  },
+  50: {
+    acceptMode: "pitchClass",
+    layout: { bassPitchClass: 7, bassMax: 48, secondPitchClass: 5, secondMax: 59, remainingMin: 48 }
   },
   51: {
     prompt: "Seleccione bajo/acorde de Cm7 con fundamental y séptima en la izquierda, tercera en la derecha y duplicación opcional de la nota guía superior.",
     answers: ["C3", "A#3", "D#4"],
     noteLabels: { "A#3": "Bb3", "D#4": "Eb4" },
     acceptedAnswers: [["C3", "A#3", "D#4", "D#5"]],
-    sampleAnswer: "C3, Bb3 y Eb4; opcionalmente Eb5 duplicada."
+    sampleAnswer: "Por ejemplo C3, Bb3 y Eb4; opcionalmente Eb5 duplicada. Conserva Do y Si♭ abajo y Mi♭ por encima.",
+    acceptMode: "pitchClass",
+    layout: { bassPitchClass: 0, bassMax: 48, secondPitchClass: 10, secondMax: 59, remainingMin: 48 }
   },
   52: {
     answers: ["F#2", "E3", "A3", "B3", "G#4"],
@@ -306,6 +334,7 @@ function normalizeData() {
   ensurePedagogicalExpansion();
   legacyQuizBanks = Object.fromEntries(DATA.modules.map(module => [module.id, module.quiz.slice()]));
   applyLearningSequence();
+  configureAppliedLearning();
 }
 function applyLearningSequence() {
   const byId = Object.fromEntries(DATA.modules.map(module => [module.id, module]));
@@ -356,6 +385,122 @@ function applyLearningSequence() {
   voicings.subtitle = "Notas guía, registros y disposiciones aplicadas a progresiones.";
   connections.subtitle = "Conducción, rearmonización, dominantes aplicados y puente hacia Jazz.";
 }
+// Both paths keep the full reference available; the essential path reduces prerequisites.
+function essentialTopicIds() {
+  return new Set(['escalas-intervalos','consonancias-disonancias','acordes','tonalidad',
+    'nivel-4-campo-armonico-mayor','nivel-4-progresiones-cadencias','nivel-4-ciclo-ritmo-armonico','nivel-4-inversiones-bajos','nivel-4-tonalidad-menor-funcional',
+    'nivel-2-referencia-intervalica','nivel-2-sistema-americano-cifrado','nivel-2-triadas','nivel-2-soportes','nivel-2-septimas','nivel-2-reglas-extensiones','nivel-2-novenas','nivel-2-omision-notas',
+    'enlace-voces','nivel-3-registros-zonas','nivel-3-shell-voicings','nivel-3-acompanamiento-bajo-acorde',
+    'n5-campo-repaso','n5-enlace-progresiones','rearmonizacion','nivel-4-puente-jazz']);
+}
+function studyTopics(module) {
+  const topics = module?.theory || [];
+  return state?.learningPath === 'essential' ? topics.filter(t => essentialTopicIds().has(t.id)) : topics;
+}
+function questionStudyTopic(q, module = activeModule()) {
+  if (q.studyTopic) return q.studyTopic;
+  const section = q.section || '';
+  if (module.id === 'nivel-1-armonia-funcional') {
+    if (/conson|dison/i.test(q.prompt)) return 'consonancias-disonancias';
+    if (/tonal|tónicos|subdominantes|dominantes/i.test(q.prompt)) return 'tonalidad';
+    return /acorde|estructura|soporte/i.test(q.prompt) ? 'acordes' : 'escalas-intervalos';
+  }
+  if (module.id === 'nivel-4-armonia-diatonica-progresiones') {
+    const prefix = section.split('.')[0];
+    return {'I':'nivel-4-campo-armonico-mayor','II':'nivel-4-progresiones-cadencias','III':'nivel-4-ciclo-ritmo-armonico','IV':'nivel-4-inversiones-bajos','V':'nivel-4-tonalidad-menor-funcional'}[prefix];
+  }
+  if (module.id === 'nivel-2-cifrado-acordes-extensiones') {
+    const topic = {'I':'referencia-intervalica','II':'triadas','III':'soportes','IV':'septimas','V':'reglas-extensiones','VI':'novenas','VII':'onceavas','VIII':'treceavas','IX':'sistema-americano-cifrado','X':'omision-notas','XI':'aplicacion','XII':'sintesis-reglas','XIII':'aplicacion'}[section.split('.')[0]] || 'reglas-extensiones';
+    return 'nivel-2-' + topic;
+  }
+  if (module.id === 'nivel-3-principios-voicing') {
+    const topic = {'I':'registros-zonas','II':'shell-voicings','III':'posicion-cerrada-skip-2','IV':'registro-grave-extensiones','V':'construccion-acordes-extendidos','VI':'acompanamiento-bajo-acorde'}[section.split('.')[0]];
+    return topic ? 'nivel-3-' + topic : 'enlace-voces';
+  }
+  return {'Campo armónico':'n5-campo-repaso','Conducción':'n5-enlace-progresiones','Dominantes aplicados':'n5-dominantes-secundarios','Color cromático':'n5-intercambio-modal','Síntesis':'n5-modulacion-aplicada','Rearmonización y préstamos':'rearmonizacion','Puente hacia Armonía Jazz':'nivel-4-puente-jazz'}[section];
+}
+function availableQuiz(module = activeModule()) {
+  return state?.learningPath === 'essential'
+    ? module.quiz.filter(q => essentialTopicIds().has(questionStudyTopic(q, module))) : module.quiz;
+}
+function configureAppliedLearning() {
+  const add = (module, studyTopic, section, prompt, labels, answers, options, explain) => {
+    module.quiz.push({id:1000 + module.quiz.filter(q => q.id >= 1000).length, type:'selectBlanks', studyTopic, section, prompt, labels, answers, options, sampleAnswer:labels.map((label,i)=>`${label}: ${answers[i]}`).join('; '), explain});
+  };
+  const diatonic = DATA.modules[1], connections = DATA.modules[4];
+  const explain = (module, id, text) => { const q=module.quiz.find(q=>q.id===id); if(q) q.explain=text; };
+  explain(DATA.modules[0],12,'Construcción y disposición son distintas: un acorde puede organizarse por terceras o como suspendido, y sus notas pueden repartirse en distintos registros.');
+  explain(DATA.modules[0],56,'Los acordes suspendidos reemplazan la tercera por segunda o cuarta. No todos los acordes son pilas de terceras.');
+  explain(DATA.modules[0],30,'La escala mayor natural define la colección diatónica. La mayor armónica rebaja el sexto grado y es un recurso de color, no una exigencia de toda tonalidad mayor.');
+  explain(DATA.modules[3],43,'El bajo es una voz: las inversiones permiten líneas como Do–Si–La en C–G/B–Am. Empezar con fundamentales es solo un ejercicio.');
+  explain(DATA.modules[3],54,'El bajo también tiene conducción. Puede conservar notas, moverse por grados o saltos y utilizar inversiones.');
+  explain(DATA.modules[2],48,'El cifrado no exige una ♯11 si no la indica. Distingue las notas requeridas de un color adicional elegido para un voicing.');
+  add(diatonic,'nivel-4-campo-armonico-mayor','I. Campo armónico mayor','Construye el campo mayor de Sol: completa las tríadas de ii, IV y vi.', ['ii','IV','vi'],['Am','C','Em'],['Am','A','C','Cm','Em','E'], 'Sol mayor contiene Fa♯: al apilar terceras, ii es Am, IV es C y vi es Em.');
+  add(diatonic,'nivel-4-campo-armonico-mayor','I. Campo armónico mayor','Construye las tétradas sobre ii, V e I en Fa mayor.', ['ii7','V7','Imaj7'],['Gm7','C7','Fmaj7'],['Gm7','G7','C7','Cmaj7','Fmaj7','Fm7'], 'Fa mayor lleva Si♭: Sol–Si♭–Re–Fa, Do–Mi–Sol–Si♭ y Fa–La–Do–Mi.');
+  add(diatonic,'nivel-4-progresiones-cadencias','II. Progresiones y cadencias','Una frase en Re mayor termina Em7 → ___ → D. Completa el dominante y su sensible.', ['Dominante','Sensible que resuelve a Re'],['A7','C#'],['A7','Am7','E7','C#','C','F#'], 'La7 prepara Re y contiene Do♯, sensible de Re. El final de frase permite oír el cierre.');
+  add(diatonic,'nivel-4-inversiones-bajos','IV. Inversiones y bajos','Completa C → G/B → Am: identifica los bajos y el movimiento.', ['Bajo de G/B','Bajo de Am','Movimiento del bajo'],['B','A','Descendente por grados'],['B','G','A','C','Descendente por grados','Siempre la fundamental'], 'El bajo Do–Si–La desciende por grados. G/B conserva la fundamental Sol, pero usa Si en el bajo.');
+  add(diatonic,'nivel-4-tonalidad-menor-funcional','V. Tonalidad menor','Construye iiø7 → V7 → i en La menor. Después identifica la sensible del dominante.', ['iiø7','V7','i','Sensible'],['Bm7(b5)','E7','Am','G#'],['Bm7(b5)','B7','E7','Em7','Am','A','G#','G'], 'Si–Re–Fa–La prepara Mi7; Sol♯ asciende a La. El dominante usa la sensible elevada.');
+  add(diatonic,'nivel-4-progresiones-cadencias','II. Progresiones y cadencias','Transporta Dm7 → G7 → Cmaj7 a Si♭ mayor conservando los grados ii–V–I.', ['ii','V','I'],['Cm7','F7','Bbmaj7'],['Cm7','C7','F7','Fm7','Bbmaj7','Bmaj7'], 'Cada acorde conserva su grado y cualidad: ii menor séptima, V dominante e I mayor séptima.');
+  add(connections,'n5-dominantes-secundarios','Dominantes aplicados','Analiza C → D7 → G7 → C sin cambiar el centro global de Do: identifica D7 y la resolución de Fa♯.', ['Función de D7','Fa♯ resuelve a'],['V/V','G'],['V/V','V/ii','I','G','F','A'], 'D7 es V de Sol: Fa♯ asciende a Sol. El regreso a Do mantiene el centro global.');
+  add(connections,'n5-dominantes-secundarios','Dominantes aplicados','Completa C → ___ → Dm → G7 → C e identifica la sensible temporal hacia Re.', ['Dominante de Dm','Sensible de Re'],['A7','C#'],['A7','Am7','D7','C#','C','F#'], 'A7 contiene Do♯ y prepara Dm. Es V/ii en Do, sin necesidad de modular.');
+  add(connections,'n5-intercambio-modal','Color cromático','Compara C → F → C con C → Fm → C. Identifica la nota que cambia y el material paralelo de Fm.', ['La pasa a','Material paralelo'],['Ab','C menor'],['Ab','A#','C menor','F mayor','G mayor'], 'La baja a La♭: Fm procede de Do menor paralelo, mientras Do sigue siendo el centro.');
+  add(connections,'n5-intercambio-modal','Color cromático','En Dm7 → Db7 → Cmaj7, identifica qué sustituye Db7 y su tritono escrito.', ['Dominante sustituido','Tercera y séptima de Db7'],['G7','F y Cb'],['G7','Dm7','Cmaj7','F y Cb','F y C','Gb y Bb'], 'Db7 sustituye a G7; Fa y Do♭ suenan como Fa y Si, notas guía de G7. El bajo Re♭ baja a Do.');
+  add(connections,'n5-modulacion-aplicada','Síntesis','Compara C–D7–G7–C con C–Am–D7–G–C–D7–G (con cierre y prolongación en Sol).', ['Primer caso','Segundo caso'],['Tonicización de V','Modulación a Sol'],['Tonicización de V','Modulación a Sol','Solo cambio de dinámica'], 'En el primero vuelve Do. En el segundo Sol se confirma mediante prolongación y cadencia; el contexto completo decide.');
+  add(connections,'n5-enlace-progresiones','Conducción','Completa el enlace G7 → C: resuelve Si y Fa, manteniendo Sol como nota común.', ['Si →','Fa →','Sol →'],['C','E','G'],['C','D','E','F','G','A'], 'La sensible Si asciende a Do, la séptima Fa baja a Mi y Sol puede mantenerse en la misma altura.');
+  add(connections,'nivel-4-puente-jazz','Puente hacia Armonía Jazz','Transporta iiø7 → V7 → i de La menor a Re menor.', ['iiø7','V7','i'],['Em7(b5)','A7','Dm'],['Em7(b5)','E7','A7','Am7','Dm','D'], 'Mi–Sol–Si♭–Re prepara La7, cuyo Do♯ asciende a Re.');
+}
+function setLearningPath(path) {
+  if (state.quiz.active && !state.quiz.submitted) {
+    document.querySelectorAll('[data-learning-path]').forEach(el => { el.value = state.learningPath; });
+    alert('Entrega el intento antes de cambiar de recorrido.'); return;
+  }
+  state.learningPath = path === 'essential' ? 'essential' : 'complete';
+  if (!moduleTheory().some(t => t.id === activeTheoryId)) activeTheoryId = moduleTheory()[0]?.id;
+  document.querySelectorAll('[data-learning-path]').forEach(el => { el.value = state.learningPath; });
+  saveState(); renderModules(); renderHome(); renderTheory(); renderQuizSetup(); updateProgress();
+}
+function topicLearningGuide(section) {
+  const guides = {
+    'escalas-intervalos':['Medir sin confundir nombres de nota con semitonos.','Cuenta Do–Mi incluyendo los extremos; luego compara Do–Mi♭.','Construye y escucha una tercera mayor desde Sol.'],
+    'consonancias-disonancias':['Comparar estabilidad y tensión según el contexto.','Escucha Do–Mi y Do–Re♭; describe la diferencia.','Elige un intervalo y explica por qué su efecto depende del contexto.'],
+    'acordes':['Separar identidad del acorde y disposición.','Compara Do–Mi–Sol con Mi–Sol–Do.','Construye una tríada menor y una suspendida; explica qué cambia.'],
+    'tonalidad':['Reconocer tónica, preparación y dominante.','Escucha C–F–G7–C e identifica la llegada.','Transporta sus grados a Sol mayor.'],
+    'nivel-4-campo-armonico-mayor':['Construir acordes desde una escala.','Escribe Do mayor y apila terceras desde Re.','Construye ii, V7 e I en Fa mayor.'],
+    'nivel-4-progresiones-cadencias':['Relacionar final de frase y tipo de cadencia.','Compara V–I y V–vi dentro de una frase.','Crea dos finales distintos en Re mayor.'],
+    'nivel-4-ciclo-ritmo-armonico':['Separar dirección armónica y velocidad de cambio.','Escucha iii–vi–ii–V–I con dos ritmos armónicos.','Conserva los acordes y cambia cada cuánto aparece uno nuevo.'],
+    'nivel-4-inversiones-bajos':['Crear una línea de bajo con inversiones.','Compara C–G–Am con C–G/B–Am.','Toca Do–Si–La en el bajo y nombra cada acorde.'],
+    'nivel-4-tonalidad-menor-funcional':['Construir el dominante con sensible en menor.','Compara Em y E7 al resolver hacia Am.','Construye iiø–V–i en Re menor.'],
+    'nivel-2-referencia-intervalica':['Relacionar grado, intervalo y altura.','Compara Re4 con Re5 respecto a Do4.','Explica qué comparten 2 y 9 y qué cambia de registro.'],
+    'nivel-2-sistema-americano-cifrado':['Leer fundamental y cualidad por separado.','Compara C, Cm y C7.','Construye Fm y G7 desde sus símbolos.'],
+    'nivel-2-triadas':['Construir tríadas y distinguir sus cualidades.','Cambia Mi por Mi♭ en Do mayor.','Construye mayor, menor y disminuida desde Re.'],
+    'nivel-2-soportes':['Distinguir sexta y tipos de séptima.','Compara C6, C7 y Cmaj7.','Explica la diferencia entre sexta y séptima disminuida aunque suenen igual.'],
+    'nivel-2-septimas':['Identificar tercera, quinta y séptima.','Compara C7, Cm7 y Cmaj7.','Construye Dm7 y Fmaj7 sin consultar la tabla.'],
+    'nivel-2-reglas-extensiones':['Elegir color sin confundir una pauta con una obligación.','Compara C7, C9 y C7(b9).','Separa las notas del cifrado de las tensiones que decides añadir.'],
+    'nivel-2-novenas':['Distinguir add9, 9 y maj9.','Compara Cadd9, C9 y Cmaj9.','Construye F9 y explica cuál es su séptima.'],
+    'nivel-2-onceavas':['Reconocer 11 y ♯11 en su contexto.','Compara Cm11 y C7(♯11).','Construye Dm11 y señala qué notas pueden omitirse en este modelo.'],
+    'nivel-2-treceavas':['Separar fórmula de referencia y voicing.','Compara C13 con y sin novena.','Construye G13 conservando tercera, séptima y trecena.'],
+    'nivel-2-omision-notas':['Conservar la identidad al reducir un acorde.','Retira la quinta de Cmaj7 y vuelve a escucharlo.','Explica qué notas debe conservar tu realización de G13(b9).'],
+    'nivel-2-aplicacion':['Pasar del cifrado a las notas y comprobar su grafía.','Construye Db7(b9) por intervalos.','Construye el mismo tipo de acorde desde Sol sin copiar posiciones.'],
+    'nivel-2-sintesis-reglas':['Justificar una elección de notas y omisiones.','Descompón un C13 en estructura, soporte y color.','Elige otro acorde y explica cada nota conservada.'],
+    'enlace-voces':['Seguir voces superiores y bajo como líneas.','Compara un bajo en fundamentales con uno por grados.','Enlaza G7–C manteniendo Sol y resolviendo Si y Fa.'],
+    'nivel-3-registros-zonas':['Elegir un registro según claridad y timbre.','Escucha un acorde cerrado y desplázalo al grave.','Abre su disposición y explica el cambio que percibes.'],
+    'nivel-3-shell-voicings':['Conservar notas guía con pocas notas.','Escucha tercera y séptima de G7 sobre un Sol grave.','Transporta ese shell a D7.'],
+    'nivel-3-posicion-cerrada-skip-2':['Aplicar dos transformaciones sin confundirlas.','En Mi–Sol–Si–Re, sube Sol para Skip 2.','Desde el mismo origen, baja Si para Drop 2 y compara.'],
+    'nivel-3-registro-grave-extensiones':['Distribuir bajo y color con claridad.','Compara F2–A2–C3 con F2–C3–A3.','Prueba otra tríada y explica el espacio entre voces.'],
+    'nivel-3-construccion-acordes-extendidos':['Construir por etapas un voicing extendido.','Parte de C7 y añade novena y trecena.','Construye Dm11 y justifica sus omisiones.'],
+    'nivel-3-acompanamiento-bajo-acorde':['Repartir bajo y notas guía entre manos.','Toca La grave con Do y Sol por encima.','Cambia sus octavas conservando el acorde y enlázalo a D7.'],
+    'n5-campo-repaso':['Construir antes de proponer sustituciones.','Reconstruye ii–V–I en Do mayor.','Transporta la progresión a Si♭.'],
+    'n5-enlace-progresiones':['Oír la dirección de cada nota guía.','Conserva Sol y resuelve Si→Do y Fa→Mi en G7–C.','Construye un enlace equivalente en Fa mayor.'],
+    'rearmonizacion':['Sustituir respetando melodía y conducción.','Compara C–F–G7 con Am–Dm–Bø7.','Comprueba qué notas de la melodía admite cada sustitución.'],
+    'n5-dominantes-secundarios':['Reconocer objetivo y sensible de un dominante aplicado.','En Do, escucha D7–G7–C y localiza Fa♯→Sol.','Completa C–A7–Dm–G7–C y explica Do♯→Re.'],
+    'n5-intercambio-modal':['Distinguir préstamo paralelo y sustitución dominante.','Compara F y Fm en Do; después G7 y Db7 hacia C.','Nombra la nota prestada y las notas guía de Db7.'],
+    'n5-modulacion-aplicada':['Distinguir color local, tonicización y nuevo centro.','Escucha los dos recorridos y busca dónde termina cada frase.','Explica qué prolongación y cadencia confirman Sol.'],
+    'nivel-4-puente-jazz':['Transportar ii–V–I con sus notas guía.','Construye Dm7–G7–Cmaj7 y Bø7–E7–Am.','Transporta el recorrido menor a Re menor.']
+  };
+  const [goal, guided, independent] = guides[section.id] || ['Aplicar el concepto a un ejemplo musical.','Observa y escucha el ejemplo.','Construye otro ejemplo y explica tus decisiones.'];
+  return `<aside class="lesson-guide" aria-label="Guía de aprendizaje"><p><b>Al terminar:</b> ${escapeHtml(goal)}</p><p><b>Con ayuda:</b> ${escapeHtml(guided)}</p><p><b>Ahora tú:</b> ${escapeHtml(independent)}</p><p class="small-note">Si estás comenzando, trabaja una idea y un ejemplo por sesión, con ayuda de tu docente cuando la necesites. Repasa este tema otro día antes de avanzar.</p></aside>`;
+}
+
 function ensurePedagogicalExpansion() {
   if (DATA.modules.some(module => module.id === "nivel-5-conexiones-funcionales")) return;
   DATA.modules.push({
@@ -549,13 +694,13 @@ const CHORD_QUALITY_PATTERNS = Object.freeze({
   "m11": { required: [0, 3, 10, 5], optional: [2, 7] },
   "ø9": { required: [0, 3, 6, 10, 2], optional: [] },
   "m6(9)": { required: [0, 3, 9, 2], optional: [7] },
-  "13": { required: [0, 2, 4, 9, 10], optional: [7] },
+  "13": { required: [0, 4, 9, 10], optional: [2, 7] },
   "13(b9)": { required: [0, 4, 10, 1, 9], optional: [7] },
   "13(b5)": { required: [0, 4, 6, 10, 9], optional: [2, 7] },
   "13(b5)b9": { required: [0, 4, 6, 10, 1, 9], optional: [7] },
-  "13(#11)": { required: [0, 4, 7, 10, 6, 9], optional: [2] },
-  "∆13": { required: [0, 2, 4, 7, 11, 9], optional: [] },
-  "∆13(#11)": { required: [0, 4, 7, 11, 6, 9], optional: [2] }
+  "13(#11)": { required: [0, 4, 10, 6, 9], optional: [2, 7] },
+  "∆13": { required: [0, 4, 11, 9], optional: [2, 7] },
+  "∆13(#11)": { required: [0, 4, 11, 6, 9], optional: [2, 7] }
 });
 function gradeChordParserSelection(accept, selected) {
   const ciphers = Array.isArray(accept.parserCiphers) ? accept.parserCiphers : [];
@@ -639,14 +784,16 @@ function chordRootPitchClass(root) {
 function activeModule() {
   return DATA.modules.find(module => module.id === state.moduleId) || DATA.modules[0];
 }
-function moduleTheory() { return activeModule()?.theory || []; }
+function moduleTheory() { return studyTopics(activeModule()); }
 function moduleQuiz() {
   if (state?.quiz?.active && Array.isArray(state.quiz.questionSnapshot)) return state.quiz.questionSnapshot;
-  return activeModule()?.quiz || [];
+  return availableQuiz();
 }
 function defaultState() {
   return {
     moduleId: DATA.modules?.[0]?.id || "armonia-funcional-i",
+    learningPath: "complete",
+    studyDates: {},
     studied: {},
     practice: {},
     quiz: {
@@ -699,6 +846,8 @@ function normalizeStoredState(value) {
     loaded.quiz = { ...defaults.quiz };
   }
 
+  loaded.studyDates = value.studyDates && typeof value.studyDates === "object" && !Array.isArray(value.studyDates) ? value.studyDates : {};
+  loaded.learningPath = value.learningPath === "essential" ? "essential" : "complete";
   loaded.quiz.focusWarnings = Math.max(0, Number.parseInt(loaded.quiz.focusWarnings, 10) || 0);
   loaded.quiz.active = Boolean(loaded.quiz.active);
   loaded.quiz.submitted = Boolean(loaded.quiz.submitted);
@@ -808,6 +957,10 @@ function populateChordReference() {
   if (mount) window.ChordRef.mount(mount);
 }
 function init() {
+  document.querySelectorAll('[data-learning-path]').forEach(el => {
+    el.value = state.learningPath;
+    el.addEventListener('change', () => setLearningPath(el.value));
+  });
   renderModules();
   renderHome();
   renderTheory();
@@ -896,8 +1049,19 @@ function applyQuizLock(on) {
   document.body.classList.toggle("quiz-lock", !!on);
   $("lockBanner").classList.toggle("hidden", !on);
 }
+function renderReviewReminders() {
+  const host = $('reviewReminders'); if (!host) return;
+  const due = DATA.modules.flatMap(module=>studyTopics(module).filter(topic=>state.studied[topic.id] && Date.now()-Number(state.studyDates[topic.id]||0)>=2*86400000).map(topic=>({module,topic}))).slice(0,3);
+  host.hidden = !due.length;
+  host.innerHTML = due.length ? `<h3>Vuelve a probar sin mirar</h3><p>Han pasado al menos dos días, o este tema pertenece a tu progreso anterior. Resuelve su desafío y construye otro ejemplo.</p>${due.map(({module,topic})=>`<button type="button" class="soft-btn" data-review-module="${escapeAttr(module.id)}" data-review-reminder="${escapeAttr(topic.id)}">Repasar ${escapeHtml(topic.title.replace(/^\d+\.\s*/,''))}</button>`).join('')}` : '';
+  host.querySelectorAll('[data-review-reminder]').forEach(button=>button.addEventListener('click',()=>{
+    selectModule(button.dataset.reviewModule); selectTheoryTopic(button.dataset.reviewReminder); showView('theory');
+    state.studyDates[button.dataset.reviewReminder]=Date.now(); saveState();
+  }));
+}
 function renderHome() {
   const module = activeModule();
+  renderReviewReminders();
   setText("topicCount", moduleTheory().length);
   setText("questionCount", moduleQuiz().length);
   setText("autoGrade", "0–5.0");
@@ -912,7 +1076,7 @@ function renderModules() {
     return `<button class="module-tab ${active ? "active" : ""}" data-module="${escapeAttr(module.id)}" type="button"${active ? ' aria-current="true"' : ""}>
       <em>${escapeHtml(module.level || "Módulo")}</em>
       <span>${escapeHtml(module.title)}</span>
-      <small>${module.theory.length} temas · ${module.quiz.length} preguntas</small>
+      <small>${studyTopics(module).length} temas · ${availableQuiz(module).length} preguntas</small>
     </button>`;
   }).join("");
   wrap.querySelectorAll("[data-module]").forEach(btn => {
@@ -975,6 +1139,7 @@ function renderTheory() {
   document.querySelectorAll("[data-study]").forEach(btn => {
     btn.addEventListener("click", () => {
       state.studied[btn.dataset.study] = !state.studied[btn.dataset.study];
+      state.studyDates[btn.dataset.study] = Date.now();
       saveState(); renderTheory(); updateProgress();
     });
   });
@@ -1021,12 +1186,13 @@ function renderTheoryDetail() {
         </div>
         <span class="study-badge ${state.studied[section.id] ? "done" : ""}">${state.studied[section.id] ? "Estudiado" : "Pendiente"}</span>
       </header>
+      ${topicLearningGuide(section)}
       <div class="concept-list">
-        ${section.items.map(item => `<section class="concept-item ${item.diagram ? "has-diagram" : ""}">
-          <h4>${escapeHtml(item.term)} ${theoryMethodBadge(item.term)}</h4>
+        ${section.items.map((item, itemIndex) => `<${state.learningPath === "essential" ? `details ${itemIndex === 0 ? "open" : ""}` : "section"} class="concept-item ${item.diagram ? "has-diagram" : ""}">
+          ${state.learningPath === "essential" ? `<summary>${escapeHtml(item.term)} ${theoryMethodBadge(item.term)}</summary>` : `<h4>${escapeHtml(item.term)} ${theoryMethodBadge(item.term)}</h4>`}
           ${renderConceptBody(item)}
           ${window.CourseExamples?.render("functional",section.id+":"+item.term)||""}
-        </section>`).join("")}
+        </${state.learningPath === "essential" ? "details" : "section"}>`).join("")}
       </div>
       ${renderSectionVisuals(section)}
       ${renderTopicPractice(section)}
@@ -1348,7 +1514,7 @@ function hydrateStudentFields() {
   updateStudentMeta();
 }
 function quizSections() {
-  return [...new Set((activeModule()?.quiz || []).map(question => question.section || "General"))];
+  return [...new Set(availableQuiz().map(question => question.section || "General"))];
 }
 function renderQuizSetup() {
   const scope = $("quizScope"), topic = $("quizTopic"), field = $("quizTopicField");
@@ -1357,9 +1523,9 @@ function renderQuizSetup() {
   topic.innerHTML = quizSections().map(section => `<option value="${escapeAttr(section)}">${escapeHtml(section)}</option>`).join("");
   if (quizSections().includes(previous)) topic.value = previous;
   field.hidden = scope.value !== "topic";
-  const count = scope.value === "full" ? activeModule().quiz.length
-    : scope.value === "topic" ? activeModule().quiz.filter(question => question.section === topic.value).length
-    : Math.min(10, activeModule().quiz.length);
+  const count = scope.value === "full" ? availableQuiz().length
+    : scope.value === "topic" ? availableQuiz().filter(question => question.section === topic.value).length
+    : Math.min(10, availableQuiz().length);
   setText("quizScopeSummary", `${count} preguntas de ${activeModule().title}. Las prácticas por tema están disponibles también en el módulo teórico.`);
 }
 function shuffleQuestions(questions) {
@@ -1371,7 +1537,7 @@ function shuffleQuestions(questions) {
   return copy;
 }
 function selectedQuizQuestions() {
-  const bank = activeModule().quiz;
+  const bank = availableQuiz();
   const scope = $("quizScope")?.value || "brief";
   if (scope === "full") return bank;
   if (scope === "topic") return bank.filter(question => question.section === $("quizTopic")?.value);
@@ -1496,7 +1662,19 @@ function renderPianoSelect(q) {
   const range = pianoQuestionRange(q);
   const notes = buildPianoNotes(range.from, range.to);
   const whiteCount = notes.filter(note => !note.isBlack).length;
-  return `<div class="multi-note">Seleccione todas las teclas correctas.</div>
+  const accept=q.accept?.mode==='oneOf' ? q.accept.alternatives[0] : q.accept;
+  const layout=accept?.layout;
+  const criteria=[];
+  if(layout) {
+    if(Number.isFinite(layout.allMin)) criteria.push(`Registro desde ${midiToSharpNote(layout.allMin)}`);
+    if(Number.isFinite(layout.allMax)) criteria.push(`hasta ${midiToSharpNote(layout.allMax)}`);
+    if(Number.isFinite(layout.bassMax)) criteria.push(`bajo hasta ${midiToSharpNote(layout.bassMax)}`);
+    if(Number.isFinite(layout.upperMin)) criteria.push(`voces superiores desde ${midiToSharpNote(layout.upperMin)}`);
+    if(Number.isFinite(layout.minGapAboveBass)) criteria.push(`separación mínima sobre el bajo: ${layout.minGapAboveBass} semitonos`);
+    if(Number.isFinite(layout.secondMax)) criteria.push(`segunda nota hasta ${midiToSharpNote(layout.secondMax)}`);
+    if(Number.isFinite(layout.totalMaxSpan)) criteria.push('posición cerrada dentro de una octava');
+  }
+  return `<div class="multi-note">Seleccione todas las teclas correctas. ${escapeHtml(criteria.join(' · '))}</div>
     <div class="piano-select-wrap">
       <div class="piano-select-keyboard" style="--white-count:${whiteCount};">
         ${notes.map(note => renderPianoToggleKey(q, note, whiteCount)).join("")}
@@ -1517,9 +1695,9 @@ function renderPianoToggleKey(q, note, whiteCount) {
       data-piano-toggle
       data-answer="q${q.id}_${escapeAttr(note.note)}"
       data-value="${escapeAttr(note.note)}"
-      aria-label="${escapeAttr(note.note)}"
+      aria-label="${escapeAttr(pianoAnswerLabel(q, note.note))}"
       aria-pressed="${selected}"
-      title="${escapeAttr(note.note)}"
+      title="${escapeAttr(pianoAnswerLabel(q, note.note))}"
       style="left:${left}%;width:${width}%;transform:${transform};">
       ${cName}
     </button>`;
@@ -1641,6 +1819,7 @@ function gradeQuiz(submittedAt = new Date().toISOString()) {
 function gradeQuestion(q) {
   let points = 0;
   let given = "";
+  let feedback = "";
   if (q.type === "selectBlanks") {
     const scores = q.answers.map((ans, i) => val(q.id,`_${i}`) === ans ? 1 : 0);
     given = q.labels.map((l,i)=>`${l}: ${val(q.id,`_${i}`)}`).join(" | ");
@@ -1661,6 +1840,7 @@ function gradeQuestion(q) {
     const evaluation = gradePianoSelection(q, selected);
     given = selected.length ? selected.map(note => pianoAnswerLabel(q, note)).join(" | ") : "";
     points = evaluation.points;
+    feedback = evaluation.feedback || "Selección correcta.";
   } else if (q.type === "classify" || q.type === "match") {
     const scores = q.items.map(item => val(q.id,`_${item}`) === q.answers[item] ? 1 : 0);
     given = q.items.map(item => `${item}: ${val(q.id,`_${item}`)}`).join(" | ");
@@ -1681,6 +1861,8 @@ function gradeQuestion(q) {
     points,
     given,
     sampleAnswer: q.sampleAnswer,
+    feedback: feedback || q.explain || (points >= .999 ? "Correcto. Puedes aplicar la misma idea en otra tonalidad." : "Compara tu selección con la referencia y repasa el concepto antes de reintentar."),
+    studyTopic: questionStudyTopic(q),
     completion,
     status: completion === "empty" ? "unanswered" : points >= .999 ? "correct" : points > 0 ? "partial" : "wrong"
   };
@@ -1702,7 +1884,7 @@ function gradePianoSelection(q, selected) {
   const accept = q.accept || buildPianoAcceptance(q);
   if (accept.mode === "oneOf") {
     const alternatives = Array.isArray(accept.alternatives) ? accept.alternatives : [];
-    if (!alternatives.length) return { points: 0 };
+    if (!alternatives.length) return { points: 0, feedback: "No hay un criterio de corrección disponible." };
     return alternatives
       .map(alternative => gradePianoSelection(Object.assign({}, q, { accept: alternative }), selected))
       .reduce((best, current) => current.points > best.points ? current : best, { points: 0 });
@@ -1714,12 +1896,16 @@ function gradePianoSelection(q, selected) {
       ? gradePianoPitchClasses(q, selected, accept)
       : parserScore;
     const layoutScore = gradePianoLayout(selected, accept.layout);
-    return { points: clamp(identityScore * (.7 + (.3 * layoutScore)), 0, 1) };
+    const points = clamp(identityScore * (.7 + (.3 * layoutScore)), 0, 1);
+    const messages = identityScore < .999 ? pianoIdentityFeedback(q, selected, accept) : [];
+    messages.push(...pianoLayoutChecks(selected, accept.layout).filter(c=>!c.ok).map(c=>c.message));
+    return { points, feedback:points>=.999 ? "Identidad y distribución correctas." : messages.join(' ') || "Revisa las notas y el registro solicitados." };
   }
   if (accept.mode === "pitchClass" && parserScore !== null && parserScore >= .999) {
     return { points: 1 };
   }
-  return structural;
+  return {...structural, feedback:structural.points>=.999 ? "Selección correcta." :
+    [...pianoIdentityFeedback(q,selected,accept), ...(accept.mode === 'shape' ? ['Conserva la disposición o transformación específica de este ejercicio.'] : accept.mode === 'exact' ? ['Comprueba las alturas exactas indicadas.'] : [])].join(' ') || 'Revisa la selección solicitada.'};
 }
 function gradePianoPitchClasses(q, selected, accept) {
   const expected = accept.expected || q.answers || [];
@@ -1733,31 +1919,42 @@ function gradePianoPitchClasses(q, selected, accept) {
     ? clamp((correct - extra - duplicateExtra) / expectedPcs.length, 0, 1)
     : 0;
 }
-function gradePianoLayout(selected, layout) {
-  const notes = selected
-    .map(note => ({ note, midi: noteStep(note), pitchClass: notePitchClass(note) }))
-    .sort((a, b) => a.midi - b.midi);
-  if (!notes.length) return 0;
-  const checks = [];
-  const bass = notes[0];
-  const upper = notes.slice(1);
-  if (Number.isFinite(layout.allMin)) checks.push(notes.every(note => note.midi >= layout.allMin));
-  if (Number.isFinite(layout.allMax)) checks.push(notes.every(note => note.midi <= layout.allMax));
-  if (Number.isFinite(layout.totalMaxSpan)) {
-    checks.push(notes[notes.length - 1].midi - notes[0].midi <= layout.totalMaxSpan);
-  }
-  if (Number.isFinite(layout.bassPitchClass)) checks.push(bass.pitchClass === layout.bassPitchClass);
-  if (Number.isFinite(layout.bassMin)) checks.push(bass.midi >= layout.bassMin);
-  if (Number.isFinite(layout.bassMax)) checks.push(bass.midi <= layout.bassMax);
-  if (Number.isFinite(layout.upperMin)) checks.push(upper.length > 0 && upper.every(note => note.midi >= layout.upperMin));
-  if (Number.isFinite(layout.minGapAboveBass)) {
-    checks.push(upper.length > 0 && upper[0].midi - bass.midi >= layout.minGapAboveBass);
-  }
-  if (Number.isFinite(layout.upperMaxSpan)) {
-    checks.push(upper.length > 0 && upper[upper.length - 1].midi - upper[0].midi <= layout.upperMaxSpan);
-  }
-  return checks.length ? checks.filter(Boolean).length / checks.length : 1;
+function pianoLayoutChecks(selected, layout) {
+  const notes = selected.map(note => ({midi:noteStep(note),pitchClass:notePitchClass(note)})).sort((a,b)=>a.midi-b.midi);
+  if (!notes.length) return [{ok:false, message:'Selecciona las notas solicitadas.'}];
+  const bass=notes[0], upper=notes.slice(1), checks=[];
+  const check=(key,ok,message)=>{if(Number.isFinite(layout[key])) checks.push({ok,message});};
+  check('allMin',notes.every(n=>n.midi>=layout.allMin),'Hay notas por debajo del registro solicitado.');
+  check('allMax',notes.every(n=>n.midi<=layout.allMax),'Hay notas por encima del registro solicitado.');
+  check('totalMaxSpan',notes.at(-1).midi-bass.midi<=layout.totalMaxSpan,'La posición cerrada debe caber dentro de una octava.');
+  check('bassPitchClass',bass.pitchClass===layout.bassPitchClass,'Revisa qué nota debe quedar en el bajo.');
+  check('bassMin',bass.midi>=layout.bassMin,'El bajo está demasiado grave para este ejercicio.');
+  check('bassMax',bass.midi<=layout.bassMax,'Coloca el bajo en la región grave solicitada.');
+  check('upperMin',upper.length>0&&upper.every(n=>n.midi>=layout.upperMin),'Sube las voces superiores al registro solicitado.');
+  check('minGapAboveBass',upper.length>0&&upper[0].midi-bass.midi>=layout.minGapAboveBass,'Separa el bajo de las voces superiores.');
+  check('upperMaxSpan',upper.length>0&&upper.at(-1).midi-upper[0].midi<=layout.upperMaxSpan,'Las voces superiores exceden la separación solicitada.');
+  check('topPitchClass',notes.at(-1).pitchClass===layout.topPitchClass,'Revisa qué nota se pide como voz superior.');
+  check('secondPitchClass',upper.length>0&&upper[0].pitchClass===layout.secondPitchClass,'La séptima debe quedar encima del bajo y debajo de la tercera.');
+  check('secondMax',upper.length>0&&upper[0].midi<=layout.secondMax,'Mantén la séptima en el registro de la mano izquierda solicitado.');
+  check('remainingMin',notes.length>2&&notes.slice(2).every(n=>n.midi>=layout.remainingMin),'Coloca la tercera y sus duplicaciones por encima del shell de la izquierda.');
+  return checks;
 }
+function gradePianoLayout(selected, layout) {
+  const checks=pianoLayoutChecks(selected,layout);
+  return checks.length ? checks.filter(c=>c.ok).length/checks.length : 1;
+}
+function pianoIdentityFeedback(q, selected, accept) {
+  const wanted=accept.pitchClasses || uniqueSorted((accept.expected||q.answers||[]).map(notePitchClass));
+  const actual=uniqueSorted(selected.map(notePitchClass));
+  const missing=wanted.filter(pc=>!actual.includes(pc));
+  const extra=actual.filter(pc=>!wanted.includes(pc));
+  const message=[];
+  if(missing.length) message.push('Faltan notas del acorde o de la selección pedida.');
+  if(extra.length) message.push('Hay notas adicionales que no pertenecen a la selección pedida.');
+  if(selected.length>(accept.expected||q.answers||[]).length) message.push('Revisa las duplicaciones: conserva solo las solicitadas.');
+  return message;
+}
+
 function gradePianoSelectionStructure(q, selected, accept) {
   const expected = accept.expected || q.answers || [];
   if (!expected.length || !selected.length) return { points: 0 };
@@ -1828,8 +2025,14 @@ function renderQuizResult(result) {
       <div class="review-meta"><b>Pregunta:</b> ${escapeHtml(d.prompt)}</div>
       <div class="review-meta"><b>Respuesta del estudiante:</b> ${escapeHtml(d.given || "Sin respuesta")}</div>
       <div class="review-meta"><b>Referencia de respuesta:</b> ${escapeHtml(d.sampleAnswer)}</div>
+      <div class="review-meta"><b>Para aprender:</b> ${escapeHtml(d.feedback || "Compara tu respuesta con la referencia.")}</div>
+      ${d.studyTopic ? `<button type="button" class="soft-btn" data-review-topic="${escapeAttr(d.studyTopic)}">Repasar el tema</button>` : ""}
     </details>`;
   }).join("");
+  wrap.querySelectorAll('[data-review-topic]').forEach(button=>button.addEventListener('click',()=>{
+    if (!moduleTheory().some(t=>t.id===button.dataset.reviewTopic)) setLearningPath('complete');
+    selectTheoryTopic(button.dataset.reviewTopic); showView('theory');
+  }));
 }
 function safeFilename(value) {
   return String(value || "estudiante")
@@ -1954,6 +2157,7 @@ const THEORY_VISUAL_LABS = {
     { type: "chordExplorer", title: "Constructor visual de acordes", description: "Explora la estructura, el soporte y la superestructura de un acorde con tres representaciones.", options: { categories: ["Triadas", "Séptimas y sextas", "Novenas", "Onceavas y treceavas", "Con #11"], defaultSymbol: "maj7" } }
   ],
   "enlace-voces": [
+    { type: "functionalBridgeLab", title: "El bajo también se enlaza", description: "Compara fundamentales con una línea de bajo por grados.", options: { family: "bass-leading" } },
     { type: "shellLab", title: "Notas guía y shells", description: "Selecciona una fundamental y observa cómo quedan la fundamental y las notas guía en un shell práctico." }
   ],
   "tonalidad": [
@@ -2006,7 +2210,7 @@ const THEORY_VISUAL_LABS = {
     { type: "shellLab", title: "Shell voicings", description: "Elige una fundamental y un tipo de acorde para ver una realización shell sugerida." }
   ],
   "nivel-3-posicion-cerrada-skip-2": [
-    { type: "drop2Lab", title: "Posición cerrada y Skip 2", description: "Compara una disposición cerrada con su transformación tipo Skip 2 / Drop 2." }
+    { type: "drop2Lab", title: "Posición cerrada y Skip 2", description: "Compara dos procedimientos distintos: Skip 2 sube la segunda nota desde abajo; Drop 2 baja la segunda voz desde arriba." }
   ],
   "nivel-3-registro-grave-extensiones": [
     { type: "extensionPlacementLab", title: "Ubicación de extensiones", description: "Comprueba por qué el grave se reserva al bajo y las extensiones suben al registro agudo." }
@@ -2039,9 +2243,9 @@ const THEORY_VISUAL_LABS = {
 Object.assign(THEORY_VISUAL_LABS, {
   "n5-campo-repaso":[{type:"functionalBridgeLab",title:"Campo y cadencias",description:"Reconstruye las tétradas y escucha su función antes de sustituir.",options:{family:"major-field"}}],
   "n5-enlace-progresiones":[{type:"shellLab",title:"Enlace de notas guía",description:"Compara shells antes de mover extensiones y bajo."}],
-  "n5-dominantes-secundarios":[{type:"functionalBridgeLab",title:"Preparación dominante",description:"Escucha la dirección de una dominante hacia su acorde objetivo.",options:{family:"cadences"}}],
-  "n5-intercambio-modal":[{type:"chordExplorer",title:"Color modal y dominante",description:"Contrasta acordes prestados y dominantes alterados en piano, guitarra y pentagrama.",options:{categories:["Séptimas y sextas","Onceavas y treceavas","Con #11"],defaultSymbol:"7"}}],
-  "n5-modulacion-aplicada":[{type:"reharmLab",title:"Laboratorio de análisis funcional",description:"Explora sustituciones y explica el destino funcional de cada acorde."}]
+  "n5-dominantes-secundarios":[{type:"functionalBridgeLab",title:"Preparación dominante",description:"Escucha la dirección de una dominante hacia su acorde objetivo.",options:{family:"applied"}}],
+  "n5-intercambio-modal":[{type:"functionalBridgeLab",title:"Préstamo y sustitución en contexto",description:"Compara recorridos con la misma tónica global y sigue las notas que cambian.",options:{family:"colors"}}],
+  "n5-modulacion-aplicada":[{type:"functionalBridgeLab",title:"Tonicización frente a modulación",description:"Compara un regreso al centro inicial con otro recorrido que confirma y prolonga un nuevo centro.",options:{family:"centers"}}]
 });
 const THEORY_VISUAL_CHORD_FORMULAS = {
   "": "1 3 5",
@@ -2301,7 +2505,7 @@ function mountScaleExplorer(el) {
     el.querySelector("[data-scale-guitar]").innerHTML = renderScaleGuitar(rootName, tones, `${theoryRootUnicode(rootName)} ${scale.label} en guitarra`);
     if(scale.id==="major"){
       const root=CrescendoPractice.rootNote(rootName,4),degrees=majorScalePracticeDegrees(practiceSel.value),semis=majorScalePracticeSemis(practiceSel.value);
-      el.querySelector("[data-scale-staff]").innerHTML=CrescendoPractice.sequence(semis.map((semi,index)=>({...CrescendoPractice.spell(root,semi,degrees[index]%7),beats:.5,label:""})),{labels:false});
+      el.querySelector("[data-scale-staff]").innerHTML=CrescendoPractice.sequence(semis.map((semi,index)=>({...CrescendoPractice.spell(root,semi,degrees[index]),beats:.5,label:""})),{labels:false});
     }else el.querySelector("[data-scale-staff]").innerHTML = renderScaleStaff(rootName, tones, `${theoryRootUnicode(rootName)} ${scale.label} en pentagrama`);
     practiceSel.disabled=scale.id!=="major";
   };
@@ -2622,13 +2826,15 @@ function mountShellLab(el) {
 }
 function closedAndDrop2(rootName, symbol) {
   const formula = THEORY_VISUAL_CHORD_FORMULAS[symbol] || THEORY_VISUAL_CHORD_FORMULAS["maj7"];
-  const tones = buildTheoryTones(rootName, formula.split(/\s+/));
+  const tones = buildTheoryTones(rootName, formula.split(/\s+/)).filter(tone => symbol !== "maj9" || tone.token !== "1");
   const base = theoryRootMidi(rootName, 4);
   const closed = tones.map(tone => ({ tone, step: base + tone.semi }));
   const sorted = closed.slice().sort((a, b) => a.step - b.step);
   const drop = sorted.map(item => ({ ...item }));
   if (drop.length >= 2) drop[drop.length - 2].step -= 12;
-  return { closed: sorted, drop: drop.sort((a, b) => a.step - b.step) };
+  const skip = sorted.map(item => ({ ...item }));
+  if (skip.length >= 2) skip[1].step += 12;
+  return { closed: sorted, skip: skip.sort((a, b) => a.step - b.step), drop: drop.sort((a, b) => a.step - b.step) };
 }
 function diagramFromAbsoluteNotes(notes, color) {
   const keys = {};
@@ -2651,24 +2857,32 @@ function mountDrop2Lab(el) {
   el.innerHTML = `<div class="theory-widget theory-widget-drop2">
     <div class="visual-controls">
       <label>Fundamental<select data-drop-root>${theorySelectOptions(THEORY_VISUAL_ROOTS, "C")}</select></label>
-      <label>Acorde<select data-drop-type>${theorySelectOptions(chordChoices, "maj7")}</select></label>
+      <label>Acorde<select data-drop-type>${theorySelectOptions(chordChoices, "maj9")}</select></label>
+      <label>Procedimiento<select data-drop-procedure><option value="skip">Skip 2 del método</option><option value="drop">Drop 2</option></select></label>
     </div>
-    <div class="visual-summary"><div><strong data-drop-name></strong><div class="small-note">La segunda voz superior baja una octava para abrir el acorde.</div></div></div>
+    <div class="visual-summary"><div><strong data-drop-name></strong><div class="small-note" data-drop-explanation></div></div></div>
     <div class="visual-panel-grid visual-panel-grid-2">
       <section class="visual-panel"><div class="diagram-label">Posición cerrada</div><div data-drop-closed></div></section>
-      <section class="visual-panel"><div class="diagram-label">Skip 2 / Drop 2</div><div data-drop-open></div></section>
+      <section class="visual-panel"><div class="diagram-label" data-drop-label>Skip 2 del método</div><div data-drop-open></div></section>
     </div>
   </div>`;
   const rootSel = el.querySelector("[data-drop-root]");
   const typeSel = el.querySelector("[data-drop-type]");
+  const procedureSel = el.querySelector("[data-drop-procedure]");
   const update = () => {
     const result = closedAndDrop2(rootSel.value, typeSel.value);
     el.querySelector("[data-drop-name]").textContent = `${theoryRootUnicode(rootSel.value)}${typeSel.value}`;
     el.querySelector("[data-drop-closed]").innerHTML = renderPianoDiagram(diagramFromAbsoluteNotes(result.closed, "#91e2af"));
-    el.querySelector("[data-drop-open]").innerHTML = renderPianoDiagram(diagramFromAbsoluteNotes(result.drop, "#a5b4fc"));
+    const skip = procedureSel.value === "skip";
+    el.querySelector("[data-drop-label]").textContent = skip ? "Skip 2 del método" : "Drop 2";
+    el.querySelector("[data-drop-explanation]").textContent = skip
+      ? "Cuenta desde abajo y sube la segunda nota una octava. No es el mismo procedimiento que Drop 2."
+      : "Cuenta desde arriba y baja la segunda voz una octava. Compara el resultado con Skip 2.";
+    el.querySelector("[data-drop-open]").innerHTML = renderPianoDiagram(diagramFromAbsoluteNotes(skip ? result.skip : result.drop, "#a5b4fc"));
   };
   rootSel.addEventListener("change", update);
   typeSel.addEventListener("change", update);
+  procedureSel.addEventListener("change", update);
   update();
 }
 function voicingFormula(symbol) {
@@ -2847,6 +3061,23 @@ function mountBassChordLab(el) {
 }
 
 const FUNCTIONAL_BRIDGE_FAMILIES = {
+  applied: [
+    {id:'v-of-v',label:'V/V → V en un centro mayor',note:'En Do: C–D7–G7–C. Fa♯ de D7 asciende a Sol; Do sigue siendo el centro global.',steps:[{roman:'I',name:'Tónica global',offsets:[0,4,7]},{roman:'V7/V',name:'Dominante aplicado · 3→objetivo',offsets:[2,6,9,12]},{roman:'V7',name:'Dominante global',offsets:[7,11,14,17]},{roman:'I',name:'Regreso a la tónica',offsets:[0,4,7]}]},
+    {id:'v-of-ii',label:'V/ii → ii',note:'En Do: C–A7–Dm–G7–C. Do♯ de A7 asciende a Re, sin abandonar el centro global.',steps:[{roman:'I',name:'Tónica',offsets:[0,4,7]},{roman:'V7/ii',name:'Dominante de ii',offsets:[9,13,16,19]},{roman:'ii',name:'Objetivo temporal',offsets:[2,5,9]},{roman:'V7',name:'Dominante',offsets:[7,11,14,17]},{roman:'I',name:'Tónica',offsets:[0,4,7]}]}
+  ],
+  colors: [
+    {id:'parallel',label:'IV mayor frente a iv prestado',note:'En Do: Fa–La–Do cambia a Fa–La♭–Do. El iv procede del menor paralelo; la tónica no cambia.',steps:[{roman:'I',name:'Tónica',offsets:[0,4,7]},{roman:'IV',name:'Diatónico',offsets:[5,9,12]},{roman:'I',name:'Tónica',offsets:[0,4,7]},{roman:'iv',name:'Préstamo del menor paralelo',offsets:[5,8,12]},{roman:'I',name:'Regreso',offsets:[0,4,7]}]},
+    {id:'tritone',label:'ii–V–I frente a ii–♭II7–I',note:'En Do: G7 y Db7 comparten Si/Do♭ y Fa enarmónicamente. Escucha Re♭→Do en el bajo del segundo recorrido.',steps:[{roman:'iim7',name:'Preparación',offsets:[2,5,9,12]},{roman:'V7',name:'Dominante original',offsets:[7,11,14,17]},{roman:'Imaj7',name:'Tónica',offsets:[0,4,7,11]},{roman:'iim7',name:'Preparación',offsets:[2,5,9,12]},{roman:'♭II7',name:'Sustituto por tritono',offsets:[1,5,8,11],degrees:[1,3,5,7]},{roman:'Imaj7',name:'Tónica',offsets:[0,4,7,11]}]}
+  ],
+  centers: [
+    {id:'temporary',label:'Tonicización con regreso al centro inicial',note:'En Do: C–D7–G7–C. La resolución final vuelve a Do; Sol es un objetivo temporal.',steps:[{roman:'I',name:'Centro inicial',offsets:[0,4,7]},{roman:'V7/V',name:'Preparación temporal',offsets:[2,6,9,12]},{roman:'V7',name:'Objetivo temporal',offsets:[7,11,14,17]},{roman:'I',name:'Cierre en el centro inicial',offsets:[0,4,7]}]},
+    {id:'new-center',label:'Nuevo centro prolongado y confirmado',note:'En Do: C–Am–D7–G–C–D7–G. Am–D7–G funciona como ii–V–I de Sol; IV–V–I confirma Sol. La duración y la frase dan contexto a la modulación.',steps:[{roman:'I inicial',name:'Centro de partida',offsets:[0,4,7]},{roman:'vi = ii nuevo',name:'Acorde pivote',offsets:[9,12,16]},{roman:'V7 nuevo',name:'Dominante del nuevo centro',offsets:[2,6,9,12]},{roman:'I nuevo',name:'Nueva tónica',offsets:[7,11,14]},{roman:'IV nuevo',name:'Prolongación',offsets:[0,4,7]},{roman:'V7 nuevo',name:'Confirmación',offsets:[2,6,9,12]},{roman:'I nuevo',name:'Cierre en el nuevo centro',offsets:[7,11,14]}]}
+  ],
+  'bass-leading': [
+    {id:'roots',label:'Bajo con fundamentales · I–V–vi',note:'En Do, el bajo Do–Sol–La sigue las fundamentales. El bajo también es una línea musical.',steps:[{roman:'I',name:'Fundamental en el bajo',offsets:[0,4,7]},{roman:'V',name:'Fundamental en el bajo',offsets:[7,11,14]},{roman:'vi',name:'Fundamental en el bajo',offsets:[9,12,16]}]},
+    {id:'line',label:'Bajo por grados · I–V/3–vi',note:'En Do, Do–Si–La desciende por grados. La inversión cambia el bajo y conserva la identidad de Sol mayor.',steps:[{roman:'I',name:'Bajo: tónica',offsets:[12,16,19]},{roman:'V/3',name:'Tercera en el bajo',offsets:[11,14,19]},{roman:'vi',name:'Fundamental en el bajo',offsets:[9,12,16]}]}
+  ],
+
   "major-field": [{id:"field7",label:"Tétradas diatónicas",note:"El patrón de calidades se mantiene al transponer.",steps:[
     {roman:"Imaj7",name:"Tónica",offsets:[0,4,7,11]},{roman:"iim7",name:"Subdominante",offsets:[2,5,9,12]},{roman:"iiim7",name:"Tónica",offsets:[4,7,11,14]},{roman:"IVmaj7",name:"Subdominante",offsets:[5,9,12,16]},{roman:"V7",name:"Dominante",offsets:[7,11,14,17]},{roman:"vim7",name:"Tónica",offsets:[9,12,16,19]},{roman:"viiø7",name:"Dominante",offsets:[11,14,17,21]}
   ]}],
@@ -2874,6 +3105,19 @@ const FUNCTIONAL_BRIDGE_FAMILIES = {
   ]
 };
 
+function renderBridgeNotation(el, pattern, rootName) {
+  let host = el.querySelector('[data-bridge-staff]');
+  if (!host) { host = document.createElement('div'); host.dataset.bridgeStaff = ''; host.className = 'diagram-scroll'; el.appendChild(host); }
+  if (!window.CrescendoPractice) return;
+  const root = CrescendoPractice.rootNote(rootName, 3);
+  const events = pattern.steps.flatMap((step, bar) => step.offsets.map((semi, index) => {
+    // Semitone spelling is replaced by an explicit diatonic degree when supplied.
+    const degree = step.degrees?.[index] ?? ({0:0,1:1,2:1,3:2,4:2,5:3,6:3,7:4,8:5,9:5,10:6,11:6,12:7,13:7,14:8,15:9,16:9,17:10,19:11,21:12})[semi];
+    return degree === undefined ? {midi:root.midi+semi,beats:1,chord:index>0,bar}
+      : {...CrescendoPractice.spell(root,semi,degree),beats:1,chord:index>0,bar};
+  }));
+  host.innerHTML = CrescendoPractice.sequence(events,{labels:false});
+}
 function mountFunctionalBridgeLab(el, options = {}) {
   const family=FUNCTIONAL_BRIDGE_FAMILIES[options.family]||FUNCTIONAL_BRIDGE_FAMILIES["jazz-bridge"];
   el.innerHTML=`<div class="theory-widget theory-widget-functional-bridge"><div class="visual-controls">
@@ -2884,8 +3128,9 @@ function mountFunctionalBridgeLab(el, options = {}) {
   const rootSel=el.querySelector("[data-bridge-root]"),patternSel=el.querySelector("[data-bridge-pattern]");
   const current=()=>family.find(item=>item.id===(patternSel?.value||family[0].id))||family[0];
   const render=()=>{
-    const pattern=current();el.querySelector("[data-bridge-note]").textContent=pattern.note;
+    const pattern=current();el.querySelector("[data-bridge-note]").textContent=(rootSel.value === "C" ? pattern.note : `Centro inicial: ${theoryRootUnicode(rootSel.value)} mayor. Los grados y la dirección funcional se conservan; compara las voces en el pentagrama.`);
     el.querySelector("[data-bridge-progression]").innerHTML=pattern.steps.map((step,index)=>`<button type="button" class="bridge-chord-step" data-bridge-step="${index}"><b>${escapeHtml(step.roman)}</b><span>${escapeHtml(step.name)}</span>${step.bass?`<small>Bajo: ${escapeHtml(step.bass)}</small>`:""}</button>${index<pattern.steps.length-1?'<span class="progression-arrow">→</span>':""}`).join("");
+    renderBridgeNotation(el, pattern, rootSel.value);
     el.querySelectorAll("[data-bridge-step]").forEach(button=>button.addEventListener("click",()=>{const step=pattern.steps[Number(button.dataset.bridgeStep)],base=theoryRootMidi(rootSel.value,3);playTheoryChord(step.offsets.map(offset=>base+offset),{duration:1.15})}));
   };
   rootSel.addEventListener("change",render);patternSel?.addEventListener("change",render);render();
@@ -2915,6 +3160,12 @@ const THEORY_AUDIO_STATE = {
 };
 
 const TOPIC_PRACTICE_BANK = {
+  'n5-campo-repaso': [{prompt:'En Fa mayor, ¿qué notas forman Gm7, el ii7?',choices:['Sol–Si♭–Re–Fa','Sol–Si–Re–Fa','Sol–Si♭–Re–Mi'],answer:0,explain:'Apila terceras de Fa mayor desde Sol; Si♭ pertenece a la tonalidad.'}],
+  'n5-enlace-progresiones': [{prompt:'En G7→C, ¿cómo pueden resolver Si y Fa?',choices:['Si→Do y Fa→Mi','Si→La y Fa→Sol siempre','Ambas voces deben saltar una octava'],answer:0,explain:'La sensible asciende a la tónica y la séptima del dominante desciende a la tercera. Sol puede conservarse.'}],
+  'n5-dominantes-secundarios': [{prompt:'En C–D7–G7–C, ¿qué explica el Fa♯ de D7?',choices:['Es sensible temporal hacia Sol','Cambia automáticamente toda la pieza a Sol','Es parte de Do mayor natural'],answer:0,explain:'D7 es V/V: Fa♯→Sol prepara V y el cierre vuelve a Do.'},{prompt:'¿Qué acorde prepara Dm como V/ii de Do?',choices:['A7','Am7','D7'],answer:0,explain:'La7 contiene Do♯, sensible hacia Re; no es necesario establecer un nuevo centro permanente.'}],
+  'n5-intercambio-modal': [{prompt:'Al cambiar F por Fm en Do, ¿qué nota introduce el préstamo?',choices:['La♭','Fa♯','Si♭'],answer:0,explain:'La pasa a La♭, procedente del menor paralelo. El centro global sigue siendo Do.'},{prompt:'¿Qué comparten G7 y Db7 para sustituirse hacia C?',choices:['Si/Do♭ y Fa enarmónicamente','La misma fundamental','Todas las notas escritas igual'],answer:0,explain:'Sus terceras y séptimas forman el mismo tritono enarmónico; el bajo Re♭ puede bajar a Do.'}],
+  'n5-modulacion-aplicada': [{prompt:'¿Qué diferencia mejor una tonicización de una modulación?',choices:['La confirmación y prolongación del nuevo centro','Una sola alteración aislada','El volumen del último acorde'],answer:0,explain:'Una dominante aplicada puede ser momentánea; la modulación se confirma en el contexto de la frase, duración y cadencias.'}],
+
   "escalas-intervalos": [
     {
       prompt: "¿Qué patrón interválico describe la escala mayor natural?",
@@ -3083,10 +3334,10 @@ const TOPIC_PRACTICE_BANK = {
   ],
   "nivel-3-posicion-cerrada-skip-2": [
     {
-      prompt: "En una transformación tipo Drop 2, ¿qué voz se baja una octava?",
-      choices: ["La segunda voz desde arriba", "La voz más grave", "La voz superior"],
+      prompt: "En el Skip 2 de este método, ¿qué nota sube una octava?",
+      choices: ["La segunda nota desde abajo", "La segunda voz desde arriba baja", "La voz más grave"],
       answer: 0,
-      explain: "Drop 2 baja una octava la segunda voz contando desde arriba."
+      explain: "Skip 2 sube la segunda nota desde abajo. Drop 2 baja la segunda voz desde arriba: son procedimientos distintos."
     }
   ],
   "nivel-3-registro-grave-extensiones": [
@@ -3568,13 +3819,14 @@ mountDrop2Lab = function(el, options) {
       );
       playTheoryChord(result.closed.map(item => item.step), { duration: 1.05 });
     },
-    chordLabel: "▶ Skip 2 / Drop 2",
+    chordLabel: "▶ Escuchar transformación",
     chord: () => {
       const result = closedAndDrop2(
         el.querySelector("[data-drop-root]")?.value || "C",
         el.querySelector("[data-drop-type]")?.value || "maj7"
       );
-      playTheoryChord(result.drop.map(item => item.step), { duration: 1.05 });
+      const notes = el.querySelector("[data-drop-procedure]")?.value === "drop" ? result.drop : result.skip;
+      playTheoryChord(notes.map(item => item.step), { duration: 1.05 });
     }
   });
 };
