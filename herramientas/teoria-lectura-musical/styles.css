@@ -1434,3 +1434,85 @@ body .reference-grid>.symbol-guide.grand-reference{grid-column:1/-1!important}
  .trainer-question-card:has(>[data-nt-staff])>:not([data-nt-staff]){grid-column:2}
  .trainer-question-card>[data-nt-staff] .cp-staff{margin:0;min-height:180px}
 }
+
+/* Lectura por frases: ayudas opcionales y corrección que permanece visible. */
+.reading-study-steps{padding-left:1.4rem;line-height:1.7}
+.reading-study .controls-row{align-items:center;gap:18px;flex-wrap:wrap}
+.reading-study .controls-row label{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.reading-study .controls-row input[type="checkbox"]{width:20px;height:20px;accent-color:var(--gold)}
+.phrase-check{min-width:0;padding:16px;margin:18px 0;border:1px solid var(--line);border-radius:10px}
+.phrase-check legend{padding:0 6px;font-weight:700;max-width:100%;line-height:1.5}
+.phrase-check p{margin-bottom:0;color:var(--muted);line-height:1.6}
+.phrase-check button,.dictation-choice button,.reading-study .solfege-actions button{min-height:44px}
+.dictation-choice{padding:14px;margin:16px 0;border:1px solid var(--line);border-radius:12px;min-width:0}
+.dictation-choice h5{font:700 1rem system-ui;margin:0 0 10px}
+.reading-study [data-phrase-result]{padding:14px;border-left:3px solid var(--gold);line-height:1.7}
+.reading-study [data-phrase-result]:empty{display:none}
+.reading-evaluation select{padding:10px;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:8px;max-width:100%;min-height:44px}
+.reading-study .reading-rubric button,.reading-study .reading-rubric p{grid-column:1/-1}
+@media(max-width:600px){.phrase-check{padding:12px 8px}.reading-study .controls-row{align-items:flex-start;flex-direction:column}.reading-study .controls-row input[type="range"]{max-width:100%}}
+
+/* Paso a paso mantiene el contenido completo accesible sin mostrarlo todo a la vez. */
+.lesson-pacing{padding:18px;margin:24px 0;border:1px solid var(--line);border-radius:12px;background:var(--panel2)}
+.lesson-pacing [role="group"],.lesson-pacing [data-lesson-step-controls]{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.lesson-pacing button{min-height:44px}
+.lesson-pacing button[aria-pressed="true"]{border-color:var(--gold);background:var(--gold);color:#17130d}
+.lesson-pacing p,.microtask{line-height:1.7}
+.lesson-pacing [data-lesson-practice]{margin-top:14px}
+.lesson-block[hidden],.lesson-pacing [hidden],.microtask[hidden]{display:none!important}
+.lesson-block,[data-lesson-practice-area]{scroll-margin-top:95px}
+.microtask{padding:14px;border-left:3px solid var(--gold);background:rgba(212,168,79,.06)}
+.review-section{padding:30px 0 50px}.review-section>p{max-width:800px;line-height:1.7}
+.review-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-top:20px}
+.review-cards article{padding:18px;border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+.review-cards h3{font-size:1.15rem;margin:0 0 8px}.review-cards button{min-height:44px}
+.tonal-change-practice .tonal-segment{padding:12px;margin:12px 0;border:1px solid var(--line);border-radius:10px;min-width:0}
+.tonal-change-practice .tonal-segment h4{margin:0 0 10px}
+ol.navigation-route{padding-left:1.6rem;display:block;line-height:1.6}ol.navigation-route li{margin:8px 0;padding:10px 14px;text-align:left}
+
+/* Acceso por teclado y reflujo: los pentagramas/tablas desplazan su propio contenido. */
+html{scroll-padding-top:var(--theory-nav-height,100px)}
+body.theory-reading-page :is(.course-layout,.course-sidebar,.lesson-panel,.lesson-block,.interactive-section,.lab-card,.visual-box,.trainer-section,.solfege-section,.track-extension,.evaluation-page,.evaluation-runner){min-width:0;max-width:100%}
+body.theory-reading-page :is(.course-layout,.visual-two,.visual-three,.track-extension-grid)>*{min-width:0}
+body.theory-reading-page :is(h1,h2,h3,h4,[tabindex="-1"],.lesson-block,[data-lesson-practice-area]){scroll-margin-top:12px}
+body.theory-reading-page .lesson-step-footer{display:flex;flex-wrap:wrap;gap:12px;margin-top:18px}
+body.theory-reading-page .lesson-step-footer[hidden]{display:none!important}
+body.theory-reading-page main :is(button,select,summary):not(.hand-hotspot){min-height:44px}
+body.theory-reading-page .topbar .nav-btn{min-height:44px}
+body.theory-reading-page .topbar .main-nav{flex-wrap:wrap;overflow:visible;gap:6px}
+body.theory-reading-page .course-header .course-header-actions{flex-wrap:wrap}
+body.theory-reading-page .course-header .course-header-socials>a{min-width:44px;min-height:44px;flex:0 0 44px}
+body.theory-reading-page .course-header .course-header-links>a{min-height:44px}
+body.theory-reading-page main :is(input[type="checkbox"],input[type="radio"]){width:20px;height:20px;accent-color:var(--gold)}
+body.theory-reading-page :is(.reading-rubric,.reading-evaluation-list) label{min-height:44px;display:flex;align-items:center;gap:9px;line-height:1.5}
+body.theory-reading-page :is(button,input,select,summary,a):focus-visible{outline:3px solid #f3ce7b!important;outline-offset:3px!important}
+body.theory-reading-page :is(h1,h2,h3,h4,[data-eval-feedback]):focus{outline:2px solid var(--gold);outline-offset:6px;border-radius:3px}
+body.theory-reading-page .irregular-pulses{max-width:100%;overflow-x:auto;padding-bottom:8px}
+body.theory-reading-page .irregular-pulse{display:grid;place-items:center;flex:0 0 36px;min-width:36px}
+@media(max-width:950px){
+ body.theory-reading-page .course-layout{grid-template-columns:minmax(0,1fr)}
+ body.theory-reading-page .course-sidebar{position:static}
+}
+@media(max-width:600px){
+ body.theory-reading-page .lesson-panel{padding:16px}
+ body.theory-reading-page .lab-card{padding:14px}
+ body.theory-reading-page .reference-panel{padding:12px}
+ body.theory-reading-page :is(.trainer-controls,.controls-row,.cp-controls) label{min-width:0;max-width:100%}
+ body.theory-reading-page :is(select,input[type="range"]){max-width:100%}
+ body.theory-reading-page :is(.controls-row,.trainer-controls,.cp-controls) select{width:100%}
+ body.theory-reading-page :is(.lesson-actions,.solfege-actions){flex-wrap:wrap}
+ body.theory-reading-page .lesson-actions button{flex:1 1 140px;white-space:normal}
+ body.theory-reading-page .reading-rubric{grid-template-columns:minmax(0,1fr)}
+ body.theory-reading-page .lesson-block p,body.theory-reading-page .lesson-block li{line-height:1.7}
+ body.theory-reading-page .track-switcher button{font-size:.85rem}
+ body.theory-reading-page .topbar{padding:8px}
+ body.theory-reading-page .topbar .nav-btn{flex:1 1 auto;padding:8px 10px;font-size:.85rem}
+ body.theory-reading-page .course-header .course-header-socials{flex-wrap:wrap;justify-content:center;gap:4px}
+ body.theory-reading-page .course-header .course-header-links{border-left:0;padding-left:0}
+}
+
+body.theory-reading-page main label:has(input[type="checkbox"],input[type="radio"]){min-height:44px}
+body.theory-reading-page :is([data-phrase-feedback],[data-study-dictation-feedback],[data-practice-feedback],[data-nt-feedback],[data-cp-feedback]):focus{outline:2px solid var(--gold);outline-offset:5px;border-radius:3px}
+body.theory-reading-page main{overflow-wrap:anywhere}
+body.theory-reading-page main :is(input[type="range"],input[type="number"]){min-height:44px}
+body.theory-reading-page .topbar [data-course-sound-choice]{min-height:44px}

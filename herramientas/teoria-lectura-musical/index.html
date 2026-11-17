@@ -5,7 +5,7 @@
   <script defer src="../../shared/course-sound.js?v=20261019-dropdown-1"></script>
 <link rel="stylesheet" href="../../shared/course-sound.css?v=20261019-dropdown-1">
 <script defer src="../../shared/opensheetmusicdisplay-1.8.4.min.js?v=20261019-bravura-1"></script>
-  <script defer src="../../shared/music-practice.js?v=20261029-purpose-audit-1"></script>
+  <script defer src="../../shared/music-practice.js?v=20261117-accessibility-2"></script>
   <link rel="stylesheet" href="../../shared/practice-lab.css">
   <script defer src="../../shared/practice-lab.js?v=20260928-timbres"></script>
   <meta charset="utf-8">
@@ -20,14 +20,14 @@
   <title>Teoría y Lectura Musical | Crescendo Academy</title>
   <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="../../shared/header-icons.css?v=20260919-flat-logo-v2">
-  <link rel="stylesheet" href="styles.css?v=20261029-reading-audit-2">
-  <script defer src="https://cdn.jsdelivr.net/npm/soundfont-player@0.12.0/dist/soundfont-player.min.js"></script>
-  <script defer src="data.js?v=20261029-clef-layout-3"></script>
+  <link rel="stylesheet" href="styles.css?v=20261117-accessibility-4">
+  <script async src="https://cdn.jsdelivr.net/npm/soundfont-player@0.12.0/dist/soundfont-player.min.js"></script>
+  <script defer src="data.js?v=20261117-accessibility-4"></script>
   <link rel="stylesheet" href="../../shared/course-instruments.css?v=20261029-purpose-audit-1">
 <script defer src="../../shared/course-instruments.js?v=20261029-purpose-audit-1"></script>
 <script defer src="../../shared/concept-examples.js?v=20261029-reading-audit-2"></script>
 <script defer src="../../shared/concept-example-catalog.js?v=20261029-reading-audit-2"></script>
-<script defer src="app.js?v=20261029-purpose-audit-1"></script>
+<script defer src="app.js?v=20261117-accessibility-4"></script>
 <link rel="stylesheet" href="../../shared/course-actions.css">
 <link rel="stylesheet" href="../../shared/course-interactions.css?v=20260927">
   <link rel="stylesheet" href="../../shared/crescendo-identity.css?v=20261019-selected-text-1">
@@ -158,13 +158,14 @@
         </div>
         <div id="levelCards" class="level-cards"></div>
       </section>
+      <section id="reviewSuggestions" class="review-section" aria-label="Repasos recomendados"></section>
     </section>
 
     <section id="cursoView" class="view hidden">
       <div class="course-layout">
         <aside class="course-sidebar">
           <p class="kicker">Ruta de aprendizaje</p>
-          <div id="courseNav"></div>
+          <nav id="courseNav" aria-label="Unidades del curso"></nav>
         </aside>
         <section class="lesson-panel">
           <div id="lessonContent"></div>
@@ -208,7 +209,7 @@
       <div class="evaluation-page">
         <p class="kicker">Evaluación y progreso</p>
         <h2>Diagnóstico y evaluaciones por nivel</h2>
-        <p class="lead">Esta sección no sustituye la práctica de lectura: sirve para medir comprensión conceptual y orientar qué nivel conviene reforzar.</p>
+        <p class="lead">Las preguntas por nivel comprueban conceptos. La lectura práctica añade reconocimiento de partitura y una autoevaluación al cantar o tocar; cada resultado se registra por separado.</p>
 
         <div class="evaluation-summary" id="evaluationSummary"></div>
 
@@ -223,21 +224,21 @@
           <article class="evaluation-card">
             <span class="level-number">Nivel 1</span>
             <h3>Fundamentos</h3>
-            <p>Comprueba la lectura, el ritmo y los conceptos musicales de la primera ruta.</p>
+            <p>Comprueba los conceptos de lectura y ritmo de la primera ruta.</p>
             <button class="primary-btn" id="startFinalEvalBtn" type="button">Evaluar fundamentos</button>
           </article>
 
           <article class="evaluation-card">
             <span class="level-number">Nivel 2</span>
             <h3>Lectura aplicada</h3>
-            <p>Comprueba claves, lectura rítmica y reconocimiento de la partitura.</p>
+            <p>Comprueba tu comprensión de claves, ritmo y estrategias de lectura.</p>
             <button class="primary-btn" id="startAppliedEvalBtn" type="button">Evaluar lectura aplicada</button>
           </article>
 
           <article class="evaluation-card">
             <span class="level-number">Nivel 3</span>
             <h3>Lectura avanzada</h3>
-            <p>Comprueba métrica, estructura y lectura en contextos más complejos.</p>
+            <p>Comprueba conceptos de métrica, estructura y estrategias de lectura avanzada.</p>
             <button class="primary-btn" id="startAdvancedEvalBtn" type="button">Evaluar lectura avanzada</button>
           </article>
 

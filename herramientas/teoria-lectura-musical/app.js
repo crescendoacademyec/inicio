@@ -31,7 +31,7 @@ const COURSE_TRACKS = {
     {id:"l3-cambios-tonales",title:"Cambios de tonalidad y cromatismo",subtitle:"Leer función y grafía en contexto.",lead:"Cuando cambia la armadura o aparecen accidentales persistentes, la lectura debe preguntarse si hay una nueva región tonal, una modulación o un color pasajero.",before:"Reconoce armaduras mayores, menores relativas y alteraciones accidentales.",goal:"Separar una alteración local de un cambio tonal indicado por la partitura.",practice:{type:"tonal-change"},blocks:[{title:"Mira antes de reaccionar",html:"<p>En una nueva sección revisa armadura, alteraciones recurrentes, notas de llegada y cadencias. La grafía correcta aporta información funcional, incluso cuando dos notas suenan igual en temperamento.</p>"},{title:"Lectura responsable",html:"<p>Respeta sostenidos, bemoles y becuadros escritos. Simplificar enarmónicamente por costumbre puede ocultar la dirección de la línea.</p>"}]},
     {id:"l3-textura",title:"Textura y lectura polifónica",subtitle:"Voces, acordes y prioridades.",lead:"En una textura polifónica cada voz tiene dirección propia. La lectura eficaz distingue qué voz lleva la melodía, qué voz sostiene el ritmo y qué notas forman apoyo armónico.",before:"Coordina dos claves en patrones simples y reconoce tríadas.",goal:"Seguir una voz principal sin perder la alineación vertical del conjunto.",practice:{type:"grand",meter:"3/4",bpm:58,upper:["G4","B4","A4","C5","B4","D5","C5","B4","A4"],lower:["C3","G2","C3","F2","C3","G2","C3","G2","C3"]},blocks:[{title:"Jerarquía de voces",html:"<p>Identifica primero la voz que debe escucharse como melodía. Después observa las notas que coinciden con sus apoyos y, por último, los detalles de acompañamiento.</p>"},{title:"Acordes no sustituyen voces",html:"<p>Un acorde explica la verticalidad, pero no elimina el valor melódico de cada línea. Lee ambas dimensiones: sucesión y simultaneidad.</p>"}]},
     {id:"l3-navegacion",title:"Partitura, ensamble y navegación",subtitle:"Repeticiones, señales y entradas.",lead:"En una partitura extensa, leer también es orientarse: números de compás, marcas de ensayo, repeticiones, codas y cambios de tempo permiten conservar la forma.",before:"Reconoce barras, casillas, D.C., D.S., Fine y Coda.",goal:"Trazar y comprobar el recorrido de una sección antes de tocarla con otras personas.",practice:{type:"navigation"},blocks:[{title:"Mapa antes de ensayo",html:"<p>Marca secciones, repeticiones y cambios de tempo. En ensamble, saber dónde se está es tan importante como leer las notas correctas.</p>"},{title:"Entradas y silencios",html:"<p>Cuenta los silencios activos. Antes de una entrada, identifica qué instrumento o voz funciona como referencia audible.</p>"}]},
-    {id:"l3-capstone",title:"Primera vista avanzada e interpretación",subtitle:"Integrar lectura, continuidad y decisión musical.",lead:"La meta final no es eliminar todo error: es leer con dirección, pulso, sonido y capacidad de recuperarse sin abandonar la forma.",before:"Integra métrica, tonalidad, textura, signos expresivos y navegación.",goal:"Realizar una lectura breve, registrar evidencia y definir un plan de mejora concreto.",practice:{type:"reading",clef:"treble",meter:"5/4",bpm:56,phrase:["D4","F4","A4","G4","E4","F4","A4","C5","B4","A4","G4","F4","E4","D4","C4"]},blocks:[{title:"Protocolo profesional",html:"<ol><li>Observa clave, compás, tonalidad, tempo y forma.</li><li>Localiza los ritmos, saltos y alteraciones de riesgo.</li><li>Cuenta antes de entrar y conserva el pulso.</li><li>Si ocurre un error, vuelve al pulso en el siguiente punto seguro.</li></ol>"},{title:"Cierre del curso",html:"<p>Graba una lectura, escucha una vez y evalúa continuidad, precisión rítmica, alturas, articulación y fraseo. Esa evidencia orienta tu práctica posterior en repertorio real.</p>"}]}
+    {id:"l3-capstone",title:"Primera vista avanzada e interpretación",subtitle:"Integrar lectura, continuidad y decisión musical.",lead:"La meta final no es eliminar todo error: es leer con dirección, pulso, sonido y capacidad de recuperarse sin abandonar la forma.",before:"Integra métrica, tonalidad, textura, signos expresivos y navegación.",goal:"Realizar una lectura breve, registrar evidencia y definir un plan de mejora concreto.",practice:{type:"reading",clef:"treble",meter:"5/4",key:1,bpm:56,phrase:["D4","F4","A4","G4","E4","F4","A4","C5","B4","A4","G4","F4","E4","D4","C4"]},blocks:[{title:"Protocolo profesional",html:"<ol><li>Observa clave, compás, tonalidad, tempo y forma.</li><li>Localiza los ritmos, saltos y alteraciones de riesgo.</li><li>Cuenta antes de entrar y conserva el pulso.</li><li>Si ocurre un error, vuelve al pulso en el siguiente punto seguro.</li></ol>"},{title:"Cierre del curso",html:"<p>Graba una lectura, escucha una vez y evalúa continuidad, precisión rítmica, alturas, articulación y fraseo. Esa evidencia orienta tu práctica posterior en repertorio real.</p>"}]}
   ]}
 };
 const LS_KEY = "crescendo-teoria-lectura-v3";
@@ -55,6 +55,7 @@ const SCALES = [
   {id:"major",label:"Mayor natural",tokens:["1","2","3","4","5","6","7","8"],pattern:"T–T–S–T–T–T–S"},
   {id:"minor",label:"Menor natural",tokens:["1","2","b3","4","5","b6","b7","8"],pattern:"T–S–T–T–S–T–T"},
   {id:"harmonic-minor",label:"Menor armónica",tokens:["1","2","b3","4","5","b6","7","8"],pattern:"T–S–T–T–S–3S–S"},
+  {id:"melodic-minor",label:"Menor melódica clásica",tokens:["1","2","b3","4","5","6","7","8"],descendingTokens:["1","2","b3","4","5","b6","b7","8"],pattern:"Ascenso: T–S–T–T–T–T–S · descenso: menor natural"},
   {id:"major-penta",label:"Pentatónica mayor",tokens:["1","2","3","5","6","8"],pattern:"1–2–3–5–6"},
   {id:"minor-penta",label:"Pentatónica menor",tokens:["1","b3","4","5","b7","8"],pattern:"1–♭3–4–5–♭7"}
 ];
@@ -94,7 +95,7 @@ function currentTrack(){return COURSE_TRACKS[activeTrackId]||COURSE_TRACKS.found
 function currentLevels(){return currentTrack().levels}
 function allCourseLevels(){return Object.values(COURSE_TRACKS).flatMap(track=>track.levels)}
 function loadState(){
-  const empty={completed:{},activeTrackId:"foundation",activeLevelId:DATA.levels[0].id,practice:{},readingEvaluation:null,diagnostic:null,finalEvaluation:null,appliedEvaluation:null,advancedEvaluation:null};
+  const empty={completed:{},activeTrackId:"foundation",activeLevelId:DATA.levels[0].id,practice:{},studyMode:"guided",lessonSteps:{},readingEvidence:[],readingEvaluation:null,diagnostic:null,finalEvaluation:null,appliedEvaluation:null,advancedEvaluation:null};
   for(const key of [LS_KEY,...LEGACY_LS_KEYS]){
     try{
       const raw=localStorage.getItem(key);
@@ -105,6 +106,9 @@ function loadState(){
         activeTrackId: COURSE_TRACKS[parsed.activeTrackId]?parsed.activeTrackId:"foundation",
         activeLevelId: allCourseLevels().some(x=>x.id===parsed.activeLevelId)?parsed.activeLevelId:DATA.levels[0].id,
         practice: parsed.practice&&typeof parsed.practice==="object"?parsed.practice:{},
+        studyMode: parsed.studyMode==="full"?"full":"guided",
+        lessonSteps: parsed.lessonSteps&&typeof parsed.lessonSteps==="object"?parsed.lessonSteps:{},
+        readingEvidence: Array.isArray(parsed.readingEvidence)?parsed.readingEvidence.slice(-40):[],
         readingEvaluation: parsed.readingEvaluation&&typeof parsed.readingEvaluation==="object"?parsed.readingEvaluation:null,
         diagnostic: parsed.diagnostic&&typeof parsed.diagnostic==="object"?parsed.diagnostic:null,
         finalEvaluation: parsed.finalEvaluation&&typeof parsed.finalEvaluation==="object"?parsed.finalEvaluation:null,
@@ -125,16 +129,64 @@ function saveState(){
 function reducedMotion(){return !!window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches}
 function scrollTopSafe(){window.scrollTo({top:0,behavior:reducedMotion()?"auto":"smooth"})}
 
-function showView(view){
+function focusTarget(element,{scroll=true}={}){
+  if(!element)return false;
+  element.setAttribute('tabindex','-1');
+  element.focus({preventScroll:true});
+  if(scroll)element.scrollIntoView({behavior:reducedMotion()?"auto":"smooth",block:"start"});
+  return true;
+}
+function focusContent(container,options){
+  return focusTarget(container?.querySelector('h1,h2,h3,h4')||container,options);
+}
+function enhanceTheoryScrollRegions(root){
+  if(!root)return;
+  root.querySelectorAll('.table-scroll,.scroll-x,.ce-scroll,.cp-staff,.grand-score,.irregular-pulses,.chromatic-keyboard-scroll').forEach(region=>{
+    const overflowing=region.clientWidth>0&&region.scrollWidth>region.clientWidth+1;
+    if(overflowing&&!region.hasAttribute('tabindex')){
+      region.setAttribute('tabindex','0');region.dataset.theoryScrollable='true';
+      if(!region.hasAttribute('role')){region.setAttribute('role','region');region.dataset.theoryScrollRole='true';}
+      if(!region.hasAttribute('aria-label')){
+        const section=region.closest('.lesson-block,.lab-card,.trainer-section,.solfege-section');
+        const title=region.querySelector('caption')?.textContent||section?.querySelector('h2,h3,h4')?.textContent||'Ejemplo musical';
+        region.setAttribute('aria-label',`${title.trim()} · contenido desplazable`);region.dataset.theoryScrollLabel='true';
+      }
+    }else if(!overflowing&&region.dataset.theoryScrollable==='true'){
+      region.removeAttribute('tabindex');delete region.dataset.theoryScrollable;
+      if(region.dataset.theoryScrollRole==='true'){region.removeAttribute('role');delete region.dataset.theoryScrollRole;}
+      if(region.dataset.theoryScrollLabel==='true'){region.removeAttribute('aria-label');delete region.dataset.theoryScrollLabel;}
+    }
+  });
+}
+function observeTheoryScrollRegions(){
+  const main=$('mainContent');if(!main)return;
+  const refresh=()=>enhanceTheoryScrollRegions(main);
+  refresh();
+  if(typeof MutationObserver!=="undefined")new MutationObserver(refresh).observe(main,{childList:true,subtree:true});
+  if(typeof ResizeObserver!=="undefined")new ResizeObserver(refresh).observe(document.documentElement);
+}
+
+function observeTheoryNavigation(){
+  const navigation=document.querySelector('.topbar');if(!navigation)return;
+  const update=()=>document.documentElement.style.setProperty('--theory-nav-height',`${Math.ceil(navigation.getBoundingClientRect().height)+12}px`);
+  update();
+  if(typeof ResizeObserver!=="undefined")new ResizeObserver(update).observe(navigation);
+}
+
+function showView(view,{focus=true}={}){
+  const target=$(`${view}View`);if(!target)return false;
+  if(view!=="curso")stopAllAudio();
   document.querySelectorAll(".view").forEach(v=>v.classList.add("hidden"));
   $(`${view}View`).classList.remove("hidden");
-  document.querySelectorAll(".nav-btn").forEach(btn=>{
+  document.querySelectorAll("[data-view]").forEach(btn=>{
     const active=btn.dataset.view===view;
     btn.classList.toggle("active",active);
     if(active) btn.setAttribute("aria-current","page"); else btn.removeAttribute("aria-current");
   });
   if(view==="curso") renderCourse();
-  scrollTopSafe();
+  if(focus)focusContent(target);else scrollTopSafe();
+  enhanceTheoryScrollRegions(target);
+  return true;
 }
 
 function renderLevelCards(){
@@ -195,32 +247,86 @@ function renderLearningGuide(level,index){
     <div class="learning-guide-goal"><span>Meta práctica</span><b>${escapeHtml(guide.goal)}</b></div>
   </section>`;
 }
+function renderLessonPacing(level){
+  return `<section class="lesson-pacing" aria-label="Forma de estudiar"><div role="group" aria-label="Vista de la lección"><button type="button" class="ghost-btn" data-lesson-mode="guided">Paso a paso</button><button type="button" class="ghost-btn" data-lesson-mode="full">Vista completa</button></div><p>Una idea por vez: observa el ejemplo, explícalo con tus palabras y pruébalo. Puedes detenerte y continuar otro día.</p><div data-lesson-step-controls><button type="button" class="ghost-btn" data-lesson-back>← Idea anterior</button><span data-lesson-position aria-live="polite"></span><button type="button" class="ghost-btn" data-lesson-forward>Siguiente idea →</button></div><button type="button" class="primary-btn" data-lesson-practice>Ir a la práctica</button></section>`;
+}
+function lessonStepIndex(levelId,count){
+  return Math.max(0,Math.min(count-1,Math.floor(Number(state.lessonSteps?.[levelId])||0)));
+}
+function mountLessonPacing(level){
+  const root=$("lessonContent"),blocks=[...root.querySelectorAll('[data-lesson-block]')];
+  let position=lessonStepIndex(level.id,blocks.length);
+  const update=()=>{
+    const guided=state.studyMode!=="full";
+    blocks.forEach((block,index)=>{block.hidden=guided&&index!==position;block.querySelector('[data-microtask]').hidden=!guided;block.querySelector('[data-lesson-footer]').hidden=!guided;});
+    root.querySelectorAll('[data-lesson-mode]').forEach(button=>button.setAttribute('aria-pressed',String((button.dataset.lessonMode==='guided')===guided)));
+    root.querySelector('[data-lesson-step-controls]').hidden=!guided;
+    root.querySelector('[data-lesson-position]').textContent=`Idea ${position+1} de ${blocks.length}`;
+    root.querySelector('[data-lesson-back]').disabled=position===0;
+    root.querySelector('[data-lesson-forward]').disabled=position===blocks.length-1;
+    enhanceTheoryScrollRegions(root);
+  };
+  root.querySelectorAll('[data-lesson-mode]').forEach(button=>button.addEventListener('click',()=>{state.studyMode=button.dataset.lessonMode;saveState();update();}));
+  const move=next=>{position=Math.max(0,Math.min(blocks.length-1,next));state.lessonSteps??={};state.lessonSteps[level.id]=position;saveState();update();focusContent(blocks[position]);};
+  root.querySelector('[data-lesson-back]').addEventListener('click',()=>move(position-1));
+  root.querySelector('[data-lesson-forward]').addEventListener('click',()=>move(position+1));
+  root.querySelectorAll('[data-lesson-go]').forEach(button=>button.addEventListener('click',()=>move(Number(button.dataset.lessonGo))));
+  const openPractice=()=>focusContent(root.querySelector('[data-lesson-practice-area]'));
+  root.querySelector('[data-lesson-practice]').addEventListener('click',openPractice);
+  root.querySelectorAll('[data-lesson-start-practice]').forEach(button=>button.addEventListener('click',openPractice));
+  update();
+}
+function readingReviewPlan(now=Date.now()){
+  const latest=new Map();
+  for(const evidence of state.readingEvidence||[])latest.set(evidence.levelId,evidence);
+  return [...latest.values()].map(evidence=>{
+    const level=allCourseLevels().find(level=>level.id===evidence.levelId);
+    const days=evidence.score/evidence.total>=.8?3:1;
+    const dueAt=Date.parse(evidence.at)+days*86400000;
+    return {level,score:evidence.score,total:evidence.total,days,dueAt,due:dueAt<=now};
+  }).filter(item=>item.level&&Number.isFinite(item.dueAt)).sort((a,b)=>a.dueAt-b.dueAt).slice(0,3);
+}
+function renderReviewSuggestions(){
+  const host=document.getElementById?.('reviewSuggestions');if(!host)return;
+  const plan=readingReviewPlan();
+  host.innerHTML=`<p class="kicker">VOLVER A PRACTICAR</p><h2>Repasos breves</h2><p>Leer una frase nueva otro día ayuda a comprobar lo que recuerdas. Estas fechas son sugerencias; puedes repetir antes si lo necesitas.</p>${plan.length?`<div class="review-cards">${plan.map(item=>`<article><h3>${escapeHtml(item.level.title)}</h3><p>Última comprobación: ${item.score}/${item.total}. ${item.due?"Repaso recomendado para hoy.":`Vuelve el ${new Date(item.dueAt).toLocaleDateString('es-EC',{day:'numeric',month:'long'})}.`}</p><button type="button" class="ghost-btn" data-review-level="${item.level.id}">Practicar otra frase</button></article>`).join('')}</div>`:'<p>Completa una práctica de lectura o dictado para recibir una sugerencia de repaso.</p>'}`;
+  host.querySelectorAll('[data-review-level]').forEach(button=>button.addEventListener('click',()=>{
+    activeTrackId=Object.values(COURSE_TRACKS).find(track=>track.levels.some(level=>level.id===button.dataset.reviewLevel))?.id||"foundation";
+    activeLevelId=button.dataset.reviewLevel;saveState();showView('curso');
+  }));
+}
+
 function renderCourse(){
   stopAllAudio();
   const levels=currentLevels();
   const index=levels.findIndex(x=>x.id===activeLevelId);
   const level=levels[index]||levels[0];
   if(level.id!==activeLevelId){activeLevelId=level.id;saveState();}
-  $("courseNav").innerHTML=`<div class="track-switcher" role="tablist" aria-label="Nivel del curso">${Object.values(COURSE_TRACKS).map(track=>`<button type="button" role="tab" aria-selected="${track.id===activeTrackId}" class="${track.id===activeTrackId?"active":""}" data-course-track="${track.id}">${escapeHtml(track.short)}</button>`).join("")}</div>`+levels.map((item,i)=>`
+  $("courseNav").innerHTML=`<div class="track-switcher" role="group" aria-label="Nivel del curso">${Object.values(COURSE_TRACKS).map(track=>`<button type="button" aria-pressed="${track.id===activeTrackId}" class="${track.id===activeTrackId?"active":""}" data-course-track="${track.id}">${escapeHtml(track.short)}</button>`).join("")}</div>`+levels.map((item,i)=>`
     <button class="course-nav-btn ${item.id===level.id?"active":""}" data-course-level="${item.id}" type="button" ${item.id===level.id?'aria-current="page"':""}>
-      <span>${i+1}</span><span><b>${escapeHtml(item.title)}</b><small>${state.practice[item.id]?"Práctica correcta · ":""}${state.completed[item.id]?"Estudiada":"Por estudiar"}</small></span>
+      <span>${i+1}</span><span><b>${escapeHtml(item.title)}</b><small>${escapeHtml(readingLevelStatus(item.id))}${state.completed[item.id]?"Estudiada":"Por estudiar"}</small></span>
     </button>`).join("");
   $("lessonContent").innerHTML=`
     <p class="kicker">${escapeHtml(currentTrack().short)} · Unidad ${index+1} de ${levels.length}</p>
     <h2 class="lesson-title">${escapeHtml(level.title)}</h2>
     <p class="lesson-lead">${escapeHtml(level.lead)}</p>
     ${renderLearningGuide(level,index)}
-    ${courseBlocks(level).map(block=>`
-      <section class="lesson-block">
+    ${renderLessonPacing(level)}
+    ${courseBlocks(level).map((block,blockIndex,blocks)=>`
+      <section class="lesson-block" data-lesson-block>
         <h3>${escapeHtml(block.title)}</h3>
         ${block.html}
         ${window.CourseExamples?.render("reading",block.title)||""}
+        <p class="microtask" data-microtask><b>Antes de seguir:</b> señala en el ejemplo qué representa esta idea y explícalo con tus palabras. Si estudias con alguien, alternen quién muestra y quién explica.</p>
+        <div class="lesson-step-footer" data-lesson-footer>${blockIndex>0?`<button type="button" class="ghost-btn" data-lesson-go="${blockIndex-1}">← Idea anterior</button>`:""}${blockIndex<blocks.length-1?`<button type="button" class="primary-btn" data-lesson-go="${blockIndex+1}">Siguiente idea →</button>`:'<button type="button" class="primary-btn" data-lesson-start-practice>Comenzar práctica</button>'}</div>
       </section>`).join("")}
+    <div data-lesson-practice-area>
     ${renderTrackExtension(level)}
     ${renderInteractive(level)}
     ${renderTrainer(level)}
     ${renderSolfege(level)}
     ${renderQuickPractice(level)}
+    </div>
     <div class="lesson-actions">
       <button class="ghost-btn" id="prevLevelBtn" type="button" ${index===0?"disabled":""}>← Anterior</button>
       <button class="primary-btn complete-btn ${state.completed[level.id]?"done":""}" id="completeLevelBtn" type="button">
@@ -229,28 +335,29 @@ function renderCourse(){
       <button class="ghost-btn" id="nextLevelBtn" type="button" ${index===levels.length-1?"disabled":""}>Siguiente →</button>
       <button class="ghost-btn" id="resetCourseBtn" type="button">Reiniciar progreso</button>
     </div>`;
+  mountLessonPacing(level);
   $("resetCourseBtn").addEventListener("click",()=>{
     if(!confirm("¿Reiniciar el progreso de estudio del curso?")) return;
-    state.completed={}; state.practice={}; state.diagnostic=null; state.finalEvaluation=null; state.appliedEvaluation=null; state.advancedEvaluation=null; state.readingEvaluation=null;
-    saveState(); renderCourse(); renderLevelCards(); updateHomeProgress();
+    state.completed={}; state.practice={}; state.diagnostic=null; state.finalEvaluation=null; state.appliedEvaluation=null; state.advancedEvaluation=null; state.readingEvaluation=null; state.readingEvidence=[]; state.lessonSteps={};
+    saveState(); renderCourse(); renderLevelCards(); updateHomeProgress();$("resetCourseBtn").focus();
   });
   document.querySelectorAll("[data-course-level]").forEach(btn=>btn.addEventListener("click",()=>{
-    activeLevelId=btn.dataset.courseLevel; saveState(); renderCourse(); scrollTopSafe();
+    activeLevelId=btn.dataset.courseLevel; saveState(); renderCourse(); focusContent($("lessonContent"));
   }));
   document.querySelectorAll("[data-course-track]").forEach(btn=>btn.addEventListener("click",()=>{
     activeTrackId=btn.dataset.courseTrack;
     activeLevelId=currentLevels()[0].id;
-    saveState();renderCourse();scrollTopSafe();
+    saveState();renderCourse();focusContent($("lessonContent"));
   }));
   $("prevLevelBtn").addEventListener("click",()=>{
-    if(index>0){activeLevelId=levels[index-1].id;saveState();renderCourse();scrollTopSafe();}
+    if(index>0){activeLevelId=levels[index-1].id;saveState();renderCourse();focusContent($("lessonContent"));}
   });
   $("nextLevelBtn").addEventListener("click",()=>{
-    if(index<levels.length-1){activeLevelId=levels[index+1].id;saveState();renderCourse();scrollTopSafe();}
+    if(index<levels.length-1){activeLevelId=levels[index+1].id;saveState();renderCourse();focusContent($("lessonContent"));}
   });
   $("completeLevelBtn").addEventListener("click",()=>{
     state.completed[level.id]=!state.completed[level.id];
-    saveState();renderCourse();renderLevelCards();
+    saveState();renderCourse();renderLevelCards();$("completeLevelBtn").focus();
   });
   mountInteractive(level);
   mountTrainer(level);
@@ -390,8 +497,17 @@ function stopAllAudio(){
   if(AUDIO.metroTimer){clearInterval(AUDIO.metroTimer);AUDIO.metroTimer=null}
 }
 function meterPulseCount(meter="4/4"){
-  // 6/8 se practica aquí como dos pulsos principales con subdivisión ternaria.
-  return meter==="6/8"?2:Number(String(meter).split("/")[0])||4;
+  const [top,bottom]=String(meter).split("/").map(Number);
+  return bottom===8 && top>=6 && top%3===0 ? top/3 : top||4;
+}
+// Las duraciones de la partitura se expresan en negras; BPM cuenta pulsos principales.
+function quarterUnitsPerPulse(meter="4/4"){
+  const [top,bottom]=String(meter).split("/").map(Number);
+  return bottom===8 && top>=6 && top%3===0 ? 1.5 : 4/(bottom||4);
+}
+function meterTempoLabel(meter,bpm){
+  const unit=quarterUnitsPerPulse(meter);
+  return `${unit===1.5?"Negra con puntillo":unit===.5?"Corchea":unit===2?"Blanca":"Negra"} = ${bpm}`;
 }
 function setCountIn(root,text,active=false){
   const display=root.querySelector("[data-count-in-display]");
@@ -614,7 +730,7 @@ const SMUFL_GLYPHS=Object.freeze({
 });
 function smuflTimeDigit(value){const digit=Number(value);return Number.isInteger(digit)&&digit>=0&&digit<=9?String.fromCodePoint(0xE080+digit):String(value)}
 function staffTrainerSVG(note,clef){
-  return CrescendoPractice.staff([CrescendoPractice.named(note)],{clef});
+  return clef==="alto"?CrescendoPractice.sequence([{note,beats:4}],{clef:"alto"}):CrescendoPractice.staff([CrescendoPractice.named(note)],{clef});
 }
 const NOTE_SOLFEGE={C:"Do",D:"Re",E:"Mi",F:"Fa",G:"Sol",A:"La",B:"Si"};
 function referencePosition(note,clef){
@@ -764,10 +880,22 @@ function mountChromaticPractice(parent){
 }
 
 /* SCALES */
+function scaleFluencyPitch(rootName,degree){
+  const base=[0,2,4,5,7,9,11];
+  const semi=base[degree%7]+12*Math.floor(degree/7);
+  const tone=spellTone(rootName,String(degree%7+1));
+  const midi=rootMidi(rootName,4)+semi;
+  const accidental=(tone.name.match(/♯/g)||[]).length-(tone.name.match(/♭/g)||[]).length;
+  const octave=Math.round((midi-NATURAL_PC[tone.name[0]]-accidental)/12)-1;
+  return {name:tone.name+octave,midi};
+}
+function descendingScaleTones(rootName,scale){
+  return tones(rootName,scale.descendingTokens||scale.tokens).slice().reverse();
+}
 function mountScaleLab(el){
   el.innerHTML=`<div class="lab-card">
     <div class="controls-row"><label>Tónica <select data-scale-root>${rootOptions()}</select></label><label>Escala <select data-scale-type>${SCALES.map(s=>`<option value="${s.id}">${s.label}</option>`).join("")}</select></label></div>
-    <div class="summary-line"><strong data-scale-title></strong><span data-scale-pattern></span></div><div class="note-pills" data-scale-notes></div>
+    <div class="summary-line"><strong data-scale-title></strong><span data-scale-pattern></span></div><div class="note-pills" data-scale-notes></div><p data-scale-descent hidden></p>
     <div class="visual-three"><section class="visual-box"><div class="diagram-label">Piano</div><div data-scale-piano></div></section><section class="visual-box"><div class="diagram-label">Guitarra</div><div class="scroll-x" data-scale-guitar></div></section><section class="visual-box"><div class="diagram-label">Pentagrama</div><div class="scroll-x" data-scale-staff></div></section></div>
     <div class="lab-actions"><button class="primary-btn" data-scale-play>▶ Escuchar escala</button><button class="ghost-btn" data-scale-descending>▶ Escala descendente</button></div>
     <section class="scale-fluency"><p class="eyebrow">FLUIDEZ EN 12 TONALIDADES</p><h4>Transforma la escala mayor</h4><p>Lee y escucha la misma tonalidad como línea, terceras, tríadas o tétradas. La escritura correcta de cada nota se conserva aunque cambie el recorrido.</p>
@@ -777,19 +905,19 @@ function mountScaleLab(el){
   </div>`;
   const root=el.querySelector("[data-scale-root]"),sel=el.querySelector("[data-scale-type]");
   const current=()=>{const s=SCALES.find(x=>x.id===sel.value)||SCALES[0],ts=tones(root.value,s.tokens);return{s,ts}};
-  const update=()=>{const {s,ts}=current();el.querySelector("[data-scale-title]").textContent=`${ROOTS.find(r=>r.value===root.value)?.label} ${s.label}`;el.querySelector("[data-scale-pattern]").textContent=s.pattern;el.querySelector("[data-scale-notes]").innerHTML=ts.map(t=>`<span>${escapeHtml(t.name)} <small>${escapeHtml(t.token.replace(/b/g,"♭").replace(/#/g,"♯"))}</small></span>`).join("");el.querySelector("[data-scale-piano]").innerHTML=pianoHTML(root.value,ts,{range:12});el.querySelector("[data-scale-guitar]").innerHTML=guitarScaleSVG(root.value,ts);el.querySelector("[data-scale-staff]").innerHTML=staffSVG(root.value,ts,`${s.label}`)};
+  const update=()=>{const {s,ts}=current();el.querySelector("[data-scale-title]").textContent=`${ROOTS.find(r=>r.value===root.value)?.label} ${s.label}`;el.querySelector("[data-scale-pattern]").textContent=s.pattern;const descent=el.querySelector("[data-scale-descent]");descent.hidden=!s.descendingTokens;descent.textContent=s.descendingTokens?`Descenso clásico: ${descendingScaleTones(root.value,s).map(t=>t.name).join("–")}. En jazz suele conservarse la forma ascendente al descender; aquí practicamos la convención clásica.`:"";el.querySelector("[data-scale-notes]").innerHTML=ts.map(t=>`<span>${escapeHtml(t.name)} <small>${escapeHtml(t.token.replace(/b/g,"♭").replace(/#/g,"♯"))}</small></span>`).join("");el.querySelector("[data-scale-piano]").innerHTML=pianoHTML(root.value,ts,{range:12});el.querySelector("[data-scale-guitar]").innerHTML=guitarScaleSVG(root.value,ts);el.querySelector("[data-scale-staff]").innerHTML=staffSVG(root.value,ts,`${s.label}`)};
   [root,sel].forEach(x=>x.addEventListener("change",update));update();
   el.querySelector("[data-scale-play]").addEventListener("click",()=>{const {ts}=current(),m=rootMidi(root.value,4);playSequence(ts.map(t=>m+t.semi),340)});
-  el.querySelector("[data-scale-descending]").addEventListener("click",()=>{const {ts}=current(),m=rootMidi(root.value,4);playSequence(ts.map(t=>m+t.semi).reverse(),340)});
+  el.querySelector("[data-scale-descending]").addEventListener("click",()=>{const {s}=current(),m=rootMidi(root.value,4);playSequence(descendingScaleTones(root.value,s).map(t=>m+t.semi),340)});
   const fluency=()=>{
     const base=[0,2,4,5,7,9,11],kind=el.querySelector("[data-fluency-pattern]").value,degreeSemi=n=>base[n%7]+12*Math.floor(n/7);
     let degrees=kind==="line"?[0,1,2,3,4,5,6,7]:kind==="thirds"?[0,2,1,3,2,4,3,5,4,6,5,7]:kind==="triads"?[0,2,4,1,3,5,2,4,6,3,5,7,4,6,8,5,7,9,6,8,10]:kind==="sevenths"?[0,2,4,6,1,3,5,7,2,4,6,8,3,5,7,9,4,6,8,10,5,7,9,11,6,8,10,12]:[0,2,1,4,2,5,4,7];
     const direction=el.querySelector("[data-fluency-direction]").value;if(direction==="down")degrees=degrees.slice().reverse();if(direction==="both")degrees=degrees.concat(degrees.slice(0,-1).reverse());
     return degrees.map(degree=>({degree,semi:degreeSemi(degree)}));
   };
-  const updateFluency=()=>{const names=fluency().map(item=>spellTone(root.value,String(item.degree%7+1)).name+(4+Math.floor(item.degree/7)));el.querySelector("[data-fluency-notes]").innerHTML=names.map((name,i)=>`<span>${escapeHtml(name)} <small>${i+1}</small></span>`).join("")};
+  const updateFluency=()=>{const names=fluency().map(item=>scaleFluencyPitch(root.value,item.degree).name);el.querySelector("[data-fluency-notes]").innerHTML=names.map((name,i)=>`<span>${escapeHtml(name)} <small>${i+1}</small></span>`).join("")};
   [root,el.querySelector("[data-fluency-pattern]"),el.querySelector("[data-fluency-direction]")].forEach(x=>x.addEventListener("change",updateFluency));updateFluency();
-  el.querySelector("[data-fluency-play]").addEventListener("click",()=>{const m=rootMidi(root.value,4);playSequence(fluency().map(item=>m+item.semi),230)});
+  el.querySelector("[data-fluency-play]").addEventListener("click",()=>{playSequence(fluency().map(item=>scaleFluencyPitch(root.value,item.degree).midi),230)});
 }
 
 /* TONALITY */
@@ -799,7 +927,8 @@ function mountTonalityLab(el){
   el.innerHTML=`<div class="lab-card">
     <div class="fifths-wheel" data-fifths>${FIFTHS.map((k,i)=>`<button style="--i:${i}" data-key="${k}">${ROOTS.find(r=>r.value===k)?.label||k}</button>`).join("")}<div class="wheel-center"><b data-key-center>C</b><span>Tónica</span></div></div>
     <div class="key-info"><h4 data-key-title>C mayor</h4><p data-key-signature>0 alteraciones</p><div class="note-pills" data-key-notes></div></div>
-    <div class="visual-two"><section class="visual-box"><div class="diagram-label">Escala tonal</div><div data-key-piano></div></section><section class="visual-box"><div class="diagram-label">Jerarquía básica</div><div class="degree-function-grid" data-key-functions></div></section></div>
+    <div class="visual-two"><section class="visual-box"><div class="diagram-label">Escala tonal</div><div data-key-piano></div></section><section class="visual-box"><div class="diagram-label">Familias de acordes · modo mayor</div><div class="degree-function-grid" data-key-functions></div></section></div>
+    <p>Este esquema agrupa acordes por familias funcionales en modo mayor; su función concreta depende de la progresión y del contexto.</p>
     <button class="primary-btn" data-key-play>▶ Escuchar tonalidad</button>
   </div>`;
   let key="C";
@@ -863,6 +992,7 @@ function mountQuickPractice(level){
     const chosen=Number(btn.dataset.choice),ok=chosen===q.a;
     root.querySelectorAll("[data-choice]").forEach(b=>{b.disabled=true;const i=Number(b.dataset.choice);if(i===q.a)b.classList.add("correct");else if(i===chosen)b.classList.add("wrong")});
     root.querySelector("[data-practice-feedback]").textContent=(ok?"Correcto. ":"Revisa: ")+q.why;
+    focusTarget(root.querySelector("[data-practice-feedback]"),{scroll:false});
     state.practice[level.id]=ok;saveState();
   }));
 }
@@ -1221,7 +1351,7 @@ mountRhythmSolfege = function(root){
 const TRAINER_BANK = {
   lectura: {
     title: "Entrenador de lectura de notas",
-    description: "Practica reconocimiento de notas en clave de sol y fa con dificultad progresiva.",
+    description: "Practica reconocimiento de notas en claves de sol, fa y do en tercera con dificultad progresiva.",
     type: "noteTrainer"
   },
   ritmo: {
@@ -1299,7 +1429,7 @@ function mountTrainer(level){
   if(cfg.type==="rhythmTrainer") mountRhythmTrainer(root,onResult);
   const practicePlay=(midis,chord)=>{stopAllAudio();if(chord)midis.forEach(midi=>playTone(midi,{duration:1.6}));else playSequence(midis,500);};
   const practiceKinds={intervalTrainer:'interval',scaleTrainer:'scale',keyTrainer:'key'};
-  if(practiceKinds[cfg.type]) window.CrescendoPractice.mount(root.querySelector('[data-trainer-body]'),practiceKinds[cfg.type],practicePlay,onResult);
+  if(practiceKinds[cfg.type]) window.CrescendoPractice.mount(root.querySelector('[data-trainer-body]'),practiceKinds[cfg.type],practicePlay,onResult,cfg.type==='scaleTrainer'?{scaleIds:['major','minor','harmonic','melodic']}:{})
   if(cfg.type==="expressionTrainer") mountExpressionTrainer(root,onResult);
   if(cfg.type==="melodyAnalysis") mountMelodyAnalysisTrainer(root,onResult);
   if(level.id==='puente-armonia'){
@@ -1323,11 +1453,12 @@ function noteTrainerPitches(selection,chromatic=false){
 function mountNoteTrainer(root,onResult){
   const body=root.querySelector("[data-trainer-body]");
   body.innerHTML=`<div class="trainer-controls">
-    <label>Clave <select data-nt-clef><option value="treble">Sol</option><option value="bass">Fa</option><option value="mixed">Mixta</option></select></label>
+    <label>Clave <select data-nt-clef><option value="treble">Sol</option><option value="bass">Fa</option><option value="alto">Do en tercera</option><option value="mixed">Mixta · sol y fa</option></select></label>
     <label>Dificultad <select data-nt-level><option value="1">Nivel 1 · centro</option><option value="2">Nivel 2 · rango amplio</option><option value="3">Nivel 3 · líneas adicionales</option></select></label>
     <label>Modo <select data-nt-mode><option value="spanish">Nombres en español · Do, Re, Mi</option><option value="name">Cifrado americano · C, D, E</option><option value="keyboard">Tecla visual · C, D, E</option></select></label>
     <label>Notas a practicar <select data-nt-accidentals><option value="natural">Solo naturales</option><option value="sharps">Solo sostenidos</option><option value="flats">Solo bemoles</option><option value="both">Sostenidos y bemoles</option><option value="all">Naturales, sostenidos y bemoles</option></select></label>
   </div>
+  <p>En clave de do en tercera, Do4 está en la línea central. El modo mixto alterna claves de sol y fa.</p>
   <p data-nt-chromatic-guide hidden>Do = C en esta práctica, como en Piano Virtual. Ti = B; Si = G♯. Identifica la sílaba según la escritura de la nota, no solo su sonido. Este modo usa las alteraciones de la tabla introductoria (sin E♯, B♯, C♭ ni F♭).</p>
   <div class="trainer-question-card" data-ci-notation-only>
     <div data-nt-staff data-ci-notation-only></div>
@@ -1354,7 +1485,8 @@ function mountNoteTrainer(root,onResult){
     const bass=lv===1?["G2","A2","B2","C3","D3","E3","F3","G3","A3"]:
                lv===2?BASS_STAFF_NOTES:
                ["C2","D2",...BASS_STAFF_NOTES,"D4","E4"];
-    const notes=c==="treble"?treble:c==="bass"?bass:treble.concat(bass);
+    const alto=lv===1?["G3","A3","B3","C4","D4","E4","F4"]:lv===2?["F3","G3","A3","B3","C4","D4","E4","F4","G4"]:["C3","D3","E3","F3","G3","A3","B3","C4","D4","E4","F4","G4","A4","B4"];
+    const notes=c==="treble"?treble:c==="bass"?bass:c==="alto"?alto:treble.concat(bass);
     const pitches=noteTrainerPitches(accidentals.value,mode.value==="chromatic");
     return notes.flatMap(note=>pitches.filter(pitch=>pitch[0]===note[0]).map(pitch=>pitch+note.slice(1)));
   }
@@ -1385,6 +1517,7 @@ function mountNoteTrainer(root,onResult){
         if(pitch===b.dataset.ntAnswer) b.classList.add("correct");
         else if(b===btn) b.classList.add("wrong");
       });
+      focusTarget(body.querySelector("[data-nt-feedback]"),{scroll:false});
     }));
   }
   function next(){
@@ -1393,7 +1526,7 @@ function mountNoteTrainer(root,onResult){
     current=randomItem(pool());
     const c=inferClef(current);
     body.querySelector("[data-nt-staff]").innerHTML=staffTrainerSVG(current,c);
-    body.querySelector("[data-nt-prompt]").textContent=`Clave de ${c==="treble"?"sol":"fa"} · ${mode.value==="chromatic"?"¿Qué sílaba de solfeo cromático corresponde?":"¿qué nota es?"}`;
+    body.querySelector("[data-nt-prompt]").textContent=`Clave de ${c==="treble"?"sol":c==="alto"?"do en tercera":"fa"} · ${mode.value==="chromatic"?"¿Qué sílaba de solfeo cromático corresponde?":"¿qué nota es?"}`;
     body.querySelector("[data-nt-feedback]").textContent="";
     renderAnswers();
   }
@@ -1566,33 +1699,179 @@ function mountAppliedReading(level){
     mount.querySelectorAll("[data-applied-answer]").forEach(item=>{item.disabled=true;if(item.dataset.appliedAnswer===first)item.classList.add("correct");else if(item===button)item.classList.add("wrong")});
   }));
   mount.querySelector("[data-applied-play]").addEventListener("click",()=>playPhrase(mount,phrase,config.bpm,config.meter));
-  mount.querySelector("[data-applied-hear]").addEventListener("click",()=>playSequence(phrase.map(event=>midiFromNamed(event.note)),Math.round(60000/config.bpm)));
+  mount.querySelector("[data-applied-hear]").addEventListener("click",()=>playPhrase(mount,phrase,config.bpm,config.meter,{countIn:false}));
 }
 
 /* ===================== NIVELES 2 Y 3 · PRÁCTICA APLICADA ===================== */
 function trackPhrase(notes,meter){
-  const beats=meter==="3/4"?3:meter==="5/4"?5:meter==="6/8"?6:meter==="7/8"?7:4;
-  const compound=meter==="6/8"||meter==="7/8";
-  return notes.map((note,index)=>({note,dur:compound?"e":"q",beats:compound ? .5 : 1,bar:Math.floor(index/beats)}));
+  const [top,bottom]=String(meter).split("/").map(Number);
+  const eighths=bottom===8;
+  return notes.map((note,index)=>({note,dur:eighths?"e":"q",beats:eighths?.5:1,bar:Math.floor(index/(top||4))}));
 }
+function melodicOpening(first,second){
+  const diatonic=note=>{const m=/^([A-G])(?:[#b♯♭]*)(-?\d+)$/.exec(note);return Number(m[2])*7+NATURAL.indexOf(m[1]);};
+  const delta=midiFromNamed(second)-midiFromNamed(first);
+  if(delta===0)return "Repetición exacta";
+  const step=Math.abs(diatonic(second)-diatonic(first));
+  return `${step<=1?"Grado conjunto":"Salto"} ${delta>0?"ascendente":"descendente"}`;
+}
+function dictationOpeningQuestion(notes){
+  const correct=melodicOpening(notes[0],notes[1]);
+  const alternatives=["Repetición exacta","Grado conjunto ascendente","Grado conjunto descendente","Salto ascendente","Salto descendente"];
+  return shuffledQuestion("Después de escuchar, ¿cómo comienza la frase nueva?",correct,shuffle(alternatives.filter(answer=>answer!==correct)).slice(0,3));
+}
+// Repertorio breve: cada patrón completa un compás, con duraciones en negras.
+function readingRhythmPatterns(meter,difficulty=1){
+  const rest=beats=>({beats,kind:"rest"});
+  if(meter==="6/8")return [[1.5,.5,.5,.5],[.5,.5,.5,1.5],[1,.5,rest(.5),.5,.5],[{beats:1,tieStart:true},{beats:.5,tied:true},1.5]];
+  if(meter==="5/4")return [[1,.5,.5,2,1],[.5,1,.5,rest(1),1,1],[1.5,.5,1,1,1],[.5,{beats:1,tieStart:true},{beats:.5,tied:true},1,2]];
+  if(meter==="3/4")return difficulty>1?[[1,.5,.5,1],[1.5,.5,rest(1)],[.5,{beats:1,tieStart:true},{beats:.5,tied:true},1]]:[[1,1,1],[2,.5,.5],[1,.5,.5,1]];
+  return difficulty>1?[[1,.5,.5,2],[.5,1,.5,rest(1),1],[1.5,.5,1,1],[.5,{beats:1,tieStart:true},{beats:.5,tied:true},2]]:[[1,1,1,1],[2,1,1],[1,.5,.5,2]];
+}
+function makeReadingStudy(cfg,{difficulty=1,bars=4}={}){
+  const patterns=readingRhythmPatterns(cfg.meter,difficulty),start=Math.floor(Math.random()*patterns.length);
+  const rhythms=Array.from({length:bars},(_,bar)=>patterns[(start+bar)%patterns.length].map(value=>typeof value==="number"?{beats:value}:{...value}));
+  const count=rhythms.reduce((n,bar)=>n+bar.length,0);
+  const seeds=Array.from({length:count},(_,i)=>cfg.phrase[i%cfg.phrase.length]);
+  const notes=generateTrackNotes(seeds);let index=0,lastNote=notes[0];
+  return rhythms.flatMap((events,bar)=>events.map((event,i)=>{
+    let note=notes[index++];
+    if(cfg.key===1)note=note.replace(/^F(?=\d)/,"F#");
+    if(event.tied)note=lastNote;
+    if(event.kind!=="rest")lastNote=note;
+    return {...event,note,bar,...(difficulty>2&&i===0&&event.kind!=="rest"?{articulation:"accent"}:{})};
+  }));
+}
+function namedPitchLabel(note){
+  return note.replace(/^([A-G])/,letter=>({C:"Do",D:"Re",E:"Mi",F:"Fa",G:"Sol",A:"La",B:"Si"})[letter]).replace(/#/g,"♯").replace(/b/g,"♭");
+}
+function durationLabel(beats){
+  return ({.25:"Semicorchea",.5:"Corchea",1:"Negra",1.5:"Negra con puntillo",2:"Blanca",3:"Blanca con puntillo",4:"Redonda"})[beats]||`${beats} negras`;
+}
+function phraseCheckpoints(phrase,meter){
+  const sounded=phrase.map((event,index)=>({...event,index})).filter(event=>event.kind!=="rest"&&!event.tied);
+  const targets=[sounded[0],sounded[Math.floor(sounded.length/2)],sounded.at(-1)].filter((event,i,all)=>all.findIndex(other=>other.index===event.index)===i);
+  const questions=targets.map(event=>{
+    const position=phrase.filter((item,index)=>item.bar===event.bar&&index<=event.index).length;
+    const choices=[...new Set(sounded.map(item=>item.note).concat(NATURAL.map(letter=>letter+event.note.slice(-1))))].filter(note=>note!==event.note);
+    return {...shuffledQuestion(`Compás ${event.bar+1}, símbolo ${position} (cuenta también los silencios): ¿qué nota está escrita?`,namedPitchLabel(event.note),shuffle(choices).slice(0,3).map(namedPitchLabel)),skill:"altura",explain:`Es ${namedPitchLabel(event.note)}. Comprueba la clave, la posición, la octava y las alteraciones.`};
+  });
+  const event=sounded.find(item=>item.beats!==1)||sounded[0];
+  const position=phrase.filter((item,index)=>item.bar===event.bar&&index<=event.index).length;
+  questions.push({...shuffledQuestion(`Compás ${event.bar+1}, símbolo ${position}: ¿qué figura está escrita?`,durationLabel(event.beats),shuffle([.5,1,1.5,2,3].filter(value=>value!==event.beats)).slice(0,3).map(durationLabel)),skill:"ritmo",explain:`La figura es ${durationLabel(event.beats).toLowerCase()}. ${meterTempoLabel(meter,60)} sería una referencia posible; el valor escrito no cambia con la velocidad.`});
+  const rests=phrase.filter(item=>item.kind==="rest").length;
+  questions.push({...shuffledQuestion("¿Cuántos signos de silencio aparecen en la frase completa?",String(rests),[rests+1,rests+2,rests===0?3:rests-1].map(String)),skill:"ritmo",explain:`Hay ${rests} ${rests===1?"silencio escrito":"silencios escritos"}. Durante esos valores se mantiene el pulso sin tocar esa voz.`});
+  return questions;
+}
+function dictationPhraseChoices(phrase){
+  const clone=()=>phrase.map(event=>({...event}));
+  const pitchVariant=clone(),target=pitchVariant.find(event=>event.kind!=="rest"&&!event.tied&&!event.tieStart);
+  const letter=target.note[0],next=NATURAL[(NATURAL.indexOf(letter)+1)%7];
+  target.note=next+(Number(target.note.slice(-1))+(letter==="B"?1:0));
+  const rhythmVariant=clone();
+  const a=rhythmVariant.findIndex((event,index)=>!event.tied&&!event.tieStart&&rhythmVariant.some((other,j)=>j>index&&other.bar===event.bar&&!other.tied&&!other.tieStart&&other.beats!==event.beats));
+  if(a>=0){const b=rhythmVariant.findIndex((event,index)=>index>a&&event.bar===rhythmVariant[a].bar&&!event.tied&&!event.tieStart&&event.beats!==rhythmVariant[a].beats);[rhythmVariant[a].beats,rhythmVariant[b].beats]=[rhythmVariant[b].beats,rhythmVariant[a].beats];}
+  else {const target=rhythmVariant.filter(event=>event.kind!=="rest"&&!event.tied&&!event.tieStart).at(-1);target.note=target.note[0]+(Number(target.note.slice(-1))+1);}
+  const choices=shuffle([{phrase:clone(),correct:true},{phrase:pitchVariant,correct:false},{phrase:rhythmVariant,correct:false}]);
+  return choices;
+}
+function phraseSoundEvents(phrase){
+  let start=0;
+  return phrase.map((event,index)=>{
+    let length=event.beats;
+    if(event.tieStart){let i=index;while(phrase[i]?.tieStart&&phrase[i+1]?.tied){length+=phrase[i+1].beats;i++;}}
+    const sound={...event,start,length,audible:event.kind!=="rest"&&!event.tied};
+    start+=event.beats;return sound;
+  });
+}
+function recordReadingEvidence(levelId,result){
+  state.readingEvidence=Array.isArray(state.readingEvidence)?state.readingEvidence:[];
+  state.readingEvidence.push({levelId,...result,at:new Date().toISOString()});
+  state.readingEvidence=state.readingEvidence.slice(-40);saveState();renderReviewSuggestions();
+}
+function mountPhraseChecks(host,phrase,{meter,levelId,supportUsed=()=>false,bpm=()=>60,onFinish=()=>{}}){
+  const questions=phraseCheckpoints(phrase,meter),answers=new Array(questions.length);let finished=false;
+  host.innerHTML=`<h4>Comprueba la frase completa</h4><p>Responde sobre distintos compases y sus figuras. Esta comprobación evalúa lo que reconoces en la partitura; cantar o tocar la frase se valora por separado.</p>${questions.map((question,index)=>`<fieldset class="phrase-check"><legend>${index+1}. ${escapeHtml(question.question)}</legend><div class="trainer-answer-grid">${question.answers.map((answer,i)=>`<button type="button" data-phrase-question="${index}" data-phrase-answer="${i}">${escapeHtml(answer)}</button>`).join("")}</div><p data-phrase-feedback="${index}" aria-live="polite"></p></fieldset>`).join("")}<p data-phrase-result aria-live="polite"></p>`;
+  host.querySelectorAll("[data-phrase-question]").forEach(button=>button.addEventListener("click",()=>{
+    const index=Number(button.dataset.phraseQuestion);if(answers[index]!==undefined)return;
+    const question=questions[index],correct=Number(button.dataset.phraseAnswer)===question.correct;
+    answers[index]=correct;
+    host.querySelectorAll(`[data-phrase-question="${index}"]`).forEach(item=>{item.disabled=true;if(Number(item.dataset.phraseAnswer)===question.correct)item.classList.add("correct");else if(item===button)item.classList.add("wrong");});
+    const feedback=host.querySelector(`[data-phrase-feedback="${index}"]`);
+    feedback.textContent=(correct?"Correcto. ":"Revisa. ")+question.explain;
+    focusTarget(feedback,{scroll:false});
+    if(answers.filter(answer=>answer!==undefined).length!==questions.length||finished)return;
+    finished=true;
+    const score=answers.filter(Boolean).length;
+    const skills=["altura","ritmo"].map(skill=>({skill,score:questions.filter((question,i)=>question.skill===skill&&answers[i]).length,total:questions.filter(question=>question.skill===skill).length}));
+    const result={score,total:questions.length,meter,bpm:Number(bpm()),supportUsed:!!supportUsed(),skills};
+    recordReadingEvidence(levelId,result);
+    host.querySelector('[data-phrase-result]').textContent=`${score}/${questions.length} comprobaciones correctas · ${result.supportUsed?"con ayudas o modelo":"sin consultar ayudas"}. ${skills.map(item=>`${item.skill}: ${item.score}/${item.total}`).join(" · ")}. Repite otro día con una frase nueva para comprobar lo que conservas.`;
+    renderEvaluationSummary();onFinish(result);
+  }));
+}
+function mountReadingStudy(mount,level,{evaluation=false}={}){
+  const cfg=level.practice,difficulty=cfg.difficulty||(level.id.startsWith("l3")?3:level.id.includes("fluidez")||level.id.includes("clave-fa")?1:2);
+  const phrase=makeReadingStudy(cfg,{difficulty,bars:cfg.type==="dictation"?2:4});
+  let supportUsed=false,dictationAnswered=false;
+  const isDictation=cfg.type==="dictation";
+  mount.innerHTML=`<section class="lab-card reading-study" data-ci-notation-only><p class="kicker">${evaluation?"LECTURA PRÁCTICA":"PRÁCTICA DE LECTURA"} · FRASE NUEVA</p><h3>${escapeHtml(level.title)}</h3><ol class="reading-study-steps"><li>${isDictation?"Escucha el modelo sin mirar la solución.":"Observa clave, compás y dificultades."}</li><li>${isDictation?"Compara las tres partituras y elige la que escuchaste.":"Marca el pulso y lee la frase antes de escuchar el modelo."}</li><li>Comprueba la frase y elige qué mejorar.</li></ol><div class="controls-row"><label>Tempo <input data-study-tempo type="range" min="40" max="110" value="${cfg.bpm}"><span data-study-tempo-label>${escapeHtml(meterTempoLabel(cfg.meter,cfg.bpm))}</span></label>${!isDictation?'<label><input type="checkbox" data-study-labels> Mostrar nombres de notas (ayuda)</label>':""}</div><div class="solfege-score-wrap ${isDictation?"dictation-hidden":""}" data-study-score><div class="scroll-x" data-study-notation>${phraseStaffSVG(phrase,{clef:cfg.clef||"treble",meter:cfg.meter,key:cfg.key||0,labels:false})}</div></div><p class="count-in-display" data-count-in-display aria-live="polite">Cuenta previa · preparada</p><div class="solfege-actions"><button type="button" class="primary-btn" data-study-count>▶ Solo cuenta previa</button><button type="button" class="ghost-btn" data-study-model>▶ Escuchar modelo</button><button type="button" class="ghost-btn" data-study-stop>■ Detener</button><button type="button" class="ghost-btn" data-study-new>↻ Nueva frase</button></div>${level.id==="l3-capstone"?interpretationGuideHTML():""}<div data-study-dictation></div><div data-study-checks ${isDictation?"hidden":""}></div><fieldset class="reading-rubric"><legend>Después de cantar o tocar · autoevaluación</legend>${["Mantuve el pulso hasta el final","Respeté alturas, silencios y ligaduras","Me recuperé sin volver al comienzo","Di dirección a la frase"].map((label,index)=>`<label><input type="checkbox" data-study-rubric="${index}"> ${label}</label>`).join("")}<button type="button" class="ghost-btn" data-study-save>Registrar autoevaluación</button><p data-study-self-feedback aria-live="polite">Estas casillas registran tu observación; la aplicación no escucha tu interpretación.</p></fieldset></section>`;
+  const tempo=mount.querySelector('[data-study-tempo]'),score=mount.querySelector('[data-study-notation]');
+  const bpm=()=>Number(tempo.value);
+  tempo.addEventListener('input',()=>{stopAllAudio();mount.querySelector('[data-study-tempo-label]').textContent=meterTempoLabel(cfg.meter,bpm());});
+  mount.querySelector('[data-study-labels]')?.addEventListener('change',event=>{supportUsed=supportUsed||event.target.checked;score.innerHTML=phraseStaffSVG(phrase,{clef:cfg.clef||"treble",meter:cfg.meter,key:cfg.key||0,labels:event.target.checked});});
+  mount.querySelector('[data-study-count]').addEventListener('click',async()=>{const token=await playCountIn(mount,bpm(),cfg.meter);if(token!==null)finishCountIn(mount);});
+  mount.querySelector('[data-study-model]').addEventListener('click',async()=>{
+    supportUsed=true;
+    const completed=await playPhrase(mount,phrase,bpm(),cfg.meter);
+    if(isDictation&&completed&&!dictationAnswered){
+      mount.querySelectorAll('[data-study-choice]').forEach(button=>{button.disabled=false;});
+      mount.querySelector('[data-study-dictation-feedback]').textContent="Modelo escuchado. Compara las alturas y el ritmo de los dos compases y elige una opción.";
+    }
+  });
+  mount.querySelector('[data-study-stop]').addEventListener('click',()=>{stopAllAudio();finishCountIn(mount);});
+  mount.querySelector('[data-study-new]').addEventListener('click',()=>{stopAllAudio();mountReadingStudy(mount,level,{evaluation});focusContent(mount);});
+  mount.querySelector('[data-study-save]').addEventListener('click',()=>{
+    const ratings=[...mount.querySelectorAll('[data-study-rubric]')].map(box=>box.checked);
+    state.readingEvaluation={achieved:ratings.filter(Boolean).length,total:ratings.length,meter:cfg.meter,bpm:bpm(),levelId:level.id,ratings,at:new Date().toISOString()};saveState();
+    mount.querySelector('[data-study-self-feedback]').textContent=`Autoevaluación registrada: ${ratings.filter(Boolean).length}/${ratings.length} aspectos. Escoge un aspecto pendiente y practícalo con calma.`;renderEvaluationSummary();
+  });
+  const checks=mount.querySelector('[data-study-checks]');
+  const beginChecks=()=>mountPhraseChecks(checks,phrase,{meter:cfg.meter,levelId:level.id,supportUsed:()=>supportUsed,bpm});
+  if(!isDictation){beginChecks();return;}
+  const choices=dictationPhraseChoices(phrase),dictation=mount.querySelector('[data-study-dictation]');
+  dictation.innerHTML=`<h4>¿Qué partitura corresponde al modelo completo?</h4>${choices.map((choice,index)=>`<div class="dictation-choice"><h5>Opción ${index+1}</h5>${phraseStaffSVG(choice.phrase,{clef:cfg.clef||"treble",meter:cfg.meter,labels:false})}<button type="button" class="ghost-btn" data-study-choice="${index}" disabled>Elegir opción ${index+1}</button></div>`).join("")}<p data-study-dictation-feedback aria-live="polite">Escucha el modelo completo para habilitar las respuestas.</p>`;
+  dictation.querySelectorAll('[data-study-choice]').forEach(button=>button.addEventListener('click',()=>{
+    if(dictationAnswered)return;dictationAnswered=true;
+    const correct=choices[Number(button.dataset.studyChoice)].correct;
+    const correctIndex=choices.findIndex(choice=>choice.correct);
+    dictation.querySelectorAll('[data-study-choice]').forEach(item=>{item.disabled=true;if(choices[Number(item.dataset.studyChoice)].correct)item.classList.add('correct');else if(item===button)item.classList.add('wrong');});
+    dictation.querySelector('[data-study-dictation-feedback]').textContent=`${correct?"Correcto.":"Compara con la opción "+(correctIndex+1)+"."} Revisa las alturas y las duraciones de ambos compases; las otras opciones cambian una altura o el ritmo.`;
+    recordReadingEvidence(level.id,{score:correct?1:0,total:1,meter:cfg.meter,bpm:bpm(),supportUsed:false,skills:[{skill:"dictado de frase",score:correct?1:0,total:1}]});
+    supportUsed=true;mount.querySelector('[data-study-score]').classList.remove('dictation-hidden');checks.hidden=false;beginChecks();renderEvaluationSummary();focusTarget(dictation.querySelector('[data-study-dictation-feedback]'),{scroll:false});
+  }));
+}
+
 function trackTones(notes){
   return [...new Set(notes.map(note=>midiFromNamed(note)%12))].map((pc,index)=>({pc,semi:pc,name:NOTE_NAMES[pc],token:NOTE_NAMES[pc],degree:index+1,isRoot:pc===0}));
 }
 function generateTrackNotes(seedNotes){
+  if(!seedNotes.length)return [];
   const pool=[...new Set(seedNotes.map(midiFromNamed))].sort((a,b)=>a-b);
-  const length=seedNotes.length;
-  let current=randomItem(pool),previousDirection=0;
-  const notes=[current];
-  for(let index=1;index<length;index++){
-    const direction=Math.random()<.18&&previousDirection!==0?-previousDirection:(Math.random()<.5?1:-1);
-    const leap=Math.random()<.24?2:1;
-    const candidate=current+(direction*leap*2);
-    current=pool.reduce((best,pitch)=>Math.abs(pitch-candidate)<Math.abs(best-candidate)?pitch:best,pool[0]);
-    previousDirection=Math.sign(current-notes[notes.length-1])||previousDirection;
-    notes.push(current);
+  let position=Math.floor(Math.random()*pool.length),direction=Math.random()<.5?1:-1;
+  const notes=[pool[position]];
+  for(let index=1;index<seedNotes.length;index++){
+    if(pool.length===1||Math.random()<.14){notes.push(pool[position]);continue;}
+    if(Math.random()<.3)direction*=-1;
+    const leap=Math.min(Math.random()<.24?2:1,pool.length-1);
+    let next=position+direction*leap;
+    if(next<0||next>=pool.length){direction*=-1;next=position+direction*leap;}
+    position=Math.max(0,Math.min(pool.length-1,next));
+    notes.push(pool[position]);
   }
   return notes.map(namedFromMidiNatural);
 }
+
 function keySignaturePracticeHTML(key){
   const signatures={G:{kind:"sharp",count:1},D:{kind:"sharp",count:2},A:{kind:"sharp",count:3},F:{kind:"flat",count:1},Bb:{kind:"flat",count:2},Eb:{kind:"flat",count:3}};
   const signature=signatures[key.root]||{kind:"sharp",count:0};
@@ -1606,23 +1885,38 @@ const IRREGULAR_METERS=[
   {meter:"7/8",groups:[2,2,3],label:"2 + 2 + 3"},{meter:"7/8",groups:[3,2,2],label:"3 + 2 + 2"},{meter:"7/8",groups:[2,3,2],label:"2 + 3 + 2"},
   {meter:"8/8",groups:[3,3,2],label:"3 + 3 + 2"},{meter:"11/8",groups:[3,3,3,2],label:"3 + 3 + 3 + 2"}
 ];
+function irregularGroupingQuestion(pattern){
+  const options=[pattern.label,...IRREGULAR_METERS.filter(item=>item.meter===pattern.meter).map(item=>item.label),String(pattern.groups.reduce((a,b)=>a+b,0)),"2 + 2", "3 + 3 + 3", "2 + 3 + 2 + 2"];
+  return shuffledQuestion(`¿Qué agrupación escuchas en ${pattern.meter}?`,pattern.label,[...new Set(options)].filter(label=>label!==pattern.label).slice(0,3));
+}
 function irregularMeterHTML(pattern){
-  const cells=pattern.groups.flatMap((size,group)=>Array.from({length:size},(_,index)=>`<button type="button" class="irregular-pulse ${index===0?"accent":""}" data-irregular-pulse="${group}" aria-label="Grupo ${group+1}, corchea ${index+1}">${index===0?group+1:"·"}</button>`));
+  const cells=pattern.groups.flatMap((size,group)=>Array.from({length:size},(_,index)=>`<span class="irregular-pulse ${index===0?"accent":""}" data-irregular-pulse="${group}" aria-label="Grupo ${group+1}, corchea ${index+1}">${index===0?group+1:"·"}</span>`));
   return `<div class="irregular-meter" aria-label="Patrón de ${pattern.meter} agrupado ${pattern.label}"><div class="irregular-meter-head"><b>${pattern.meter}</b><span>Agrupación ${pattern.label}</span></div><div class="irregular-pulses">${cells.join("")}</div><p>Marca los inicios dorados; las demás corcheas mantienen el movimiento interno.</p></div>`;
 }
-function tonalChangePracticeHTML(){
-  const sharp=String.fromCodePoint(0xE262),flat=String.fromCodePoint(0xE260),natural=String.fromCodePoint(0xE261);
-  const staff=(label,signature,accidental)=>`<section class="tonal-segment"><b>${label}</b><div class="tonal-staff"><span class="tonal-clef">${SMUFL_GLYPHS.gClef}</span>${[0,1,2,3,4].map(line=>`<i style="top:${22+line*14}%"></i>`).join("")}<span class="tonal-signature" style="top:${signature.top}%">${signature.glyph}</span>${accidental?`<span class="tonal-accidental" style="top:${accidental.top}%">${accidental.glyph}</span>`:""}</div></section>`;
-  return `<div class="tonal-change-practice" role="img" aria-label="Ejemplo de cambio de Sol mayor a Re mayor con cromatismo local"><div class="tonal-flow">${staff("I · Sol mayor",{glyph:sharp,top:54},{glyph:natural,top:54})}<span class="tonal-arrow">→</span>${staff("Nueva armadura · Re mayor",{glyph:sharp+sharp,top:54},{glyph:flat,top:40})}</div><p><b>Lectura:</b> el becuadro es local; la nueva armadura añade Do♯ a partir de la flecha.</p></div>`;
+const TONAL_CHANGE_SCENARIOS=[
+  {from:"Sol mayor",to:"Re mayor",oldKey:1,newKey:2,oldNotes:["G4","B4","F4","G4"],newNotes:["D4","F#4","C#5","D5"],localNote:"F4",localLabel:"Fa♮",added:"Do♯"},
+  {from:"Fa mayor",to:"Si♭ mayor",oldKey:-1,newKey:-2,oldNotes:["F4","A4","B4","F4"],newNotes:["Bb3","D4","Eb4","Bb4"],localNote:"B4",localLabel:"Si♮",added:"Mi♭"},
+  {from:"Re mayor",to:"La mayor",oldKey:2,newKey:3,oldNotes:["D4","F#4","C5","D5"],newNotes:["A3","C#4","G#4","A4"],localNote:"C5",localLabel:"Do♮",added:"Sol♯"}
+];
+function tonalChangePracticeHTML(scenario=TONAL_CHANGE_SCENARIOS[0]){
+  const panel=(title,notes,key,local)=>`<section class="tonal-segment"><h4>${escapeHtml(title)}</h4>${CrescendoPractice.sequence(notes.map(note=>({note,beats:1,...(local&&note===scenario.localNote?{accidental:"natural"}:{})})),{meter:"4/4",key,labels:false})}</section>`;
+  return `<div class="tonal-change-practice">${panel(scenario.from,scenario.oldNotes,scenario.oldKey,true)}${panel("Nueva armadura · "+scenario.to,scenario.newNotes,scenario.newKey,false)}<p>${escapeHtml(scenario.localLabel)} es una alteración local en el primer ejemplo. La segunda armadura añade ${escapeHtml(scenario.added)}; esa alteración rige en todas sus octavas, salvo indicación accidental.</p></div>`;
 }
-function navigationPracticeHTML(){
-  const score=CrescendoPractice.sequence([{note:"C4",beats:1},{note:"D4",beats:1},{note:"E4",beats:1},{note:"G4",beats:1}],{meter:"4/4",labels:true});
-  return `<div class="navigation-practice" role="img" aria-label="Mapa de navegación de una partitura"><div class="navigation-score"><b>A · 4 compases</b>${score}<span>𝄆 :||: 𝄇</span></div><div class="navigation-route"><span class="route-box">A<br><small>inicio</small></span><span class="route-box">B<br><small>signo</small></span><span class="route-box">C<br><small>To Coda</small></span><span class="route-box">Coda<br><small>Fine</small></span></div><div class="navigation-steps"><b>Ruta:</b> A → B → C → <span>D.S.</span> → B → C → <span>𝄌 Coda</span> → Fine</div><p>El símbolo y la indicación determinan el salto; las letras son marcas de ensayo para orientarte.</p></div>`;
+const NAVIGATION_SCENARIOS=[
+  {command:"D.S. al Coda",destination:"Al signo",route:["A · inicio","B · segno","C · To Coda","D · D.S. al Coda","B · segno","C · To Coda","Coda · final"],explain:"Primero vuelve al signo. En el recorrido posterior, toma la salida To Coda y termina en la coda."},
+  {command:"D.C. al Fine",destination:"Al comienzo",route:["A · inicio","B · Fine (continúa)","C · D.C. al Fine","A · inicio","B · Fine (termina)"],explain:"Vuelve al comienzo. Fine indica el final en este segundo recorrido, no en la primera pasada."},
+  {command:"D.S. al Fine",destination:"Al signo",route:["A · inicio","B · segno","C · Fine (continúa)","D · D.S. al Fine","B · segno","C · Fine (termina)"],explain:"Vuelve al signo y, en ese segundo recorrido, termina en Fine."}
+];
+function navigationPracticeHTML(scenario=NAVIGATION_SCENARIOS[0]){
+  return `<div class="navigation-practice"><h4>Mapa de recorrido · ${escapeHtml(scenario.command)}</h4><ol class="navigation-route">${scenario.route.map(step=>`<li class="route-box">${escapeHtml(step)}</li>`).join("")}</ol><p>${escapeHtml(scenario.explain)} Las letras identifican secciones; este mapa indica el orden del recorrido.</p></div>`;
 }
+
 function interpretationGuideHTML(){return `<div class="interpretation-guide"><b>Guía de lectura expresiva</b><span><em>p</em> empieza contenido</span><span><em>&lt;</em> crece hacia el punto alto</span><span><em>legato</em> une la línea</span><span><em>rit.</em> prepara el final</span><p>Aplica una intención por repetición: primero pulso, luego articulación y por último fraseo.</p></div>`}
 function grandStaffHTML(upper,lower,meter){
-  return `<div class="grand-score" data-ci-notation-only aria-label="Gran pentagrama con claves de sol y fa"><span class="grand-brace">{</span><div class="grand-score-lines"><div>${phraseStaffSVG(upper,{clef:"treble",meter})}</div><div>${phraseStaffSVG(lower,{clef:"bass",meter})}</div></div></div>`;
+  const events=[...upper.map(event=>({...event,staff:1})),...lower.map(event=>({...event,staff:2}))];
+  return `<div class="grand-score" data-ci-notation-only aria-label="Gran pentagrama con claves de sol y fa">${CrescendoPractice.sequence(events,{clef:"grand",meter,labels:false,bars:4})}</div>`;
 }
+
 function shuffledQuestion(question,correctAnswer,distractors){
   const answers=shuffle([correctAnswer,...distractors]);
   return {question,answers,correct:answers.indexOf(correctAnswer)};
@@ -1661,6 +1955,10 @@ function generatedTrackQuestion(level,cfg){
   }
   return {question:cfg.question,answers:cfg.answers,correct:cfg.correct,explain:cfg.explain};
 }
+function polyrhythmCounts(upper,lower){
+  const values=[Number(upper),Number(lower)];
+  return values.every(value=>Number.isInteger(value)&&value>=2&&value<=8)?values:null;
+}
 function mountTrackPractice(level){
   const cfg=level.practice;
   if(!cfg||activeTrackId==="foundation")return;
@@ -1669,65 +1967,69 @@ function mountTrackPractice(level){
   if(cfg.type==="meter-lab"){
     let pattern=randomItem(IRREGULAR_METERS);
     const render=()=>{
-      const question=shuffledQuestion(`¿Cuál es la agrupación que muestra este ${pattern.meter}?`,pattern.label,IRREGULAR_METERS.filter(item=>item.meter===pattern.meter&&item.label!==pattern.label).map(item=>item.label).slice(0,3));
-      mount.innerHTML=`<div class="lab-card track-practice" data-ci-notation-only><header><p class="kicker">MÉTRICA IRREGULAR · GENERADA</p><h3>${escapeHtml(level.title)}</h3><p>Escoge el compás y la agrupación que quieres practicar. El metrónomo acentúa cada inicio de grupo.</p></header><div class="irregular-controls"><label>Compás <select data-irregular-meter>${[...new Set(IRREGULAR_METERS.map(item=>item.meter))].map(meter=>`<option value="${meter}" ${meter===pattern.meter?"selected":""}>${meter}</option>`).join("")}</select></label><label>Agrupación <select data-irregular-group>${IRREGULAR_METERS.filter(item=>item.meter===pattern.meter).map(item=>`<option value="${item.label}" ${item.label===pattern.label?"selected":""}>${item.label}</option>`).join("")}</select></label></div>${irregularMeterHTML(pattern)}<div class="solfege-actions"><button class="primary-btn" type="button" data-irregular-play>▶ Escuchar y contar</button><button class="ghost-btn" type="button" data-irregular-new>↻ Nuevo patrón</button></div>${makeQuestion(question.question,question.answers)}`;
-      mount.querySelector("[data-irregular-meter]").addEventListener("change",event=>{pattern=randomItem(IRREGULAR_METERS.filter(item=>item.meter===event.target.value));render()});
-      mount.querySelector("[data-irregular-group]").addEventListener("change",event=>{pattern=IRREGULAR_METERS.find(item=>item.meter===pattern.meter&&item.label===event.target.value)||pattern;render()});
-      mount.querySelector("[data-irregular-new]").addEventListener("click",()=>{pattern=randomItem(IRREGULAR_METERS);render()});
+      stopAllAudio();
+      const question=irregularGroupingQuestion(pattern);
+      mount.innerHTML=`<div class="lab-card track-practice" data-ci-notation-only><header><p class="kicker">MÉTRICA IRREGULAR · PRÁCTICA GUIADA</p><h3>${escapeHtml(level.title)}</h3><p>Escoge el compás y la agrupación que quieres practicar. Escucha los apoyos y relaciónalos con el dibujo. Esta actividad es guiada y muestra la agrupación elegida.</p></header><div class="irregular-controls"><label>Compás <select data-irregular-meter>${[...new Set(IRREGULAR_METERS.map(item=>item.meter))].map(meter=>`<option value="${meter}" ${meter===pattern.meter?"selected":""}>${meter}</option>`).join("")}</select></label><label>Agrupación <select data-irregular-group>${IRREGULAR_METERS.filter(item=>item.meter===pattern.meter).map(item=>`<option value="${item.label}" ${item.label===pattern.label?"selected":""}>${item.label}</option>`).join("")}</select></label></div>${irregularMeterHTML(pattern)}<div class="solfege-actions"><button class="primary-btn" type="button" data-irregular-play>▶ Escuchar y contar</button><button class="ghost-btn" type="button" data-irregular-new>↻ Nuevo patrón</button></div>${makeQuestion(question.question,question.answers)}`;
+      mount.querySelector("[data-irregular-meter]").addEventListener("change",event=>{pattern=randomItem(IRREGULAR_METERS.filter(item=>item.meter===event.target.value));render();mount.querySelector("[data-irregular-meter]").focus()});
+      mount.querySelector("[data-irregular-group]").addEventListener("change",event=>{pattern=IRREGULAR_METERS.find(item=>item.meter===pattern.meter&&item.label===event.target.value)||pattern;render();mount.querySelector("[data-irregular-group]").focus()});
+      mount.querySelector("[data-irregular-new]").addEventListener("click",()=>{pattern=randomItem(IRREGULAR_METERS);render();focusContent(mount)});
       mount.querySelector("[data-irregular-play]").addEventListener("click",async()=>{stopAllAudio();const token=AUDIO.seq;const ms=260;const cells=[...mount.querySelectorAll("[data-irregular-pulse]")];for(let index=0;index<cells.length;index++){if(token!==AUDIO.seq)return;cells.forEach((cell,i)=>cell.classList.toggle("active",i===index));playTone(cells[index].classList.contains("accent")?84:77,{duration:.07,volume:.15});await new Promise(resolve=>setTimeout(resolve,ms))}cells.forEach(cell=>cell.classList.remove("active"))});
       mount.querySelectorAll("[data-track-answer]").forEach(button=>button.addEventListener("click",()=>resolveTrackCheck(mount,{selected:Number(button.dataset.trackAnswer),correctIndex:question.correct,explain:`${pattern.meter} se organiza como ${pattern.label}; cambia la agrupación si el estilo lo pide.`,levelId:level.id})));
     };render();return;
   }
   if(cfg.type==="polyrhythm"){
     let top=3,bottom=2;
-    const gcd=(a,b)=>b?gcd(b,a%b):a,render=()=>{const steps=(top*bottom)/gcd(top,bottom);const row=(count,name)=>`<div><b>${count}</b><div class="poly-track" style="grid-template-columns:repeat(${count},1fr)">${Array.from({length:count},(_,i)=>`<span data-poly="${name}-${i}">${i+1}</span>`).join("")}</div></div>`;
-      mount.innerHTML=`<div class="lab-card track-practice" data-ci-notation-only><header><p class="kicker">POLIRRITMIA · ${top}:${bottom}</p><h3>${escapeHtml(level.title)}</h3><p>Elige una relación habitual o crea tu propia combinación de ataques dentro del mismo ciclo.</p></header><div class="poly-controls"><label>Relación <select data-poly-preset><option value="3:2">3:2</option><option value="4:3">4:3</option><option value="5:4">5:4</option><option value="custom">Personalizada</option></select></label><label>Capa superior <input data-poly-top type="number" min="2" max="8" value="${top}"></label><label>Capa inferior <input data-poly-bottom type="number" min="2" max="8" value="${bottom}"></label></div><div class="polyrhythm-grid">${row(top,"top")}${row(bottom,"bottom")}<div class="poly-subdivision">Ciclo común: ${steps} subdivisiones</div></div><div class="solfege-actions"><button class="primary-btn" type="button" data-poly-play>▶ Metrónomo ${top}:${bottom}</button><button class="ghost-btn" type="button" data-poly-new>↻ Nueva combinación</button></div>${makeQuestion(`En ${top}:${bottom}, ${top} ataques ocupan el mismo tiempo que:`,[` ${bottom} ataques de la otra capa`,` ${top+1} ataques`,`Una corchea`,`Dos compases`])}</div>`;
+    const gcd=(a,b)=>b?gcd(b,a%b):a,render=()=>{stopAllAudio();const steps=(top*bottom)/gcd(top,bottom);const row=(count,name)=>`<div><b>${count}</b><div class="poly-track" style="grid-template-columns:repeat(${count},1fr)">${Array.from({length:count},(_,i)=>`<span data-poly="${name}-${i}">${i+1}</span>`).join("")}</div></div>`;
+      mount.innerHTML=`<div class="lab-card track-practice" data-ci-notation-only><header><p class="kicker">POLIRRITMIA · ${top}:${bottom}</p><h3>${escapeHtml(level.title)}</h3><p>Elige una relación habitual o crea tu propia combinación de ataques dentro del mismo ciclo.</p></header><div class="poly-controls"><label>Relación <select data-poly-preset><option value="3:2">3:2</option><option value="4:3">4:3</option><option value="5:4">5:4</option><option value="custom">Personalizada</option></select></label><label>Capa superior <input data-poly-top type="number" min="2" max="8" value="${top}"></label><label>Capa inferior <input data-poly-bottom type="number" min="2" max="8" value="${bottom}"></label><button type="button" class="ghost-btn" data-poly-apply>Aplicar combinación</button></div><p>Para cambiar las capas manualmente, escribe ambos valores y pulsa «Aplicar combinación».</p><div class="polyrhythm-grid">${row(top,"top")}${row(bottom,"bottom")}<div class="poly-subdivision">Ciclo común: ${steps} subdivisiones</div></div><div class="solfege-actions"><button class="primary-btn" type="button" data-poly-play>▶ Metrónomo ${top}:${bottom}</button><button class="ghost-btn" type="button" data-poly-new>↻ Nueva combinación</button></div>${makeQuestion(`En ${top}:${bottom}, ${top} ataques ocupan el mismo tiempo que:`,[` ${bottom} ataques de la otra capa`,` ${top+1} ataques`,`Una corchea`,`Dos compases`])}</div>`;
       const preset=mount.querySelector("[data-poly-preset]");preset.value=["3:2","4:3","5:4"].includes(`${top}:${bottom}`)?`${top}:${bottom}`:"custom";
-      preset.addEventListener("change",event=>{if(event.target.value!=="custom"){[top,bottom]=event.target.value.split(":").map(Number);render()}});["top","bottom"].forEach(name=>mount.querySelector(`[data-poly-${name}]`).addEventListener("change",event=>{if(name==="top")top=Number(event.target.value);else bottom=Number(event.target.value);render()}));
+      preset.addEventListener("change",event=>{if(event.target.value!=="custom"){[top,bottom]=event.target.value.split(":").map(Number);render();mount.querySelector("[data-poly-preset]").focus()}});
+      ["top","bottom"].forEach(name=>{
+        const control=mount.querySelector(`[data-poly-${name}]`);
+        control.addEventListener("input",()=>control.setCustomValidity(""));
+      });
+      mount.querySelector('[data-poly-apply]').addEventListener('click',()=>{
+        const controls=[mount.querySelector('[data-poly-top]'),mount.querySelector('[data-poly-bottom]')];
+        const values=polyrhythmCounts(controls[0].value,controls[1].value);
+        if(!values){
+          const invalid=controls.find(control=>!polyrhythmCounts(control.value,2));
+          invalid.setCustomValidity('Usa un número entero entre 2 y 8.');invalid.reportValidity();return;
+        }
+        [top,bottom]=values;render();focusContent(mount);
+      });
       mount.querySelector("[data-poly-play]").addEventListener("click",async()=>{stopAllAudio();const token=AUDIO.seq,cells=[...mount.querySelectorAll("[data-poly]")];for(let step=0;step<steps;step++){if(token!==AUDIO.seq)return;cells.forEach(cell=>cell.classList.remove("active"));if(step%(steps/top)===0){mount.querySelector(`[data-poly="top-${step/(steps/top)}"]`).classList.add("active");playTone(84,{duration:.07,volume:.13})}if(step%(steps/bottom)===0){mount.querySelector(`[data-poly="bottom-${step/(steps/bottom)}"]`).classList.add("active");playTone(72,{duration:.07,volume:.13})}await new Promise(resolve=>setTimeout(resolve,Math.max(95,720/steps)))}cells.forEach(cell=>cell.classList.remove("active"))});
-      mount.querySelector("[data-poly-new]").addEventListener("click",()=>{top=2+Math.floor(Math.random()*5);bottom=2+Math.floor(Math.random()*5);render()});
+      mount.querySelector("[data-poly-new]").addEventListener("click",()=>{top=2+Math.floor(Math.random()*5);bottom=2+Math.floor(Math.random()*5);render();focusContent(mount)});
       mount.querySelectorAll("[data-track-answer]").forEach(button=>button.addEventListener("click",()=>resolveTrackCheck(mount,{selected:Number(button.dataset.trackAnswer),correctIndex:0,explain:`${top}:${bottom} comparte un ciclo de ${steps} subdivisiones.`,levelId:level.id})))};render();return;
   }
   if(cfg.type==="tonal-change"||cfg.type==="navigation"){
     const change=cfg.type==="tonal-change";
-    const question=change?shuffledQuestion("Después de la nueva armadura, ¿qué nota queda alterada en Re mayor?","Do♯",["Do♮","Si♭","Fa♮"]):shuffledQuestion("Tras D.S., ¿a qué marca se vuelve?","Al signo",["Al inicio absoluto","A Fine","Directamente a la Coda"]);
-    mount.innerHTML=`<div class="lab-card track-practice" data-ci-notation-only><header><p class="kicker">${change?"MODULACIÓN Y CROMATISMO":"RECORRIDO DE PARTITURA"}</p><h3>${escapeHtml(level.title)}</h3><p>${change?"Distingue una alteración local del cambio de armadura que modifica la lectura posterior.":"Sigue visualmente el recorrido antes de tocar: marca, repetición, salto y final."}</p></header>${change?tonalChangePracticeHTML():navigationPracticeHTML()}<div class="solfege-actions"><button class="primary-btn" type="button" data-track-hear>▶ ${change?"Escuchar centros tonales":"Escuchar pulso de la ruta"}</button><button class="ghost-btn" type="button" data-track-new>↻ Nuevo ejemplo</button></div>${makeQuestion(question.question,question.answers)}</div>`;
-    mount.querySelector("[data-track-hear]").addEventListener("click",()=>change?playSequence([55,59,62,67,50,54,57,62],300):playSequence([79,76,79,84],420));
-    mount.querySelector("[data-track-new]").addEventListener("click",()=>mountTrackPractice(level));
-    mount.querySelectorAll("[data-track-answer]").forEach(button=>button.addEventListener("click",()=>resolveTrackCheck(mount,{selected:Number(button.dataset.trackAnswer),correctIndex:question.correct,explain:change?"La nueva armadura de Re mayor afecta Fa♯ y Do♯; un becuadro previo solo afecta su compás.":"D.S. significa Dal Segno: vuelve al signo y continúa hasta la indicación de Coda o Fine.",levelId:level.id})));return;
+    const scenarios=change?TONAL_CHANGE_SCENARIOS:NAVIGATION_SCENARIOS;
+    const scenario=randomItem(scenarios.filter(item=>(change?item.to:item.command)!==mount.dataset.scenarioKey));
+    mount.dataset.scenarioKey=change?scenario.to:scenario.command;
+    const question=change?shuffledQuestion(`¿Qué alteración se añade en la nueva armadura de ${scenario.to}?`,scenario.added,["Fa♮","Re♭","Mi♮"]):shuffledQuestion(`Después de ${scenario.command}, ¿a dónde vuelves primero?`,scenario.destination,[scenario.destination==="Al signo"?"Al comienzo":"Al signo","Directamente a la Coda","Al último compás"]);
+    const explanation=change?`La nueva armadura de ${scenario.to} añade ${scenario.added}; ${scenario.localLabel} era una alteración local del ejemplo anterior.`:scenario.explain;
+    mount.innerHTML=`<div class="lab-card track-practice" data-ci-notation-only><header><p class="kicker">${change?"ARMADURA Y CROMATISMO":"RECORRIDO DE PARTITURA"}</p><h3>${escapeHtml(level.title)}</h3><p>${change?"Compara las dos armaduras y distingue el cambio global de la alteración local.":"Sigue el recorrido y explica cuándo debes continuar y cuándo terminar."}</p></header>${change?tonalChangePracticeHTML(scenario):navigationPracticeHTML(scenario)}<div class="solfege-actions">${change?'<button class="primary-btn" type="button" data-track-hear>▶ Escuchar los dos ejemplos</button>':""}<button class="ghost-btn" type="button" data-track-new>↻ Nuevo ejemplo</button></div>${makeQuestion(question.question,question.answers)}</div>`;
+    mount.querySelector('[data-track-hear]')?.addEventListener('click',()=>playSequence([...scenario.oldNotes,...scenario.newNotes].map(midiFromNamed),400));
+    mount.querySelector('[data-track-new]').addEventListener('click',()=>{mountTrackPractice(level);focusContent(mount);});
+    mount.querySelectorAll('[data-track-answer]').forEach(button=>button.addEventListener('click',()=>resolveTrackCheck(mount,{selected:Number(button.dataset.trackAnswer),correctIndex:question.correct,explain:explanation,levelId:level.id})));return;
   }
   if(cfg.type==="reading"||cfg.type==="dictation"){
-    const notes=generateTrackNotes(cfg.phrase),phrase=trackPhrase(notes,cfg.meter),visualTones=trackTones(notes),first=notes[0].replace(/\d/,"");
-    const noteQuestion=shuffledQuestion("¿Cuál es la primera nota de esta nueva frase?",`${first} · ${NOTE_SOLFEGE[first]||first}`,NATURAL.filter(note=>note!==first).slice(0,3).map(note=>`${note} · ${NOTE_SOLFEGE[note]}`));
-    const delta=midiFromNamed(notes[1])-midiFromNamed(notes[0]);
-    const contour=delta>2?"Salto ascendente":delta>0?"Grado conjunto ascendente":delta<-2?"Salto descendente":"Grado conjunto descendente";
-    const dictationQuestion=shuffledQuestion("Después de escuchar, ¿cómo comienza la frase nueva?",contour,["Repetición exacta","Dos notas simultáneas","Silencio inicial"]);
-    const question=cfg.type==="dictation"?dictationQuestion:noteQuestion;
-    const instrumentMap=""; // Reading and dictation are practiced from notation alone.
-    const scoreHTML=`<div data-ci-notation-only class="solfege-score-wrap ${cfg.type==="dictation"?"dictation-hidden":""}" data-dictation-score><div class="scroll-x">${phraseStaffSVG(phrase,{clef:cfg.clef||"treble",meter:cfg.meter})}</div></div>`;
-    const rubric=level.id==="l2-primera-vista"?`<fieldset class="reading-rubric"><legend>Autoevaluación de la lectura</legend>${["Pulso continuo","Alturas precisas","Ritmo claro","Recuperación tras un error"].map(item=>`<label><input type="checkbox" data-rubric> ${item}</label>`).join("")}<p data-rubric-feedback>Elige una meta concreta para la siguiente lectura.</p></fieldset>`:"";
-    const interpretation=level.id==="l3-capstone"?interpretationGuideHTML():"";
-    mount.innerHTML=`<div class="lab-card track-practice" data-ci-notation-only><header><p class="kicker">PRÁCTICA GUIADA · GENERADA</p><h3>${escapeHtml(level.title)}</h3><p>${cfg.type==="dictation"?"Escucha primero; responde y después revela el modelo para comparar.":"Observa el contorno, recibe la cuenta previa y mantén el pulso."}</p></header>${scoreHTML}${interpretation}${instrumentMap}<p class="count-in-display" data-count-in-display aria-live="polite">Cuenta previa · preparada</p><div class="solfege-actions"><button class="primary-btn" type="button" data-track-read>▶ Cuenta y lee</button><button class="ghost-btn" type="button" data-track-hear>▶ Escuchar modelo</button><button class="ghost-btn" type="button" data-track-new>↻ Nueva práctica</button></div>${makeQuestion(question.question,question.answers)}${rubric}</div>`;
-    mount.querySelector("[data-track-read]").addEventListener("click",()=>playPhrase(mount,phrase,cfg.bpm,cfg.meter));
-    mount.querySelector("[data-track-hear]").addEventListener("click",()=>playSequence(phrase.map(event=>midiFromNamed(event.note)),Math.round(60000/cfg.bpm)));
-    mount.querySelector("[data-track-new]").addEventListener("click",()=>mountTrackPractice(level));
-    mount.querySelectorAll("[data-track-answer]").forEach(button=>button.addEventListener("click",()=>{resolveTrackCheck(mount,{selected:Number(button.dataset.trackAnswer),correctIndex:question.correct,explain:cfg.type==="dictation"?"El contorno se determina por la distancia y dirección entre las dos primeras notas.":`La frase comienza en ${NOTE_SOLFEGE[first]||first}.`,levelId:level.id});mount.querySelector("[data-dictation-score]")?.classList.remove("dictation-hidden")}));
-    mount.querySelectorAll("[data-rubric]").forEach(box=>box.addEventListener("change",()=>{const done=[...mount.querySelectorAll("[data-rubric]")].filter(item=>item.checked).length;mount.querySelector("[data-rubric-feedback]").textContent=done===4?"Lectura registrada: conserva esta lista como referencia para subir el tempo.":`${done}/4 aspectos observados. Elige uno para mejorar en la siguiente práctica.`}));
-    return;
+    mountReadingStudy(mount,level);return;
   }
   if(cfg.type==="grand"){
-    const upper=trackPhrase(generateTrackNotes(cfg.upper),cfg.meter),lower=trackPhrase(generateTrackNotes(cfg.lower),cfg.meter);
+    const upper=makeReadingStudy({...cfg,phrase:cfg.upper},{difficulty:level.id.startsWith("l3")?3:1,bars:4});
+    const capacity=Number(cfg.meter.split("/")[0])*4/Number(cfg.meter.split("/")[1]);
+    const bassNotes=generateTrackNotes(Array.from({length:8},(_,i)=>cfg.lower[i%cfg.lower.length]));
+    const lower=Array.from({length:4},(_,bar)=>[{note:bassNotes[bar*2],beats:capacity-1,bar},{note:bassNotes[bar*2+1],beats:1,bar}]).flat();
     mount.innerHTML=`<div class="lab-card track-practice" data-ci-notation-only><header><p class="kicker">LECTURA POLIFÓNICA · GENERADA</p><h3>${escapeHtml(level.title)}</h3><p>Lee cada voz por separado y después observa los puntos de coincidencia vertical.</p></header>${grandStaffHTML(upper,lower,cfg.meter)}<p class="count-in-display" data-count-in-display aria-live="polite">Cuenta previa · preparada</p><div class="solfege-actions"><button class="primary-btn" type="button" data-track-upper>▶ Leer voz superior</button><button class="ghost-btn" type="button" data-track-lower>▶ Leer voz inferior</button><button class="ghost-btn" type="button" data-track-both>▶ Escuchar ambas</button><button class="ghost-btn" type="button" data-track-new>↻ Nueva práctica</button></div><p class="feedback">Empieza a un tempo donde puedas mantener ambas voces sin detener el pulso.</p></div>`;
     mount.querySelector("[data-track-upper]").addEventListener("click",()=>playPhrase(mount,upper,cfg.bpm,cfg.meter));
     mount.querySelector("[data-track-lower]").addEventListener("click",()=>playPhrase(mount,lower,cfg.bpm,cfg.meter));
     mount.querySelector("[data-track-both]").addEventListener("click",async()=>{
       const token=await playCountIn(mount,cfg.bpm,cfg.meter);if(token===null)return;
-      const secondsPerEvent=60/cfg.bpm;
-      upper.forEach((event,index)=>playTone(midiFromNamed(event.note),{delay:index*secondsPerEvent,duration:.55,volume:.13}));
-      lower.forEach((event,index)=>playTone(midiFromNamed(event.note),{delay:index*secondsPerEvent,duration:.55,volume:.13}));
-      window.setTimeout(()=>{if(token===AUDIO.seq)finishCountIn(mount)},upper.length*secondsPerEvent*1000);
+      const secondsPerQuarter=60/cfg.bpm/quarterUnitsPerPulse(cfg.meter);
+      [upper,lower].forEach(voice=>phraseSoundEvents(voice).filter(event=>event.audible).forEach(event=>playTone(midiFromNamed(event.note),{delay:event.start*secondsPerQuarter,duration:event.length*secondsPerQuarter*.9,volume:.13})));
+      window.setTimeout(()=>{if(token===AUDIO.seq)finishCountIn(mount)},upper.reduce((sum,event)=>sum+event.beats,0)*secondsPerQuarter*1000);
     });
-    mount.querySelector("[data-track-new]").addEventListener("click",()=>mountTrackPractice(level));
+    mount.querySelector("[data-track-new]").addEventListener("click",()=>{mountTrackPractice(level);focusContent(mount);});
     return;
   }
   if(cfg.type==="key"||cfg.type==="meter"){
@@ -1739,27 +2041,27 @@ function mountTrackPractice(level){
       {root:"F",name:"Fa mayor",relative:"Re menor",notes:["F4","G4","A4","Bb4","C5","D5","E5","F5"]}
     ]);
     const notes=isKey?[]:generateTrackNotes(["G4","A4","B4","D5","C5","B4","A4","G4"]);
-    const phrase=trackPhrase(notes,meter);
+    const phrase=isKey?[]:makeReadingStudy({...cfg,meter,phrase:notes},{difficulty:2,bars:4});
     const question=isKey?shuffledQuestion("¿Qué tonalidad mayor corresponde a la armadura mostrada?",keyExample.name,["Do mayor","La menor","Mi♭ mayor"]):generatedTrackQuestion(level,cfg);
     const notation=isKey?keySignaturePracticeHTML(keyExample):`<div data-ci-notation-only class="solfege-score-wrap"><div class="scroll-x">${phraseStaffSVG(phrase,{clef:"treble",meter})}</div></div>`;
-    const actions=isKey?`<div class="solfege-actions"><button class="primary-btn" type="button" data-track-hear>▶ Escuchar escala</button><button class="ghost-btn" type="button" data-track-new>↻ Nueva armadura</button></div>`:`<p class="count-in-display" data-count-in-display aria-live="polite">Cuenta previa · preparada</p><div class="solfege-actions"><button class="primary-btn" type="button" data-track-read>▶ Cuenta y lee</button><button class="ghost-btn" type="button" data-track-hear>▶ Escuchar modelo</button><button class="ghost-btn" type="button" data-track-new>↻ Nueva práctica</button></div>`;
+    const actions=isKey?`<div class="solfege-actions"><button class="primary-btn" type="button" data-track-hear>▶ Escuchar escala</button><button class="ghost-btn" type="button" data-track-new>↻ Nueva armadura</button></div>`:`<p>${escapeHtml(meterTempoLabel(meter,68))}</p><p class="count-in-display" data-count-in-display aria-live="polite">Cuenta previa · preparada</p><div class="solfege-actions"><button class="primary-btn" type="button" data-track-read>▶ Cuenta y lee</button><button class="ghost-btn" type="button" data-track-hear>▶ Escuchar modelo</button><button class="ghost-btn" type="button" data-track-new>↻ Nueva práctica</button></div>`;
     mount.innerHTML=`<div class="lab-card track-practice" data-ci-notation-only><header><p class="kicker">LECTURA GUIADA · GENERADA</p><h3>${escapeHtml(level.title)}</h3><p>${isKey?"Identifica la armadura, nombra la tonalidad mayor y después relaciona su relativa menor.":"Marca la agrupación antes de entrar: el pentagrama se lee desde el pulso, no desde figuras aisladas."}</p></header>${notation}${actions}${makeQuestion(question.question,question.answers)}</div>`;
     if(!isKey)mount.querySelector("[data-track-read]").addEventListener("click",()=>playPhrase(mount,phrase,68,meter));
-    mount.querySelector("[data-track-hear]").addEventListener("click",()=>isKey?playSequence(tones(keyExample.root,SCALES[0].tokens).map(t=>rootMidi(keyExample.root,4)+t.semi),330):playSequence(phrase.map(event=>midiFromNamed(event.note)),440));
-    mount.querySelector("[data-track-new]").addEventListener("click",()=>mountTrackPractice(level));
+    mount.querySelector("[data-track-hear]").addEventListener("click",()=>isKey?playSequence(tones(keyExample.root,SCALES[0].tokens).map(t=>rootMidi(keyExample.root,4)+t.semi),330):playPhrase(mount,phrase,68,meter,{countIn:false}));
+    mount.querySelector("[data-track-new]").addEventListener("click",()=>{mountTrackPractice(level);focusContent(mount);});
     mount.querySelectorAll("[data-track-answer]").forEach(button=>button.addEventListener("click",()=>resolveTrackCheck(mount,{selected:Number(button.dataset.trackAnswer),correctIndex:question.correct,explain:isKey?`${keyExample.name} comparte esa armadura con ${keyExample.relative}.`:question.explain||cfg.explain,levelId:level.id})));
     return;
   }
   const question=generatedTrackQuestion(level,cfg);
   mount.innerHTML=`<div class="lab-card track-practice" data-ci-notation-only><header><p class="kicker">COMPROBACIÓN ACTIVA · GENERADA</p><h3>${escapeHtml(level.title)}</h3><p>Responde y lee la explicación antes de continuar.</p></header>${makeQuestion(question.question,question.answers)}<div class="solfege-actions"><button class="ghost-btn" type="button" data-track-new>↻ Nueva práctica</button></div></div>`;
-  mount.querySelector("[data-track-new]").addEventListener("click",()=>mountTrackPractice(level));
+  mount.querySelector("[data-track-new]").addEventListener("click",()=>{mountTrackPractice(level);focusContent(mount);});
   mount.querySelectorAll("[data-track-answer]").forEach(button=>button.addEventListener("click",()=>resolveTrackCheck(mount,{selected:Number(button.dataset.trackAnswer),correctIndex:question.correct,explain:question.explain||cfg.explain,levelId:level.id})));
 }
 function resolveTrackCheck(mount,{selected,correctIndex,explain,levelId}){
   const correct=selected===correctIndex;
   mount.querySelectorAll("[data-track-answer]").forEach(button=>{button.disabled=true;const answer=Number(button.dataset.trackAnswer);if(answer===correctIndex)button.classList.add("correct");else if(answer===selected)button.classList.add("wrong")});
   const feedback=mount.querySelector("[data-track-feedback]");
-  if(feedback)feedback.textContent=(correct?"Correcto. ":"Revisa. ")+explain;
+  if(feedback){feedback.textContent=(correct?"Correcto. ":"Revisa. ")+explain;focusTarget(feedback,{scroll:false});}
   state.practice[levelId]=correct;saveState();
 }
 
@@ -1829,10 +2131,10 @@ function beatsOf(dur){
   return SOLFEGE_DURATIONS.find(d=>d.id===dur)?.beats || 1;
 }
 function midiFromNamed(note){
-  const m=String(note).match(/^([A-G])(#|b)?(\d)$/);
+  const m=String(note).replace(/♯/g,"#").replace(/♭/g,"b").match(/^([A-G])(##|bb|#|b)?(-?\d+)$/);
   if(!m) return 60;
-  const pitch=({C:0,D:2,E:4,F:5,G:7,A:9,B:11})[m[1]] + (m[2]==="#"?1:m[2]==="b"?-1:0);
-  return (Number(m[3])+1)*12 + ((pitch+12)%12);
+  const pitch=({C:0,D:2,E:4,F:5,G:7,A:9,B:11})[m[1]] + accVal(m[2]||"");
+  return (Number(m[3])+1)*12 + pitch;
 }
 function namedFromMidiNatural(midi){
   const pc=((midi%12)+12)%12,oct=Math.floor(midi/12)-1;
@@ -1869,24 +2171,28 @@ function makeMelodyPhrase({bars=2,meter=4,level=1}={}){
   return phrase;
 }
 
-function phraseStaffSVG(phrase,{clef="treble",meter="4/4"}={}){
-  return CrescendoPractice.sequence(phrase,{clef,meter,labels:true})+'<div class="cp-note-buttons">'+phrase.map((ev,index)=>'<span data-sol-note-index="'+index+'">'+escapeHtml(ev.note)+'</span>').join('')+'</div>';
+function phraseStaffSVG(phrase,{clef="treble",meter="4/4",labels=true,key=0}={}){
+  return CrescendoPractice.sequence(phrase,{clef,meter,labels,key})+'<div class="cp-note-buttons">'+phrase.map((ev,index)=>'<span data-sol-note-index="'+index+'">'+(labels?(ev.kind==="rest"?"Silencio":escapeHtml(ev.note)):String(index+1))+'</span>').join('')+'</div>';
 }
 
-async function playPhrase(root,phrase,bpm,meter="4/4"){
-  const playbackToken=await playCountIn(root,bpm,meter);
-  if(playbackToken===null) return;
-  const msPerBeat=60000/bpm;
+async function playPhrase(root,phrase,bpm,meter="4/4",{countIn=true}={}){
+  let playbackToken;
+  if(countIn) playbackToken=await playCountIn(root,bpm,meter);
+  else {stopAllAudio();playbackToken=AUDIO.seq;await ensurePianoSoundFont();}
+  if(playbackToken===null || playbackToken!==AUDIO.seq) return false;
+  const msPerBeat=60000/bpm/quarterUnitsPerPulse(meter);
+  const events=phraseSoundEvents(phrase);
   for(let i=0;i<phrase.length;i++){
-      if(playbackToken!==AUDIO.seq)return;
+      if(playbackToken!==AUDIO.seq)return false;
     const groups=[...root.querySelectorAll("[data-sol-note-index]")];
     groups.forEach((g,j)=>g.classList.toggle("playing",i===j));
-    const ev=phrase[i];
-    playTone(midiFromNamed(ev.note),{duration:Math.max(.12,(ev.beats*msPerBeat/1000)*.82),volume:.15});
+    const ev=events[i];
+    if(ev.audible)playTone(midiFromNamed(ev.note),{duration:Math.max(.05,(ev.length*msPerBeat/1000)*(ev.articulation==="staccato"?.45:ev.tieStart?.98:.82)),volume:ev.articulation==="accent"?.19:.15});
     await new Promise(r=>setTimeout(r,ev.beats*msPerBeat));
   }
   root.querySelectorAll("[data-sol-note-index]").forEach(g=>g.classList.remove("playing"));
   finishCountIn(root);
+  return true;
 }
 
 function mountMelodySolfege(root){
@@ -2396,7 +2702,8 @@ function mountExpressionFormLab(el){
     const playbackToken=AUDIO.seq;
     await ensurePianoSoundFont();
     const beatMs=60000/config.bpm;
-    for(let i=0;i<phrase.length;i++){
+    const events=phraseSoundEvents(phrase);
+  for(let i=0;i<phrase.length;i++){
       if(playbackToken!==AUDIO.seq)return;
       const accentGain=config.art.accent && (i===0||i===3) ? 1.35 : 1;
       playTone(phrase[i],{
@@ -2554,60 +2861,60 @@ function mountExpressionTrainer(root,onResult){
 /* ===================== FASE 8 · EVALUACIÓN GLOBAL Y CIERRE ===================== */
 
 const DIAGNOSTIC_QUESTIONS = [
-  {level:"musica",q:"¿Qué propiedad del sonido permite percibirlo como grave o agudo?",choices:["Altura","Duración","Timbre"],a:0},
-  {level:"lectura",q:"¿Qué indica principalmente la posición vertical de una nota en el pentagrama?",choices:["Altura","Tempo","Dinámica"],a:0},
-  {level:"ritmo",q:"¿Qué representa el tempo?",choices:["Velocidad del pulso","Nombre del compás","Altura tonal"],a:0},
-  {level:"intervalos",q:"¿Cuántos semitonos tiene una 5 justa?",choices:["5","7","9"],a:1},
-  {level:"escalas",q:"La escala mayor se construye mediante:",choices:["Un patrón de tonos y semitonos","Notas al azar","Solo acordes"],a:0},
-  {level:"tonalidad",q:"¿Qué nota funciona como centro de una tonalidad?",choices:["Tónica","Quinta","Séptima"],a:0},
-  {level:"expresion-forma",q:"¿Qué elemento diferencia un piano de una guitarra tocando la misma nota?",choices:["Timbre","Compás","Armadura"],a:0},
-  {level:"puente-armonia",q:"¿Qué grados forman una tríada mayor?",choices:["1–3–5","1–2–4","1–4–7"],a:0},
-  {level:"ritmo-avanzado",q:"En 6/8 suelen sentirse principalmente:",choices:["2 pulsos subdivididos en tres","6 pulsos fuertes","3 pulsos subdivididos en dos"],a:0},
-  {level:"melodia",q:"¿Qué describe mejor una secuencia melódica?",choices:["Repetir una idea trasladada de altura","Mantener una sola nota","Cambiar de instrumento"],a:0}
+  {level:"musica",q:"¿Qué propiedad del sonido permite percibirlo como grave o agudo?",choices:["Altura","Duración","Timbre"],a:0,explain:"La altura distingue grave y agudo; la duración mide tiempo y el timbre distingue fuentes sonoras."},
+  {level:"lectura",q:"¿Qué indica principalmente la posición vertical de una nota en el pentagrama?",choices:["Altura","Tempo","Dinámica"],a:0,explain:"La clave permite interpretar la altura de cada posición; las figuras expresan duración."},
+  {level:"ritmo",q:"¿Qué representa el tempo?",choices:["Velocidad del pulso","Nombre del compás","Altura tonal"],a:0,explain:"El tempo establece la velocidad de la unidad de pulso indicada."},
+  {level:"intervalos",q:"¿Cuántos semitonos tiene una 5 justa?",choices:["5","7","9"],a:1,explain:"Una quinta justa, como Do–Sol, abarca cinco nombres y siete semitonos."},
+  {level:"escalas",q:"La escala mayor se construye mediante:",choices:["Un patrón de tonos y semitonos","Notas al azar","Solo acordes"],a:0,explain:"El patrón mayor es T–T–S–T–T–T–S; cambiar de tónica conserva ese patrón."},
+  {level:"tonalidad",q:"¿Qué nota funciona como centro de una tonalidad?",choices:["Tónica","Quinta","Séptima"],a:0,explain:"La tónica es el centro de referencia; otras notas adquieren estabilidad o dirección respecto de ella."},
+  {level:"expresion-forma",q:"¿Qué elemento diferencia un piano de una guitarra tocando la misma nota?",choices:["Timbre","Compás","Armadura"],a:0,explain:"El timbre diferencia fuentes aun cuando coincidan altura y duración."},
+  {level:"puente-armonia",q:"¿Qué grados forman una tríada mayor?",choices:["1–3–5","1–2–4","1–4–7"],a:0,explain:"Una tríada mayor reúne fundamental, tercera mayor y quinta justa."},
+  {level:"ritmo-avanzado",q:"En 6/8 suelen sentirse principalmente:",choices:["2 pulsos subdivididos en tres","6 pulsos fuertes","3 pulsos subdivididos en dos"],a:0,explain:"En 6/8 cada pulso principal es una negra con puntillo y contiene tres corcheas."},
+  {level:"melodia",q:"¿Qué describe mejor una secuencia melódica?",choices:["Repetir una idea trasladada de altura","Mantener una sola nota","Cambiar de instrumento"],a:0,explain:"Una secuencia traslada un motivo a otra altura; puede conservar relaciones diatónicas sin conservar todos los semitonos."}
 ];
 
 const FINAL_EVAL_QUESTIONS = [
-  {level:"musica",q:"¿Cuál conjunto incluye solo propiedades del sonido?",choices:["Altura, duración, intensidad, timbre","Ritmo, tonalidad, compás, forma","Escala, acorde, frase, textura"],a:0},
-  {level:"musica",q:"Ritmo, melodía y armonía son:",choices:["Tres ejes introductorios útiles, pero no los únicos elementos musicales","Los únicos elementos de toda música","Tres tipos de compás"],a:0},
+  {level:"musica",q:"¿Cuál conjunto incluye solo propiedades del sonido?",choices:["Altura, duración, intensidad, timbre","Ritmo, tonalidad, compás, forma","Escala, acorde, frase, textura"],a:0,explain:"Estas propiedades describen el sonido; escala, compás y forma describen maneras de organizarlo."},
+  {level:"musica",q:"Ritmo, melodía y armonía son:",choices:["Tres ejes introductorios útiles, pero no los únicos elementos musicales","Los únicos elementos de toda música","Tres tipos de compás"],a:0,explain:"Timbre, textura, dinámica y forma también participan en la organización musical."},
 
-  {level:"lectura",q:"En notación musical, el eje horizontal se relaciona principalmente con:",choices:["El tiempo","La altura","El timbre"],a:0},
-  {level:"lectura",q:"¿Qué función cumple una clave?",choices:["Asigna nombres y registros a líneas y espacios","Indica la dinámica","Define el tempo"],a:0},
+  {level:"lectura",q:"En notación musical, el eje horizontal se relaciona principalmente con:",choices:["El tiempo","La altura","El timbre"],a:0,explain:"El tiempo avanza de izquierda a derecha; la posición vertical se interpreta como altura según la clave."},
+  {level:"lectura",q:"¿Qué función cumple una clave?",choices:["Asigna nombres y registros a líneas y espacios","Indica la dinámica","Define el tempo"],a:0,explain:"La clave fija una referencia desde la cual se nombran líneas y espacios."},
 
-  {level:"ritmo",q:"¿Qué hace el puntillo?",choices:["Añade la mitad del valor de la figura","Duplica siempre la figura","Reduce la figura a la mitad"],a:0},
-  {level:"ritmo-avanzado",q:"Una síncopa desplaza el peso hacia:",choices:["Una parte débil o prolongada sobre una fuerte","Solo el primer pulso","El silencio final"],a:0},
+  {level:"ritmo",q:"¿Qué hace el puntillo?",choices:["Añade la mitad del valor de la figura","Duplica siempre la figura","Reduce la figura a la mitad"],a:0,explain:"Una negra con puntillo equivale a una negra más una corchea: 1 + ½."},
+  {level:"ritmo-avanzado",q:"Una síncopa desplaza el peso hacia:",choices:["Una parte débil o prolongada sobre una fuerte","Solo el primer pulso","El silencio final"],a:0,explain:"Por ejemplo, una nota que empieza entre pulsos y se prolonga sobre el siguiente puede producir síncopa."},
 
-  {level:"intervalos",q:"Una 3 mayor contiene:",choices:["4 semitonos","3 semitonos","5 semitonos"],a:0},
-  {level:"intervalos",q:"Dos notas simultáneas forman un intervalo:",choices:["Armónico","Melódico","Rítmico"],a:0},
+  {level:"intervalos",q:"Una 3 mayor contiene:",choices:["4 semitonos","3 semitonos","5 semitonos"],a:0,explain:"Do–Mi tiene cuatro semitonos. Do–Mi♭ tiene tres y es tercera menor."},
+  {level:"intervalos",q:"Dos notas simultáneas forman un intervalo:",choices:["Armónico","Melódico","Rítmico"],a:0,explain:"Un intervalo armónico se escucha simultáneamente; uno melódico se escucha sucesivamente."},
 
-  {level:"escalas",q:"¿Qué relación existe entre intervalos y escalas?",choices:["Las escalas se construyen mediante patrones interválicos","No existe relación","Las escalas eliminan los intervalos"],a:0},
-  {level:"escalas",q:"La menor natural contiene respecto de la mayor:",choices:["♭3, ♭6 y ♭7","♭2, ♭4 y ♭5","#4 únicamente"],a:0},
+  {level:"escalas",q:"¿Qué relación existe entre intervalos y escalas?",choices:["Las escalas se construyen mediante patrones interválicos","No existe relación","Las escalas eliminan los intervalos"],a:0,explain:"El patrón de distancias permite reconocer y construir una escala desde distintas tónicas."},
+  {level:"escalas",q:"La menor natural contiene respecto de la mayor:",choices:["♭3, ♭6 y ♭7","♭2, ♭4 y ♭5","#4 únicamente"],a:0,explain:"La comparación es con la escala mayor de la misma tónica: bajan los grados tercero, sexto y séptimo."},
 
-  {level:"tonalidad",q:"La tonalidad organiza las alturas alrededor de:",choices:["Una tónica","Un silencio","Una figura"],a:0},
-  {level:"tonalidad",q:"La función dominante se asocia principalmente con:",choices:["V y vii°","I y vi","ii y IV"],a:0},
+  {level:"tonalidad",q:"La tonalidad organiza las alturas alrededor de:",choices:["Una tónica","Un silencio","Una figura"],a:0,explain:"La tónica es un centro de reposo y referencia; no se determina únicamente por la primera nota."},
+  {level:"tonalidad",q:"La función dominante se asocia principalmente con:",choices:["V y vii°","I y vi","ii y IV"],a:0,explain:"En el esquema funcional mayor, V y vii° suelen dirigir hacia la tónica; el contexto determina su función concreta."},
 
-  {level:"expresion-forma",q:"Legato y staccato son tipos de:",choices:["Articulación","Tonalidad","Textura"],a:0},
-  {level:"expresion-forma",q:"A–B–A describe principalmente:",choices:["Forma","Timbre","Intervalo"],a:0},
+  {level:"expresion-forma",q:"Legato y staccato son tipos de:",choices:["Articulación","Tonalidad","Textura"],a:0,explain:"Legato conecta los sonidos; staccato los separa. Pueden combinarse con distintas dinámicas."},
+  {level:"expresion-forma",q:"A–B–A describe principalmente:",choices:["Forma","Timbre","Intervalo"],a:0,explain:"Las letras representan secciones: A presenta una idea, B contrasta y A regresa."},
 
-  {level:"melodia",q:"¿Qué notas suelen ser estructurales en una frase?",choices:["Puntos importantes de apoyo melódico","Solo notas cromáticas","Solo silencios"],a:0},
-  {level:"puente-armonia",q:"El puente hacia armonía busca conectar:",choices:["Melodía, intervalos, tríadas y función armónica","Solo ritmo y tempo","Solo timbre y dinámica"],a:0}
+  {level:"melodia",q:"¿Qué notas suelen ser estructurales en una frase?",choices:["Puntos importantes de apoyo melódico","Solo notas cromáticas","Solo silencios"],a:0,explain:"Las notas estructurales sostienen apoyos y llegadas; las de paso pueden conectar esos puntos."},
+  {level:"puente-armonia",q:"El puente hacia armonía busca conectar:",choices:["Melodía, intervalos, tríadas y función armónica","Solo ritmo y tempo","Solo timbre y dinámica"],a:0,explain:"La relación entre melodía, acorde y centro tonal permite comprender la función armónica."}
 ];
 
 const APPLIED_EVAL_QUESTIONS = [
-  {level:"l2-fluidez-sol",q:"Para leer una frase con más fluidez conviene reconocer primero:",choices:["El contorno y las notas de apoyo","Cada nota desde la primera línea","Solo la última nota"],a:0},
-  {level:"l2-clave-fa",q:"En clave de fa en cuarta, la línea indicada por la clave corresponde a:",choices:["Fa","Do","Sol"],a:0},
-  {level:"l2-armaduras",q:"Una armadura con Fa♯ corresponde a Sol mayor y a su relativa menor:",choices:["Mi menor","La menor","Re menor"],a:0},
-  {level:"l2-ritmo-compuesto",q:"La diferencia habitual entre 3/4 y 6/8 es:",choices:["Tres pulsos binarios frente a dos ternarios","Solo la velocidad","La clave utilizada"],a:0},
-  {level:"l2-dictado",q:"En un dictado inicial resulta útil identificar primero:",choices:["Pulso y contorno","Cada alteración simultáneamente","El timbre antes del ritmo"],a:0},
-  {level:"l2-gran-pentagrama",q:"En un gran pentagrama, dos notas alineadas verticalmente:",choices:["Ocurren al mismo tiempo","Tienen siempre el mismo nombre","Pertenecen a la misma mano"],a:0},
-  {level:"l2-primera-vista",q:"Antes de una primera lectura conviene revisar:",choices:["Clave, compás, armadura y dificultades","Solo la última barra","Únicamente el tempo"],a:0}
+  {level:"l2-fluidez-sol",q:"Para leer una frase con más fluidez conviene reconocer primero:",choices:["El contorno y las notas de apoyo","Cada nota desde la primera línea","Solo la última nota"],a:0,explain:"Reconocer dirección, pasos y saltos reduce la necesidad de contar cada línea desde cero."},
+  {level:"l2-clave-fa",q:"En clave de fa en cuarta, la línea indicada por la clave corresponde a:",choices:["Fa","Do","Sol"],a:0,explain:"En clave de fa en cuarta, los puntos rodean la cuarta línea, correspondiente a Fa3."},
+  {level:"l2-armaduras",q:"Una armadura con Fa♯ corresponde a Sol mayor y a su relativa menor:",choices:["Mi menor","La menor","Re menor"],a:0,explain:"La relativa menor se encuentra una tercera menor por debajo de la tónica mayor y comparte su armadura."},
+  {level:"l2-ritmo-compuesto",q:"La diferencia habitual entre 3/4 y 6/8 es:",choices:["Tres pulsos binarios frente a dos ternarios","Solo la velocidad","La clave utilizada"],a:0,explain:"3/4 agrupa tres negras; 6/8 agrupa dos negras con puntillo. Ambos suman seis corcheas."},
+  {level:"l2-dictado",q:"En un dictado inicial resulta útil identificar primero:",choices:["Pulso y contorno","Cada alteración simultáneamente","El timbre antes del ritmo"],a:0,explain:"Primero encuentra referencias generales; después concreta las notas y sus duraciones."},
+  {level:"l2-gran-pentagrama",q:"En un gran pentagrama, dos notas alineadas verticalmente:",choices:["Ocurren al mismo tiempo","Tienen siempre el mismo nombre","Pertenecen a la misma mano"],a:0,explain:"La alineación representa simultaneidad, aunque las notas tengan distinto nombre o duración."},
+  {level:"l2-primera-vista",q:"Antes de una primera lectura conviene revisar:",choices:["Clave, compás, armadura y dificultades","Solo la última barra","Únicamente el tempo"],a:0,explain:"Una vista previa permite anticipar riesgos y elegir un tempo que mantenga la continuidad."}
 ];
 const ADVANCED_EVAL_QUESTIONS = [
-  {level:"l3-metricas",q:"En 7/8, una agrupación posible es:",choices:["2+2+3","4+4","3+3+3"],a:0},
-  {level:"l3-polirritmia",q:"Para practicar una relación 3:2 conviene encontrar:",choices:["Un pulso común","Dos tempos independientes","Una sola voz"],a:0},
-  {level:"l3-cambios-tonales",q:"Para distinguir una alteración local de un cambio tonal debes observar:",choices:["Armadura, recurrencia y puntos de llegada","Solo la primera nota","Solo el nombre de la obra"],a:0},
-  {level:"l3-textura",q:"En una textura polifónica es importante seguir:",choices:["La dirección de cada voz y sus coincidencias","Solo el acorde global","Solo la voz más grave"],a:0},
-  {level:"l3-navegacion",q:"Antes de tocar una sección con D.S. y Coda conviene:",choices:["Trazar el recorrido de la partitura","Ignorar las señales","Tocar siempre de inicio a fin"],a:0},
-  {level:"l3-capstone",q:"Si cometes un error en primera vista, prioriza:",choices:["Recuperar el pulso en el siguiente punto seguro","Detener a todos y empezar de nuevo","Acelerar hasta alcanzar la partitura"],a:0}
+  {level:"l3-metricas",q:"En 7/8, una agrupación posible es:",choices:["2+2+3","4+4","3+3+3"],a:0,explain:"2+2+3 suma siete corcheas; otras agrupaciones, como 3+2+2, también son posibles."},
+  {level:"l3-polirritmia",q:"Para practicar una relación 3:2 conviene encontrar:",choices:["Un pulso común","Dos tempos independientes","Una sola voz"],a:0,explain:"Las capas reparten el mismo lapso en tres y dos ataques; una rejilla común útil tiene seis partes."},
+  {level:"l3-cambios-tonales",q:"Para distinguir una alteración local de un cambio tonal debes observar:",choices:["Armadura, recurrencia y puntos de llegada","Solo la primera nota","Solo el nombre de la obra"],a:0,explain:"Una nota cromática aislada no demuestra modulación. Hay que observar su contexto y los puntos de reposo."},
+  {level:"l3-textura",q:"En una textura polifónica es importante seguir:",choices:["La dirección de cada voz y sus coincidencias","Solo el acorde global","Solo la voz más grave"],a:0,explain:"Cada voz conserva una trayectoria melódica y se encuentra con las demás en momentos concretos."},
+  {level:"l3-navegacion",q:"Antes de tocar una sección con D.S. y Coda conviene:",choices:["Trazar el recorrido de la partitura","Ignorar las señales","Tocar siempre de inicio a fin"],a:0,explain:"D.S. retorna al signo; una indicación al Coda determina después la salida a la sección final."},
+  {level:"l3-capstone",q:"Si cometes un error en primera vista, prioriza:",choices:["Recuperar el pulso en el siguiente punto seguro","Detener a todos y empezar de nuevo","Acelerar hasta alcanzar la partitura"],a:0,explain:"Recuperar un punto seguro conserva la forma y la continuidad; después se revisa el error para estudiarlo."}
 ];
 const EVALUATION_CONFIG = {
   diagnostic:{title:"Diagnóstico",questions:DIAGNOSTIC_QUESTIONS,stateKey:"diagnostic"},
@@ -2634,10 +2941,12 @@ function practiceCount(){
   return allCourseLevels().filter(level=>state.practice?.[level.id]).length;
 }
 function totalProgressPercent(){
-  const total=allCourseLevels().length;
-  const completionPart = completedCount()/total;
-  const practicePart = practiceCount()/total;
-  return Math.round((completionPart*.75 + practicePart*.25)*100);
+  return Math.round(completedCount()/allCourseLevels().length*100);
+}
+function readingLevelStatus(levelId){
+  const evidence=state.readingEvidence?.filter(item=>item.levelId===levelId).at(-1);
+  if(evidence)return `Comprobación ${evidence.score}/${evidence.total}${evidence.supportUsed?" con ayudas":""} · `;
+  return state.practice[levelId]?"Pregunta rápida correcta · ":"";
 }
 
 function renderDetailedProgress(){
@@ -2647,7 +2956,7 @@ function renderDetailedProgress(){
   el.innerHTML=`
     <div class="mini-stat"><b>${completed}</b><span>unidades estudiadas</span></div>
     <div class="mini-stat"><b>${practice}</b><span>prácticas rápidas correctas</span></div>
-    <div class="mini-stat"><b>${totalProgressPercent()}%</b><span>avance global estimado</span></div>`;
+    <div class="mini-stat"><b>${totalProgressPercent()}%</b><span>avance de estudio</span></div>`;
 }
 
 function renderEvaluationSummary(){
@@ -2658,12 +2967,13 @@ function renderEvaluationSummary(){
   const applied=state.appliedEvaluation;
   const advanced=state.advancedEvaluation;
   el.innerHTML=`
-    <div class="summary-stat"><span>Progreso de estudio y práctica</span><b>${totalProgressPercent()}%</b><small>${completedCount()}/${allCourseLevels().length} unidades estudiadas</small></div>
+    <div class="summary-stat"><span>Progreso de estudio</span><b>${totalProgressPercent()}%</b><small>${completedCount()}/${allCourseLevels().length} unidades estudiadas</small></div>
     <div class="summary-stat"><span>Diagnóstico</span><b>${diag?diag.percent+"%":"—"}</b><small>${diag?"último resultado":"sin realizar"}</small></div>
-    <div class="summary-stat"><span>Fundamentos · Nivel 1</span><b>${final?final.percent+"%":"—"}</b><small>${final?final.label:"sin realizar"}</small></div>
-    <div class="summary-stat"><span>Lectura aplicada · Nivel 2</span><b>${applied?applied.percent+"%":"—"}</b><small>${applied?applied.label:"sin realizar"}</small></div>
-    <div class="summary-stat"><span>Lectura avanzada · Nivel 3</span><b>${advanced?advanced.percent+"%":"—"}</b><small>${advanced?advanced.label:"sin realizar"}</small></div>
-    <div class="summary-stat"><span>Lectura práctica</span><b>${state.readingEvaluation?"✓":"—"}</b><small>${state.readingEvaluation?"registrada":"sin realizar"}</small></div>`;
+    <div class="summary-stat"><span>Fundamentos · Nivel 1</span><b>${final?final.percent+"%":"—"}</b><small>${final?evaluationLabel(final.percent):"sin realizar"}</small></div>
+    <div class="summary-stat"><span>Lectura aplicada · Nivel 2</span><b>${applied?applied.percent+"%":"—"}</b><small>${applied?evaluationLabel(applied.percent):"sin realizar"}</small></div>
+    <div class="summary-stat"><span>Lectura avanzada · Nivel 3</span><b>${advanced?advanced.percent+"%":"—"}</b><small>${advanced?evaluationLabel(advanced.percent):"sin realizar"}</small></div>
+    <div class="summary-stat"><span>Comprobaciones de partitura y oído</span><b>${state.readingEvidence?.length?`${state.readingEvidence.at(-1).score}/${state.readingEvidence.at(-1).total}`:"—"}</b><small>${state.readingEvidence?.length?`${state.readingEvidence.length} ${state.readingEvidence.length===1?"registro":"registros"} · ${state.readingEvidence.at(-1).supportUsed?"último con ayudas":"último sin ayudas"}`:"sin realizar"}</small></div>
+    <div class="summary-stat"><span>Interpretación · autoevaluación</span><b>${state.readingEvaluation?`${state.readingEvaluation.achieved}/${state.readingEvaluation.total}`:"—"}</b><small>${state.readingEvaluation?"observación del estudiante":"sin registrar"}</small></div>`;
 }
 
 function renderBadges(){
@@ -2681,8 +2991,8 @@ function renderBadges(){
 }
 
 function evaluationLabel(percent){
-  if(percent>=90) return "Dominio muy sólido";
-  if(percent>=80) return "Objetivo alcanzado";
+  if(percent>=90) return "Comprensión conceptual muy sólida";
+  if(percent>=80) return "Objetivo conceptual alcanzado";
   if(percent>=65) return "Base adecuada; conviene reforzar";
   return "Conviene repasar antes de avanzar";
 }
@@ -2711,9 +3021,11 @@ function startEvaluation(kind){
         <h3>${escapeHtml(q.q)}</h3>
         <div class="eval-options">${q.choices.map((choice,i)=>`<button type="button" data-eval-choice="${i}">${escapeHtml(choice)}</button>`).join("")}</div>
         <p class="feedback" data-eval-feedback aria-live="polite"></p>
+        <button type="button" class="primary-btn" data-eval-next hidden>${index===questions.length-1?"Ver resultado":"Continuar"}</button>
       </div>`;
     runner.querySelectorAll("[data-eval-choice]").forEach(btn=>btn.addEventListener("click",()=>{
       const chosen=Number(btn.dataset.evalChoice),ok=chosen===q.a;
+      if(answers.length>index)return;
       if(ok) score++;
       answers.push({level:q.level,correct:ok});
       runner.querySelectorAll("[data-eval-choice]").forEach(b=>{
@@ -2721,13 +3033,18 @@ function startEvaluation(kind){
         if(Number(b.dataset.evalChoice)===q.a)b.classList.add("correct");
         else if(b===btn)b.classList.add("wrong");
       });
-      runner.querySelector("[data-eval-feedback]").textContent=ok?"Correcto.":"Respuesta incorrecta.";
-      setTimeout(()=>{
+      const explanation=q.explain||QUICK_PRACTICE[q.level]?.why||LEARNING_GUIDE[q.level]?.goal||allCourseLevels().find(level=>level.id===q.level)?.goal||"Revisa el ejemplo de esta unidad antes de repetir la evaluación.";
+      runner.querySelector("[data-eval-feedback]").textContent=`${ok?"Correcto.":"Revisa la respuesta."} ${q.choices[q.a]}. ${explanation}`;
+      const next=runner.querySelector("[data-eval-next]");
+      next.hidden=false;
+      focusTarget(runner.querySelector("[data-eval-feedback]"),{scroll:false});
+      next.addEventListener("click",()=>{
         index++;
         if(index<questions.length) renderQuestion();
         else finish();
-      },420);
+      },{once:true});
     }));
+    focusContent(runner);
   }
 
   function finish(){
@@ -2744,7 +3061,7 @@ function startEvaluation(kind){
       <div class="evaluation-result">
         <span class="result-percent">${percent}%</span>
         <h3>${escapeHtml(result.label)}</h3>
-        <p>${score} respuestas correctas de ${questions.length}.</p>
+        <p>${score} respuestas correctas de ${questions.length} sobre comprensión conceptual. La fluidez y la interpretación se observan por separado en la práctica de lectura.</p>
         <div class="level-result-grid">
           ${byLevel.map(item=>`<div class="level-result ${item.correct===item.total?"good":""}">
             <span>${escapeHtml(item.level.title)}</span><b>${item.correct}/${item.total}</b>
@@ -2756,35 +3073,28 @@ function startEvaluation(kind){
         </div>
       </div>`;
     runner.querySelector("[data-eval-retry]").addEventListener("click",()=>startEvaluation(kind));
-    runner.querySelector("[data-eval-close]").addEventListener("click",()=>runner.classList.add("hidden"));
+    runner.querySelector("[data-eval-close]").addEventListener("click",()=>{
+      runner.classList.add("hidden");
+      $({diagnostic:"startDiagnosticBtn",final:"startFinalEvalBtn",applied:"startAppliedEvalBtn",advanced:"startAdvancedEvalBtn"}[kind])?.focus();
+    });
     renderEvaluationSummary();
     renderBadges();
+    focusContent(runner);
   }
   renderQuestion();
 }
 
 function startReadingEvaluation(){
-  const runner=$("evaluationRunner");
-  if(!runner)return;
-  const phrase=["C4","D4","E4","G4","F4","E4","D4","C4"].map((note,index)=>({note,dur:"q",beats:1,bar:Math.floor(index/4)}));
-  runner.classList.remove("hidden");
-  runner.innerHTML=`<section class="reading-evaluation"><div class="eval-runner-head"><div><span>Lectura práctica guiada</span><b>Frase de 2 compases · 4/4</b></div></div>
-    <p>Esta prueba no simula medir tu voz: úsala para comprobar una lectura real. Escucha la cuenta previa, entra con el pulso y marca honestamente lo que lograste.</p>
-    <div data-ci-notation-only class="solfege-score-wrap"><div class="scroll-x">${phraseStaffSVG(phrase,{clef:"treble",meter:"4/4"})}</div></div>
-    <p class="count-in-display" data-count-in-display aria-live="polite">Cuenta previa · preparada</p>
-    <div class="solfege-actions"><button type="button" class="primary-btn" data-reading-eval-play>▶ Cuenta y reproduce</button><button type="button" class="ghost-btn" data-reading-eval-hear>▶ Escuchar referencia</button></div>
-    <div class="reading-evaluation-list"><label><input type="checkbox" data-reading-check="pulse"> Entré después de la cuenta previa y mantuve el pulso.</label><label><input type="checkbox" data-reading-check="names"> Nombré las notas sin detenerme.</label><label><input type="checkbox" data-reading-check="shape"> Reconocí que la frase sube y vuelve a Do.</label></div>
-    <button type="button" class="primary-btn" data-reading-eval-save>Registrar práctica</button><p class="feedback" data-reading-eval-feedback aria-live="polite"></p></section>`;
-  runner.querySelector("[data-reading-eval-play]").addEventListener("click",()=>playPhrase(runner,phrase,72,"4/4"));
-  runner.querySelector("[data-reading-eval-hear]").addEventListener("click",()=>playSequence(phrase.map(event=>midiFromNamed(event.note)),Math.round(60000/72)));
-  runner.querySelector("[data-reading-eval-save]").addEventListener("click",()=>{
-    const checks=[...runner.querySelectorAll("[data-reading-check]")];
-    const achieved=checks.filter(check=>check.checked).length;
-    state.readingEvaluation={achieved,total:checks.length,at:new Date().toISOString()};
-    saveState();
-    runner.querySelector("[data-reading-eval-feedback]").textContent=achieved===checks.length?"Práctica registrada: lectura completa. Repite en otro tempo para consolidarla.":`Práctica registrada: ${achieved}/${checks.length}. Repite la frase y enfócate en el punto que falta.`;
-    renderEvaluationSummary();
-  });
+  const runner=$("evaluationRunner");if(!runner)return;
+  stopAllAudio();runner.classList.remove("hidden");
+  runner.innerHTML='<section class="reading-evaluation"><h3>Lectura práctica por nivel</h3><p>Elige una frase, léela y comprueba alturas y ritmo. El resultado de las preguntas se guarda separado de tu autoevaluación al cantar o tocar.</p><label>Nivel <select data-reading-evaluation-level><option value="foundation">Inicial · 4/4</option><option value="applied">Aplicado · 6/8</option><option value="advanced">Integración · 5/4 con armadura</option></select></label><div data-reading-evaluation-study></div></section>';
+  const selector=runner.querySelector('[data-reading-evaluation-level]');
+  const render=()=>{
+    stopAllAudio();
+    const level=selector.value==="advanced"?COURSE_TRACKS.advanced.levels.find(level=>level.id==="l3-capstone"):selector.value==="applied"?COURSE_TRACKS.applied.levels.find(level=>level.id==="l2-primera-vista"):{id:"lectura",title:"Lectura inicial",practice:{type:"reading",clef:"treble",meter:"4/4",bpm:60,difficulty:1,phrase:["C4","D4","E4","G4","F4"]}};
+    mountReadingStudy(runner.querySelector('[data-reading-evaluation-study]'),level,{evaluation:true});
+  };
+  selector.addEventListener('change',render);render();focusContent(runner);
 }
 
 /* Refuerza el progreso al marcar niveles */
@@ -2792,12 +3102,15 @@ const _updateHomeProgressPhase1 = updateHomeProgress;
 updateHomeProgress = function(){
   _updateHomeProgressPhase1();
   renderDetailedProgress();
+  renderReviewSuggestions();
   renderEvaluationSummary();
   renderBadges();
 };
 
 
 document.addEventListener("DOMContentLoaded",()=>{
+  observeTheoryNavigation();
+  observeTheoryScrollRegions();
   renderLevelCards();
   /* El selector de timbre comparte el estilo nav-btn, pero no navega: solo
      cambia el instrumento. Escuchar el clic como navegación ocultaba todas
@@ -2812,7 +3125,7 @@ document.addEventListener("DOMContentLoaded",()=>{
   $("startReadingEvalBtn")?.addEventListener("click",startReadingEvaluation);
   renderEvaluationSummary();
   renderBadges();
-  if(location.hash==="#curso") showView("curso");
-  else if(location.hash==="#mapa") showView("mapa");
-  else if(location.hash==="#evaluacion") showView("evaluacion");
+  if(location.hash==="#curso") showView("curso",{focus:false});
+  else if(location.hash==="#mapa") showView("mapa",{focus:false});
+  else if(location.hash==="#evaluacion") showView("evaluacion",{focus:false});
 });

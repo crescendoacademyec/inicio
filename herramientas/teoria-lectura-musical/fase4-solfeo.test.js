@@ -15,7 +15,7 @@ assert.match(app,/FASE 4 · SOLFEO INTERACTIVO/);
 assert.match(css,/FASE 4 · SOLFEO INTERACTIVO/);
 assert.match(app,/data-sol-note-index/);
 assert.match(app,/2 a 4 compases|2–4 compases|2 a 4/);
-assert.match(app,/CrescendoPractice\.sequence\(phrase,\{clef,meter,labels:true\}\)/,'La frase y el compás se delegan al motor');
+assert.match(app,/CrescendoPractice\.sequence\(phrase,\{clef,meter,labels,key\}\)/,'La frase y el compás se delegan al motor');
 assert.doesNotMatch(app,/<ellipse|const stem = \x60<line/,'No debe dibujar cabezas ni plicas manualmente');
 global.window={};require('../../shared/music-practice.js');
 const xml=window.CrescendoPractice.sequence([{note:'C4',beats:2,bar:0},{note:'D4',beats:2,bar:0}],{meter:'4/4'});
