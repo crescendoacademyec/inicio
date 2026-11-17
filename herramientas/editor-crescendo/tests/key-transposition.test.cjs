@@ -1,0 +1,34 @@
+const {test}=require('node:test');
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const vm=require('node:vm');
+const path=require('node:path');
+const S=require('../../metronomo/rhythm-structure.js');
+test('metronome transposes degrees across octaves on both staves and reverses the change',()=>{
+ const events=[{bar:0,note:'G4',notes:['G4','B4','D5'],staff:1},{bar:0,note:'G2',staff:2},{bar:1,note:'G4'},{bar:0,kind:'rest'}];
+ const marks=[{type:'key',bar:1,fifths:2}],next=[{type:'key',bar:0,fifths:1},...marks];
+ const result=S.transposeKey(events,marks,next,0);
+ assert.deepEqual(S.resolve(result,next)[0].notes,['D5','F#5','A5']);
+ assert.equal(result[1].note,'D3');
+ assert.equal(result[2],events[2]);assert.equal(result[3],events[3]);
+ assert.deepEqual(S.resolve(S.transposeKey(result,next,marks,0),marks)[0].notes,['G4','B4','D5']);
+});
+test('Crescendo transposes register, accidentals and chord metadata up to the next key change',()=>{
+ const c={window:{}};vm.createContext(c);
+ vm.runInContext(fs.readFileSync(path.join(__dirname,'../src/score-editor-key-signatures.js'),'utf8'),c);
+ const key=c.window.JMLScoreKeySignatures;
+ const entry={type:'note',steps:[-2,0,2],noteColors:{'-2':'red'},accidentalsByDiatonicStep:{4:'sharp'},tieStaffStep:-2,tieDiatonicStep:4};
+ const untouched={type:'note',steps:[-2]};
+ const systems=[{measures:[{entries:[entry]},{keySignature:key.parse('D'),entries:[untouched]}]}];
+ Object.assign(c,{KeySignatures:key,state:{measures:systems[0].measures},scoreSystems:()=>systems,systemIsPercussionLine:()=>false,withSystemContext:(i,f)=>f(),refreshAutomaticAccidentals(){},entryStaffSteps:e=>e.steps,entryDiatonicStepForStaffStep:(e,s)=>s+6,getEntryAccidental:(e,s)=>e.accidentalsByDiatonicStep?.[s+6],getAutomaticAccidental:()=>null,keySignatureAccidentalForDiatonicStep:key.accidentalForDiatonicStep,setEntryStaffSteps:(e,s)=>e.steps=s,setEntryAccidental:(e,s,a)=>{e.accidentalsByDiatonicStep??={};e.accidentalsByDiatonicStep[s+6]=a;}});
+ const source=fs.readFileSync(path.join(__dirname,'../src/app.js'),'utf8');
+ vm.runInContext(source.slice(source.indexOf('  function effectiveAccidentalWithSignature('),source.indexOf('  function setKeySignatureAtMeasure(')),c);
+ c.respellEntriesForKeySignature(key.parse('C'),key.parse('G'));
+ assert.deepEqual(Array.from(entry.steps),[2,4,6]);
+ assert.equal(entry.accidentalsByDiatonicStep[8],'sharp');
+ assert.equal(entry.noteColors[2],'red');assert.equal(entry.tieStaffStep,2);assert.equal(entry.tieDiatonicStep,8);
+ assert.deepEqual(untouched.steps,[-2]);
+ c.respellEntriesForKeySignature(key.parse('G'),key.parse('C'));
+ assert.deepEqual(Array.from(entry.steps),[-2,0,2]);
+ assert.equal(entry.accidentalsByDiatonicStep[4],'sharp');
+});

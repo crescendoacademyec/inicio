@@ -38,6 +38,27 @@ function transposeHead(events,marks,index,head,direction){
  entry.accidentalsByNote=Object.fromEntries(notes.map(n=>{const p=parsePitch(n);return [p.plain,p.explicit||'natural'];}));
  delete entry.accidental;delete entry.midi;return true;
 }
+function transposeKey(events,marks,nextMarks,startBar){
+ const sounding=resolve(events,marks);
+ return events.map((e,i)=>{
+  if(e.kind==='rest'||(e.bar||0)<startBar)return e;
+  const oldKey=keyAt(marks,e.bar||0),newKey=keyAt(nextMarks,e.bar||0);
+  if(oldKey===newKey)return e;
+  const letters='CDEFGAB',tonic=k=>((k*4)%7+7)%7,shift=tonic(newKey)-tonic(oldKey);
+  const accidentalsByNote={};
+  const notes=(sounding[i].notes||[sounding[i].note]).map(n=>{
+   const p=parsePitch(n),d=p.octave*7+letters.indexOf(p.letter)+shift,letter=letters[((d%7)+7)%7],octave=Math.floor(d/7);
+   const sem=a=>a==='sharp'?1:a==='flat'?-1:0;
+   const deviation=sem(p.explicit)-sem(signatureAccidental(p.letter,oldKey));
+   const value=sem(signatureAccidental(letter,newKey))+deviation;
+   const plain=letter+octave;
+   if(deviation)accidentalsByNote[plain]=value>0?'sharp':value<0?'flat':'natural';
+   return plain;
+  });
+  const result={...e,note:notes[0],accidentalsByNote};if(e.notes)result.notes=notes;
+  delete result.accidental;delete result.midi;return result;
+ });
+}
 function editBars(events,marks,bars,index,operation){
  const inserting=operation==='insert';
  if(!['insert','remove'].includes(operation)||!Number.isInteger(index)||index<0||index>(inserting?bars:bars-1))return {message:'Compás no válido.'};
@@ -109,5 +130,5 @@ function keyWidth(fifths,previous=0){const count=keyGlyphs(fifths,previous).leng
 function keySVG(fifths,previous,x,top,staff){return keyGlyphs(fifths,previous).map((g,i)=>`<text class="rhythm-key-accidental" x="${x+i*11}" y="${top+20-(g.step-(staff===2?2:0))*5}" font-family="Bravura Metronome" font-size="40">${String.fromCodePoint(g.code)}</text>`).join('');}
 function slots(duration,capacity,events=[],pulse=1,span=duration){const step=Math.min(duration,pulse),values=new Set([0]);for(let beat=0,n=0;beat<capacity-EPS&&n<2048;beat+=step,n++)values.add(Number(beat.toFixed(7)));for(const e of events){if(e.grace)continue;values.add(e.offset||0);values.add((e.offset||0)+e.beats);}return [...values].filter(beat=>beat>=0&&beat<capacity-EPS&&beat+span<=capacity+EPS).sort((a,b)=>a-b);}
 function validate(events,tl,marks=[]){return marks.every(m=>(m.offset===undefined||m.offset>=0&&m.offset<tl.capacities[m.bar])&&(m.endOffset===undefined||m.endOffset>=0&&m.endOffset<=tl.capacities[m.endBar??m.bar]))&&events.every(e=>e.bar>=0&&e.bar<tl.capacities.length&&(e.offset||0)>=0&&(e.offset||0)+(e.beats||0)<=tl.capacities[e.bar]+.0001);}
-const api={rebar,editBars,chromaticPitch,transposeHead,meter,timeline,keyAt,keyNames,signatureAccidental,parsePitch,resolve,keyGlyphs,keyWidth,keySVG,slots,validate};if(typeof module!=='undefined')module.exports=api;else root.CrescendoRhythmStructure=api;
+const api={transposeKey,rebar,editBars,chromaticPitch,transposeHead,meter,timeline,keyAt,keyNames,signatureAccidental,parsePitch,resolve,keyGlyphs,keyWidth,keySVG,slots,validate};if(typeof module!=='undefined')module.exports=api;else root.CrescendoRhythmStructure=api;
 })(typeof window==='undefined'?globalThis:window);

@@ -1331,7 +1331,7 @@
         const result=rhythmStructure.rebar(rhythmEditorEvents,rhythmMarks,oldTimeline,currentRhythmMeter(),next,Number(UI.rhythmBars.value));
         if(result.message){document.getElementById('rhythmContextError').textContent=result.message;return false;}
         rhythmEditorEvents=result.events;rhythmMarks=result.marks;UI.rhythmBars.value=String(result.bars);
-      }else rhythmMarks=next;
+      }else {rhythmEditorEvents=rhythmStructure.transposeKey(rhythmEditorEvents,rhythmMarks,next,bar);rhythmMarks=next;}
       rhythmHistory.commit(before,rhythmSnapshot());selectedRhythmNote=null;rhythmPointerTarget=null;rhythmPointerEvent=null;activeRhythmTool.actual=0;activeRhythmTool.groupIndex=0;rhythmPreview.replaceChildren();renderRhythmScore(type==='key'?'Armadura aplicada desde el compás '+(bar+1)+'.':'Música reorganizada desde el compás '+(bar+1)+'.');return true;
     }
     keySelect.addEventListener('change',()=>setRhythmSignature('key',keySelect.value,0));

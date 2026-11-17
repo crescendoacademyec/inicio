@@ -14344,20 +14344,33 @@
       if (systemIsPercussionLine(system)) return;
       withSystemContext(systemIndex, () => {
         refreshAutomaticAccidentals();
+        const nextChange = state.measures.findIndex((measure, index) => index > startMeasureIndex && measure.keySignature);
         state.measures.forEach((measure, measureIndex) => {
-          if (measureIndex < startMeasureIndex) return;
+          if (measureIndex < startMeasureIndex || (nextChange >= 0 && measureIndex >= nextChange)) return;
           measure.entries.forEach((entry) => {
             if (entry.type === "rest") return;
-            entryStaffSteps(entry).forEach((staffStep) => {
+            const pitches = entryStaffSteps(entry).map((staffStep) => {
+              const letters = "CDEFGAB";
+              const shift = letters.indexOf((nextSignature?.tonic || "C")[0]) - letters.indexOf((previousSignature?.tonic || "C")[0]);
               const diatonicStep = entryDiatonicStepForStaffStep(entry, staffStep);
-              const previousAccidental = effectiveAccidentalWithSignature(entry, staffStep, previousSignature);
-              const nextDiatonicAccidental = keySignatureAccidentalForDiatonicStep(diatonicStep, nextSignature) || "natural";
-              if (previousAccidental === nextDiatonicAccidental) {
-                clearEntryAccidental(entry, staffStep);
-              } else {
-                setEntryAccidental(entry, staffStep, previousAccidental);
-              }
+              const deviation = KeySignatures.accidentalSemitone(effectiveAccidentalWithSignature(entry, staffStep, previousSignature)) - KeySignatures.accidentalSemitone(keySignatureAccidentalForDiatonicStep(diatonicStep, previousSignature));
+              return { staffStep, nextStep: staffStep + shift, accidental: KeySignatures.accidentalBySemitone(KeySignatures.accidentalSemitone(keySignatureAccidentalForDiatonicStep(diatonicStep + shift, nextSignature)) + deviation), deviation };
             });
+            const shiftedMaps = {};
+            for (const field of ["noteheadsByStep", "noteColors"]) {
+              if (entry[field]) shiftedMaps[field] = Object.fromEntries(pitches.filter(p => entry[field][p.staffStep] !== undefined).map(p => [p.nextStep, entry[field][p.staffStep]]));
+            }
+            const tiedPitch = pitches.find(p => p.staffStep === entry.tieStaffStep);
+            setEntryStaffSteps(entry, pitches.map(p => p.nextStep));
+            Object.assign(entry, shiftedMaps);
+            if (tiedPitch) {
+              entry.tieStaffStep = tiedPitch.nextStep;
+              if (Number.isFinite(entry.tieDiatonicStep)) entry.tieDiatonicStep += tiedPitch.nextStep - tiedPitch.staffStep;
+            }
+            delete entry.accidentalsByDiatonicStep;
+            delete entry.accidentalsByStep;
+            delete entry.accidental;
+            pitches.forEach(p => { if (p.deviation) setEntryAccidental(entry, p.nextStep, p.accidental); });
           });
         });
         refreshAutomaticAccidentals();
