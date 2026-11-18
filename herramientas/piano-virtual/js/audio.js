@@ -184,10 +184,10 @@ function noteOn(n, velocity = 127) {
   if(typeof window.evaluateMetroAttack==='function')window.evaluateMetroAttack();
   if (!isNoteInRange(n.midi)) return;
   document.dispatchEvent(new CustomEvent('piano-input',{detail:{midi:n.midi,on:true}}));
-  if (sustainedNotes.has(n.midi)) {
-    sustainedNotes.delete(n.midi);
-    stopSoundNow(n.midi);
-  }
+  // A repeated attack replaces this pitch's voice, including attacks from
+  // another input. Never overwrite the only handle that can release it.
+  sustainedNotes.delete(n.midi);
+  if (activeSources[n.midi]) stopSoundNow(n.midi);
   if (visuallySustainedNotes.has(n.midi)) {
     visuallySustainedNotes.delete(n.midi);
     setKeyActive(n.midi, false);

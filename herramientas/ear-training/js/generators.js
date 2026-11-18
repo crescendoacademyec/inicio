@@ -111,9 +111,9 @@
   function generateInterval(config) {
     const forced = forcedSet(config);
     let pool = D.INTERVALS.filter(iv => (config.intervals || []).includes(iv.semitones));
-    if (forced) pool = pool.filter(iv => forced.has(`interval:${iv.semitones}`));
-    if (!pool.length) return emptyRound('Selecciona al menos un intervalo válido.');
-    const target = sample(pool);
+    const targets = forced ? pool.filter(iv => forced.has(`interval:${iv.semitones}`)) : pool;
+    if (!targets.length) return emptyRound('Selecciona al menos un intervalo válido.');
+    const target = sample(targets);
     const direction = intervalDirection(config);
     const root = randomIntervalRoot(target.semitones, direction, config.register);
     const upper = root + target.semitones;
@@ -123,7 +123,8 @@
     else if (direction === 'descending') seq = [{notes:[root],start:0.05,dur:0.6,vel:0.7},{notes:[lower],start:0.95,dur:1.35,vel:0.8}];
     else seq = [{notes:[root],start:0.05,dur:0.6,vel:0.7},{notes:[upper],start:0.95,dur:1.35,vel:0.8}];
 
-    let candidates = pick(pool, Math.min(4,pool.length));
+    const distractors=pool.length>1?pool:[...D.INTERVALS].sort((a,b)=>Math.abs(a.semitones-target.semitones)-Math.abs(b.semitones-target.semitones)).slice(0,4);
+    let candidates = pick(distractors, Math.min(4,distractors.length));
     if (!candidates.some(x=>x.semitones===target.semitones)) candidates[0]=target;
     candidates = shuffle(candidates);
     const options = candidates.map(x=>option(`interval:${x.semitones}`, x.name, {semitones:x.semitones}));
@@ -142,21 +143,24 @@
   function generateChord(config) {
     const forced = forcedSet(config);
     let pool = D.CHORD_BANK.filter(ch => (config.chords || []).includes(ch.id));
-    if (forced) pool = pool.filter(ch => forced.has(`chord:${ch.id}`));
-    if (!pool.length) return emptyRound('Selecciona al menos un acorde válido.');
-    const target = sample(pool);
+    const targets = forced ? pool.filter(ch => forced.has(`chord:${ch.id}`)) : pool;
+    if (!targets.length) return emptyRound('Selecciona al menos un acorde válido.');
+    const target = sample(targets);
     const rootPc = randInt(12);
     const rootMidi = randomRootForPc(rootPc, config.register);
     const voiced = applyVoicing(target.intervals, config.chordVoicing || 'root');
     const notes = normalizeWithinRange(voiced.map(iv=>rootMidi+iv));
-    let candidates = pick(pool, Math.min(4,pool.length));
+    const distractors=pool.length>1?pool:[...D.CHORD_BANK].sort((a,b)=>Math.abs(a.intervals.length-target.intervals.length)-Math.abs(b.intervals.length-target.intervals.length)).slice(0,6);
+    let candidates = pick(distractors, Math.min(4,distractors.length));
     if (!candidates.some(x=>x.id===target.id)) candidates[0]=target;
     candidates=shuffle(candidates);
     const options = candidates.map(x=>option(`chord:${x.id}`, `${x.name} · ${x.symbol || 'Mayor'}`, {chordId:x.id}));
     const correctIdx = options.findIndex(x=>x.id===`chord:${target.id}`);
     const rootName = D.PITCH_NAMES[rootPc];
     return {
-      options, correctIdx, seq:[{notes,start:0.1,dur:2.6,vel:0.84}],
+      options, correctIdx,
+      prompt:'Primero escucha la fundamental sola; después identifica la calidad del acorde.',
+      seq:[{notes:[rootMidi],start:0.05,dur:0.6,vel:0.7},{notes,start:1.0,dur:2.6,vel:0.84}],
       meta:{targetId:`chord:${target.id}`,targetType:'chord',targetName:target.name,chordId:target.id,symbol:target.symbol,formula:D.formulaLabel(target.intervals),root:rootName,voicing:config.chordVoicing||'root'},
       feedback(ok, selected) {
         const aliases = target.aliases?.length ? ` · alias: ${target.aliases.join(', ')}` : '';
@@ -171,7 +175,8 @@
   function generateLevel3(config) {
     const type = config.level3Type || 'tetrad';
     const forced = forcedSet(config);
-    let targetDegrees = (config.level3Targets || [0,1,2,3,4,5,6]).slice();
+    const selectedDegrees = (config.level3Targets || [0,1,2,3,4,5,6]).slice();
+    let targetDegrees = selectedDegrees.slice();
     const refs = (config.level3Refs || [0,1,2,3,4,5,6]).slice();
     if (forced) targetDegrees = targetDegrees.filter(d=>forced.has(`degree:${type}:${d}`));
     if (!targetDegrees.length || !refs.length) return emptyRound('Selecciona grados de referencia y objetivo.');
@@ -180,7 +185,8 @@
     const ref=sample(refs);
     let targetPool=targetDegrees.filter(d=>d!==ref); if(!targetPool.length) targetPool=targetDegrees;
     const degree=sample(targetPool);
-    let candidates=pick(targetPool,Math.min(4,targetPool.length));
+    const distractors=selectedDegrees.length>1?selectedDegrees:[0,1,2,3,4,5,6];
+    let candidates=pick(distractors,Math.min(4,distractors.length));
     if(!candidates.includes(degree)) candidates[0]=degree;
     candidates=shuffle(candidates);
     const options=candidates.map(d=>option(`degree:${type}:${d}`,degreeLabel(d,type),{degree:d}));

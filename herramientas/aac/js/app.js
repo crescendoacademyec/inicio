@@ -2382,7 +2382,22 @@ function captureAppState() {
   };
 }
 
+function validateImportedState(raw) {
+  const object = value => value && typeof value === "object" && !Array.isArray(value);
+  if (!object(raw) || (raw.app && raw.app !== "analizador-armonico-svg-pro")) throw new Error("Formato de análisis no reconocido.");
+  if (raw.exportVersion != null && (!Number.isInteger(raw.exportVersion) || raw.exportVersion < 1 || raw.exportVersion > 44)) throw new Error("Versión de exportación no compatible.");
+  if (raw.uiState != null && !object(raw.uiState)) throw new Error("Estado de interfaz no válido.");
+  const document = raw.document ?? raw;
+  const measures = value => Array.isArray(value) && value.every(object);
+  const valid = object(document) && (Array.isArray(document.pages) && document.pages.length > 0
+    ? document.pages.every(page => object(page) && measures(page.measures))
+    : measures(document.measures));
+  if (!valid) throw new Error("El archivo no contiene páginas o compases de un análisis.");
+  return raw;
+}
+
 function normalizeImportedState(raw) {
+  validateImportedState(raw);
   if (raw?.document) {
     return {
       document: normalizeSong(raw.document),
@@ -2418,6 +2433,7 @@ function pushHistory() {
 async function applyAppState(rawState, dirtyAfter = true) {
   const state = normalizeImportedState(rawState);
   isRestoringState = true;
+  try {
   song = state.document;
   selected = state.uiState.selected || { page: 0, measure: 0 };
   selectedRhythm = state.uiState.selectedRhythm || { page: selected.page || 0, measure: selected.measure || 0, sources: [], tuplets: [], openTuplet: null };
@@ -2437,7 +2453,7 @@ async function applyAppState(rawState, dirtyAfter = true) {
   if (restoredStandardFilename !== currentStandardFilename) currentStandardSource = null;
   currentStandardFilename = restoredStandardFilename;
   evaluationIssues.clear();
-  currentFilename = state.uiState.currentFilename || currentFilename;
+  if (Object.prototype.hasOwnProperty.call(state.uiState, "currentFilename")) currentFilename = state.uiState.currentFilename || null;
   if (assistanceMode === "assisted") updateOriginScalesFromCurrentAnalysis(false);
   await registerLocalFonts();
   renderSettingsForm();
@@ -2455,7 +2471,7 @@ async function applyAppState(rawState, dirtyAfter = true) {
   els.measurePanel.classList.add("hidden");
 
   setDirty(dirtyAfter);
-  isRestoringState = false;
+  } finally { isRestoringState = false; }
 }
 
 async function undo() {
@@ -13541,16 +13557,22 @@ function importJson(event) {
 
   const reader = new FileReader();
   reader.onload = async () => {
+    let previous = null, wasDirty = dirty;
     try {
       const imported = JSON.parse(reader.result);
-      currentFilename = file.name;
+      validateImportedState(imported);
+      if (dirty && !confirm("Hay cambios sin guardar. ¿Importar otro análisis? Podrás recuperar el anterior con Deshacer.")) return;
+      previous = JSON.parse(JSON.stringify(captureAppState()));
+      pushHistory();
       await applyAppState(imported, true);
+      currentFilename = file.name;
       clearCurrentStandardSource();
-      resetHistory();
+      pushHistory();
       setDirty(true);
     } catch (error) {
+      if (previous) await applyAppState(previous, wasDirty);
       console.warn(error);
-      alert("No se pudo importar ese JSON.\n\nEl archivo no parece ser un analisis valido para esta app, o esta danado.\n\nPrueba con un JSON descargado desde esta misma app.");
+      alert("No se pudo importar ese JSON. El documento actual se conserva.\n\nUsa un análisis exportado por esta aplicación en un formato compatible.");
     }
   };
 

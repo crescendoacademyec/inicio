@@ -1009,22 +1009,33 @@
       }
       intonationRAF=requestAnimationFrame(intonationTick);
     }
+    let intonationMicPending=false, intonationMicRequest=0;
     async function toggleIntonationMic(){
-      if(intonationStream){stopIntonationMic();return;}
+      if(intonationStream||intonationMicPending){stopIntonationMic();return;}
       if(!navigator.mediaDevices?.getUserMedia){intonationStatus.textContent='Este navegador no ofrece acceso al micrófono.';return;}
+      const request=++intonationMicRequest;intonationMicPending=true;intonationMicBtn.textContent='Cancelar solicitud';
+      let acquired=null,source=null;
       try{
         const ctx=ensureCtx();
-        intonationStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
-        intonationSource=ctx.createMediaStreamSource(intonationStream);intonationAnalyser=ctx.createAnalyser();intonationAnalyser.fftSize=4096;intonationAnalyser.smoothingTimeConstant=.1;intonationSource.connect(intonationAnalyser);
+        acquired=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
+        if(request!==intonationMicRequest){acquired.getTracks().forEach(t=>t.stop());return;}
+        source=ctx.createMediaStreamSource(acquired);const analyser=ctx.createAnalyser();analyser.fftSize=4096;analyser.smoothingTimeConstant=.1;source.connect(analyser);
+        intonationStream=acquired;intonationSource=source;intonationAnalyser=analyser;intonationMicPending=false;
         intonationPanel?.classList.add('is-listening');intonationMicBtn.textContent='Detener micrófono';intonationStatus.textContent='Micrófono activo · toca una nota sostenida y estable.';intonationTick();
-      }catch(err){intonationStatus.textContent='No se pudo activar el micrófono. Revisa el permiso del navegador.';}
+      }catch(err){
+        acquired?.getTracks().forEach(t=>t.stop());try{source?.disconnect();}catch(_){}
+        if(request!==intonationMicRequest)return;
+        stopIntonationMic();intonationStatus.textContent='No se pudo activar el micrófono. Revisa el permiso del navegador.';
+      }
     }
     function stopIntonationMic(){
+      intonationMicRequest++;intonationMicPending=false;
       if(intonationRAF)cancelAnimationFrame(intonationRAF);intonationRAF=0;try{intonationSource?.disconnect();}catch(e){}intonationSource=null;intonationAnalyser=null;
       if(intonationStream){intonationStream.getTracks().forEach(t=>t.stop());intonationStream=null;}
       intonationPanel?.classList.remove('is-listening');if(intonationMicBtn)intonationMicBtn.textContent='Activar micrófono';
       if(intonationDetectedLabel)intonationDetectedLabel.textContent='—';if(intonationCents)intonationCents.textContent='— cents';if(intonationNeedle)intonationNeedle.style.left='50%';if(intonationStatus)intonationStatus.textContent='Micrófono detenido.';
     }
+    window.addEventListener('pagehide',stopIntonationMic);
     function playReferenceFrequency(freq,duration=1.5,gainValue=.12){const ctx=ensureCtx(),osc=ctx.createOscillator(),gain=ctx.createGain();osc.type='sine';osc.frequency.value=freq;gain.gain.setValueAtTime(.0001,ctx.currentTime);gain.gain.exponentialRampToValueAtTime(gainValue,ctx.currentTime+.04);gain.gain.exponentialRampToValueAtTime(.0001,ctx.currentTime+Math.max(.12,duration-.08));osc.connect(gain);gain.connect(masterBus);osc.start();osc.stop(ctx.currentTime+duration);}
     function playIntonationReference(){const midi=intonationTargetMidi(),freq=intonationTargetFrequency();try{if(Math.abs(intonationFineOffsetCents)>.05)playReferenceFrequency(freq,1.5);else playNote(midi,1.5);intonationStatus.textContent=`Referencia: ${midiLabel(midi)} · ${freq.toFixed(2)} Hz${Math.abs(intonationFineOffsetCents)>.05?` · ${intonationFineOffsetCents>0?'+':''}${intonationFineOffsetCents.toFixed(1)}¢`:''}`;}catch(e){}}
     function stopIntonationDrone(){try{const ctx=ensureCtx();intonationDroneGain?.gain.setTargetAtTime(.0001,ctx.currentTime,.03);intonationDroneOsc?.stop(ctx.currentTime+.15);}catch(e){}intonationDroneOsc=null;intonationDroneGain=null;if(intonationDroneBtn)intonationDroneBtn.textContent='Iniciar drone';}

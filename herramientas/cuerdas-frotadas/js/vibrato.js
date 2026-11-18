@@ -37,14 +37,15 @@
   }
   const median=a=>{const b=a.slice().sort((x,y)=>x-y),n=b.length;return n? (n%2?b[(n-1)/2]:(b[n/2-1]+b[n/2])/2):0};
   function percentile(a,p){if(!a.length)return 0;const b=a.slice().sort((x,y)=>x-y),i=(b.length-1)*p,lo=Math.floor(i),hi=Math.ceil(i);return b[lo]+(b[hi]-b[lo])*(i-lo)}
-  function smooth(vals,n=5){return vals.map((_,i)=>{let s=0,k=0;for(let j=Math.max(0,i-n+1);j<=i;j++){s+=vals[j];k++}return s/k})}
   function crossingTimes(times,vals,center){const out=[];let armed=false;for(let i=1;i<vals.length;i++){if(vals[i-1]<center-2)armed=true;if(armed&&vals[i]>=center+2){const dv=vals[i]-vals[i-1]||1,frac=(center-vals[i-1])/dv;out.push(times[i-1]+Math.max(0,Math.min(1,frac))*(times[i]-times[i-1]));armed=false;}}return out}
   function analyze(){
     const valid=samples.filter(p=>Number.isFinite(p.c)&&Math.abs(p.c)<=100); if(valid.length<20){status.textContent='No hubo suficientes muestras estables para analizar.';status.className='vibrato-status bad';return;}
-    const times=valid.map(p=>p.t), raw=valid.map(p=>p.c), vals=smooth(raw,5), center=median(vals), p10=percentile(vals,.10),p90=percentile(vals,.90),halfWidth=(p90-p10)/2;
+    // Measure the unsmoothed contour. A five-frame average erases a 6 Hz
+    // vibrato at 30 fps. P5–P95 describes the central excursion robustly.
+    const times=valid.map(p=>p.t), vals=valid.map(p=>p.c), center=median(vals), halfWidth=(percentile(vals,.95)-percentile(vals,.05))/2;
     const crossings=crossingTimes(times,vals,center), periods=crossings.slice(1).map((t,i)=>t-crossings[i]).filter(x=>x>.07&&x<.5), rate=periods.length?1/(periods.reduce((a,b)=>a+b,0)/periods.length):0;
     const meanP=periods.length?periods.reduce((a,b)=>a+b,0)/periods.length:0, sdP=periods.length?Math.sqrt(periods.reduce((s,x)=>s+(x-meanP)**2,0)/periods.length):0, regularity=periods.length?Math.max(0,100-(sdP/meanP)*100):0;
-    let onset=0;if(modeEl.value==='delayed'){const thresh=Math.max(6,(+widthEl.value)*.35);const base=median(vals.slice(0,Math.max(5,Math.floor(vals.length*.15))));let idx=vals.findIndex((v,i)=>i>4&&Math.abs(v-base)>=thresh&&vals.slice(i,i+4).filter(x=>Math.abs(x-base)>=thresh).length>=3);onset=idx>=0?times[idx]-times[0]:0;}
+    let onset=0;if(modeEl.value==='delayed'){const thresh=Math.max(6,(+widthEl.value)*.35);const base=median(vals.filter((_,i)=>times[i]-times[0]<=.15));let idx=vals.findIndex((v,i)=>times[i]-times[0]>.15&&Math.abs(v-base)>=thresh);onset=idx>=0?times[idx]-times[0]:0;}
     centerEl.textContent=`${center>=0?'+':''}${center.toFixed(1)}¢`;measuredWidthEl.textContent=`±${halfWidth.toFixed(1)}¢`;measuredRateEl.textContent=rate?`${rate.toFixed(1)} Hz`:'—';regularityEl.textContent=periods.length?`${regularity.toFixed(0)}%`:'—';onsetEl.textContent=modeEl.value==='delayed'?(onset?`${onset.toFixed(2)} s`:'no detectada'):'—';
     const targetW=+widthEl.value,targetR=+rateEl.value, centerOK=Math.abs(center)<=8;
     let msg;if(modeEl.value==='stable'){msg=`Centro ${centerOK?'estable':'desplazado'}; variación central ≈ ±${halfWidth.toFixed(1)}¢. Para nota sin vibrato busca una oscilación pequeña y un centro afinado.`;}

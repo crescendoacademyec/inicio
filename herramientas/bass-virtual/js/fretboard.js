@@ -134,13 +134,21 @@
       }
       return pcs;
     };
-    const toneRole = (pc, r, pcs, spec) => {
-      const index = pcs.indexOf(pc);
-      if (pc === r) return "root";
-      if (spec) return index % 3 === 0 ? "structural" : "tension";
-      if ([2,4,6].includes(index)) return "structural";
-      if ([1,3,5].includes(index)) return pcs.includes((pc + 11) % 12) ? "unavailable" : "tension";
-      return "unavailable";
+    const toneRole = (pc, r, pcs) => {
+      const index = pcs.indexOf(pc), interval = (pc-r+12)%12;
+      if (interval === 0) return "root";
+      if (index < 0) return "unavailable";
+      // Seven-note collections spell tertian chords by scale degrees.
+      // Shorter/symmetric scales need actual intervals, never array indices.
+      if (pcs.length === 7) {
+        if ([2,4,6].includes(index)) return "structural";
+        return pcs.includes((pc+11)%12) ? "unavailable" : "tension";
+      }
+      const intervals=pcs.map(n=>(n-r+12)%12);
+      const third=intervals.includes(4)?4:intervals.includes(3)?3:null;
+      const fifth=intervals.includes(7)?7:third===4&&intervals.includes(8)?8:intervals.includes(6)?6:null;
+      const sevenths=third===3&&fifth===6?[9]:[10,11];
+      return [third,fifth,...sevenths].includes(interval) ? "structural" : "tension";
     };
 
     // DOM refs
@@ -621,9 +629,8 @@
 
     cvs.addEventListener('pointerleave', () => { if (hoverCell) { hoverCell = null; draw(); } });
 
-    cvs.addEventListener('pointerdown', evt => {
-      const cell = cellFromEvent(evt);
-      if (!cell) return;
+    function activateBoardCell(cell) {
+      if(!blankMode()&&!tutorMode){playNote(activePitches()[cell.s]+physicalFret(cell.displayFret),1.8);return;}
       const midiNow=activePitches()[cell.s]+physicalFret(cell.displayFret);
       if(tutorMode&&tutorExpectedKeys.size){
         const tutorKey=scoreCellKey({string:cell.s,fret:cell.displayFret,midi:midiNow});
@@ -674,7 +681,8 @@
         playNote(midi, 1.8);
       }
       draw();
-    });
+    }
+    cvs.addEventListener('pointerdown',evt=>{const cell=cellFromEvent(evt);if(cell)activateBoardCell(cell);});
 
     clearSelectionBtn.onclick = () => { manualSelections.clear(); hoverCell = null; draw(); };
     clearAllBtn.onclick = () => {
@@ -908,6 +916,22 @@
     }
 
     // Función draw (diapasón)
+    let accessibleBoard=null;
+    function renderAccessibleBoard(){
+      if(!window.CrescendoFretboardAccess)return;
+      if(!accessibleBoard)accessibleBoard=window.CrescendoFretboardAccess.create(cvs,activateBoardCell);
+      const pitches=activePitches(),start=offset===0?0:offset+1,end=offset+visibleFrets,root=window.CrescendoPitchSpelling.pc(rootSel.value);
+      let pcs=scaleSel.value?scalePitchClasses(rootSel.value,scaleSel.value):[];
+      if(rootSel.value&&chordTypeSel.value){const chord=parseChordValue();if(chord)pcs=chord.def.intervals.map(i=>(root+i)%12);}
+      if(typeof arpeggioSel!=='undefined'&&arpeggioSel.value)pcs=studyIntervals().map(i=>(root+i)%12);
+      const cells=[],names={root:'fundamental',structural:'sonido estructural',tension:'tensión',unavailable:'tensión a resolver'};
+      for(let string=0;string<pitches.length;string++)for(let fret=start;fret<=end;fret++){
+        const midi=pitches[string]+physicalFret(fret),pc=midi%12;
+        const role=pcs.length?(pcs.includes(pc)?names[toneRole(pc,root,pcs)]:'fuera del material seleccionado'):'';
+        cells.push({s:string,displayFret:fret,selected:blankMode()?manualSelections.has(selectedKey(string,fret)):null,label:spellPc(pc,rootSel.value||'')+(Math.floor(midi/12)-1),role});
+      }
+      accessibleBoard.update(cells,end-start+1);
+    }
     function draw() {
       fitCanvas();
       const pitches = activePitches();
@@ -1238,6 +1262,7 @@
 
       // Actualizar pentagrama con las notas actuales
       renderStaffNotes(currentNotes);
+      renderAccessibleBoard();
 
       fretLabel.textContent = roman(offset + 1);
       updateInfo();

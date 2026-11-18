@@ -746,8 +746,8 @@
                         <button class="step-btn" id="loopClear" title="Quitar loop"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
                     </div>
                     <div class="loop-row">
-                        <div class="loop-tag" id="loopATag" title="Marcar inicio de loop (A)">A</div>
-                        <div class="loop-tag" id="loopBTag" title="Marcar fin de loop (B)">B</div>
+                        <button type="button" class="loop-tag" id="loopATag" aria-label="Marcar inicio de loop (A)">A</button>
+                        <button type="button" class="loop-tag" id="loopBTag" aria-label="Marcar fin de loop (B)">B</button>
                         <div class="loop-hint" id="loopHint">Reproduce y toca A / B para marcar un tramo a repetir.</div>
                     </div>
                 </div>
@@ -821,9 +821,9 @@
             let Mediabunny, registerAacEncoder, registerMp3Encoder;
             try {
                 const [mb, aac, mp3] = await Promise.all([
-                    import('https://cdn.jsdelivr.net/npm/mediabunny@1/+esm'),
-                    import('https://cdn.jsdelivr.net/npm/@mediabunny/aac-encoder@1/+esm'),
-                    import('https://cdn.jsdelivr.net/npm/@mediabunny/mp3-encoder@1/+esm')
+                    import('https://cdn.jsdelivr.net/npm/mediabunny@1.65.2/+esm'),
+                    import('https://cdn.jsdelivr.net/npm/@mediabunny/aac-encoder@1.66.0/+esm'),
+                    import('https://cdn.jsdelivr.net/npm/@mediabunny/mp3-encoder@1.66.0/+esm')
                 ]);
                 Mediabunny = mb;
                 registerAacEncoder = aac.registerAacEncoder;
@@ -902,6 +902,7 @@
             let audioCtx = null;
             let currentSource = null;
             let isPlaying = false;
+            let playbackGeneration = 0, fileGeneration = 0, playPending = false;
             let currentTime = 0;
             let startedAt = 0;
             let startedOffset = 0;
@@ -957,6 +958,7 @@
             function refreshCurrentTime() {
                 if (!isPlaying || !audioCtx) return;
                 if (fallbackMedia) {
+                    if(loopActive && loopA!==null && loopB>loopA && fallbackMedia.currentTime>=loopB) fallbackMedia.currentTime=loopA;
                     currentTime = fallbackMedia.currentTime;
                     return;
                 }
@@ -1013,8 +1015,9 @@
                 fallbackUrl = null;
             }
 
-            async function startFallbackPlayback(offset = currentTime) {
-                if (!audioFile) throw new Error('No hay archivo de audio para reproducir.');
+            async function startFallbackPlayback(offset = currentTime, generation = playbackGeneration) {
+                if (!audioFile || generation!==playbackGeneration) return;
+                if(currentPitchSemitones()!==0) throw new Error('El modo de respaldo no permite cambiar el tono. Restablece el tono o vuelve a intentar el motor procesado.');
                 if (!fallbackMedia) {
                     fallbackUrl = URL.createObjectURL(audioFile);
                     fallbackMedia = new Audio(fallbackUrl);
@@ -1022,12 +1025,14 @@
                     fallbackMedia.preservesPitch = true;
                     fallbackMedia.mozPreservesPitch = true;
                     fallbackMedia.webkitPreservesPitch = true;
-                    fallbackMedia.onended = () => { isPlaying=false; currentTime=duration; stopTimeUpdates(); playIcon.innerHTML='<path d="M8 5v14l12-7Z"/>'; updateTimeDisplay(); drawWaveform(); };
+                    fallbackMedia.onended = () => { if(loopActive&&loopA!==null&&loopB>loopA){fallbackMedia.currentTime=loopA;void fallbackMedia.play().catch(()=>pausePlayback());return;} isPlaying=false; currentTime=duration; stopTimeUpdates(); playIcon.innerHTML='<path d="M8 5v14l12-7Z"/>'; updateTimeDisplay(); drawWaveform(); };
                 }
                 fallbackMedia.pause();
                 fallbackMedia.playbackRate = currentTempoRate();
                 fallbackMedia.currentTime = Math.max(0, Math.min(offset, Math.max(0, duration-.001)));
-                await fallbackMedia.play();
+                const media=fallbackMedia;
+                await media.play();
+                if(generation!==playbackGeneration || media!==fallbackMedia){media.pause();return;}
                 startedOffset = fallbackMedia.currentTime;
                 startedAt = performance.now()/1000;
                 isPlaying = true;
@@ -1184,51 +1189,49 @@
             }
 
             async function startPlayback(offset = currentTime) {
-                if (!audioBuffer) return;
+                if(!audioBuffer)return;
+                const generation=++playbackGeneration, file=audioBuffer;
+                const current=()=>generation===playbackGeneration&&audioBuffer===file;
+                playPending=true;
                 try {
-                  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                  await audioCtx.resume();
-                  const buffer = await ensureProcessed();
-                  if (!buffer) throw new Error('El procesamiento fue cancelado.');
-                  disposeFallbackMedia();
-                  disposeSource();
-                  currentSource = createSource(buffer);
-                  if (!currentSource) throw new Error('No se pudo crear la fuente de audio.');
-                const safeSourceOffset = Math.max(0, Math.min(offset, Math.max(0, duration - 0.001)));
-                const processedOffset = safeSourceOffset / processedTempo;
-                startedOffset = safeSourceOffset;
-                currentTime = safeSourceOffset;
-                startedAt = audioCtx.currentTime;
-                isPlaying = true;
-                currentSource.onended = () => {
-                    if (!currentSource || currentSource.loop) return;
-                    refreshCurrentTime();
-                    if (currentTime >= duration - 0.05) currentTime = duration;
-                    isPlaying = false;
-                    stopTimeUpdates();
-                    playIcon.innerHTML = '<path d="M8 5v14l12-7Z"/>';
-                    updateTimeDisplay();
-                    drawWaveform();
-                };
-                currentSource.start(0, Math.max(0, Math.min(processedOffset, buffer.duration - 0.001)));
-                playIcon.innerHTML = '<rect x="6" y="5" width="4" height="14"/><rect x="14" y="5" width="4" height="14"/>';
-                startTimeUpdates();
-                } catch (err) {
-                    console.error('No se pudo iniciar el motor procesado:', err);
-                    try { await startFallbackPlayback(offset); }
-                    catch (fallbackError) { setStatus('No se pudo reproducir el archivo: '+fallbackError.message, true); }
-                }
+                    if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+                    await audioCtx.resume();
+                    if(!current())return;
+                    const buffer=await ensureProcessed();
+                    if(!current()||!buffer)return;
+                    disposeFallbackMedia(); disposeSource();
+                    const source=createSource(buffer);
+                    if(!source)throw new Error('No se pudo crear la fuente de audio.');
+                    currentSource=source;
+                    const safeSourceOffset=Math.max(0,Math.min(offset,Math.max(0,duration-.001)));
+                    startedOffset=safeSourceOffset;currentTime=safeSourceOffset;startedAt=audioCtx.currentTime;isPlaying=true;
+                    applyLoop();
+                    source.onended=()=>{
+                        if(!current()||currentSource!==source||source.loop)return;
+                        refreshCurrentTime();if(currentTime>=duration-.05)currentTime=duration;
+                        isPlaying=false;stopTimeUpdates();playIcon.innerHTML='<path d="M8 5v14l12-7Z"/>';updateTimeDisplay();drawWaveform();
+                    };
+                    source.start(0,Math.max(0,Math.min(safeSourceOffset/processedTempo,buffer.duration-.001)));
+                    playIcon.innerHTML='<rect x="6" y="5" width="4" height="14"/><rect x="14" y="5" width="4" height="14"/>';startTimeUpdates();
+                }catch(err){
+                    if(!current())return;
+                    try{await startFallbackPlayback(offset,generation);}catch(fallbackError){if(current())setStatus('No se pudo reproducir el archivo: '+fallbackError.message,true);}
+                }finally{if(generation===playbackGeneration)playPending=false;}
             }
 
             function pausePlayback() {
-                refreshCurrentTime();
-                isPlaying = false;
-                stopTimeUpdates();
-                if (fallbackMedia) { currentTime=fallbackMedia.currentTime; fallbackMedia.pause(); }
-                disposeSource();
-                playIcon.innerHTML = '<path d="M8 5v14l12-7Z"/>';
-                updateTimeDisplay();
-                drawWaveform();
+                refreshCurrentTime();playbackGeneration++;playPending=false;processToken++;
+                isPlaying=false;stopTimeUpdates();
+                if(fallbackMedia){currentTime=fallbackMedia.currentTime;fallbackMedia.pause();}
+                disposeSource();playIcon.innerHTML='<path d="M8 5v14l12-7Z"/>';updateTimeDisplay();drawWaveform();
+            }
+
+            function clearAudio() {
+                fileGeneration++;playbackGeneration++;playPending=false;processToken++;
+                clearTimeout(processTimer);isPlaying=false;stopTimeUpdates();disposeSource();disposeFallbackMedia();
+                audioFile=null;audioBuffer=null;processedBuffer=null;waveformData=null;duration=0;currentTime=0;
+                loopA=null;loopB=null;loopActive=false;
+                player.classList.remove('active');loaderScreen.style.display='block';setStatus('');
             }
 
             // --- Dibujar forma de onda ---
@@ -1334,7 +1337,8 @@
             // --- Cargar archivo ---
             async function loadFile(file) {
                 if (!file) return;
-                disposeFallbackMedia();
+                clearAudio();
+                const generation=fileGeneration;
                 audioFile = file;
                 fileNameLabel.innerHTML = `${file.name} <span>${(file.size / 1024 / 1024).toFixed(2)} MB</span>`;
 
@@ -1350,8 +1354,11 @@
                     const decoder = new Mediabunny.AudioBufferSink(track);
                     const wrapped = [];
                     for await (const wrappedBuffer of decoder.buffers(0, Infinity)) {
+                        if(generation!==fileGeneration){input.dispose?.();return;}
                         wrapped.push(wrappedBuffer);
                     }
+                    input.dispose?.();
+                    if(generation!==fileGeneration)return;
                     if (wrapped.length === 0) throw new Error('No se pudo decodificar audio del archivo.');
 
                     // Combinar todos los buffers en uno solo
@@ -1418,7 +1425,7 @@
 
                 } catch (err) {
                     console.error(err);
-                    setStatus('Error al cargar el archivo: ' + err.message, true);
+                    if(generation===fileGeneration)setStatus('Error al cargar el archivo: ' + err.message, true);
                 }
             }
 
@@ -1430,33 +1437,9 @@
                 if (e.target.files.length > 0) loadFile(e.target.files[0]);
                 e.target.value = '';
             });
-            openAnotherBtn.addEventListener('click', () => {
-                isPlaying = false;
-                stopTimeUpdates();
-                disposeSource();
-                player.classList.remove('active');
-                loaderScreen.style.display = 'block';
-                // limpiar
-                audioBuffer = null;
-                processedBuffer = null;
-                waveformData = null;
-                duration = 0;
-                currentTime = 0;
-                setStatus('');
-            });
-            removeFileBtn.addEventListener('click', () => {
-                isPlaying = false;
-                stopTimeUpdates();
-                disposeSource();
-                player.classList.remove('active');
-                loaderScreen.style.display = 'block';
-                audioBuffer = null;
-                processedBuffer = null;
-                waveformData = null;
-                duration = 0;
-                currentTime = 0;
-                setStatus('');
-            });
+            openAnotherBtn.addEventListener('click', clearAudio);
+            removeFileBtn.addEventListener('click', clearAudio);
+            window.addEventListener('pagehide',clearAudio);
 
             // Drag & Drop
             const container = document.getElementById('appContainer');
@@ -1522,58 +1505,32 @@
                 if (b) updatePitch(Number(b.dataset.pitch));
             });
 
-            // Loop
-            loopATag.addEventListener('click', () => {
-                if (!audioBuffer) return;
-                loopA = currentTime;
-                loopATag.classList.add('set');
-                if (loopB !== null && loopB > loopA) {
-                    loopHint.textContent = `Loop activo: ${formatTime(loopA)} → ${formatTime(loopB)}`;
-                    if (currentSource) {
-                        currentSource.loopStart = loopA / processedTempo;
-                        currentSource.loopEnd = loopB / processedTempo;
-                        currentSource.loop = true;
-                        loopActive = true;
-                    }
-                } else {
-                    loopHint.textContent = `Inicio marcado en ${formatTime(loopA)}. Marca el final (B).`;
-                }
+            // Pointer and keyboard controls share the same loop state and source update.
+            function applyLoop() {
+                const valid=loopActive&&loopA!==null&&loopB!==null&&loopB>loopA;
+                if(currentSource){currentSource.loop=valid;if(valid){currentSource.loopStart=loopA/processedTempo;currentSource.loopEnd=loopB/processedTempo;}}
+                repeatBtn.classList.toggle('active',!!valid);repeatBtn.setAttribute('aria-pressed',String(!!valid));
+            }
+            function markLoop(which) {
+                if(!audioBuffer)return;
+                refreshCurrentTime();
+                if(which==='a'){loopA=currentTime;loopATag.classList.add('set');}else{loopB=currentTime;loopBTag.classList.add('set');}
+                loopActive=loopA!==null&&loopB!==null&&loopB>loopA;
+                applyLoop();
+                loopHint.textContent=loopActive?`Loop activo: ${formatTime(loopA)} → ${formatTime(loopB)}`:which==='a'?`Inicio marcado en ${formatTime(loopA)}. Marca el final (B).`:`Final marcado en ${formatTime(loopB)}. Marca el inicio (A).`;
                 drawWaveform();
-            });
-            loopBTag.addEventListener('click', () => {
-                if (!audioBuffer) return;
-                loopB = currentTime;
-                loopBTag.classList.add('set');
-                if (loopA !== null && loopB > loopA) {
-                    loopHint.textContent = `Loop activo: ${formatTime(loopA)} → ${formatTime(loopB)}`;
-                    if (currentSource) {
-                        currentSource.loopStart = loopA / processedTempo;
-                        currentSource.loopEnd = loopB / processedTempo;
-                        currentSource.loop = true;
-                        loopActive = true;
-                    }
-                } else {
-                    loopHint.textContent = `Final marcado en ${formatTime(loopB)}. Marca el inicio (A).`;
-                }
-                drawWaveform();
-            });
-            loopClear.addEventListener('click', () => {
-                loopA = null;
-                loopB = null;
-                loopActive = false;
-                loopATag.classList.remove('set');
-                loopBTag.classList.remove('set');
-                loopHint.textContent = 'Reproduce y toca A / B para marcar un tramo a repetir.';
-                if (currentSource) {
-                    currentSource.loop = false;
-                }
-                drawWaveform();
+            }
+            loopATag.addEventListener('click',()=>markLoop('a'));
+            loopBTag.addEventListener('click',()=>markLoop('b'));
+            loopClear.addEventListener('click',()=>{
+                loopA=null;loopB=null;loopActive=false;loopATag.classList.remove('set');loopBTag.classList.remove('set');applyLoop();
+                loopHint.textContent='Reproduce y toca A / B para marcar un tramo a repetir.';drawWaveform();
             });
 
             // Reproducción
             playBtn.addEventListener('click', async () => {
                 if (!audioBuffer) return;
-                if (isPlaying) {
+                if (isPlaying || playPending) {
                     pausePlayback();
                 } else {
                     if (currentTime >= duration) currentTime = 0;
@@ -1627,18 +1584,8 @@
             }
 
             repeatBtn.addEventListener('click', () => {
-                loopActive = !loopActive;
-                if (currentSource) {
-                    currentSource.loop = loopActive;
-                    if (loopActive && loopA !== null && loopB !== null) {
-                        currentSource.loopStart = loopA / processedTempo;
-                        currentSource.loopEnd = loopB / processedTempo;
-                    } else {
-                        currentSource.loopStart = 0;
-                        currentSource.loopEnd = processedBuffer ? processedBuffer.duration : duration / processedTempo;
-                    }
-                }
-                repeatBtn.style.color = loopActive ? 'var(--accent)' : 'var(--text-dim)';
+                if(loopA===null||loopB===null||loopB<=loopA){setStatus('Primero marca un loop A–B válido.',true);return;}
+                loopActive=!loopActive;applyLoop();drawWaveform();
             });
 
             // Zoom + pan temporal real
@@ -1692,9 +1639,9 @@
             // Exportar
             function setExportFormat(format) {
                 exportFormat = format;
-                [fmtWavBtn, fmtAiffBtn, fmtMp3Btn, fmtM4aBtn].forEach(b => b.classList.remove('active'));
+                [fmtWavBtn, fmtAiffBtn, fmtMp3Btn, fmtM4aBtn].forEach(b => {b.classList.remove('active');b.setAttribute('aria-selected','false');});
                 const map = { wav: fmtWavBtn, mov: fmtAiffBtn, mp3: fmtMp3Btn, m4a: fmtM4aBtn };
-                if (map[format]) map[format].classList.add('active');
+                if (map[format]) {map[format].classList.add('active');map[format].setAttribute('aria-selected','true');}
             }
             function setExportScope(scope) {
                 exportScope = scope;
@@ -1722,14 +1669,17 @@
                     setStatus('No hay audio cargado.', true);
                     return;
                 }
+                const generation=fileGeneration, file=audioBuffer, format=exportFormat, scope=exportScope;
+                exportBtn.disabled=true;
                 setStatus('Exportando…');
                 try {
                     // El mismo motor independiente usado en reproducción se usa para exportar.
                     const fullProcessed = await ensureProcessed();
+                    if(generation!==fileGeneration||file!==audioBuffer)return;
                     if (!fullProcessed) throw new Error('No se pudo procesar el audio.');
                     let renderedBuffer = fullProcessed;
 
-                    if (exportScope === 'loop') {
+                    if (scope === 'loop') {
                         if (loopA === null || loopB === null || loopB <= loopA) throw new Error('No hay un loop A–B válido.');
                         const tempo = processedTempo;
                         const startSec = loopA / tempo;
@@ -1751,13 +1701,13 @@
                     // Convertir a formato exportable
                     let codec;
                     let outputFormat;
-                    if (exportFormat === 'mov') {
+                    if (format === 'mov') {
                         outputFormat = new Mediabunny.MovOutputFormat({ fastStart: 'in-memory' });
                         codec = 'pcm-s16';
-                    } else if (exportFormat === 'mp3') {
+                    } else if (format === 'mp3') {
                         outputFormat = new Mediabunny.Mp3OutputFormat({ xingHeader: true });
                         codec = 'mp3';
-                    } else if (exportFormat === 'm4a') {
+                    } else if (format === 'm4a') {
                         outputFormat = new Mediabunny.Mp4OutputFormat({ fastStart: 'in-memory' });
                         codec = 'aac';
                     } else {
@@ -1781,13 +1731,14 @@
                     await audioSource.add(renderedBuffer);
                     await output.finalize();
 
+                    if(generation!==fileGeneration||file!==audioBuffer)return;
                     // Obtener el buffer final
                     const buffer = target.buffer;
                     const blob = new Blob([buffer], { type: output.getMimeType() });
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     a.href = url;
-                    a.download = `audio_${exportScope === 'loop' ? 'loop' : 'completo'}_${Math.round(processedTempo*100)}pct_${processedPitch >= 0 ? 'p' : 'm'}${Math.abs(processedPitch).toFixed(1)}st.${exportFormat}`;
+                    a.download = `audio_${scope === 'loop' ? 'loop' : 'completo'}_${Math.round(processedTempo*100)}pct_${processedPitch >= 0 ? 'p' : 'm'}${Math.abs(processedPitch).toFixed(1)}st.${format}`;
                     document.body.appendChild(a);
                     a.click();
                     a.remove();
@@ -1795,8 +1746,9 @@
                     setStatus('Exportación completada.');
                 } catch (err) {
                     console.error(err);
-                    setStatus('Error al exportar: ' + err.message, true);
-                }
+                    if(generation!==fileGeneration||file!==audioBuffer)return;
+                    setStatus('No se pudo exportar en este formato. Prueba WAV o revisa la compatibilidad del navegador.', true);
+                }finally{exportBtn.disabled=false;}
             });
 
             // Inicializar
@@ -1822,16 +1774,12 @@
                 const tag = (e.target && e.target.tagName || '').toLowerCase();
                 if (tag === 'input' || tag === 'textarea' || tag === 'select' || e.metaKey || e.ctrlKey || e.altKey) return;
                 if (e.code === 'Space') {
+                    if(e.target.closest?.('button,[role="button"]'))return;
                     e.preventDefault();
                     if (!audioBuffer) return;
-                    if (isPlaying) pausePlayback(); else await startPlayback(currentTime >= duration ? 0 : currentTime);
-                } else if (e.key.toLowerCase() === 'a' && audioBuffer) {
-                    loopA = currentTime; loopATag.classList.add('set'); drawWaveform();
-                    loopHint.textContent = `Inicio marcado en ${formatTime(loopA)}. Marca el final (B).`;
-                } else if (e.key.toLowerCase() === 'b' && audioBuffer) {
-                    loopB = currentTime; loopBTag.classList.add('set');
-                    if (loopA !== null && loopB > loopA) { loopActive = true; loopHint.textContent = `Loop activo: ${formatTime(loopA)} → ${formatTime(loopB)}`; }
-                    drawWaveform();
+                    if (isPlaying || playPending) pausePlayback(); else await startPlayback(currentTime >= duration ? 0 : currentTime);
+                } else if (['a','b'].includes(e.key.toLowerCase()) && audioBuffer) {
+                    markLoop(e.key.toLowerCase());
                 } else if (e.key.toLowerCase() === 'l' && audioBuffer) {
                     repeatBtn.click();
                 } else if (e.key === 'ArrowLeft' && audioBuffer) {

@@ -25,7 +25,7 @@
     level: D.LEVELS.find(l=>l.id===Number(S.getPref('activeLevel')))?.id ?? D.LEVELS[0].id,
     mode: S.getPref('mode') || 'practice',
     round: null,
-    session: { correct:0,total:0,streak:0,streakMax:0 },
+    session: { correct:0,total:0,streak:0,streakMax:0,assisted:0 },
     errorPractice: null,
     challenge: null,
     challengeResult: null,
@@ -74,7 +74,7 @@
 
   function statsHtml(){
     const st=S.getLevelStats(state.level); const pct=st.total?Math.round(st.correct*100/st.total):0;
-    return `<span class="stats-line"><b>${st.correct}</b>/${st.total} · racha <b>${state.session.streak}</b> · máx <b>${st.streakMax}</b> · <b>${pct}%</b></span>`;
+    return `<span class="stats-line"><b>${st.correct}</b>/${st.total} · racha <b>${state.session.streak}</b> · máx <b>${st.streakMax}</b> · <b>${pct}%</b> · ${st.assisted||0} con ayuda</span>`;
   }
 
   function modeTabs(){
@@ -165,7 +165,7 @@
 
   function renderPractice(){
     const view=document.getElementById('view');
-    const errorBadge=state.errorPractice?`<div class="learn-note"><b>Modo revisión de errores:</b> se están generando preguntas solo con ${state.errorPractice.targetIds.length} concepto(s) fallado(s). <button class="mini-btn" data-action="stop-error-practice">Salir de revisión</button></div>`:'';
+    const errorBadge=state.errorPractice?`<div class="learn-note"><b>Modo revisión de errores:</b> los objetivos se generan con ${state.errorPractice.targetIds.length} concepto(s) fallado(s); se mantienen otras opciones para comparar. <button class="mini-btn" data-action="stop-error-practice">Salir de revisión</button></div>`:'';
     view.innerHTML=`${errorBadge}
       <div class="practice-grid"><div class="stage"><button id="playBtn" class="play-btn" data-action="play" aria-label="Escuchar ejercicio">▶<br><small>Escuchar</small></button><div id="stageHint" class="stage-hint">Espacio para reproducir</div></div><div id="options" class="options" role="group" aria-label="Respuestas"></div><div id="feedback" class="feedback" aria-live="polite">Escucha y selecciona una respuesta.</div><div class="practice-actions"><button id="nextBtn" class="ghost-btn" data-action="next" disabled>Siguiente · N</button></div></div>${challengeHtml()}`;
     newRound();
@@ -175,20 +175,21 @@
     if(state.mode!=='practice')return;
     stopRoundAudio();
     state.round=G.generate(state.level,effectiveConfig());
-    state.round.answered=false;
+    state.round.answered=false;state.round.heard=false;state.round.assisted=false;
     renderRound();
     if(S.getPref('autoplay') && state.audioUnlocked && state.round.seq?.length) autoplayTimer=setTimeout(playRound,180);
   }
 
   function renderRound(){
     const opts=document.getElementById('options'); if(!opts||!state.round)return;
+    const hint=document.getElementById('stageHint');if(hint)hint.textContent=state.round.prompt||'Escucha el ejercicio completo para responder.';
     const count=state.round.options.length; opts.style.gridTemplateColumns=count<=2?'1fr':count===3?'repeat(3,1fr)':'repeat(2,1fr)';
-    opts.innerHTML=state.round.options.map((o,i)=>`<button class="opt-btn" data-action="answer" data-index="${i}" ${state.round.disabled?'disabled':''}><span class="option-number">Opción ${i+1}</span><span class="option-label">${esc(o.label)}</span></button>`).join('');
+    opts.innerHTML=state.round.options.map((o,i)=>`<button class="opt-btn" data-action="answer" data-index="${i}" ${state.round.disabled||!state.round.heard?'disabled':''}><span class="option-number">Opción ${i+1}</span><span class="option-label">${esc(o.label)}</span></button>`).join('');
     const fb=document.getElementById('feedback'); if(fb){
       fb.innerHTML=state.round.disabled?state.round.feedback():'Escucha y selecciona una respuesta.';
       if(!state.round.disabled&&!state.challenge){
         const help=document.createElement('button');help.type='button';help.className='ghost-btn';help.textContent='Mostrar ayuda visual';
-        help.onclick=()=>{help.disabled=true;fb.insertAdjacentHTML('beforeend',window.CrescendoPractice.review(state.round));};
+        help.onclick=()=>{state.round.assisted=true;help.disabled=true;fb.insertAdjacentHTML('beforeend','<p>Intento con ayuda: se registra por separado.</p>'+window.CrescendoPractice.review(state.round).replace('Lo que escuchaste','Ayuda visual del ejercicio'));};
         fb.appendChild(help);
       }
     }
@@ -201,19 +202,27 @@
     const hint=document.getElementById('stageHint'); if(hint)hint.textContent='Reproduciendo…';
     clearTimeout(autoplayTimer);clearTimeout(roundHintTimer);
     const round=state.round;
-    const pending=audio.playSequence(round.seq), generation=audio.generation;
-    await pending;
-    if(generation!==audio.generation || round!==state.round)return;
-    const total=Math.max(...round.seq.map(s=>Number(s.start||0)+Number(s.dur||0)),0);
-    roundHintTimer=setTimeout(()=>{if(generation!==audio.generation || round!==state.round)return;const h=document.getElementById('stageHint');if(h)h.textContent='Repetir · Espacio';},Math.ceil(total*1000));
+    try {
+      const pending=audio.playSequence(round.seq), generation=audio.generation;
+      await pending;
+      if(generation!==audio.generation || round!==state.round)return;
+      const total=Math.max(...round.seq.map(s=>Number(s.start||0)+Number(s.dur||0)),0);
+      roundHintTimer=setTimeout(()=>{
+        if(generation!==audio.generation || round!==state.round)return;
+        round.heard=true;
+        if(!round.answered)document.querySelectorAll('#options .opt-btn').forEach(b=>b.disabled=false);
+        const h=document.getElementById('stageHint');if(h)h.textContent='Responde o vuelve a escuchar · Espacio';
+      },Math.ceil((total+.1)*1000));
+    }catch(error){const h=document.getElementById('stageHint');if(h)h.textContent='No se pudo reproducir. Pulsa Escuchar para intentarlo otra vez.';}
   }
 
   function answerRound(index){
-    const r=state.round; if(!r||r.answered||r.disabled)return;
+    const r=state.round; if(!r||r.answered||r.disabled||!r.heard)return;
     const i=Number(index); if(!Number.isInteger(i)||!r.options[i])return;
     r.answered=true; const correct=i===r.correctIdx; const selected=r.options[i]; const expected=r.options[r.correctIdx];
-    state.session.total++; if(correct){state.session.correct++;state.session.streak++;}else state.session.streak=0; state.session.streakMax=Math.max(state.session.streakMax,state.session.streak);
-    S.recordAnswer(state.level,correct,state.session.streakMax,r.meta);
+    if(r.assisted){state.session.assisted++;state.session.streak=0;}
+    else{state.session.total++;if(correct){state.session.correct++;state.session.streak++;}else state.session.streak=0;state.session.streakMax=Math.max(state.session.streakMax,state.session.streak);}
+    S.recordAnswer(state.level,correct,state.session.streakMax,{...r.meta,assisted:r.assisted});
 
     if(state.challenge){
       const c=state.challenge;c.stats.total++;if(correct){c.stats.correct++;c.stats.streak++;}else c.stats.streak=0;c.stats.streakMax=Math.max(c.stats.streakMax,c.stats.streak);
@@ -221,10 +230,10 @@
     }
 
     [...document.querySelectorAll('#options .opt-btn')].forEach((b,idx)=>{b.disabled=true;if(idx===r.correctIdx)b.classList.add('correct');else if(idx===i)b.classList.add('wrong');});
-    const fb=document.getElementById('feedback'); if(fb)fb.innerHTML=r.feedback(correct,selected)+window.CrescendoPractice.review(r);
+    const fb=document.getElementById('feedback'); if(fb)fb.innerHTML=(r.assisted?'<p>Práctica con ayuda registrada por separado.</p>':'')+r.feedback(correct,selected)+window.CrescendoPractice.review(r);
     const next=document.getElementById('nextBtn'); if(next)next.disabled=false;
     const stats=document.querySelector('.stats-line'); if(stats)stats.outerHTML=statsHtml();
-    if(state.challenge)setTimeout(()=>{if(state.challenge)newRound();},950);
+    if(state.challenge){const challenge=state.challenge;setTimeout(()=>{if(state.challenge===challenge&&state.round===r)newRound();},950);}
   }
 
   function startChallenge(){

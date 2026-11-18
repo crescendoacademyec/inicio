@@ -117,12 +117,13 @@
 
   function getLevelStats(levelId) {
     const st = db.stats[String(levelId)] || {};
-    return { correct:Number(st.correct||0), total:Number(st.total||0), streakMax:Number(st.streakMax||0) };
+    return { correct:Number(st.correct||0), total:Number(st.total||0), streakMax:Number(st.streakMax||0), assisted:Number(st.assisted||0) };
   }
 
   function recordAnswer(levelId, correct, streakMax, meta) {
     const key = String(levelId);
     const st = getLevelStats(levelId);
+    if(meta?.assisted){st.assisted++;db.stats[key]=st;persist();return st;}
     st.total += 1;
     if (correct) st.correct += 1;
     st.streakMax = Math.max(st.streakMax, Number(streakMax||0));

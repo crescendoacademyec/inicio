@@ -1,0 +1,8 @@
+.fretboard-access{margin:12px 0;padding:12px;border:1px solid #8c784c;border-radius:10px;background:#201e19;color:#faf4e8;font:14px/1.5 system-ui,sans-serif}
+.fretboard-access summary{cursor:pointer;font-weight:700;padding:4px}
+.fretboard-access-grid{display:grid;grid-template-columns:repeat(var(--fret-columns),minmax(52px,1fr));gap:5px;overflow:auto;padding:5px}
+.fretboard-access-grid button{min-height:44px;background:#39342a;color:#fff4da;border:1px solid #89744b;border-radius:6px;cursor:pointer}
+.fretboard-access-grid button:focus-visible{outline:3px solid #f8cc75;outline-offset:1px}
+@media print{.fretboard-access{display:none}}
+
+.fretboard-access-grid button[aria-pressed="true"]{background:#d4a84f;color:#15120c}

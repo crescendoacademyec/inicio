@@ -170,7 +170,8 @@
 
   function parseChord(chord) {
     const cleaned = String(chord || "").trim();
-    const [symbolPart, bassPart] = cleaned.split("/");
+    // A numeric 6/9 extension is part of the quality, not a slash bass.
+    const [symbolPart, bassPart] = cleaned.replace(/6\/9(?=\/|$)/g, "69").split("/");
     const match = symbolPart.match(/^([A-G])(#5)$/i) || symbolPart.match(/^([A-G](?:bb|##|b|#)?)(.*)$/i);
     if (!match) return null;
 

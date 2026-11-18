@@ -1468,45 +1468,59 @@ spellingSelect.addEventListener('change', () => { spellingMode = spellingSelect.
 
 let audioCtx, analyser, detector, dataArray, rafId, stream;
 let listening = false;
+let micPending = false;
+let micRequest = 0;
 
 micBtn.addEventListener('click', async () => {
-  if(listening){ stopListening(); return; }
+  if(listening || micPending){ stopListening(); return; }
+  const request = ++micRequest;
+  micPending = true;
+  micBtn.textContent = 'Cancelar solicitud';
+  micStatus.textContent = 'Esperando acceso al micrófono…';
+  let acquired = null, context = null;
   try{
-    stream = await navigator.mediaDevices.getUserMedia({ audio: {
+    acquired = await navigator.mediaDevices.getUserMedia({ audio: {
       echoCancellation:false, noiseSuppression:false, autoGainControl:false
     }});
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    const source = audioCtx.createMediaStreamSource(stream);
-    analyser = audioCtx.createAnalyser();
-    analyser.fftSize = 4096;
-    source.connect(analyser);
-
-    detector = PitchDetector.forFloat32Array(analyser.fftSize);
-    try { detector.minVolumeDecibels = -45; } catch(e) { /* propiedad no soportada en esta build; se ignora sin romper la detección */ }
+    if(request !== micRequest){ acquired.getTracks().forEach(t=>t.stop()); return; }
+    context = new (window.AudioContext || window.webkitAudioContext)();
+    const source = context.createMediaStreamSource(acquired);
+    const nextAnalyser = context.createAnalyser();
+    nextAnalyser.fftSize = 4096;
+    source.connect(nextAnalyser);
+    const nextDetector = PitchDetector.forFloat32Array(nextAnalyser.fftSize);
+    try { nextDetector.minVolumeDecibels = -45; } catch(e) {}
+    stream = acquired; audioCtx = context; analyser = nextAnalyser; detector = nextDetector;
     dataArray = new Float32Array(analyser.fftSize);
-
-    listening = true;
+    micPending = false; listening = true;
     micBtn.textContent = '⏹️ Detener';
     micBtn.classList.add('listening');
     micStatus.textContent = 'Escuchando... toca una cuerda.';
     micStatus.classList.remove('err');
     tick();
   }catch(err){
+    acquired?.getTracks().forEach(t=>t.stop());
+    if(context) void context.close()?.catch?.(()=>{});
+    if(request !== micRequest) return;
+    micPending = false; listening = false; stream = null; audioCtx = null;
+    micBtn.textContent = '🎙️ Activar micrófono';
     micStatus.textContent = 'No se pudo acceder al micrófono. Revisa los permisos del navegador.';
     micStatus.classList.add('err');
   }
 });
 
 function stopListening(){
-  listening = false;
+  micRequest++; micPending = false; listening = false;
   cancelAnimationFrame(rafId);
   if(stream) stream.getTracks().forEach(t => t.stop());
-  if(audioCtx) audioCtx.close();
+  if(audioCtx) void audioCtx.close()?.catch?.(()=>{});
+  stream = null; audioCtx = null; analyser = null;
   micBtn.textContent = '🎙️ Activar micrófono';
   micBtn.classList.remove('listening');
   micStatus.textContent = 'Micrófono detenido.';
   resetDial();
 }
+window.addEventListener('pagehide', stopListening);
 
 function tick(){
   analyser.getFloatTimeDomainData(dataArray);

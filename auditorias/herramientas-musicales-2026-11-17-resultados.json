@@ -1,0 +1,618 @@
+{
+  "metronomeMeter": [
+    {
+      "meter": "4/4",
+      "tempo": 60,
+      "figure": "quarter",
+      "mainBarSeconds": 4,
+      "scoreBarSeconds": 4
+    },
+    {
+      "meter": "6/8",
+      "tempo": 60,
+      "figure": "quarter",
+      "mainBarSeconds": 6,
+      "scoreBarSeconds": 3
+    },
+    {
+      "meter": "7/8",
+      "tempo": 60,
+      "figure": "quarter",
+      "mainBarSeconds": 7,
+      "scoreBarSeconds": 3.5
+    }
+  ],
+  "vibrato": [
+    {
+      "fps": 30,
+      "expectedHalfWidth": 30,
+      "expectedRate": 6,
+      "measuredWidth": "±0.0¢",
+      "measuredRate": "—",
+      "feedback": "Centro -0.0¢ · ancho 0.0¢ (-30.0 vs objetivo) · velocidad — Hz."
+    },
+    {
+      "fps": 60,
+      "expectedHalfWidth": 30,
+      "expectedRate": 6,
+      "measuredWidth": "±18.5¢",
+      "measuredRate": "6.0 Hz",
+      "feedback": "Centro +0.0¢ · ancho 18.5¢ (-11.5 vs objetivo) · velocidad 6.0 Hz (+0.0 vs objetivo)."
+    },
+    {
+      "fps": 120,
+      "expectedHalfWidth": 30,
+      "expectedRate": 6,
+      "measuredWidth": "±25.8¢",
+      "measuredRate": "6.0 Hz",
+      "feedback": "Centro +0.0¢ · ancho 25.8¢ (-4.2 vs objetivo) · velocidad 6.0 Hz (+0.0 vs objetivo)."
+    }
+  ],
+  "scaleRoles": {
+    "diapason-virtual": {
+      "majorPentatonic": [
+        {
+          "pc": 0,
+          "role": "root"
+        },
+        {
+          "pc": 2,
+          "role": "tension"
+        },
+        {
+          "pc": 4,
+          "role": "tension"
+        },
+        {
+          "pc": 7,
+          "role": "structural"
+        },
+        {
+          "pc": 9,
+          "role": "tension"
+        }
+      ],
+      "dominantPentatonic": [
+        {
+          "pc": 0,
+          "role": "root"
+        },
+        {
+          "pc": 2,
+          "role": "tension"
+        },
+        {
+          "pc": 4,
+          "role": "structural"
+        },
+        {
+          "pc": 7,
+          "role": "tension"
+        },
+        {
+          "pc": 10,
+          "role": "structural"
+        }
+      ]
+    },
+    "bass-virtual": {
+      "majorPentatonic": [
+        {
+          "pc": 0,
+          "role": "root"
+        },
+        {
+          "pc": 2,
+          "role": "tension"
+        },
+        {
+          "pc": 4,
+          "role": "tension"
+        },
+        {
+          "pc": 7,
+          "role": "structural"
+        },
+        {
+          "pc": 9,
+          "role": "tension"
+        }
+      ],
+      "dominantPentatonic": [
+        {
+          "pc": 0,
+          "role": "root"
+        },
+        {
+          "pc": 2,
+          "role": "tension"
+        },
+        {
+          "pc": 4,
+          "role": "structural"
+        },
+        {
+          "pc": 7,
+          "role": "tension"
+        },
+        {
+          "pc": 10,
+          "role": "structural"
+        }
+      ]
+    },
+    "folk-virtual": {
+      "majorPentatonic": [
+        {
+          "pc": 0,
+          "role": "root"
+        },
+        {
+          "pc": 2,
+          "role": "tension"
+        },
+        {
+          "pc": 4,
+          "role": "tension"
+        },
+        {
+          "pc": 7,
+          "role": "structural"
+        },
+        {
+          "pc": 9,
+          "role": "tension"
+        }
+      ],
+      "dominantPentatonic": [
+        {
+          "pc": 0,
+          "role": "root"
+        },
+        {
+          "pc": 2,
+          "role": "tension"
+        },
+        {
+          "pc": 4,
+          "role": "structural"
+        },
+        {
+          "pc": 7,
+          "role": "tension"
+        },
+        {
+          "pc": 10,
+          "role": "structural"
+        }
+      ]
+    },
+    "requinteando": {
+      "majorPentatonic": [
+        {
+          "pc": 0,
+          "role": "root"
+        },
+        {
+          "pc": 2,
+          "role": "tension"
+        },
+        {
+          "pc": 4,
+          "role": "tension"
+        },
+        {
+          "pc": 7,
+          "role": "structural"
+        },
+        {
+          "pc": 9,
+          "role": "tension"
+        }
+      ],
+      "dominantPentatonic": [
+        {
+          "pc": 0,
+          "role": "root"
+        },
+        {
+          "pc": 2,
+          "role": "tension"
+        },
+        {
+          "pc": 4,
+          "role": "structural"
+        },
+        {
+          "pc": 7,
+          "role": "tension"
+        },
+        {
+          "pc": 10,
+          "role": "structural"
+        }
+      ]
+    }
+  },
+  "pianoRepeatedPitch": {
+    "created": 2,
+    "stopped": 1,
+    "retainedHandles": 0
+  },
+  "tunerConcurrentPermission": {
+    "requests": 2,
+    "tracksStopped": [
+      false,
+      true
+    ],
+    "contextsClosed": [
+      false,
+      true
+    ]
+  },
+  "speedKeyboardLoop": {
+    "A": 2,
+    "B": 5,
+    "announcedActive": true,
+    "source": {
+      "loop": false,
+      "loopStart": 0,
+      "loopEnd": 0
+    },
+    "status": "Loop activo: 2 → 5"
+  },
+  "speedRemovedDuringProcessing": {
+    "audioPresent": false,
+    "sourcesStarted": 1,
+    "playing": true
+  },
+  "aacChords": [
+    {
+      "symbol": "C6/9",
+      "displayed": "C6/9",
+      "parsed": {
+        "input": "C6/9",
+        "root": "C",
+        "chroma": 0,
+        "bass": "",
+        "suffix": "6",
+        "displaySuffix": "6"
+      }
+    },
+    {
+      "symbol": "Cm6/9",
+      "displayed": "Cm6/9",
+      "parsed": {
+        "input": "Cm6/9",
+        "root": "C",
+        "chroma": 0,
+        "bass": "",
+        "suffix": "m6",
+        "displaySuffix": "-6"
+      }
+    },
+    {
+      "symbol": "C6/9/E",
+      "displayed": "C6/9/E",
+      "parsed": {
+        "input": "C6/9/E",
+        "root": "C",
+        "chroma": 0,
+        "bass": "",
+        "suffix": "6",
+        "displaySuffix": "6"
+      }
+    },
+    {
+      "symbol": "C69",
+      "displayed": "C69",
+      "parsed": {
+        "input": "C69",
+        "root": "C",
+        "chroma": 0,
+        "bass": "",
+        "suffix": "69",
+        "displaySuffix": "69"
+      }
+    },
+    {
+      "symbol": "Cm69",
+      "displayed": "Cm69",
+      "parsed": {
+        "input": "Cm69",
+        "root": "C",
+        "chroma": 0,
+        "bass": "",
+        "suffix": "m69",
+        "displaySuffix": "-6(9)"
+      }
+    },
+    {
+      "symbol": "C7/E",
+      "displayed": "C7/E",
+      "parsed": {
+        "input": "C7/E",
+        "root": "C",
+        "chroma": 0,
+        "bass": "E",
+        "bassChroma": 4,
+        "suffix": "7",
+        "displaySuffix": "7"
+      }
+    }
+  ],
+  "aacBasicCadence": [
+    {
+      "key": "C",
+      "scaleType": "major",
+      "scaleLabel": "mayor",
+      "degree": "II-7",
+      "mode": "Dórico",
+      "chord": "Dm7",
+      "source": "majorMinorTwoFive",
+      "sectionStart": true,
+      "sectionLabel": "C:["
+    },
+    {
+      "key": "C",
+      "scaleType": "major",
+      "scaleLabel": "mayor",
+      "degree": "V7",
+      "mode": "Mixolidio",
+      "chord": "G7",
+      "source": "majorMinorTwoFive",
+      "sectionStart": false,
+      "sectionLabel": ""
+    },
+    {
+      "key": "C",
+      "scaleType": "major",
+      "scaleLabel": "mayor",
+      "degree": "Imaj7",
+      "mode": "Jónico",
+      "chord": "Cmaj7",
+      "source": "stableMajorDegree",
+      "sectionStart": false,
+      "sectionLabel": ""
+    }
+  ],
+  "aacForeignImport": {
+    "accepted": true,
+    "rawPassedToNormalizer": {
+      "version": 1,
+      "stats": {},
+      "sessions": []
+    },
+    "scope": "import router only; normalizeSong stubbed; no real document changed"
+  },
+  "earSingleError": {
+    "options": 1,
+    "answer": "Quinta / power chord · 5"
+  },
+  "earAmbiguousVoicing": {
+    "notes": [
+      71,
+      73,
+      76,
+      80
+    ],
+    "first": {
+      "targetId": "chord:cm7",
+      "targetType": "chord",
+      "targetName": "Menor séptima",
+      "chordId": "cm7",
+      "symbol": "m7",
+      "formula": "1–♭3–5–♭7",
+      "root": "D♭",
+      "voicing": "inversions"
+    },
+    "second": {
+      "targetId": "chord:c6",
+      "targetType": "chord",
+      "targetName": "Sexta mayor",
+      "chordId": "c6",
+      "symbol": "6",
+      "formula": "1–3–5–6",
+      "root": "E",
+      "voicing": "inversions"
+    },
+    "options": [
+      "Sexta mayor · 6",
+      "Menor séptima · m7"
+    ]
+  },
+  "automatedSuite": {
+    "files": [
+      "herramientas/afinador/tunings.test.mjs",
+      "herramientas/armonia-funcional/audit-corrections.test.js",
+      "herramientas/armonia-funcional/chord-reference-fase5.test.js",
+      "herramientas/armonia-funcional/chord-renderer.test.js",
+      "herramientas/armonia-funcional/fase6-final.test.js",
+      "herramientas/armonia-funcional/fase8-audio-practica.test.js",
+      "herramientas/armonia-funcional/learning-sequence.test.js",
+      "herramientas/armonia-funcional/nivel3-voicing.test.js",
+      "herramientas/armonia-funcional/nivel4-puente-jazz.test.js",
+      "herramientas/armonia-funcional/niveles1-2-pedagogia.test.js",
+      "herramientas/armonia-funcional/pedagogia-visual-fase7.test.js",
+      "herramientas/armonia-funcional/quiz-engine.test.js",
+      "herramientas/armonia-funcional/reharm-builder.test.js",
+      "herramientas/armonia-funcional/scale-display.test.js",
+      "herramientas/armonia-jazz/audit-corrections.test.cjs",
+      "herramientas/armonia-jazz/chord-scale-dictionary.test.cjs",
+      "herramientas/armonia-jazz/improvisation-engine.test.js",
+      "herramientas/armonia-jazz/melodic-audio.test.js",
+      "herramientas/armonia-jazz/nivel5-refuerzos.test.js",
+      "herramientas/armonia-jazz/notation.test.js",
+      "herramientas/armonia-jazz/octatonic-chord.test.cjs",
+      "herramientas/armonia-jazz/theory-symbol-notes.test.cjs",
+      "herramientas/chordsyncpro/tests/worker_regression.test.js",
+      "herramientas/cuerdas-frotadas/tests/live-staff.test.js",
+      "herramientas/diapason-virtual/tests/guitar-bank.test.js",
+      "herramientas/diapason-virtual/tests/study-complete.test.js",
+      "herramientas/diapason-virtual/tests/study-lab.test.js",
+      "herramientas/diapason-virtual/tests/study-models.test.js",
+      "herramientas/diapason-virtual/tests/ukulele-bank.test.js",
+      "herramientas/ear-training/tests/interval-learning.test.js",
+      "herramientas/editor-crescendo/tests/chord-layout.test.cjs",
+      "herramientas/editor-crescendo/tests/count-in.test.cjs",
+      "herramientas/editor-crescendo/tests/flow-export.test.cjs",
+      "herramientas/editor-crescendo/tests/guitar.test.cjs",
+      "herramientas/editor-crescendo/tests/input-regression.test.cjs",
+      "herramientas/editor-crescendo/tests/instrument-playback.test.cjs",
+      "herramientas/editor-crescendo/tests/instruments.test.cjs",
+      "herramientas/editor-crescendo/tests/key-transposition.test.cjs",
+      "herramientas/editor-crescendo/tests/meter-rebar.test.cjs",
+      "herramientas/editor-crescendo/tests/recording-sync.test.cjs",
+      "herramientas/editor-crescendo/tests/writing-parity.test.cjs",
+      "herramientas/metronomo/duration-consistency.test.cjs",
+      "herramientas/metronomo/keyboard-entry.test.cjs",
+      "herramientas/metronomo/measure-selection.test.cjs",
+      "herramientas/metronomo/meter-rebar.test.cjs",
+      "herramientas/metronomo/overflow-writing.test.cjs",
+      "herramientas/metronomo/rhythm-audio.test.cjs",
+      "herramientas/metronomo/rhythm-export.test.cjs",
+      "herramientas/metronomo/rhythm-marks.test.cjs",
+      "herramientas/metronomo/rhythm-structure.test.cjs",
+      "herramientas/metronomo/rhythm-tablature.test.cjs",
+      "herramientas/metronomo/rhythm-writing.test.cjs",
+      "herramientas/piano-virtual/tests/chord-bank.test.js",
+      "herramientas/piano-virtual/tests/chrome-fit.test.js",
+      "herramientas/produccion-musical/tests/audit-corrections.test.cjs",
+      "herramientas/produccion-musical/tests/ear-training.test.cjs",
+      "herramientas/produccion-musical/tests/models.test.cjs",
+      "herramientas/produccion-musical/tests/teaching.test.cjs",
+      "herramientas/produccion-musical/tests/visual-atlas.test.cjs",
+      "herramientas/requinteando/tests/guitar-bank.test.js",
+      "herramientas/requinteando/tests/ukulele-bank.test.js",
+      "herramientas/tabla-frecuencias/tests/analyzer-lifecycle.test.cjs",
+      "herramientas/tabla-frecuencias/tests/backup.test.cjs",
+      "herramientas/tabla-frecuencias/tests/catalog.test.cjs",
+      "herramientas/tabla-frecuencias/tests/dynamics-reference.test.cjs",
+      "herramientas/tabla-frecuencias/tests/ear-rounds.test.cjs",
+      "herramientas/tabla-frecuencias/tests/ear-signal.test.cjs",
+      "herramientas/tabla-frecuencias/tests/eq-guidance.test.cjs",
+      "herramientas/tabla-frecuencias/tests/eq-response.test.cjs",
+      "herramientas/tabla-frecuencias/tests/frequency-cursor.test.cjs",
+      "herramientas/tabla-frecuencias/tests/mix-catalog.test.cjs",
+      "herramientas/tabla-frecuencias/tests/mix-space.test.cjs",
+      "herramientas/tabla-frecuencias/tests/processing.test.cjs",
+      "herramientas/tabla-frecuencias/tests/storage.test.cjs",
+      "herramientas/tabla-frecuencias/tests/workbench.test.cjs",
+      "herramientas/teoria-lectura-musical/audit-regression.test.js",
+      "herramientas/teoria-lectura-musical/fase2-interactiva.test.js",
+      "herramientas/teoria-lectura-musical/fase3-entrenador.test.js",
+      "herramientas/teoria-lectura-musical/fase4-solfeo.test.js",
+      "herramientas/teoria-lectura-musical/fase5-ritmo-avanzado.test.js",
+      "herramientas/teoria-lectura-musical/fase6-melodia.test.js",
+      "herramientas/teoria-lectura-musical/fase7-expresion-forma.test.js",
+      "herramientas/teoria-lectura-musical/fase8-final.test.js",
+      "herramientas/teoria-lectura-musical/solfeo-cromatico.test.js",
+      "shared/concept-examples.test.cjs",
+      "shared/course-instruments.test.cjs",
+      "shared/course-layout.test.js",
+      "shared/course-sound.test.cjs",
+      "shared/gate-lab/model.test.cjs",
+      "shared/listening-engine.test.cjs",
+      "shared/music-compendium/compendium.test.cjs",
+      "shared/music-practice.test.js",
+      "shared/musical-audit.test.js",
+      "shared/notation-font.test.cjs",
+      "shared/practice-lab.test.js",
+      "shared/rhythm-engine.test.js",
+      "shared/tests/pitch-spelling.test.cjs",
+      "shared/tests/score-file-name.test.cjs",
+      "shared/tests/string-tablature.test.cjs",
+      "shared/tool-routes.test.cjs",
+      "auditorias/editor-metronome-regression.test.cjs",
+      "auditorias/playback-regression.test.cjs"
+    ],
+    "tests": 488,
+    "pass": 484,
+    "fail": 4,
+    "failures": [
+      {
+        "file": "auditorias/playback-regression.test.cjs",
+        "kind": "stale harness",
+        "detail": "fallbackMedia absent from VM fixture; temporary in-memory addition makes all 62 assertions pass"
+      },
+      {
+        "file": "shared/course-layout.test.js",
+        "kind": "stale source regex",
+        "detail": "expects literal view = \"all\" from former implementation"
+      },
+      {
+        "file": "shared/musical-audit.test.js",
+        "kind": "stale source injection",
+        "detail": "export string replacement no longer matches; suffixIntervals never exposed to the test"
+      },
+      {
+        "file": "shared/concept-examples.test.cjs",
+        "kind": "missing authored example",
+        "detail": "Tres formas de la escala menor; 1 missing of 93 reading blocks"
+      }
+    ]
+  },
+  "syntax": {
+    "units": 172,
+    "errors": []
+  },
+  "validators": {
+    "pass": [
+      "piano-virtual",
+      "diapason-virtual",
+      "requinteando",
+      "bass-virtual",
+      "folk-virtual",
+      "cuerdas-frotadas",
+      "ear-training"
+    ]
+  },
+  "pythonCore": {
+    "command": "python3 test_core.py",
+    "cwd": "herramientas/chordsyncpro/server",
+    "pass": 3
+  },
+  "browser": {
+    "origin": "http://127.0.0.1:8766",
+    "initialPagesLoaded": 14,
+    "checkedApps": [
+      "piano-virtual",
+      "diapason-virtual",
+      "requinteando",
+      "bass-virtual",
+      "folk-virtual",
+      "cuerdas-frotadas",
+      "afinador",
+      "ear-training",
+      "speed",
+      "metronomo",
+      "editor-crescendo",
+      "aac",
+      "chordsyncpro",
+      "historia-del-jazz"
+    ],
+    "speedMp3": "FAILED: unsupported encoder configuration (mp3, 192000 bps, 2 channels, 44100 Hz)",
+    "speedModuleWarning": "Mediabunny was loaded twice",
+    "speedTabAria": "WAV remains aria-selected=true after other format selected",
+    "chordsyncFile": "8-second synthetic stereo Dm7-G7-Cmaj7-Cmaj7; visible C major, BPM 60, 4/4, scale; chord timeline hidden by CSS",
+    "microphoneAndMidiHardware": "not activated; concurrent permission and synthesis ownership tested with controlled mocks",
+    "mobileAndSafari": "not physically tested"
+  },
+  "speedDownloads": {
+    "wav": {
+      "bytes": 1411244,
+      "headerHex": "52494646a488150057415645",
+      "channels": 2,
+      "sampleRate": 44100,
+      "duration": 8.0
+    },
+    "mov": {
+      "bytes": 1411859,
+      "headerHex": "000000146674797071742020"
+    },
+    "m4a": {
+      "bytes": 82886,
+      "headerHex": "000000186674797069736f6d"
+    }
+  }
+}

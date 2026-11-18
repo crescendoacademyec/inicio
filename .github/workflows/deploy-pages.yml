@@ -15,7 +15,23 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  musical-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Musical regression tests and validators
+        run: node auditorias/run-musical-tests.cjs
+      - name: ChordSync core tests
+        working-directory: herramientas/chordsyncpro/server
+        run: python3 test_core.py
+
   build:
+    needs: musical-tests
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

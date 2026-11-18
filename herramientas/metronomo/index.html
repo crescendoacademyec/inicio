@@ -762,6 +762,7 @@
         <div class="bpm-section">
             <div class="tempo-name" id="tempo-name">Andantino</div>
             <div class="bpm-display" id="bpm-display">80</div>
+            <p id="tempo-unit" class="tempo-unit" style="text-align:center;color:var(--text-dim);font-size:.8rem;margin:0 0 10px">♩ = BPM · tempo en negras por minuto</p>
             <div class="quick-bpm-row" id="quick-bpm-row"></div>
             <div class="bpm-controls">
                 <button class="btn-circle" onclick="adjustBpm(-1)">-</button>
@@ -1312,6 +1313,8 @@
     UI.subSel.addEventListener('change', syncBasicLabels);
     UI.amalgamInp.addEventListener('input', syncBasicLabels);
     syncBasicLabels();
+
+    UI.bpmDisp.title="Tempo en negras por minuto (♩ = BPM), también en 6/8 y 7/8";
 
     // --- Laboratorio de ritmo y feel: generador y editor sobre un único pentagrama ---
     let rhythmMarks=[],rhythmEditorEvents=[],activeRhythmStaff=1;let rhythmAudio=null;let rhythmPointerTarget=null;
@@ -1885,7 +1888,7 @@
         const countInBars=parseInt(UI.scoreCountIn?.value||0,10);
         if(UI.scoreSyncMetro?.checked && !isPlaying){ toggleMetronome(); scoreMetroStartedByReader=true; }
         if(countInBars>0){
-            const beats=Math.max(1,parseInt(UI.beatsSel.value)||4); const wait=countInBars*beats*(60000/Math.max(20,tempo));
+            const beats=mainMeter().capacity; const wait=countInBars*beats*(60000/Math.max(20,tempo));
             setScoreReaderStatus(`Count-in · ${countInBars} compás${countInBars>1?'es':''}`);
             scorePlaybackTimer=setTimeout(scheduleScoreEvent,wait);
         }else scheduleScoreEvent();
@@ -2044,6 +2047,7 @@
     UI.volMaster.addEventListener('input', (e) => { if(masterGainNode) masterGainNode.gain.value = e.target.value; });
 
     function updateBpmUI() {
+        syncPulseCaption();
         const exerciseBpm=document.getElementById("rhythmPlaybackBpm");if(exerciseBpm&&document.activeElement!==exerciseBpm)exerciseBpm.value=Math.round(tempo);
         UI.bpmDisp.innerText = Math.round(tempo); UI.bpmSld.value = Math.round(tempo);
         if (UI.tempoName) UI.tempoName.innerText = tempoMarking(Math.round(tempo));
@@ -2127,6 +2131,23 @@
     UI.tapBtn.addEventListener('click', () => doTap(UI.tapBtn));
     UI.fsTapBtn.addEventListener('click', () => doTap(UI.fsTapBtn));
 
+    // All internal positions and tempo values use quarter notes, like the editor.
+    function mainMeter() {
+        return window.CrescendoRhythmStructure.meter(currentRhythmMeter());
+    }
+    function mainSubdivision() {
+        const value=UI.subSel.value;
+        return value==='0.666667'?2/3:value==='0.333333'?1/3:parseFloat(value);
+    }
+    function syncPulseCaption() {
+        const caption=document.getElementById('tempo-unit');
+        if(caption)caption.textContent=`♩ = ${Math.round(tempo)} BPM · figura elegida: ${Math.round(tempo*mainSubdivision()*100)/100} clics/min`;
+    }
+    function mainPulse() {
+        if(/^\d+(\+\d+)*$/.test(UI.amalgamInp.value.replace(/\s+/g,'')))return 1;
+        const meter=mainMeter();
+        return meter.bottom===8 && meter.top%3===0?1.5:4/meter.bottom;
+    }
     function parsePattern() {
         const customVal = UI.amalgamInp.value.replace(/\s+/g, '');
         if (/^\d+(\+\d+)*$/.test(customVal)) {
@@ -2135,8 +2156,10 @@
             parts.forEach(p => { if(p > 0) { accentPulses.push(currentPulse); currentPulse += p; } });
             totalBeats = currentPulse || 1; UI.beatsSel.style.opacity = "0.3";
         } else {
-            totalBeats = parseInt(UI.beatsSel.value); accentPulses = [0]; UI.beatsSel.style.opacity = "1";
+            totalBeats = mainMeter().capacity; accentPulses = [0]; UI.beatsSel.style.opacity = "1";
         }
+        mainBeatPos=0;
+        syncPulseCaption();
         renderVisualizer();
     }
 
@@ -2226,23 +2249,27 @@
         window.setTimeout(() => { if (!wasPlaying && isPlaying) toggleMetronome(); }, duration + 80);
     });
     renderClaveTimeline(); renderPolyBuilder(); setRhythmWorkspace('pulse');
-    UI.beatsSel.addEventListener('change', parsePattern);
+    UI.beatsSel.addEventListener('change', () => {
+        UI.subSel.value=mainMeter().label==='6/8'?'0.666667':mainMeter().bottom===8?'2':'1';
+        parsePattern(); syncBasicLabels();
+    });
     UI.amalgamInp.addEventListener('input', () => { parsePattern(); if(isPlaying) { mainBeatPos = 0; barCount = 0; }});
 
     function buildVisualizerInto(container) {
         if (!container) return;
-        container.innerHTML = ''; const sub = parseFloat(UI.subSel.value);
-        const dotCount = Math.max(1, Math.round(totalBeats * sub));
+        container.innerHTML = ''; const sub = mainSubdivision();
+        const dotCount = Math.max(1, Math.ceil(totalBeats * sub - 1e-7));
         for (let i = 0; i < dotCount; i++) {
             const beatPos = i / sub;
-            const isBeatDot = Math.abs(beatPos - Math.round(beatPos)) < 1e-6;
+            const isBeatDot = Math.abs(beatPos/mainPulse() - Math.round(beatPos/mainPulse())) < 1e-6;
 
             const col = document.createElement('div'); col.className = 'beat-col';
             const num = document.createElement('div'); num.className = 'beat-num';
-            if (isBeatDot) { num.innerText = (Math.round(beatPos) % totalBeats) + 1; } else { num.classList.add('empty'); num.innerText = '·'; }
+            if (isBeatDot) { num.innerText = Math.round(beatPos/mainPulse()) + 1; } else { num.classList.add('empty'); num.innerText = '·'; }
 
             const dot = document.createElement('div'); dot.className = 'dot';
-            if (sub >= 1 && i % sub !== 0) dot.classList.add('sub-dot');
+            if (!isBeatDot) dot.classList.add('sub-dot');
+            dot.dataset.beat = String(isBeatDot);
             dot.dataset.idx = i;
 
             col.appendChild(num); col.appendChild(dot); container.appendChild(col);
@@ -2253,7 +2280,7 @@
         buildVisualizerInto(UI.scoreBeatVis);
         buildVisualizerInto(UI.fsBeatVis);
     }
-    UI.subSel.addEventListener('change', renderVisualizer);
+    UI.subSel.addEventListener('change', () => {renderVisualizer();syncPulseCaption();});
 
     function updateTimerDisplay() {
         let mins = Math.floor(secondsLeft / 60); let secs = secondsLeft % 60;
@@ -2344,10 +2371,11 @@
             if (nEv.engine === 'main') {
                 // sub = pulsos por negra. >=1 => subdivisiones dentro del pulso (corcheas, tresillos...).
                 // <1 => la figura dura varios pulsos (blanca, redonda, con puntillo...).
-                let sub = parseFloat(UI.subSel.value); let beatStep = 1 / sub;
+                let sub = mainSubdivision(); let beatStep = Math.min(1 / sub, totalBeats-mainBeatPos);
                 let beatFrac = mainBeatPos - Math.floor(mainBeatPos);
-                let isBeat = beatFrac < 1e-6 || beatFrac > 1 - 1e-6; // esta pulsación cae justo en un tiempo (negra) del compás
-                let beatIdx = Math.round(mainBeatPos) % totalBeats;
+                let pulsePos = mainBeatPos/mainPulse();
+                let isBeat = Math.abs(pulsePos-Math.round(pulsePos))<1e-6; // esta pulsación coincide con el pulso del compás
+                let beatIdx = mainBeatPos;
                 let isAcc = isBeat && accentPulses.includes(beatIdx) && UI.accentTgl.checked;
                 let swing = parseInt(UI.swingSld.value);
                 let subNoteCalc = Math.round(beatFrac * sub);
@@ -2467,7 +2495,7 @@
                 UI.pendulum.style.opacity = ev.isMuted ? "0.2" : "1";
 
                 if (UI.pendTgl.checked && ev.isBeat) {
-                    pendulumSide *= -1; UI.pendulum.style.transition = `transform ${60/tempo}s ease-in-out`; UI.pendulum.style.transform = `rotate(${25 * pendulumSide}deg)`;
+                    pendulumSide *= -1; UI.pendulum.style.transition = `transform ${60*mainPulse()/tempo}s ease-in-out`; UI.pendulum.style.transform = `rotate(${25 * pendulumSide}deg)`;
                     if (ev.isAcc && !ev.isMuted) { UI.pendulum.classList.add('accent-flash'); setTimeout(() => UI.pendulum.classList.remove('accent-flash'), 100); }
                 }
                 if (UI.pendTgl.checked && ev.sub === 2 && parseInt(UI.swingSld.value) !== 50 && !ev.isBeat && !ev.isMuted) {
@@ -2476,7 +2504,7 @@
 
                 [UI.vis, UI.scoreBeatVis, UI.fsBeatVis].forEach(vc => {
                     if (!vc) return;
-                    vc.querySelectorAll('.dot').forEach(d => d.className = 'dot' + (ev.sub >= 1 && d.dataset.idx % ev.sub !== 0 ? ' sub-dot' : ''));
+                    vc.querySelectorAll('.dot').forEach(d => d.className = 'dot' + (d.dataset.beat==='false' ? ' sub-dot' : ''));
                     vc.querySelectorAll('.beat-num').forEach(n => n.classList.remove('active'));
                     const aDot = vc.querySelector(`.dot[data-idx="${ev.noteIdx}"]`);
                     if (aDot && !ev.isMuted) {
@@ -2540,9 +2568,9 @@
             UI.pendulum.style.transition = "transform 0.3s ease-out"; UI.pendulum.style.transform = `rotate(0deg)`; UI.vis.style.opacity = "1"; UI.pendulum.style.opacity = "1";
             if (UI.scoreBeatVis) UI.scoreBeatVis.style.opacity = "1";
             if (UI.fsBeatVis) UI.fsBeatVis.style.opacity = "1";
-            { const sReset = parseFloat(UI.subSel.value);
+            { const sReset = mainSubdivision();
               [UI.vis, UI.scoreBeatVis, UI.fsBeatVis].forEach(vc => { if (!vc) return;
-                vc.querySelectorAll('.dot').forEach(d => d.className = 'dot' + (sReset >= 1 && d.dataset.idx % sReset !== 0 ? ' sub-dot' : ''));
+                vc.querySelectorAll('.dot').forEach(d => d.className = 'dot' + (d.dataset.beat==='false' ? ' sub-dot' : ''));
                 vc.querySelectorAll('.beat-num').forEach(n => n.classList.remove('active'));
               });
             }

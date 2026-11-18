@@ -324,5 +324,5 @@
     else if (config.type === "bebop") renderBebop(root, config);
     else renderProgression(root, config);
   }
-  global.TheoryVisuals = { mount: mount, playNotes: playNotes, symbolNotes: symbolNotes, mirrorPitch: mirrorPitch, mirrorModel: mirrorModel, compoundModel: compoundModel, compounds: COMPOUNDS };
+  global.TheoryVisuals = { suffixIntervals: suffixIntervals, VISUALS: VISUALS, mount: mount, playNotes: playNotes, symbolNotes: symbolNotes, mirrorPitch: mirrorPitch, mirrorModel: mirrorModel, compoundModel: compoundModel, compounds: COMPOUNDS };
 })(window);

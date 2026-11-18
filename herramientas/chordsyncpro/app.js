@@ -973,15 +973,17 @@
       const label = showNashville
         ? chordToNashville(displayChordRaw, activeKey)
         : displayChordForKey(displayChordRaw, activeKey);
-      $('currentChordName').textContent = label;
+      const identified=!!parseChordLabel(displayChordRaw);
+      $('currentChordName').textContent = identified?label:'Sin acorde identificado';
+      $('currentChordName').classList.toggle('no-chord',!identified);
       const conf = Math.round((seg.confidence || 0) * 100);
       $('confidenceFill').style.width = conf + '%';
       if (displayChordRaw !== lastDiagramChord) {
-        const guitarSvg = renderGuitarDiagramSVG(displayChordRaw);
-        const ukuleleSvg = renderUkuleleDiagramSVG(displayChordRaw);
-        $('guitarDiagram').innerHTML = guitarSvg || '<div class="diagram-unavailable">Digitación no incluida todavía para esta extensión.</div>';
-        $('ukuleleDiagram').innerHTML = ukuleleSvg || '<div class="diagram-unavailable">Digitación no incluida todavía para esta extensión.</div>';
-        $('pianoDiagram').innerHTML = renderPianoDiagramSVG(displayChordRaw);
+        const guitarSvg = identified?renderGuitarDiagramSVG(displayChordRaw):'';
+        const ukuleleSvg = identified?renderUkuleleDiagramSVG(displayChordRaw):'';
+        $('guitarDiagram').innerHTML = guitarSvg || '<div class="diagram-unavailable">'+(identified?'Digitación no incluida todavía para esta extensión.':'Sin acorde identificado en este segmento.')+'</div>';
+        $('ukuleleDiagram').innerHTML = ukuleleSvg || '<div class="diagram-unavailable">'+(identified?'Digitación no incluida todavía para esta extensión.':'Sin acorde identificado en este segmento.')+'</div>';
+        $('pianoDiagram').innerHTML = identified?renderPianoDiagramSVG(displayChordRaw):'';
         lastDiagramChord = displayChordRaw;
       }
     } else {
@@ -1166,6 +1168,8 @@
     $('chordCountValue').innerHTML = String(analysisResult.totalChords ?? '—') + (sectionCount ? `<span class="value small-note">${sectionCount} secciones · ${semanticCount} semánticas · ${repeatGroups} grupos repetidos</span>` : '');
     syncAnalysisCorrectionControls();
     renderScaleExplorer();
+    const notice=$('chordAnalysisNotice');
+    if(notice){notice.hidden=(analysisResult.segments||[]).some(segment=>!!parseChordLabel(chordForDisplay(segment)));notice.textContent='No se identificaron acordes en este archivo. Revisa la señal o corrige los segmentos al escuchar.';}
 
     buildBeatGrid();
     buildTimeline();
@@ -1300,7 +1304,7 @@
         ? chordToNashville(displayChordRaw, activeKey)
         : displayChordForKey(displayChordRaw, activeKey);
       el.innerHTML = `<span class="seg-resize-handle" data-handle="left"></span>
-        <span class="seg-label">${label}</span>
+        <span class="seg-label">${parseChordLabel(displayChordRaw)?label:"Sin acorde"}</span>
         <span class="seg-tools">
           <span class="seg-tool-btn" data-action="edit" title="Corregir acorde">✎</span>
           <span class="seg-tool-btn" data-action="split" title="Dividir en dos">✂</span>
@@ -2821,6 +2825,7 @@
       if(secondary.length){
         const details=document.createElement('details');
         details.className='secondary-options';
+        details.hidden=true; // Diagnostic controls belong to the local administrator edition.
         const summary=document.createElement('summary');
         summary.textContent='Herramientas de evaluación';
         const controls=document.createElement('div');
