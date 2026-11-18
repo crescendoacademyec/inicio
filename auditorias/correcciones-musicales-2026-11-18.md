@@ -34,6 +34,8 @@ Las referencias a recursos modificados llevan nuevas versiones para renovar la c
 - Sintaxis de 49 unidades modificadas, incluidos scripts inline: sin errores.
 - Núcleo Python de ChordSync: 3 pruebas aprobadas.
 
+La primera ejecución de GitHub detectó además una expectativa aleatoria antigua del taller compartido: invertir un unísono u octava conserva las clases de altura. Se corrigió la expectativa sin alterar el comparador musical, se añadieron casos explícitos de unísono, octava y alturas distintas, y se verifican por separado los criterios de clase de altura y registro exacto en ambas presentaciones.
+
 Comprobaciones realizadas en el navegador de escritorio:
 
 - Speed: descargas WAV, MOV, MP3 y M4A con el mismo WAV de ocho segundos de la auditoría. El WAV completo conserva dos canales, 44.100 Hz y ocho segundos. El WAV del loop A–B marcado por teclado dura cinco segundos.

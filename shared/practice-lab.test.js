@@ -31,10 +31,17 @@ assert.ok(!L.sameNotes([48,52,55],[60,64,67],{exact:true}));
 for(let length=2;length<=8;length++)assert.equal(L.makeQuestion('dictation',{length}).notes.length,length);
 console.log('1600 ejercicios: respuestas, grafías, registros, afinaciones y dictados de 2–8 notas verificados.');
 
-for(const intervalMode of ['harmonic','melodic']){
+// Default comparison uses pitch classes, so reversing a unison or octave
+// remains equivalent. Exact comparison must also preserve the register.
+for(const intervalMode of ['harmonic','melodic'])for(let attempt=0;attempt<40;attempt++){
   const q=L.makeQuestion('interval',{intervalMode});
   assert.equal(q.stack,intervalMode==='harmonic');
   assert.equal(q.notes.length,2);
   const midis=q.notes.map(n=>n.midi);
-  assert.equal(L.sameNotes([...midis].reverse(),midis,{ordered:!q.stack}),q.stack);
+  assert.equal(L.sameNotes([...midis].reverse(),midis,{ordered:!q.stack}),q.stack||midis[0]%12===midis[1]%12);
+  assert.equal(L.sameNotes([...midis].reverse(),midis,{ordered:!q.stack,exact:true}),q.stack||midis[0]===midis[1]);
 }
+assert.equal(L.sameNotes([60,60],[60,60],{ordered:true}),true);
+assert.equal(L.sameNotes([72,60],[60,72],{ordered:true}),true);
+assert.equal(L.sameNotes([72,60],[60,72],{ordered:true,exact:true}),false);
+assert.equal(L.sameNotes([64,60],[60,64],{ordered:true}),false);
