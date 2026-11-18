@@ -245,7 +245,7 @@ solicitadas, recuperación de un filtro incompatible y cápsula con clic/flechas
 
 ## Ecualizador visual (octubre 2026)
 
-- Respuesta de biquads calculada con Audio EQ Cookbook de Robert Bristow-Johnson, publicado por W3C: https://www.w3.org/TR/audio-eq-cookbook/ . Referencia a 96 kHz; suma de magnitudes en dB para bandas en cascada. Shelves con S=1; HPF/LPF de segundo orden. No hay procesamiento ni reproducción de audio.
+- Respuesta de biquads calculada con Audio EQ Cookbook de Robert Bristow-Johnson, publicado por W3C: https://www.w3.org/TR/audio-eq-cookbook/ . Referencia a 96 kHz; suma de magnitudes en dB para bandas en cascada. Shelves con S=1; HPF/LPF de segundo orden en la implementación inicial. La mesa de escucha posterior añade procesamiento de audio local y cascadas Butterworth para las pendientes seleccionadas; véase README.md.
 - Material proporcionado para consulta: *Aprende a utilizar tu ecualizador*, páginas 8–11 y 15–16 (parámetros, filtros y barrido). Se redactaron explicaciones originales; no se distribuyen el PDF ni sus gráficos. Se aclara que Q alto estrecha campanas, y que los ajustes dependen de cada grabación.
 - Los botones de las fichas toman la zona indicada en el catálogo; para rangos usan el centro geométrico. ±3 dB y Q=1 son ejemplos didácticos propios, no valores extraídos del libro ni recomendaciones obligatorias.
 
@@ -268,3 +268,12 @@ Siete rutas separadas del catálogo de instrumentos: mezcla completa, batería, 
 - iZotope, [Stem mastering](https://www.izotope.com/community/blog/stem-mastering): alternativa al mastering estéreo y acuerdo de entregas.
 
 Las curvas, umbrales y tiempos aquí son didácticos, no parámetros atribuidos a estas fuentes. El simulador no suma stems ni simula limitación, true peak, sidechain filtrado o procesamiento M/S. El nuevo flujo de mastering describe esas verificaciones para realizarlas en el DAW.
+
+
+## Revisión para adultos · 2026-11-17
+
+El público de mezcla/producción de esta herramienta es adulto. Se añade un recorrido por objetivos: nota/frecuencia, intervención A/B y decisión en contexto de DAW. No se propone adaptación infantil.
+
+Se corrigen el parser de rangos Hz/kHz, la cadena audible de Boost/Cut, la repetición de rondas, las definiciones breves de dinámica y normalización, y la ventana de guitarra de 20 trastes E2–D6. Las ayudas se contrastan con FabFilter [controles temporales](https://www.fabfilter.com/help/pro-c/using/timecontrols), [ratio](https://www.fabfilter.com/help/pro-c/using/dynamicscontrols) y [de-esser wide/split-band](https://www.fabfilter.com/help/pro-ds/using/advancedcontrols).
+
+El analizador identifica su suma mono y separa L/R según [Web Audio, reducción a mono](https://www.w3.org/TR/webaudio/#time-domain-down-mixing). Las magnitudes espectrales por bin y el piso de representación no equivalen al pico temporal ni a silencio absoluto. FFT y suavizado afectan la lectura. El respaldo complementario y el mapa son ahora importables; su alcance se distingue del progreso auditivo principal y de las curvas EQ.

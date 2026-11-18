@@ -41,11 +41,11 @@ const TECHNIQUES = {
   },
   paralela: {
     title: 'Compresión paralela (New York Compression)',
-    body: 'Se duplica la señal (por un bus o auxiliar): a la copia se le aplica compresión agresiva, mientras la señal original se mantiene limpia o casi sin comprimir. Luego se mezclan ambas, sumando el cuerpo de la señal comprimida sin perder los transitorios de la original.',
+    body: 'Se duplica la señal (por un bus o auxiliar): a la copia se le aplica compresión agresiva, mientras la señal original se mantiene limpia o casi sin comprimir. Luego se mezclan ambas para combinar la dinámica de la rama seca con el cuerpo de la comprimida. La cantidad de mezcla y la alineación entre ramas cambian el resultado.',
     tips: [
       'Muy útil en baterías, guitarras eléctricas o incluso el bus completo de la mezcla.',
       'Compresores FET (rápidos y agresivos) son una elección típica para la señal duplicada.',
-      'Preserva el punch de los transitorios mientras añade peso y presencia de fondo.',
+      'Compara a nivel semejante; revisa compensación de latencia y fase. Añadir rama comprimida también puede reducir el contraste relativo del ataque.',
     ],
   },
 };
@@ -60,11 +60,11 @@ const GLOSSARY = [
   { t: 'Gain reduction', d: 'Atenuación que aplica el compresor, expresada en dB; no es la ganancia de compensación.' },
   { t: 'Range (de Gate)', d: 'Cuánto se atenúa la señal cuando el gate está cerrado.' },
   { t: 'Hold', d: 'Tiempo que un gate permanece abierto después de que la señal cae por debajo del umbral, antes de iniciar el release.' },
-  { t: 'Gate', d: 'Procesador que bloquea la señal por debajo de un umbral, usado para reducir bleed y ruido de fondo.' },
-  { t: 'De-Esser', d: 'Compresor enfocado solo en una banda de frecuencia (típicamente 5–10 kHz) para controlar sibilancias vocales.' },
+  { t: 'Gate', d: 'Atenúa una señal cuando el detector queda por debajo del umbral. Range limita cuánto se reduce; no siempre produce silencio. Un expansor descendente reduce de forma progresiva según su ratio.' },
+  { t: 'De-Esser', d: 'Control dinámico de sibilancia: detecta las consonantes en una zona elegida por escucha. Puede atenuar una banda (split-band) o toda la señal (wideband); la banda del detector no es necesariamente la banda procesada.' },
   { t: 'Compresión en Serie', d: 'Dos o más compresores procesan la señal consecutivamente, repartiendo el trabajo entre etapas.' },
-  { t: 'Compresión Paralela', d: 'Se mezcla una copia muy comprimida con la señal original, sumando cuerpo sin perder transitorios.' },
-  { t: 'Limiter', d: 'Compresor con ratio muy alto, usado para evitar que la señal sobrepase un techo y distorsione.' },
+  { t: 'Compresión Paralela', d: 'Combina una rama seca y una comprimida. Permite ajustar cuerpo y contraste de ataques; compara a nivel semejante y revisa fase y compensación de latencia entre ramas.' },
+  { t: 'Limiter', d: 'Procesador destinado a controlar picos respecto de un techo. Un ratio alto por sí solo no garantiza ese techo: importan ataque, anticipación y diseño. Limitar picos de muestra no garantiza limitar true peak ni evitar toda distorsión.' },
   { t: 'Transient (Transiente)', d: 'La parte inicial y más rápida de un sonido — el golpe o ataque, clave para la claridad y definición.' },
   { t: 'EQ (Ecualización)', d: 'Proceso de ajustar el balance de frecuencias de una señal: gráfico, paramétrico u otros tipos.' },
   { t: 'Bandas (de EQ)', d: 'Secciones de un ecualizador, cada una con su propia frecuencia central, ancho de banda (Q) y ganancia.' },
@@ -73,7 +73,7 @@ const GLOSSARY = [
   { t: 'Fader', d: 'Control deslizante que ajusta el nivel de una pista o canal en la consola o DAW.' },
   { t: 'Phase Cancellation', d: 'Pérdida o debilitamiento de frecuencias cuando dos señales similares se suman fuera de fase.' },
   { t: 'Room Acoustics', d: 'Cómo un espacio refleja, absorbe y difunde el sonido, afectando la grabación y la mezcla.' },
-  { t: 'Normalization', d: 'Ajustar el nivel de una señal a un máximo predefinido sin alterar la relación entre sus partes.' },
+  { t: 'Normalización', d: 'Aplica una ganancia global para alcanzar un objetivo: por pico se refiere al máximo de muestra o true peak, según el medidor; por sonoridad, a una medida como LUFS. Sin limitación adicional conserva las relaciones dinámicas; no equivale a comprimir.' },
   { t: 'Reverb', d: 'Efecto que simula el eco difuso de un espacio cerrado, dando profundidad y ambiente.' },
   { t: 'Delay', d: 'Efecto que repite la señal tras un tiempo definido, usado para eco, espacialidad o profundidad.' },
 ];
@@ -121,7 +121,7 @@ const INSTRUMENTS = [
   {
     id: 'guit-ac', name: 'Guitarra Acústica', cat: 'cuerdas',
     range: [80, 1000],
-    realRange: [82.4, 1174.7], rangeKind: 'register', rangeNote: 'Guitarra estándar E2–E6 aprox.; el límite superior presupone acceso al registro agudo.', harm: [1000, 12000],
+    realRange: [82.4, 1174.7], rangeKind: 'register', rangeNote: 'Afinación estándar E2; ventana de referencia de 20 trastes hasta D6 (1.174,7 Hz). La extensión depende del modelo y del acceso a los trastes agudos.', harm: [1000, 12000],
     cuts: [{"f": "200–350 Hz", "r": "Si hay exceso de caja, explora un corte ancho pequeño; no es una región inútil."}, {"f": "Resonancias localizadas", "r": "Busca notas que sobresalen y considera un corte estrecho o dinámico solo si molestan."}, {"f": "Graves no musicales", "r": "Ajusta el pasa-altos a las notas reales: E2 está en 82.4 Hz y otras afinaciones bajan más; 120 Hz no es un límite universal."}],
     boosts: [{"f": "125–240 Hz", "r": "Si falta cuerpo, prueba un refuerzo suave solo si no compite con el bajo."}, {"f": "1–2 kHz", "r": "Si falta articulación, compara un ajuste pequeño con nivel y arreglo."}, {"f": "5 kHz en adelante", "r": "Si falta brillo, un shelf suave puede ayudar; también aumenta púa, uñas y ruido."}],
     tip: "Una guitarra protagonista suele necesitar más extensión que un acompañamiento. El micrófono y la caja cambian las resonancias.",
@@ -190,7 +190,7 @@ const INSTRUMENTS = [
     comp: {
       tipo: 'FET — rápido y con carácter.',
       ratio: '4:1 – 8:1',
-      attack: 'Rápido a medio (deja pasar el transiente inicial del golpe)',
+      attack: 'Compara rápido y más lento: un ataque rápido suele reducir más el transitorio; ajústalo al golpe y al modelo',
       release: 'Rápido (para recuperarse antes del siguiente golpe)',
       nota: 'Un release demasiado lento hace que el compresor siga actuando cuando llega el próximo golpe, aplastando la dinámica de la ejecución.',
     },
@@ -207,8 +207,8 @@ const INSTRUMENTS = [
       tipo: 'FET.',
       ratio: '4:1 – 6:1',
       attack: 'Medio',
-      release: 'Medio (usa el hold para no cortar la resonancia natural)',
-      nota: 'Un release muy corto corta la cola del tom de forma antinatural; dale espacio para que decaiga.',
+      release: 'Ajústalo a la recuperación de ganancia y al espacio entre golpes',
+      nota: 'Release es recuperación de ganancia: escucha cómo cambia la relación entre ataque, cuerpo y cola, y si hay bombeo o modulación. No equivale al cierre de un gate; si usas gate, ajusta aparte su hold y release para conservar la resonancia.',
     },
   },
   {
@@ -224,7 +224,7 @@ const INSTRUMENTS = [
       ratio: '4:1 – 6:1',
       attack: 'Medio',
       release: 'Medio',
-      nota: 'Igual que en los toms: cuida el release para no cortar la resonancia grave característica.',
+      nota: 'Ajusta la recuperación escuchando el cuerpo grave, la cola y el siguiente golpe. Un release corto puede hacer más audible la cola o producir modulación; no cierra el sonido como un gate.',
     },
   },
   {

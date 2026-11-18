@@ -64,3 +64,9 @@ test('string materials, vocal names and category ordering are explicit in shared
  assert.equal((options.match(/<option /g)||[]).length,58);
  assert.match(options,/<optgroup label="Voces">/);
 });
+
+test('steel and nylon reference windows match the stated 20-fret D6 upper note',()=>{
+ for(const id of ['guit-ac','guit-nylon']){
+  const guitar=data.instruments.find(i=>i.id===id);assert.match(guitar.rangeNote,/20 trastes.*D6/);assert.equal(guitar.realRange[1],data.frequencyForNote('D6'));
+ }
+});

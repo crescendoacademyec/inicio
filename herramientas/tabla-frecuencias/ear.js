@@ -96,12 +96,9 @@
     function moduleLabel(k) {
       return k === 'noise' ? 'Frecuencias EQ' : k === 'direction' ? 'Boost/Cut' : k === 'tone' ? 'Tono puro' : 'Mezcla · '+k.replace('processing-','');
     }
-    function weakestFocus() {
-      const used = Object.entries(byModule).filter(([,v]) => v.total > 0);
-      if (!used.length) return 'Empieza una ronda';
-      used.sort((a,b) => (a[1].correct/a[1].total) - (b[1].correct/b[1].total));
-      const [k,v] = used[0];
-      return `${moduleLabel(k)} · ${Math.round(v.correct/v.total*100)}%`;
+    function recentFocus() {
+      const used=Object.entries(byModule).filter(([,v])=>v.total>0);
+      return used.length ? used.map(([key])=>moduleLabel(key)).join(' · ') : 'Empieza una ronda';
     }
     function record(moduleName, ok) {
       startIfNeeded();
@@ -122,9 +119,11 @@
       const roundsEl=$('practiceRounds'), accEl=$('practiceAccuracy'), timeEl=$('practiceTime'),
             focusEl=$('practiceFocus'), fill=$('practiceProgressFill');
       if (roundsEl) roundsEl.textContent = `${rounds} / ${goal}`;
-      if (accEl) accEl.textContent = rounds ? `${Math.round(correct/rounds*100)}%` : '—';
+      if (accEl) accEl.textContent = rounds ? `${correct}/${rounds}` : '—';
       if (timeEl) timeEl.textContent = fmtDuration(elapsed());
-      if (focusEl) focusEl.textContent = weakestFocus();
+      if (focusEl) focusEl.textContent = recentFocus();
+      const skills=$('practiceByModule');
+      if(skills)skills.textContent=Object.entries(byModule).filter(([,v])=>v.total).map(([k,v])=>`${moduleLabel(k)}: ${v.correct}/${v.total}`).join(' · ') || 'Sin respuestas complementarias todavía.';
       if (fill) fill.style.width = `${Math.min(100, rounds/goal*100)}%`;
     }
     function resetCurrent() {
@@ -133,7 +132,7 @@
       byModule={ noise:{total:0,correct:0}, direction:{total:0,correct:0}, tone:{total:0,correct:0} };
       render();
       const note=$('practiceSessionNote');
-      if(note) note.textContent='La sesión empieza con tu primera respuesta y se guarda localmente al terminar.';
+      if(note) note.textContent='La sesión complementaria empieza con tu primera respuesta y se guarda localmente al terminar.';
     }
     function finish() {
       if (!rounds) {
@@ -151,8 +150,9 @@
       hist.push(item); saveHistory(hist);
       renderHistory();
       const note=$('practiceSessionNote');
-      if(note) note.textContent=`Sesión guardada: ${correct}/${rounds} aciertos (${Math.round(correct/rounds*100)}%).`;
+      const message=`Sesión complementaria guardada: ${correct}/${rounds} respuestas correctas. Consulta el resultado de cada habilidad por separado.`;
       resetCurrent();
+      if(note) note.textContent=message;
     }
     function renderHistory() {
       const wrap=$('practiceHistoryList');
@@ -165,16 +165,26 @@
       wrap.innerHTML=hist.slice(0,12).map((s)=>{
         const d=new Date(s.date);
         const dateTxt=d.toLocaleDateString(undefined,{day:'2-digit',month:'short',year:'numeric'});
-        const acc=s.rounds?Math.round(s.correct/s.rounds*100):0;
+
         return `<div class="practice-history-row">
           <strong>${dateTxt}</strong>
           <span>${s.rounds} rondas</span>
-          <span>${acc}%</span>
-          <span>${fmtDuration(s.duration)}</span>
+          <span>${s.correct}/${s.rounds} correctas</span>
+          <span>${fmtDuration(s.duration)}</span><span>${Object.entries(s.byModule||{}).filter(([,v])=>v.total).map(([k,v])=>`${moduleLabel(k)}: ${v.correct}/${v.total}`).join(" · ")}</span>
         </div>`;
       }).join('');
     }
     function wire() {
+      try {
+        const draft = localStorage.getItem(window.FrequencyBackup.DRAFT);
+        if (draft) {
+          const restored = window.FrequencyBackup.session(JSON.parse(draft));
+          rounds=restored.rounds;correct=restored.correct;byModule=restored.byModule;goal=restored.goal;
+          if(rounds){startedAt=Date.now()-restored.duration*1000;timerId=setInterval(render,1000);}
+          localStorage.removeItem(window.FrequencyBackup.DRAFT);
+          $('practiceSessionNote').textContent='Respaldo complementario recuperado. Revisa los resultados de cada habilidad por separado.';
+        }
+      } catch (_) { $('practiceSessionNote').textContent='No se pudo recuperar la sesión actual; el historial guardado se conserva.'; }
       const goalSel=$('practiceGoalSelect');
       if(goalSel){
         goalSel.value=String(goal);
@@ -195,7 +205,7 @@
       });
       renderHistory(); render();
     }
-    return { wire, record, finish, render, snapshot:()=>({rounds,correct,duration:elapsed(),byModule}) };
+    return { wire, record, finish, render, snapshot:()=>({rounds,correct,duration:elapsed(),goal,byModule}) };
   })();
 
   function chooseWeakTarget(freqs, stats) {
@@ -269,7 +279,7 @@
      MÓDULO: RUIDO ROSA
      ========================================================= */
   const Noise = (function () {
-    let source = null, wetSource = null, filterNode = null, dryGain = null, wetGain = null;
+    let player = null;
     let isPlaying = false, hearingWet = true;
     let selGain = 6, numOptions = 5;
     let round = null, answered = false;
@@ -286,47 +296,15 @@
     ];
     let recentResults = [];
 
-    function setupGraph() {
-      if (filterNode) return;
-      filterNode = audioCtx.createBiquadFilter();
-      filterNode.type = 'peaking';
-      filterNode.Q.value = 1.4;
-      dryGain = audioCtx.createGain();
-      wetGain = audioCtx.createGain();
-      dryGain.gain.value = 0;
-      wetGain.gain.value = 1;
-      dryGain.connect(masterGain);
-      wetGain.connect(masterGain);
-      filterNode.connect(wetGain);
-    }
-
-    function start(targetFreq, gainDb) {
+    function start(freq, gainDb, restart = false) {
       window.dispatchEvent(new CustomEvent('crescendo:audio-owner', {detail:'ear'}));
       resumeAudio();
-      setupGraph();
-      stop();
-      const raw = makePinkNoiseBuffer(audioCtx, 4).getChannelData(0);
-      const D = window.ProcessingDSP;
-      const pair = D.matchLevels([raw,D.filter(raw,audioCtx.sampleRate,'peaking',targetFreq,1.4,gainDb)]);
-      [source,wetSource] = pair.map((data,index) => {
-        const buffer=audioCtx.createBuffer(1,data.length,audioCtx.sampleRate);buffer.copyToChannel(data,0);
-        const node=audioCtx.createBufferSource();node.buffer=buffer;node.loop=true;node.connect(index?wetGain:dryGain);return node;
-      });
-      const when=audioCtx.currentTime+.01;source.start(when);wetSource.start(when);
+      player ||= window.EarSignal.create(audioCtx, masterGain, makePinkNoiseBuffer, window.ProcessingDSP);
+      player.play(freq, gainDb, restart);
       isPlaying = true;
     }
-    function stop() {
-      if (source) { try { source.stop(); source.disconnect(); } catch (e) {} source = null; }
-      if (wetSource) { try { wetSource.stop(); wetSource.disconnect(); } catch (_) {} wetSource = null; }
-      isPlaying = false;
-    }
-    function setWet(wet) {
-      hearingWet = wet;
-      if (!audioCtx || !dryGain) return;
-      const now = audioCtx.currentTime;
-      dryGain.gain.linearRampToValueAtTime(wet ? 0 : 1, now + 0.06);
-      wetGain.gain.linearRampToValueAtTime(wet ? 1 : 0, now + 0.06);
-    }
+    function stop() { player?.stop(); isPlaying = false; }
+    function setWet(wet) { hearingWet = wet; player?.setWet(wet); }
 
     // ---- modo Aprender ----
     function renderLearnGrid() {
@@ -367,8 +345,8 @@
         ? chooseWeakTarget(EAR_OCTAVE_FREQS, stats)
         : EAR_OCTAVE_FREQS[Math.floor(Math.random() * EAR_OCTAVE_FREQS.length)];
       const sign = Math.random() < 0.5 ? 1 : -1;
-      round = { target, sign, options: pickOptions(target, numOptions) };
-      start(target, sign * selGain);
+      round = { target, sign, gain: selGain, options: pickOptions(target, numOptions) };
+      start(target, sign * round.gain, true);
       setWet(true);
       renderRound();
     }
@@ -418,8 +396,8 @@
       const signTxt = round.sign > 0 ? 'un realce (boost)' : 'un corte';
       const feedbackEl = $('earFeedback');
       feedbackEl.textContent = correct
-        ? `✓ ¡Correcto! Era ${fmtHzEar(round.target)}, con ${signTxt} de ${selGain} dB.`
-        : `✗ No era esa. La frecuencia modificada era ${fmtHzEar(round.target)}, con ${signTxt} de ${selGain} dB.`;
+        ? `✓ ¡Correcto! Era ${fmtHzEar(round.target)}, con ${signTxt} de ${round.gain} dB.`
+        : `✗ No era esa. La frecuencia modificada era ${fmtHzEar(round.target)}, con ${signTxt} de ${round.gain} dB.`;
       feedbackEl.className = 'ear-feedback ' + (correct ? 'ok' : 'bad');
       $('earNextBtn').style.display = '';
       updateScore();
@@ -460,7 +438,7 @@
         [...$('earGainChips').querySelectorAll('.chip')].forEach(c => c.classList.toggle('active', Number(c.dataset.gain) === selGain));
         [...$('earOptChips').querySelectorAll('.chip')].forEach(c => c.classList.toggle('active', Number(c.dataset.opt) === numOptions));
         updateAdaptiveStatus();
-        if (round && !answered && audioCtx && filterNode) filterNode.gain.setValueAtTime(round.sign * selGain, audioCtx.currentTime);
+        if (learnFreq !== null && isPlaying) player.updateGain(selGain);
       });
       $('earGainChips').addEventListener('click', (e) => {
         const btn = e.target.closest('.chip');
@@ -469,8 +447,8 @@
         adaptiveMode = false;
         [...$('earGainChips').querySelectorAll('.chip')].forEach((c) => c.classList.toggle('active', c === btn));
         if (diffWrap) [...diffWrap.querySelectorAll('.chip')].forEach(c => c.classList.remove('active'));
-        if (round && !answered && audioCtx && filterNode) filterNode.gain.setValueAtTime(round.sign * selGain, audioCtx.currentTime);
-        if (learnFreq !== null && isPlaying) filterNode.gain.setValueAtTime(selGain, audioCtx.currentTime);
+
+        if (learnFreq !== null && isPlaying) player.updateGain(selGain);
       });
       $('earOptChips').addEventListener('click', (e) => {
         const btn = e.target.closest('.chip');
@@ -482,7 +460,7 @@
       });
       $('earPlayBtn').addEventListener('click', () => {
         if (isPlaying) { stop(); $('earPlayBtn').textContent = '▶ Reproducir ronda'; $('earAbBtn').disabled = true; return; }
-        if (!round) newRound(); else { start(round.target, round.sign * selGain); setWet(hearingWet); renderRound(); }
+        if (!round) newRound(); else { start(round.target, round.sign * round.gain); setWet(hearingWet); $('earPlayBtn').textContent = '⏹ Detener'; $('earAbBtn').disabled = false; }
       });
       $('earAbBtn').addEventListener('click', () => {
         setWet(!hearingWet);
@@ -654,7 +632,7 @@
       });
       $('earTonePlayBtn').addEventListener('click', () => {
         if (isPlaying) { stop(); $('earTonePlayBtn').textContent = '▶ Reproducir ronda'; return; }
-        if (!round) newRound(); else { start(round.target); renderRound(); }
+        if (!round) newRound(); else { start(round.target); $('earTonePlayBtn').textContent = '⏹ Detener'; }
       });
       $('earToneNextBtn').addEventListener('click', () => newRound());
       $('earToneResetScore').addEventListener('click', () => { score = { correct: 0, total: 0 }; updateScore(); });
@@ -680,58 +658,23 @@
      la dirección del cambio para aislar esta habilidad auditiva.
      ========================================================= */
   const Direction = (function () {
-    let source = null, wetSource = null, filterNode = null, dryGain = null, wetGain = null;
+    let player = null;
     let isPlaying = false, hearingWet = true;
     let selGain = 6, bandMode = 'adaptive';
-    let round = null, answered = false, learnFreq = null;
+    let round = null, answered = false, learnFreq = null, learnMode = 'ref';
     let score = { correct: 0, total: 0 };
     let stats = loadStats(STATS_DIR_KEY);
     let history = loadHistory(HISTORY_DIR_KEY);
 
-    function setupGraph() {
-      if (filterNode) return;
-      filterNode = audioCtx.createBiquadFilter();
-      filterNode.type = 'peaking';
-      filterNode.Q.value = 1.4;
-      dryGain = audioCtx.createGain();
-      wetGain = audioCtx.createGain();
-      dryGain.gain.value = 0;
-      wetGain.gain.value = 1;
-      dryGain.connect(masterGain);
-      wetGain.connect(masterGain);
-      filterNode.connect(wetGain);
-    }
-    function start(freq, gainDb) {
+    function start(freq, gainDb, restart = false) {
       window.dispatchEvent(new CustomEvent('crescendo:audio-owner', {detail:'ear'}));
       resumeAudio();
-      setupGraph();
-      stop();
-      const raw = makePinkNoiseBuffer(audioCtx, 4).getChannelData(0);
-      const D = window.ProcessingDSP;
-      const pair = D.matchLevels([raw,D.filter(raw,audioCtx.sampleRate,'peaking',freq,1.4,gainDb)]);
-      [source,wetSource] = pair.map((data,index) => {
-        const buffer=audioCtx.createBuffer(1,data.length,audioCtx.sampleRate);buffer.copyToChannel(data,0);
-        const node=audioCtx.createBufferSource();node.buffer=buffer;node.loop=true;node.connect(index?wetGain:dryGain);return node;
-      });
-      const when=audioCtx.currentTime+.01;source.start(when);wetSource.start(when);
+      player ||= window.EarSignal.create(audioCtx, masterGain, makePinkNoiseBuffer, window.ProcessingDSP);
+      player.play(freq, gainDb, restart);
       isPlaying = true;
     }
-    function stop() {
-      if (source) { try { source.stop(); source.disconnect(); } catch (_) {} source = null; }
-      if (wetSource) { try { wetSource.stop(); wetSource.disconnect(); } catch (_) {} wetSource = null; }
-      isPlaying = false;
-    }
-    function setWet(wet) {
-      hearingWet = wet;
-      if (!audioCtx || !dryGain) return;
-      const now = audioCtx.currentTime;
-      dryGain.gain.cancelScheduledValues(now);
-      wetGain.gain.cancelScheduledValues(now);
-      dryGain.gain.setValueAtTime(dryGain.gain.value, now);
-      wetGain.gain.setValueAtTime(wetGain.gain.value, now);
-      dryGain.gain.linearRampToValueAtTime(wet ? 0 : 1, now + .05);
-      wetGain.gain.linearRampToValueAtTime(wet ? 1 : 0, now + .05);
-    }
+    function stop() { player?.stop(); isPlaying = false; }
+    function setWet(wet) { hearingWet = wet; player?.setWet(wet); }
 
     function dirRow(freq) {
       const row = stats[String(freq)] || { boostCorrect:0, boostTotal:0, cutCorrect:0, cutTotal:0 };
@@ -801,7 +744,8 @@
       grid.querySelectorAll('.ear-freq-btn').forEach((btn) => btn.addEventListener('click', () => {
         learnFreq = Number(btn.dataset.freq);
         grid.querySelectorAll('.ear-freq-btn').forEach(b => b.classList.toggle('playing', Number(b.dataset.freq) === learnFreq));
-        start(learnFreq, selGain);
+        learnMode = 'ref';
+        start(learnFreq, selGain, true);
         setWet(false);
         $('earDirLearnStatus').textContent = `${fmtHzEar(learnFreq)} · referencia activa`;
       }));
@@ -811,12 +755,14 @@
         $('earDirLearnStatus').textContent = 'Selecciona una frecuencia.';
         return;
       }
-      if (!isPlaying) start(learnFreq, mode === 'cut' ? -selGain : selGain);
+      learnMode = mode;
+      const gain = mode === 'cut' ? -selGain : selGain;
+      if (!isPlaying) start(learnFreq, gain);
+      else if (mode !== 'ref') player.updateGain(gain);
       if (mode === 'ref') {
         setWet(false);
         $('earDirLearnStatus').textContent = `${fmtHzEar(learnFreq)} · referencia`;
       } else {
-        filterNode.gain.setValueAtTime(mode === 'boost' ? selGain : -selGain, audioCtx.currentTime);
         setWet(true);
         $('earDirLearnStatus').textContent = `${fmtHzEar(learnFreq)} · ${mode === 'boost' ? '+' : '−'}${selGain} dB ${mode}`;
       }
@@ -831,8 +777,8 @@
       answered = false;
       const target = chooseTarget();
       const dir = Math.random() < .5 ? 'boost' : 'cut';
-      round = { target, dir };
-      start(target, dir === 'boost' ? selGain : -selGain);
+      round = { target, dir, gain: selGain };
+      start(target, dir === 'boost' ? round.gain : -round.gain, true);
       setWet(true);
       $('earDirQuestion').textContent = `Frecuencia objetivo: ${fmtHzEar(target)}. ¿Escuchas un realce o un corte?`;
       $('earDirFeedback').textContent = '';
@@ -860,8 +806,8 @@
         else if (btn.dataset.dir === dir) btn.classList.add('wrong');
       });
       $('earDirFeedback').textContent = correct
-        ? `✓ Correcto: era ${round.dir === 'boost' ? 'un realce' : 'un corte'} de ${selGain} dB en ${fmtHzEar(round.target)}.`
-        : `✗ Era ${round.dir === 'boost' ? 'un realce' : 'un corte'} de ${selGain} dB en ${fmtHzEar(round.target)}.`;
+        ? `✓ Correcto: era ${round.dir === 'boost' ? 'un realce' : 'un corte'} de ${round.gain} dB en ${fmtHzEar(round.target)}.`
+        : `✗ Era ${round.dir === 'boost' ? 'un realce' : 'un corte'} de ${round.gain} dB en ${fmtHzEar(round.target)}.`;
       $('earDirFeedback').className = 'ear-feedback ' + (correct ? 'ok' : 'bad');
       $('earDirNextBtn').style.display = '';
       updateScore(); renderStats();
@@ -873,10 +819,7 @@
         const btn=e.target.closest('.chip'); if(!btn) return;
         selGain=Number(btn.dataset.gain);
         [...$('earDirGainChips').querySelectorAll('.chip')].forEach(c=>c.classList.toggle('active',c===btn));
-        if (learnFreq !== null && filterNode && hearingWet) {
-          const sign = $('earDirLearnStatus').textContent.includes('cut') ? -1 : 1;
-          filterNode.gain.setValueAtTime(sign*selGain,audioCtx.currentTime);
-        }
+        if (learnFreq !== null && isPlaying) applyLearn(learnMode);
       });
       $('earDirBandMode').addEventListener('click', (e) => {
         const btn=e.target.closest('.chip'); if(!btn) return;
@@ -889,7 +832,7 @@
 
       $('earDirPlayBtn').addEventListener('click',()=>{
         if(isPlaying){ stop(); $('earDirPlayBtn').textContent='▶ Reproducir ronda'; $('earDirAbBtn').disabled=true; return; }
-        if(!round) newRound(); else { start(round.target,round.dir==='boost'?selGain:-selGain); setWet(hearingWet); $('earDirPlayBtn').textContent='⏹ Detener'; $('earDirAbBtn').disabled=false; }
+        if(!round) newRound(); else { start(round.target,round.dir==='boost'?round.gain:-round.gain); setWet(hearingWet); $('earDirPlayBtn').textContent='⏹ Detener'; $('earDirAbBtn').disabled=false; }
       });
       $('earDirAbBtn').addEventListener('click',()=>{
         setWet(!hearingWet);
@@ -951,12 +894,29 @@
   });
 
   window.addEventListener('crescendo:export-progress',()=>{
-    const data={date:new Date().toISOString(),currentSession:PracticeSession.snapshot(),saved:{}};
-    for(const key of [STATS_NOISE_KEY,STATS_TONE_KEY,STATS_DIR_KEY,HISTORY_NOISE_KEY,HISTORY_TONE_KEY,HISTORY_DIR_KEY,SESSION_HISTORY_KEY,'crescendo-processing-practice-v1','crescendo-listening-v1']){
-      try{data.saved[key]=JSON.parse(localStorage.getItem(key)||'null');}catch(_){data.saved[key]=null;}
-    }
+    let data;
+    try{data=window.FrequencyBackup.capture(localStorage,PracticeSession.snapshot());}
+    catch(_){$('practiceBackupStatus').textContent='No se pudo preparar el respaldo: revisa los datos guardados del navegador.';return;}
     const url=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));
-    const link=document.createElement('a');link.href=url;link.download='crescendo-progreso.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+    const link=document.createElement('a');link.href=url;link.download='crescendo-practica-complementaria.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+    $('practiceBackupStatus').textContent='Descarga solicitada. Este respaldo incluye solo la práctica complementaria; el entrenamiento principal tiene su propio respaldo.';
+  });
+  document.addEventListener('DOMContentLoaded',()=>{
+    const input=$('practiceImport'),restore=$('practiceRestore'),status=$('practiceBackupStatus');if(!input||!restore)return;
+    try{restore.disabled=!localStorage.getItem(window.FrequencyBackup.PREVIOUS);}catch(_){}
+    function apply(raw){
+      const B=window.FrequencyBackup;
+      B.replace(localStorage,raw,B.capture(localStorage,PracticeSession.snapshot()));
+      Noise.stopLearn();Direction.stopLearn();Tone.stopLearn();
+      // Rehydrate every complementary module from the same committed snapshot.
+      location.reload();
+    }
+    input.addEventListener('change',async()=>{
+      const file=input.files?.[0];if(!file)return;
+      try{if(file.size>1e6)throw Error('El respaldo supera el tamaño admitido.');apply(JSON.parse(await file.text()));}
+      catch(error){status.textContent=error.message;}finally{input.value='';}
+    });
+    restore.addEventListener('click',()=>{try{const raw=localStorage.getItem(window.FrequencyBackup.PREVIOUS);if(!raw)throw Error('No hay una copia anterior disponible.');apply(JSON.parse(raw));}catch(error){status.textContent=error.message;}});
   });
   window.addEventListener('crescendo:practice-result', e => { if(e.detail && typeof e.detail.correct==='boolean') PracticeSession.record(e.detail.module,e.detail.correct); });
   window.addEventListener('crescendo:view-change', () => { Noise.stopLearn(); Direction.stopLearn(); Tone.stopLearn(); });

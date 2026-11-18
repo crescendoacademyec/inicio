@@ -586,7 +586,7 @@ a { color: inherit; text-decoration: none; }
         <p>Desarrolla tu criterio de mezcla: consulta frecuencias y propuestas por instrumento, experimenta con EQ, compresión, mastering, gate y expansión, y compara paneo y profundidad en el mapa de mezcla. Entrena el oído con ejercicios y ejemplos de audio, y resuelve dudas en el diccionario y las guías de diagnóstico.</p>
     </section>
 
-    <link rel="stylesheet" href="eq-visual.css?v=20261012-11"><link rel="stylesheet" href="workbench.css?v=20261020-workbench-3"><div class="mode-tabs" id="modeTabs">
+    <link rel="stylesheet" href="eq-visual.css?v=20261012-11"><link rel="stylesheet" href="workbench.css?v=20261117-table-audit-1"><div class="mode-tabs" id="modeTabs">
         <button class="mode-tab active" data-view="chart"><b>Tabla de referencia</b><span>Rangos y recomendaciones por instrumento</span></button>
         <button class="mode-tab" data-view="eq"><b>Ecualizador visual</b><span>Curvas, audio y comparación A/B</span></button>
         <button class="mode-tab" data-view="dynamics"><b>Dinámica y mastering</b><span>Propuestas, controles y gráficos de dinámica</span></button>
@@ -595,6 +595,8 @@ a { color: inherit; text-decoration: none; }
         <button class="mode-tab" data-view="analyzer"><b>Analizador de espectro</b><span>Examina tus grabaciones y compara frecuencias</span></button>
         <button class="mode-tab" data-view="consult"><b>Diccionario y diagnóstico</b><span>Conceptos y soluciones por problemas</span></button>
     </div>
+
+    <div id="frequencyStart"></div>
 
     <section class="view-section active" id="viewChart">
     <div class="controls-bar">
@@ -668,14 +670,14 @@ a { color: inherit; text-decoration: none; }
         <button id="labTrain" role="tab" aria-selected="false" aria-controls="viewEar" tabindex="-1" data-lab-mode="ear">Entrenar</button>
       </div><label class="lab-selector">Qué quieres explorar <select id="labProcess"><option value="processors">EQ, filtros y dinámica</option><option value="gate">Gate y expansor</option></select></label><label class="lab-selector" hidden>Qué quieres entrenar <select id="labTraining"><option value="general">Frecuencias, EQ y dinámica</option><option value="gate">Gate y expansor</option></select></label></div>
     <section class="view-section active" id="viewProcessing" role="tabpanel" aria-labelledby="labExplore"><div class="processing-module" id="processingLab"></div><section id="viewGate" hidden><iframe class="gate-frame" allow="autoplay" src="../produccion-musical/gate-lab.html?v=20261013-3" title="Simulador de gate y expansor con audio" loading="lazy" style="width:100%;height:1900px;border:0"></iframe></section></section>
-    <section class="view-section" id="viewEar" role="tabpanel" aria-labelledby="labTrain" hidden><div id="trainGatePanel" hidden><iframe class="gate-frame" allow="autoplay" src="../produccion-musical/gate-lab.html?mode=practice&amp;v=20261013-3" title="Ejercicios guiados de gate y expansor" loading="lazy" style="width:100%;height:1900px;border:0"></iframe></div><div id="trainGeneral"><div id="frequencyListening"></div>
-        <details class="processing-module"><summary>Entrenamiento de mezcla y dinámica · EQ, compresión y limitación</summary><div id="processingPractice"></div></details>
+    <section class="view-section" id="viewEar" role="tabpanel" aria-labelledby="labTrain" hidden><div id="trainGatePanel" hidden><iframe class="gate-frame" allow="autoplay" src="../produccion-musical/gate-lab.html?mode=practice&amp;v=20261013-3" title="Ejercicios guiados de gate y expansor" loading="lazy" style="width:100%;height:1900px;border:0"></iframe></div><div id="trainGeneral"><h3>Entrenamiento principal · EQ y filtros</h3><p>Sesiones de 5 o 10 rondas y progreso por habilidad. Su respaldo se descarga e importa en este bloque.</p><div id="frequencyListening"></div>
+        <details class="processing-module"><summary>Práctica complementaria · EQ, compresión y limitación</summary><div id="processingPractice"></div></details>
 
         <div class="practice-session-card" id="practiceSessionCard">
             <div class="practice-session-head">
                 <div>
-                    <div class="practice-session-kicker">Sesión de práctica</div>
-                    <strong id="practiceSessionTitle">Sesión actual</strong>
+                    <div class="practice-session-kicker">Práctica complementaria</div>
+                    <strong id="practiceSessionTitle">Sesión complementaria actual</strong>
                 </div>
                 <div class="practice-session-actions">
                     <label class="practice-goal-label">
@@ -687,21 +689,23 @@ a { color: inherit; text-decoration: none; }
                             <option value="50">50 rondas</option>
                         </select>
                     </label>
-                    <button class="ear-btn-ghost" type="button" onclick="window.dispatchEvent(new CustomEvent('crescendo:export-progress'))">Exportar progreso</button><button class="ear-btn-ghost" id="practiceEndBtn" type="button">Terminar sesión</button>
+                    <button class="ear-btn-ghost" type="button" onclick="window.dispatchEvent(new CustomEvent('crescendo:export-progress'))">Descargar respaldo complementario</button><button class="ear-btn-ghost" id="practiceEndBtn" type="button">Terminar sesión</button>
                 </div>
             </div>
             <div class="practice-session-metrics">
                 <div class="practice-metric"><span>Rondas</span><strong id="practiceRounds">0 / 20</strong></div>
-                <div class="practice-metric"><span>Precisión</span><strong id="practiceAccuracy">—</strong></div>
+                <div class="practice-metric"><span>Respuestas correctas</span><strong id="practiceAccuracy">—</strong></div>
                 <div class="practice-metric"><span>Tiempo</span><strong id="practiceTime">00:00</strong></div>
-                <div class="practice-metric"><span>Foco sugerido</span><strong id="practiceFocus">Empieza una ronda</strong></div>
+                <div class="practice-metric"><span>Módulos practicados</span><strong id="practiceFocus">Empieza una ronda</strong></div>
             </div>
+            <p>Este contador incluye solo ruido rosa, Boost/Cut, tono puro y los ejercicios complementarios de procesamiento. El entrenamiento principal y gate tienen sus propios historiales. Los aciertos de habilidades distintas no son una nota de dominio global.</p><p id="practiceByModule"></p>
             <div class="practice-progress-track" aria-hidden="true">
                 <div class="practice-progress-fill" id="practiceProgressFill"></div>
             </div>
             <div class="practice-session-note" id="practiceSessionNote">
-                La sesión empieza con tu primera respuesta y se guarda localmente al terminar.
+                La sesión complementaria empieza con tu primera respuesta y se guarda localmente al terminar.
             </div>
+            <div class="fw-row"><label>Importar respaldo complementario<input id="practiceImport" type="file" accept=".json,application/json"></label><button class="ear-btn-ghost" id="practiceRestore" type="button" disabled>Recuperar copia previa a importar</button></div><p id="practiceBackupStatus" role="status">Importar reemplaza solo la práctica complementaria y recarga esta página. Se conserva una copia anterior recuperable. El progreso del entrenamiento principal se importa arriba.</p>
             <details class="practice-history">
                 <summary>Historial de sesiones</summary>
                 <div id="practiceHistoryList" class="practice-history-list"></div>
@@ -715,7 +719,7 @@ a { color: inherit; text-decoration: none; }
             <p class="ear-intro">
                 Entrena tres habilidades por separado: reconocer <b>frecuencias en ruido rosa</b>, identificar
                 <b>boost vs. cut</b> sin mezclar esa decisión con la frecuencia, y reconocer <b>tono puro</b>.
-                Usa <b>Aprender</b> antes de pasar a <b>Examen</b>.
+                Usa <b>Aprender</b> antes de pasar a <b>Examen</b>. Los cambios de dificultad, ganancia y opciones se aplican a la próxima ronda; en Aprender puedes comparar ganancias al momento.
             </p>
 
             <div class="ear-subtabs" id="earTypeTabs">
@@ -973,6 +977,7 @@ a { color: inherit; text-decoration: none; }
                     <input type="checkbox" id="analyzerFreezeToggle">
                     Congelar espectro (pausar el dibujo)
                 </label>
+                <label class="analyzer-setting">Espectro mostrado<select id="analyzerChannel" class="mini-select"><option value="mono">Suma mono · (L+R)/2</option><option value="left">Canal izquierdo · L</option><option value="right">Canal derecho · R</option></select></label>
                 <label class="analyzer-setting">FFT
                     <select id="analyzerFftSelect" class="mini-select">
                         <option value="4096">4096</option><option value="8192" selected>8192</option><option value="16384">16384</option>
@@ -989,17 +994,19 @@ a { color: inherit; text-decoration: none; }
                 <div><span>Pico dominante</span><b id="analyzerPeakNow">—</b></div>
                 <div><span>Peak hold</span><b id="analyzerPeakHold">—</b></div>
                 <button class="ear-btn-ghost" id="analyzerPeakReset" type="button">Reiniciar peak hold</button>
-                <small>Lectura en dBFS aproximados; no equivale a SPL calibrado.</small>
+                <small>Lectura espectral en dBFS aproximados por bin, con ventana Blackman y suavizado. No es pico temporal ni SPL calibrado. Peak hold corresponde al canal y FFT seleccionados.</small>
             </div>
 
+            <p>La suma mono puede cancelar señales de polaridad opuesta aunque cada canal tenga audio. Cambiar el espectro mostrado no cambia la reproducción estéreo. Una fuente mono ocupa L; R puede quedar sin señal.</p><p id="analyzerResolution">La resolución se calcula al iniciar el audio.</p>
             <div class="analyzer-canvas-wrap" id="analyzerCanvasWrap">
-                <canvas id="analyzerCanvas"></canvas>
+                <canvas id="analyzerCanvas" role="img" aria-label="Espectro del canal seleccionado; lectura dominante disponible arriba"></canvas>
                 <div class="analyzer-db-axis" id="analyzerDbAxis"></div>
                 <div class="analyzer-empty" id="analyzerEmpty">Elige un archivo o activa el micrófono para ver el espectro.</div>
                 <div class="analyzer-hover-line" id="analyzerHoverLine"></div>
                 <div class="analyzer-hover-label" id="analyzerHoverLabel"></div>
             </div>
             <div class="analyzer-axis-row" id="analyzerAxisRow"></div>
+            <div class="fw-row"><label>Consultar frecuencia · Hz<input id="analyzerProbe" type="number" min="20" max="20000" value="1000" step="1"></label><output id="analyzerProbeReading">1 kHz · Sin lectura todavía</output></div>
 
             <div class="chart-wrap analyzer-ref-wrap" id="analyzerRefWrap">
                 <div class="chart-inner">
@@ -1048,20 +1055,21 @@ a { color: inherit; text-decoration: none; }
     <div id="techContent"></div>
 </aside>
 
-<script src="data.js?v=20261012-6"></script>
+<script src="data.js?v=20261117-table-audit-1"></script>
 <script src="instrument-catalog.js?v=20261012-15"></script>
 <script src="eq-presets.js?v=20261012-15"></script><script src="eq-guidance.js?v=20261020-workbench-3"></script>
-<script src="eq-response.js?v=20261020-workbench-3"></script><script src="workbench-model.js?v=20261020-workbench-3"></script><script src="instrument-visuals.js?v=20261020-workbench-3"></script><script src="app.js?v=20261020-workbench-3"></script><script src="eq-visual.js?v=20261020-workbench-3"></script>
-<script src="dynamics-model.js?v=20261012-1"></script><script src="dynamics-presets.js?v=20261012-15"></script><script src="dynamics-reference.js?v=20261013-2"></script>
+<script src="eq-response.js?v=20261117-table-audit-1"></script><script src="workbench-model.js?v=20261020-workbench-3"></script><script src="instrument-visuals.js?v=20261020-workbench-3"></script><script src="app.js?v=20261020-workbench-3"></script><script src="eq-visual.js?v=20261020-workbench-3"></script>
+<script src="dynamics-model.js?v=20261012-1"></script><script src="dynamics-presets.js?v=20261012-15"></script><script src="dynamics-reference.js?v=20261117-table-audit-1"></script>
 <script src="processing-dsp.js?v=20261012-1"></script>
-<script src="ear.js?v=20261012-1"></script>
+<script src="backup-model.js?v=20261117-table-audit-1"></script><script src="ear-signal.js?v=20261117-table-audit-1"></script>
+<script src="ear.js?v=20261117-table-audit-1"></script>
 <script src="processing-exercises.js?v=20260926-audit"></script>
 <script src="../../shared/listening-engine.js?v=20261117-production-audit-1"></script><script src="listening-integration.js?v=20261012-1"></script>
 <script src="processing-lab.js?v=20260926-audit"></script>
-<script src="analyzer.js?v=20260926-audit"></script>
+<script src="analyzer.js?v=20261117-table-audit-1"></script>
 <script src="mix-presets.js?v=20261012-9"></script>
 <script src="mix-space.js?v=20260927-space"></script>
-<script src="mix-map.js?v=20261013-9"></script>
+<script src="mix-map.js?v=20261117-table-audit-1"></script>
 <script src="frequency-cursor.js?v=20261020-workbench-3"></script><script src="eq-audio.js?v=20261020-workbench-3"></script><script src="workbench-ui.js?v=20261020-workbench-3"></script>
 <script>
 let labMode = 'processing';
@@ -1100,6 +1108,7 @@ document.getElementById('modeTabs').addEventListener('click', (e) => {
   window.dispatchEvent(new CustomEvent('crescendo:view-change', { detail: { view: view === 'lab' ? labMode : view } }));
 });
 </script>
+<script src="start-here.js?v=20261117-table-audit-1"></script>
 <script>document.getElementById('footerYear').textContent = '© ' + new Date().getFullYear();</script>
 <link rel="stylesheet" href="../../shared/music-compendium/styles.css?v=20261012-1"><script src="../../shared/music-compendium/data.js?v=20261117-production-audit-1"></script><script src="../../shared/music-compendium/ui.js?v=20261013-1"></script>
 <script>addEventListener('message',e=>{const f=[...document.querySelectorAll('.gate-frame')].find(f=>e.source===f.contentWindow);if(f&&e.origin===location.origin&&e.data?.type==='crescendo-gate-size'&&Number.isFinite(e.data.height))f.style.height=Math.max(600,Math.min(6000,e.data.height))+'px';});</script>

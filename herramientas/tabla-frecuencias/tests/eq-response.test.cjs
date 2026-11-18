@@ -5,6 +5,12 @@ test('bell centre reaches requested gain and Q narrows its width',()=>{assert.ok
 test('pass filters have -3 dB cutoff and reject correct side',()=>{for(const type of ['highpass','lowpass'])assert.ok(Math.abs(response(band(type),1000)+3.01)<.01);assert.ok(response(band('highpass'),20)<-60);assert.ok(response(band('lowpass'),20000)<-50);});
 test('shelves reach gain at the appropriate end; notch rejects centre',()=>{assert.ok(Math.abs(response(band('lowshelf',6),20)-6)<.01);assert.ok(Math.abs(response(band('highshelf',-6),20000)+6)<.01);assert.ok(response(band('notch'),1000)<-70);});
 test('frequency zones use logarithmic midpoint and ignore unspecified zones',()=>{assert.equal(frequencyFromText('500 Hz'),500);assert.ok(Math.abs(frequencyFromText('1.5–3 kHz')-Math.sqrt(1500*3000))<.01);assert.equal(frequencyFromText('Graves no musicales'),null);});
+test('mixed Hz/kHz and decimal commas keep each endpoint unit',()=>{
+ for(const [text,low,high] of [['800 Hz–1.5 kHz',800,1500],['500 Hz–1,5 kHz',500,1500],['1,5–3 kHz',1500,3000],['100–200 Hz',100,200],['1 kHz–2000 Hz',1000,2000]])assert.ok(Math.abs(frequencyFromText(text)-Math.sqrt(low*high))<1e-8,text);
+ for(const text of ['sin frecuencia','modelo 2','200–100 Hz','25 kHz'])assert.equal(frequencyFromText(text),null,text);
+ const {instrumentExample}=require('../eq-response.js');
+ assert.ok(Math.abs(instrumentExample({cuts:[{f:'800 Hz–1.5 kHz',r:'nasalidad'}]}).bands[0].frequency-1095.445)<.001);
+});
 
 test('instrument example combines every numeric cut and boost without dropping bands',()=>{const {instrumentExample}=require('../eq-response.js');const result=instrumentExample({cuts:[{f:'80 Hz',r:'retumbo'},{f:'Graves no musicales',r:'sin frecuencia'}],boosts:Array.from({length:8},(_,i)=>({f:(i+1)+' kHz',r:'definición'}))});assert.equal(result.bands.length,9);assert.equal(result.bands[0].gain,-3);assert.ok(result.bands.slice(1).every(b=>b.gain===3&&b.enabled));assert.equal(result.unspecified.length,1);});
 

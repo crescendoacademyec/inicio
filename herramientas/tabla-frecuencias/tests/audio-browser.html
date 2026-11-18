@@ -1,0 +1,39 @@
+<!doctype html><html lang="es"><meta charset="utf-8"><title>Regresiones Web Audio · Tabla de frecuencias</title>
+<style>body{font:16px system-ui;background:#181818;color:#eee;margin:32px;line-height:1.6}button{padding:12px;font:inherit}pre{white-space:pre-wrap}</style>
+<h1>Regresiones de audio en navegador</h1><p>Pruebas offline: no reproduce audio ni utiliza micrófono. Servir desde la raíz del repositorio.</p><button id="run">Ejecutar pruebas</button><pre id="results">Pendiente.</pre>
+<script src="../processing-dsp.js"></script><script src="../ear-signal.js"></script><script>
+'use strict';
+const result=document.getElementById('results');
+function check(ok,message){if(!ok)throw Error(message);result.textContent+='✓ '+message+'\n';}
+function amplitude(data,start,end,f,sr){let re=0,im=0;for(let i=Math.round(start*sr);i<Math.round(end*sr);i++){const w=2*Math.PI*f*i/sr;re+=data[i]*Math.cos(w);im+=data[i]*Math.sin(w);}return Math.hypot(re,im);}
+document.getElementById('run').onclick=async()=>{
+ result.textContent='';document.getElementById('run').disabled=true;
+ try{
+  const sr=48000,ctx=new OfflineAudioContext(2,sr,sr),buffer=ctx.createBuffer(2,sr,sr);
+  for(let i=0;i<sr;i++){buffer.getChannelData(0)[i]=.5*Math.sin(2*Math.PI*1000*i/sr);buffer.getChannelData(1)[i]=-buffer.getChannelData(0)[i];}
+  const source=ctx.createBufferSource();source.buffer=buffer;
+  const mono=ctx.createAnalyser(),split=ctx.createChannelSplitter(2),left=ctx.createAnalyser(),right=ctx.createAnalyser();
+  for(const node of [mono,left,right]){node.fftSize=8192;node.smoothingTimeConstant=0;}
+  source.connect(mono);mono.connect(ctx.destination);source.connect(split);split.connect(left,0,0);split.connect(right,1,0);source.start();
+  const pause=ctx.suspend(.5).then(()=>{
+   const peak=node=>{const data=new Float32Array(node.frequencyBinCount);node.getFloatFrequencyData(data);return Math.max(...data);};
+   const m=peak(mono),l=peak(left),r=peak(right);result.textContent+=`L ${l.toFixed(2)} / R ${r.toFixed(2)} / mono ${m} dBFS espectrales\n`;
+   check(l>-30&&r>-30&&Math.abs(l-r)<.01,'L/R conservan su espectro con polaridades opuestas');
+   check(m===-Infinity||m<-120,'La suma mono refleja cancelación sin borrar L/R');
+   return ctx.resume();
+  });
+  await Promise.all([ctx.startRendering(),pause]);
+  const audio=new OfflineAudioContext(1,16000*2,16000);
+  const make=(ctx,seconds)=>{const b=ctx.createBuffer(1,ctx.sampleRate*seconds,ctx.sampleRate),data=b.getChannelData(0);for(let i=0;i<data.length;i++)data[i]=.1*(Math.sin(2*Math.PI*1000*i/ctx.sampleRate)+Math.sin(2*Math.PI*250*i/ctx.sampleRate));return b;};
+  const player=EarSignal.create(audio,audio.destination,make,ProcessingDSP);player.play(1000,6,true);player.setWet(true);
+  const change=audio.suspend(.5).then(()=>{player.updateGain(-6);return audio.resume();});
+  const rendered=audio.startRendering();await change;const samples=(await rendered).getChannelData(0);
+  const contrast=(start,end)=>20*Math.log10(amplitude(samples,start,end,1000,16000)/amplitude(samples,start,end,250,16000));
+  const boost=contrast(.2,.4),cut=contrast(.8,1);result.textContent+=`Contraste relativo: boost ${boost.toFixed(2)} / cut ${cut.toFixed(2)} dB\n`;
+  check(boost>5&&cut<-5,'Cambiar Boost → Cut modifica el audio renderizado, conservando la misma fuente');
+  check(samples.every(Number.isFinite)&&Math.max(...samples.map(Math.abs))<1,'Salida finita con margen de amplitud');
+  result.textContent+='4 comprobaciones aprobadas.';
+ }catch(error){result.textContent+='ERROR: '+error.message;}
+ finally{document.getElementById('run').disabled=false;}
+};
+</script></html>

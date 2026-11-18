@@ -24,6 +24,7 @@
     const freezeToggle = $('analyzerFreezeToggle');
     const fftSelect = $('analyzerFftSelect');
     const smoothSelect = $('analyzerSmoothSelect');
+    const channelSelect = $('analyzerChannel');
     const peakNowEl = $('analyzerPeakNow');
     const peakHoldEl = $('analyzerPeakHold');
     const peakResetBtn = $('analyzerPeakReset');
@@ -33,6 +34,7 @@
 
     let audioCtx = null;
     let analyser = null;
+    let splitter = null, channelAnalysers = [];
     let sourceNode = null;
     let mediaSource = null, fileUrl = null, operation = 0;
     let micStream = null;       // stream activo por micrófono O por "compartir pestaña"
@@ -47,11 +49,23 @@
       if (audioCtx) return;
       audioCtx = new (window.AudioContext || window.webkitAudioContext)();
       analyser = audioCtx.createAnalyser();
-      analyser.fftSize = Number(fftSelect?.value || 8192);
-      analyser.smoothingTimeConstant = Number(smoothSelect?.value || 0.82);
-      analyser.minDecibels = -100;
-      analyser.maxDecibels = 0;
+      splitter = audioCtx.createChannelSplitter(2);
+      channelAnalysers = [audioCtx.createAnalyser(),audioCtx.createAnalyser()];
+      channelAnalysers.forEach((node,i)=>splitter.connect(node,i,0));
+      configureAnalysis();
     }
+    function configureAnalysis(){
+      for(const node of [analyser,...channelAnalysers]){
+        node.fftSize=Number(fftSelect?.value||8192);
+        node.smoothingTimeConstant=Number(smoothSelect?.value||.82);
+        node.minDecibels=DB_MIN;node.maxDecibels=DB_MAX;
+      }
+      const resolution=$('analyzerResolution');
+      if(resolution)resolution.textContent=`Separación de bins: ${(audioCtx.sampleRate/analyser.fftSize).toFixed(2)} Hz · ${audioCtx.sampleRate} Hz / FFT ${analyser.fftSize}. No equivale a precisión de estimación de tono.`;
+    }
+    function analysisNode(){return channelSelect?.value==='left'?channelAnalysers[0]:channelSelect?.value==='right'?channelAnalysers[1]:analyser;}
+    function connectSource(){sourceNode.connect(analyser);sourceNode.connect(splitter);}
+    function resetReadings(){lastData=null;peakHold=null;if(peakNowEl)peakNowEl.textContent='—';if(peakHoldEl)peakHoldEl.textContent='—';hideHover();updateProbe();}
 
     function disconnectSource() {
       operation++;
@@ -59,6 +73,7 @@
       if (sourceNode) { try { sourceNode.disconnect(); } catch (e) {} sourceNode = null; }
       if (micStream) { micStream.getTracks().forEach((t) => t.stop()); micStream = null; }
       activeExternalKind = null;
+      resetReadings();
     }
 
     // ---------- referencia de instrumentos (mini réplica del gráfico principal) ----------
@@ -105,8 +120,9 @@
     }
     overlayToggle.addEventListener('change', updateOverlayVisibility);
     updateOverlayVisibility();
-    if (fftSelect) fftSelect.addEventListener('change', () => { ensureAudio(); analyser.fftSize = Number(fftSelect.value); peakHold = null; if (peakHoldEl) peakHoldEl.textContent = '—'; });
-    if (smoothSelect) smoothSelect.addEventListener('change', () => { ensureAudio(); analyser.smoothingTimeConstant = Number(smoothSelect.value); });
+    if (fftSelect) fftSelect.addEventListener('change', () => { ensureAudio(); configureAnalysis(); resetReadings(); });
+    if (smoothSelect) smoothSelect.addEventListener('change', () => { ensureAudio(); configureAnalysis(); });
+    if (channelSelect) channelSelect.addEventListener('change', resetReadings);
     if (peakResetBtn) peakResetBtn.addEventListener('click', () => { peakHold = null; if (peakHoldEl) peakHoldEl.textContent = '—'; });
 
     // ---------- dibujo del espectro ----------
@@ -122,9 +138,10 @@
       if (!analyser) return;
       const rect = canvas.getBoundingClientRect();
       const w = rect.width, h = rect.height;
-      const bufferLength = analyser.frequencyBinCount;
+      const node = analysisNode();
+      const bufferLength = node.frequencyBinCount;
       const data = new Uint8Array(bufferLength);
-      analyser.getByteFrequencyData(data);
+      node.getByteFrequencyData(data);
       lastData = data;
 
       ctx2d.clearRect(0, 0, w, h);
@@ -178,7 +195,8 @@
         if (peakNowEl) peakNowEl.textContent = `${fmtHzPrecise(peakFreq)} · ${peakDb} dBFS`;
         if (!peakHold || peakDb > peakHold.db) peakHold = { freq: peakFreq, db: peakDb };
         if (peakHoldEl && peakHold) peakHoldEl.textContent = `${fmtHzPrecise(peakHold.freq)} · ${peakHold.db} dBFS`;
-      }
+      } else if(peakNowEl) peakNowEl.textContent = 'Sin pico detectable sobre −100 dBFS';
+      updateProbe();
     }
 
     function loop() {
@@ -219,6 +237,12 @@
       const v = lastData[bin] / 255;
       return Math.round(DB_MIN + v * (DB_MAX - DB_MIN));
     }
+    function updateProbe(){
+      const input=$('analyzerProbe'),output=$('analyzerProbeReading');if(!input||!output)return;
+      const freq=Number(input.value);if(!Number.isFinite(freq)||freq<MIN_F||freq>MAX_F){output.textContent='Elige entre 20 y 20.000 Hz.';return;}
+      const db=dbAtFreq(freq);output.textContent=fmtHzPrecise(freq)+(db===null?' · Sin lectura todavía':db<=DB_MIN?' · En el piso de −100 dBFS':` · ${db} dBFS aprox.`);
+    }
+    $('analyzerProbe')?.addEventListener('input',updateProbe);
 
     function handleHoverMove(clientX) {
       const rect = canvas.getBoundingClientRect();
@@ -281,7 +305,7 @@
       fileNameEl.textContent = file.name;
       mediaSource ||= audioCtx.createMediaElementSource(audioEl);
       sourceNode = mediaSource;
-      sourceNode.connect(analyser);
+      connectSource();
       analyser.connect(audioCtx.destination);
       fileNameEl.textContent = file.name + ' · Pulsa reproducir.';
     });
@@ -290,7 +314,7 @@
       if (!$('viewAnalyzer').classList.contains('active')) { audioEl.pause(); return; }
       ensureAudio(); disconnectSource(); resetCaptureUI();
       mediaSource ||= audioCtx.createMediaElementSource(audioEl); sourceNode = mediaSource;
-      sourceNode.connect(analyser); analyser.connect(audioCtx.destination);
+      connectSource(); analyser.connect(audioCtx.destination);
       const request=operation;
       audioCtx.resume().then(()=>{if(request===operation && $('viewAnalyzer').classList.contains('active'))startLoop();}).catch(() => { fileNameEl.textContent = 'No se pudo iniciar el audio. Pulsa reproducir para intentar de nuevo.'; });
     });
@@ -334,7 +358,7 @@
       activeExternalKind = 'mic';
       for(const track of stream.getTracks())track.addEventListener?.('ended',()=>{if(micStream===stream){disconnectSource();resetCaptureUI();stopLoopIfIdle();}});
       sourceNode = audioCtx.createMediaStreamSource(micStream);
-      sourceNode.connect(analyser);
+      connectSource();
       // el micrófono NO se conecta a destination, para evitar retroalimentación (feedback)
       micActive = true;
       micBtn.textContent = '⏹ Detener micrófono';
@@ -448,7 +472,7 @@
       micStream = stream;
       activeExternalKind = 'tab';
       sourceNode = audioCtx.createMediaStreamSource(stream);
-      sourceNode.connect(analyser);
+      connectSource();
       // no se conecta a destination: el audio ya suena por la pestaña compartida, solo lo analizamos
       tabShareActive = true;
       shareTabBtn.textContent = '⏹ Detener captura de pestaña';

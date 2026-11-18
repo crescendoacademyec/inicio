@@ -25,9 +25,13 @@ function response(b,f){
  return 10*Math.log10(Math.max(1e-12,power(0))/Math.max(1e-12,power(3)));
 }
 function frequencyFromText(text){
- const nums=text.match(/\d+(?:[.,]\d+)?/g);if(!nums)return null;
- const factor=/kHz/i.test(text)?1000:1,values=nums.slice(0,2).map(n=>Number(n.replace(',','.'))*factor);
- return Math.max(20,Math.min(20000,values.length===2?Math.sqrt(values[0]*values[1]):values[0]));
+ const match=String(text).match(/(\d+(?:[.,]\d+)?)\s*(k?Hz)?(?:\s*[–—-]\s*(\d+(?:[.,]\d+)?)\s*(k?Hz)?)?/i);
+ if(!match||!(match[2]||match[4]))return null;
+ const hz=(n,unit)=>Number(n.replace(',','.'))*(/^k/i.test(unit)?1000:1);
+ const low=hz(match[1],match[2]||match[4]);
+ const high=match[3]?hz(match[3],match[4]||match[2]):low;
+ if(low<20||high>20000||high<low)return null;
+ return Math.sqrt(low*high);
 }
 function instrumentExample(inst){
  const bands=[], unspecified=[];

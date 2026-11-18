@@ -1,14 +1,24 @@
-# Tabla de Frecuencias — Fase 4
+# Tabla de Frecuencias
 
-Incluye Fases 1–3 más:
-- sesiones de práctica;
-- metas por rondas;
-- resumen e historial de sesiones;
-- foco sugerido;
-- revisión de lenguaje y recomendaciones de EQ/compresión;
-- semántica más clara para percusión.
+Herramienta de mezcla y producción para adultos: consulta por instrumento, EQ con audio, dinámica/mastering visuales, mapas de mezcla, entrenamiento, analizador y diccionario. «Empieza aquí» propone tres prácticas por experiencia y objetivos; el catálogo sigue disponible para consulta libre.
 
-Abrir `index.html`.
+Servir la raíz del repositorio por HTTP y abrir `herramientas/tabla-frecuencias/`.
+
+## Práctica y continuidad
+
+- Entrenamiento principal: sesiones de 5/10 rondas y progreso por habilidad. Tiene su propio respaldo auditivo exportable/importable.
+- Práctica complementaria: ruido rosa, Boost/Cut, tono puro y ocho ejercicios de procesamiento; contador e historial separados. Muestra aciertos por módulo, sin presentarlos como dominio global. Ganancia y dificultad del examen se fijan al iniciar cada ronda; en Aprender cambian el audio al momento. Repetir una ronda conserva su devolución y acceso a la siguiente.
+- Respaldo complementario: JSON identificado y validado, con compatibilidad para el antiguo `crescendo-progreso.json`. Importar reemplaza solo esos módulos, recupera la sesión actual y conserva una copia anterior accesible. El progreso principal se restaura con su propio importador.
+- Mapas: JSON identificado, importación de versiones anteriores y validación de pistas/coordenadas. Importar deja intactos los mapas guardados y permite recuperar la escena previa con sus cambios sin guardar. Guarda la escena importada para conservarla entre visitas.
+- Analizador: selección explícita de suma mono, L o R, con lectura actual y peak hold separados, resolución de bins y consulta numérica de una frecuencia. Cambiar el análisis no modifica la escucha estéreo. No mide SPL, sonoridad ni pico temporal.
+
+## Validación
+
+```sh
+node --test herramientas/tabla-frecuencias/tests/*.test.cjs shared/listening-engine.test.cjs shared/music-compendium/compendium.test.cjs shared/gate-lab/model.test.cjs
+```
+
+Pruebas adicionales con Web Audio real, sin salida audible: abrir `tests/audio-browser.html` desde el servidor y pulsar Ejecutar pruebas. Comprueban cancelación mono frente a canales separados y el cambio efectivo Boost/Cut de la cadena de entrenamiento.
 
 ## Mesa de escucha y curvas personales
 
