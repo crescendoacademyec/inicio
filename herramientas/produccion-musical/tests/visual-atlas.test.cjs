@@ -38,6 +38,10 @@ test('delay marks represent actual subdivisions at the displayed tempo',()=>{
 test('the atlas loads before the lesson renderer and inserts resources inside the reading rather than after practice',()=>{
  const index=fs.readFileSync(path.join(__dirname,'../index.html'),'utf8'),app=fs.readFileSync(path.join(__dirname,'../app.js'),'utf8');
  assert.ok(index.indexOf('visual-atlas.js')<index.indexOf('src="app.js'));assert.match(index,/visual-atlas\.css/);
- assert.ok(app.indexOf('ProductionVisualAtlas?.render(l.id,i)')<app.indexOf('Prueba y escucha'));
+ const ui=require('./ui-harness.cjs')();ui.state.learningRoute='full';ui.course(C.modules[0],C.modules[0].lessons[0]);
+ const rendered=ui.element('lessonArticle').innerHTML;
+ assert.ok(rendered.indexOf('class="reading"')<rendered.indexOf('class="practice-actions"'));
+ ui.course(C.modules.find(m=>m.id==='grabacion'),byId['grabacion-4']);
+ assert.ok(ui.element('lessonArticle').innerHTML.indexOf('data-production-photo="vocal-recording"')<ui.element('lessonArticle').innerHTML.indexOf('class="practice-actions"'));
  assert.equal(A.photos['grabacion-4'].at,1,'Photo belongs to the paragraph about monitoring, filter and position');
 });

@@ -3,6 +3,31 @@
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const dbToGain=db=>10**(db/20);
 const gainToDb=g=>g>0?20*Math.log10(g):-Infinity;
+// Web Audio uses dB for Q on high/low-pass filters, and linear Q on bells/notches.
+function filterSection(e,index,sampleRate){
+ const pass=e.type==='highpass'||e.type==='lowpass';
+ const q=pass?1/(2*Math.cos(Math.PI*(2*index+1)/(4*e.sections))):e.q;
+ return {type:e.type,frequency:Math.min(e.frequency,sampleRate*.49),gain:e.gain,Q:pass?gainToDb(q):q};
+}
+function configureFilter(node,e,index,sampleRate,time){
+ const values=filterSection(e,index,sampleRate);node.type=values.type;
+ for(const name of ['frequency','gain','Q']){
+  if(time===undefined)node[name].value=values[name];
+  else node[name].setTargetAtTime(values[name],time,.012);
+ }
+}
+function createStereoMeter(ctx,input,fftSize=2048){
+ const stereo=ctx.createGain(),splitter=ctx.createChannelSplitter(2),mute=ctx.createGain();
+ stereo.channelCount=2;stereo.channelCountMode='explicit';stereo.channelInterpretation='speakers';
+ input.connect(stereo);stereo.connect(splitter);mute.gain.value=0;mute.connect(ctx.destination);
+ const analysers=[0,1].map(i=>{const node=ctx.createAnalyser();node.fftSize=fftSize;splitter.connect(node,i);node.connect(mute);return node;});
+ return {analysers,samples:analysers.map(()=>new Float32Array(fftSize)),stereo,splitter,mute};
+}
+function readStereoMeter(meter){
+ meter.analysers.forEach((node,i)=>node.getFloatTimeDomainData(meter.samples[i]));
+ return {...statistics(meter.samples),channels:meter.samples.map(channel=>statistics([channel]))};
+}
+const comparisonGain=(db,bypass)=>dbToGain(bypass?0:db);
 function compressionDb(x,threshold,ratio,knee=0){
  const d=x-threshold,r=1/Math.max(1,ratio)-1;
  if(knee>0&&Math.abs(d)<=knee/2)return x+r*(d+knee/2)**2/(2*knee);
@@ -77,6 +102,6 @@ function delivery({lufs,truePeak,target=-14,ceiling=-1,tolerance=.5}){
  const gain=target-lufs,predicted=truePeak+gain;
  return {gain,predicted,withinLoudness:Math.abs(gain)<=tolerance,withinPeak:truePeak<=ceiling,normalizationSafe:predicted<=ceiling};
 }
-const api={clamp,dbToGain,gainToDb,compressionDb,delayMs,roomModes,bufferLatency,sineSumGain,statistics,trim,wav16,beatPattern,demo,delivery};
+const api={clamp,dbToGain,gainToDb,filterSection,configureFilter,createStereoMeter,readStereoMeter,comparisonGain,compressionDb,delayMs,roomModes,bufferLatency,sineSumGain,statistics,trim,wav16,beatPattern,demo,delivery};
 if(typeof module==='object'&&module.exports)module.exports=api;else root.ProductionModels=api;
 })(typeof window!=='undefined'?window:globalThis);

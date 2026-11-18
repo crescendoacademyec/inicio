@@ -16,3 +16,22 @@
 .studio-chain-stages span{display:block;margin-top:7px;font-size:.8rem;color:#ddd7cc}
 .studio-chain-routes{display:grid;gap:8px;padding:16px 24px;background:#24211b;font-size:.84rem;color:#f3e7ce;border-top:1px solid #d7aa4b44}
 .studio-chain-scroll:focus-visible{outline:2px solid #d7aa4b;outline-offset:3px}
+
+.learning-controls{margin-bottom:24px}.learning-controls h2{margin-bottom:12px}
+.learning-controls .control-row{margin-top:20px}.learning-controls>p{margin:12px 0}
+.learning-details{border:1px solid var(--line);border-radius:10px;padding:16px;margin:22px 0;min-width:0}
+.learning-details>summary{cursor:pointer;color:var(--gold-light);font-weight:600;line-height:1.5}
+.learning-details[open]>summary{margin-bottom:20px}
+.learning-details form,.applied-task form,.project-rubric{display:grid;gap:18px;margin:20px 0}
+.starter-map{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin:25px 0}
+.starter-map h3{margin:14px 0}.starter-map p{margin-top:10px}
+.starter-session,.applied-task{padding:20px;margin:22px 0;border:1px solid #876d3f;border-radius:12px;background:#d7aa4b08}
+.starter-session h2,.applied-task h2{margin-top:8px}.starter-session .field{margin-top:18px}
+.applied-task form>.button,.learning-details form>.button{justify-self:start}
+#appliedFeedback p{margin:12px 0;color:var(--gold-light)}
+.project-rubric select{white-space:normal}.project-rubric label{line-height:1.7}
+.meters small{display:block;font-size:.68rem;line-height:1.6;color:var(--muted);font-variant-numeric:tabular-nums}
+#returnToLesson{display:inline-block;margin-bottom:18px}
+[tabindex="-1"]:focus-visible{outline:2px solid var(--gold-light);outline-offset:5px}
+@media(max-width:900px){.starter-map{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){.starter-map{grid-template-columns:1fr}.starter-session,.applied-task{padding:15px}.learning-details{padding:13px}.project-rubric select{max-width:100%;font-size:.84rem}}

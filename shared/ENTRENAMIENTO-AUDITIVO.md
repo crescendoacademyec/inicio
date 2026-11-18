@@ -28,3 +28,9 @@ Los multitracks, ejercicios en DAW y revisión docente continúan en los canales
 `node --test shared/listening-engine.test.cjs shared/tool-routes.test.cjs herramientas/produccion-musical/tests/*.test.cjs herramientas/tabla-frecuencias/tests/*.test.cjs`
 
 Pruebas del audio finito y acotado para las 20 habilidades, relación exacta de dB, estéreo/mono, evaluación del EQ, filtros shelf, saneamiento del progreso, adaptación y regresiones de las herramientas existentes. Verificación manual de reproducción, corrección, sesión completa, recarga y progreso compartido.
+
+## Actualización · 17/11/2026
+
+Las descargas auditivas incluyen `app: crescendo-listening`. La importación en el propio entrenador valida ese formato o las copias antiguas con `stats` y `sessions`; rechaza copias del curso y conserva el estado anterior si falla la lectura o el almacenamiento. El curso de Producción utiliza otro formato y otra importación.
+
+En cortes y fades, todos los ejemplos tienen un ataque común suave de 10 ms en cada nota; la discontinuidad deliberada se conserva solo en el borde final de «Corte con clic». Los enlaces de repaso ahora se eligen por habilidad (fase, anchura, reverb, ADSR, etc.).

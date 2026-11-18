@@ -1,6 +1,8 @@
 # Auditoría pedagógica y funcional · Producción musical
 
-Crescendo Academy · 11 de octubre de 2026.
+Crescendo Academy · auditoría inicial del 11 de octubre de 2026.
+
+**Actualización del 17/11/2026:** se cerraron los diez hallazgos de [la revisión actual](../../auditorias/produccion-musical-2026-11-17.md): filtros, medición estéreo, respaldo/importación, A/B, fades, destinos de práctica, evaluación de transferencia, recorrido inicial, rúbricas y foco. Los apartados siguientes conservan el contexto de la auditoría inicial; las mejoras ya implementadas se detallan en el cierre enlazado.
 
 ## Dictamen
 
@@ -18,7 +20,7 @@ Todavía no la consideraría una formación autónoma completa ni equivalente a 
 | Fenómenos digitales/acústicos | Sonido 3: aliasing interactivo; Grabación 4: inverso del cuadrado; Profundidad 2: precedencia y filtro peine. Se conectan con fase, sala y enmascaramiento del currículo. | El aliasing se demuestra sin filtro antialias; la ley de distancia es una aproximación en campo libre. |
 | Comping y fades | Edición 1/2: curvas lineal, potencia constante y S; correlación; selección por frases, originales, respiraciones y consolidación. | El laboratorio existente practica recorte y fades; comping de varias tomas se realiza en DAW. |
 | Generador ADSR | MIDI 2: oscilador audible, frecuencia/forma de onda, ADSR, volumen, note-on, note-off y curva editable. | Envolvente de amplitud lineal, monofónica; no motor completo de síntesis. La figura muestra un sustain de un segundo como ejemplo. |
-| EQ por instrumento | Mezcla 2: host embebido que carga los scripts originales de Tabla de frecuencias, búsqueda de sus 15 instrumentos, sugerencias conjuntas, bandas, Q y pendientes. | Ese EQ es visual; el laboratorio separado permite procesamiento audible. EQ editable no significa EQ dinámica dependiente del nivel. |
+| EQ por instrumento | Mezcla 2: host embebido que carga los scripts originales de Tabla de frecuencias, búsqueda de sus 58 instrumentos, sugerencias conjuntas, bandas, Q y pendientes. | Ese EQ es visual; el laboratorio separado permite procesamiento audible. EQ editable no significa EQ dinámica dependiente del nivel. |
 | Plugins | Recomendaciones por función en voz, edición, mezcla, profundidad y mastering: Waves, UAD, FabFilter, Soundtoys, Slate Digital e iZotope. | Enlaces y criterios de comparación, no plugins ejecutados en navegador ni compras obligatorias; practicar primero con herramientas del DAW. |
 | Mastering y paquetes | Mastering 3/4: cadena razonada, formatos, frecuencia nativa, 24/32-bit float para intercambio acordado, CD, plataformas y archivo; stems, pistas, instrumental, sesión y dossier. | Destino y contrato mandan. El curso no mide LUFS/true peak automáticamente; el laboratorio usa valores externos y no los confunde con RMS/pico de muestra. |
 | Audio para medios | Medios 1: 48 kHz/24 bits como flujo habitual de posproducción, guía YouTube, criterios EBU y ficha específica de radio/TV. | No existe una única especificación mundial; no se impone el objetivo broadcast a redes ni una profundidad PCM al códec AAC. |
@@ -29,7 +31,7 @@ Todavía no la consideraría una formación autónoma completa ni equivalente a 
 
 La progresión sonido → estudio → preproducción → captura → edición → MIDI → mezcla → profundidad → mastering → medios → industria → proyecto permite desarrollar una pieza de principio a fin. Las ampliaciones se añaden a las lecciones pertinentes y enlazan producción vocal con edición; no crean una materia paralela desconectada.
 
-Se conservan las 12 materias, 48 lecciones y 48 preguntas contextualizadas, los 48 diagramas originales, los 12 proyectos y los nueve laboratorios principales. Los nuevos widgets pertenecen a sus lecciones; no se cuentan como materias o acreditaciones nuevas. Las fotografías y tablas amplían la consulta, pero el objetivo sigue siendo decidir y escuchar, no memorizar marcas o números.
+Se conservan las 12 materias, 48 lecciones, 48 preguntas de lectura y 48 casos nuevos de aplicación, los 48 diagramas originales, los 12 proyectos y los nueve laboratorios principales. Los nuevos widgets pertenecen a sus lecciones; no se cuentan como materias o acreditaciones nuevas. Las fotografías y tablas amplían la consulta, pero el objetivo sigue siendo decidir y escuchar, no memorizar marcas o números.
 
 ## Qué falta, por prioridad
 
@@ -49,7 +51,7 @@ Las pruebas de transferencia sobre las sesiones reales y la revisión de evidenc
 
 ### 3. Itinerario docente, duración y requisitos
 
-Definir duración orientativa, carga de práctica, competencias de ingreso, sesiones con profesor y criterios para pasar de etapa. Incorporar un diagnóstico inicial y rutas alternativas para músicos con experiencia o personas sin formación técnica.
+La ruta Primeros pasos ya incluye seis experiencias, tiempos orientativos, objetivos y evidencia. La orientación de ingreso recomienda recorrido por experiencia declarada; permite trabajo acompañado o autónomo. El curso completo permanece abierto. La programación de sesiones con profesor y la duración global continúan dependiendo de la escuela y del proyecto.
 
 Criterio de aceptación: cada materia indica qué producir, cuánto trabajo orientativo requiere y cómo demostrar el objetivo. Evitar bloquear por haber marcado una lectura como estudiada.
 
@@ -59,7 +61,7 @@ Grabar sesiones breves de captura, comping, ruteo, automatización, preparación
 
 ### 5. Seguimiento y accesibilidad más allá del navegador local
 
-El progreso y las notas continúan guardándose localmente, con exportación/importación. El intercambio de evidencias y la revisión docente se gestionan directamente con el estudiante, fuera de esta plataforma. Realizar auditoría manual con teclado y lector de pantalla, contraste y pruebas en Safari, Firefox, Windows y móviles reales. Los gráficos tienen descripción textual; las tablas permiten desplazamiento horizontal en pantallas pequeñas.
+El progreso y las notas continúan guardándose localmente, con exportación/importación identificada y recuperación de la copia anterior. La práctica auditiva tiene una importación propia. Se corrigió el foco después de navegar entre secciones. El intercambio de evidencias y la revisión docente se gestionan directamente con el estudiante, fuera de esta plataforma. Realizar auditoría manual con teclado y lector de pantalla, contraste y pruebas en Safari, Firefox, Windows y móviles reales. Los gráficos tienen descripción textual; las tablas permiten desplazamiento horizontal en pantallas pequeñas.
 
 ### 6. Ampliaciones avanzadas opcionales
 
