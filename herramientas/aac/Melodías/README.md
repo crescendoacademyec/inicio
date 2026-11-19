@@ -19,11 +19,13 @@ El actualizador detecta el contenido real, informa de extensiones incorrectas, c
 
 - Archivos en esta carpeta: las 42 fuentes originales, con su extensión correcta.
 - `partituras/`: MusicXML que utiliza AAC; para las fuentes MEI se conserva su recorrido de interpretación en los metadatos.
-- `referencias/`: las cinco imágenes guía iniciales.
+- `referencias/`: fotos completas de 638 obras distintas de los dos Real Books aportados, incluidas las cinco imágenes guía iniciales. El [índice de referencias](referencias/INDICE.md) reúne las 802 páginas; su catálogo conserva las ediciones repetidas sin duplicar las fotos.
 - `correcciones/`: versiones revisadas, vinculadas a la huella de la fuente para conservar las correcciones al regenerar el catálogo.
 - `catalog.json`: títulos, compositores, tempo, procedencia, huellas SHA-256, notas, compases y estado de revisión.
 
 Los originales permanecen intactos. Las correcciones posteriores deben quedar documentadas en el catálogo y conservar una referencia de la edición de origen.
+
+Las fotos y las partituras digitales tienen catálogos separados. Tener una foto disponible no añade automáticamente una melodía reproducible: la biblioteca digital mantiene sus 42 temas hasta revisar los próximos archivos que se incorporen. Una foto de otro libro o edición debe contrastarse antes de asociarla como fuente de un XML/MEI.
 
 ## Revisión e interpretación
 
