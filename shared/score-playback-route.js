@@ -137,7 +137,10 @@
     if(!parts.length)return [];
     const count=Math.max(...parts.map(p=>p.length)),measures=[];
     for(let i=0;i<count;i++){const present=parts.map(p=>p[i]).filter(Boolean);measures.push({...present[0],forward:present.some(m=>m.forward),backward:present.find(m=>m.backward)?.backward||null,endings:present.find(m=>m.endings.length)?.endings||[],controls:Object.assign({},...present.map(m=>m.controls))});}
-    return itinerary(measures);
+    const field=all(score,'miscellaneous-field').find(n=>attr(n,'name')==='crescendo:measure-route');
+    const route=field?JSON.parse(field.textContent):itinerary(measures);
+    if(!Array.isArray(route)||!route.length||route.length>20000||route.some(index=>!Number.isInteger(index)||index<0||index>=measures.length))throw Error('El recorrido de compases no es válido.');
+    return route;
   }
   function snapshot(iterator){
     const copy=Object.assign(Object.create(Object.getPrototypeOf(iterator)),iterator);

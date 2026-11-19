@@ -7,6 +7,7 @@
   <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="../../shared/header-icons.css?v=20260919-flat-logo-v2">
 <title>Piano Virtual Pro</title>
+<link rel="stylesheet" href="../../shared/piano-surface.css">
 <link rel="stylesheet" href="css/styles.css?v=20261019-gray-initial">
 <link rel="stylesheet" href="css/chord-bank.css?v=20261019-initial-black">
 <link rel="stylesheet" href="../../shared/header-metronome.css?v=20260925-beat-stop">
@@ -411,7 +412,7 @@
   <div class="spacer"></div>
 
   <div class="piano-wrap">
-    <div id="keyboard"></div>
+    <div id="keyboard" class="piano-surface"></div>
   </div>
 
   <div class="hint" id="hintText">
@@ -427,12 +428,13 @@
 <script src="../../shared/score-playback-timing.js?v=20261119-route"></script>
 <script src="https://cdn.jsdelivr.net/npm/soundfont-player@0.12.0/dist/soundfont-player.min.js">
 </script>
-<script src="../../shared/score-playback-route.js?v=20261119-mei-1"></script>
-<script src="../../shared/score-file-reader.js?v=20261119-mei-1"></script>
+<script src="../../shared/score-playback-route.js?v=20261119-library"></script>
+<script src="../../shared/score-file-reader.js?v=20261119-library"></script>
 <script src="../../shared/opensheetmusicdisplay-1.8.4.min.js?v=20261119-rest-placement">
 </script>
 
 <script src="../../shared/pitch-spelling.js?v=20261022-1"></script>
+<script src="../../shared/instrument-pitch-model.js"></script>
 <script src="js/core.js?v=20261022-enharmonics-1"></script>
 <script src="../../shared/piano-chord-patterns.js?v=20261022-enharmonics-1"></script>
 <script src="../../shared/piano-voicings.js?v=20261022-enharmonics-1"></script>

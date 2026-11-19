@@ -1,0 +1,21 @@
+const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto'),{spawnSync}=require('node:child_process');
+const app=path.resolve(__dirname,'..'),folder=path.join(app,'Melodías'),catalog=JSON.parse(fs.readFileSync(path.join(folder,'catalog.json'),'utf8'));
+const hash=data=>crypto.createHash('sha256').update(data).digest('hex');
+test('official library contains 42 distinct, traceable sources and generated scores',()=>{
+ assert.equal(catalog.schema,'aac-melody-library-v1');assert(catalog.examples.length>=42);assert.equal(new Set(catalog.examples.map(e=>e.id)).size,catalog.examples.length);
+ for(const entry of catalog.examples){for(const key of ['sourceFile','musicxml']){const file=path.resolve(app,entry[key]);assert(file.startsWith(folder+path.sep));assert(fs.existsSync(file));assert.equal(hash(fs.readFileSync(file)),entry[key==='sourceFile'?'sourceSHA256':'musicxmlSHA256']);}assert(entry.noteCount>0&&entry.measureCount>0);assert(entry.reviewSummary);if(entry.sourceImage)assert(fs.existsSync(path.resolve(app,entry.sourceImage)));}
+ assert(catalog.examples.filter(e=>e.sourceFormat==='mei').length>=19);assert(catalog.examples.filter(e=>e.reviewStatus==='source-corrected').length>=5);
+});
+test('library regeneration is deterministic and validates every original',()=>{
+ const run=spawnSync('python3',[path.join(app,'tools/actualizar-melodias.py'),'--check'],{encoding:'utf8'});assert.equal(run.status,0,run.stderr);assert.equal(JSON.parse(run.stdout).themes,catalog.examples.length);
+});
+test('invalid incoming files preserve the previous catalog',()=>{
+ const os=require('node:os'),dir=fs.mkdtempSync(path.join(os.tmpdir(),'aac-library-test-'));
+ try{const original=JSON.stringify({examples:[]});fs.writeFileSync(path.join(dir,'catalog.json'),original);fs.writeFileSync(path.join(dir,'broken.mei'),'<mei>');const run=spawnSync('python3',[path.join(app,'tools/actualizar-melodias.py'),'--folder',dir],{encoding:'utf8'});assert.notEqual(run.status,0);assert.equal(fs.readFileSync(path.join(dir,'catalog.json'),'utf8'),original);assert.equal(fs.existsSync(path.join(dir,'partituras')),false);}finally{fs.rmSync(dir,{recursive:true,force:true});}
+});
+test('manual corrections survive rebuilds and remain tied to their source edition',()=>{
+ const os=require('node:os'),dir=fs.mkdtempSync(path.join(os.tmpdir(),'aac-correction-test-'));
+ const xml=step=>`<score-partwise><work><work-title>Fixture</work-title></work><part-list><score-part id="P1"><part-name>Piano</part-name></score-part></part-list><part id="P1"><measure number="1"><attributes><divisions>1</divisions></attributes><note><pitch><step>${step}</step><octave>4</octave></pitch><duration>1</duration><type>quarter</type></note></measure></part></score-partwise>`;
+ const run=()=>{const r=spawnSync('python3',[path.join(app,'tools/actualizar-melodias.py'),'--folder',dir],{encoding:'utf8'});assert.equal(r.status,0,r.stderr);return JSON.parse(fs.readFileSync(path.join(dir,'catalog.json'),'utf8'));};
+ try{fs.writeFileSync(path.join(dir,'fixture.musicxml'),xml('C'));let c=run();fs.mkdirSync(path.join(dir,'correcciones'));fs.writeFileSync(path.join(dir,'correcciones','fixture.musicxml'),xml('D'));Object.assign(c.examples[0],{correctionFile:'correcciones/fixture.musicxml',correctionSourceSHA256:c.examples[0].sourceSHA256,reviewStatus:'source-corrected'});fs.writeFileSync(path.join(dir,'catalog.json'),JSON.stringify(c));run();run();assert.match(fs.readFileSync(path.join(dir,'partituras','fixture.musicxml'),'utf8'),/<step>D<\/step>/);fs.writeFileSync(path.join(dir,'fixture.musicxml'),xml('E'));c=run();assert.equal(c.examples[0].reviewStatus,'pending-musical-review');assert.equal(c.examples[0].correctionFile,undefined);}finally{fs.rmSync(dir,{recursive:true,force:true});}
+});

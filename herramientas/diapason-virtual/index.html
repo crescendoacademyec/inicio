@@ -1391,14 +1391,16 @@
   <!-- ===== SCRIPTS ===== -->
   <script src="../../shared/score-playback-timing.js?v=20261119-route"></script>
 <script src="https://cdn.jsdelivr.net/npm/soundfont-player@0.12.0/dist/soundfont-player.min.js"></script>
-  <script src="../../shared/score-playback-route.js?v=20261119-mei-1"></script>
-<script src="../../shared/score-file-reader.js?v=20261119-mei-1"></script>
+  <script src="../../shared/score-playback-route.js?v=20261119-library"></script>
+<script src="../../shared/score-file-reader.js?v=20261119-library"></script>
   <script src="../../shared/opensheetmusicdisplay-1.8.4.min.js?v=20261119-rest-placement"></script>
   <script src="../../shared/pitch-spelling.js?v=20261022-1"></script>
   <script src="../cuerdas-frotadas/js/live-staff.js?v=20261022-enharmonics-1"></script>
   <script src="js/reference-models.js?v=20261029-ux-4"></script>
   <script src="js/study-models.js?v=20261029-ux-4"></script>
   <script src="js/study-lab-engine.js?v=20261029-ux-4"></script>
+  <script src="../../shared/instrument-pitch-model.js"></script>
+  <script src="../../shared/instrument-surfaces.js"></script>
   <script>
 /* fretboard.js */
     // ======================================================================
@@ -1410,7 +1412,7 @@
       guitar: {
         label: "Guitarra",
         description: "6 cuerdas (E-A-D-G-B-E)",
-        pitches: [64, 59, 55, 50, 45, 40],
+        pitches: [...window.CrescendoInstrumentPitch.GUITAR_TUNINGS[0].pitches],
         nutFret: 0
       },
       ukulele: {
@@ -1428,13 +1430,7 @@
     };
 
     const TUNINGS = {
-      guitar: [
-        {value:'standard', label:'Estándar · E A D G B E', pitches:[64,59,55,50,45,40]},
-        {value:'drop_d', label:'Drop D · D A D G B E', pitches:[64,59,55,50,45,38]},
-        {value:'dadgad', label:'DADGAD · D A D G A D', pitches:[62,57,55,50,45,38]},
-        {value:'open_g', label:'Open G · D G D G B D', pitches:[62,59,55,50,43,38]},
-        {value:'open_d', label:'Open D · D A D F# A D', pitches:[62,57,54,50,45,38]}
-      ],
+      guitar: window.CrescendoInstrumentPitch.GUITAR_TUNINGS.map(t=>({...t,pitches:[...t.pitches]})),
       ukulele: [
         {value:'high_g', label:'High G · G C E A', pitches:[69,64,60,67]},
         {value:'low_g', label:'Low G · G C E A', pitches:[69,64,60,55]}
@@ -2251,99 +2247,8 @@
       const stringGap = BASS4_STRING_GAP;
       const startY = padY;
 
-      ctx.clearRect(0, 0, width, canvasH);
-
-      roundedRectPath(boardX + 0.5, padY, boardW - 1, boardH, radius);
-      ctx.save();
-      ctx.clip();
-
-      // Fondo oscuro del diapasón
-      const bg = ctx.createLinearGradient(0, padY, 0, padY + boardH);
-      bg.addColorStop(0, getComputedStyle(document.documentElement).getPropertyValue('--board1').trim());
-      bg.addColorStop(0.52, getComputedStyle(document.documentElement).getPropertyValue('--board2').trim());
-      bg.addColorStop(1, getComputedStyle(document.documentElement).getPropertyValue('--board3').trim());
-      ctx.fillStyle = bg;
-      ctx.fillRect(boardX, padY, boardW, boardH);
-
-      // Vetas
-      ctx.globalAlpha = 0.22;
-      for (let i = 0; i < 22; i++) {
-        const y = padY + 8 + (i * 11) % boardH;
-        ctx.strokeStyle = i % 2 ? '#4a2e1c' : '#170c06';
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.moveTo(boardX, y);
-        ctx.bezierCurveTo(boardX + boardW * 0.25, y + 8, boardX + boardW * 0.65, y - 7, boardX + boardW, y + 3);
-        ctx.stroke();
-      }
-      ctx.globalAlpha = 1;
-
-      // Puntos guía
-      ctx.fillStyle = 'rgba(243,224,187,0.3)';
-      GUIDE_DOTS.forEach(gd => {
-        const f = gd - offset - 1;
-        if (f < 0 || f >= visibleFrets) return;
-        const cx = isLeftHanded() ? boardX + ((visibleFrets-f-1)*fw) + fw/2 : boardX + (f*fw) + fw/2;
-        const dotR = 4.6;
-        if (gd === 12) {
-          ctx.beginPath(); ctx.arc(cx, padY + boardH * 0.32, dotR, 0, Math.PI * 2); ctx.fill();
-          ctx.beginPath(); ctx.arc(cx, padY + boardH * 0.68, dotR, 0, Math.PI * 2); ctx.fill();
-        } else {
-          ctx.beginPath(); ctx.arc(cx, padY + boardH / 2, dotR, 0, Math.PI * 2); ctx.fill();
-        }
-      });
-
-      // Trastes
-      const fretMetal = ctx.createLinearGradient(0, padY, 0, padY + boardH);
-      fretMetal.addColorStop(0, getComputedStyle(document.documentElement).getPropertyValue('--fretmetal-light'));
-      fretMetal.addColorStop(0.18, getComputedStyle(document.documentElement).getPropertyValue('--fretmetal-mid'));
-      fretMetal.addColorStop(0.5, getComputedStyle(document.documentElement).getPropertyValue('--fretmetal-dark'));
-      fretMetal.addColorStop(0.82, getComputedStyle(document.documentElement).getPropertyValue('--fretmetal-mid'));
-      fretMetal.addColorStop(1, getComputedStyle(document.documentElement).getPropertyValue('--fretmetal-light'));
-      ctx.lineCap = 'butt';
-      for (let f = 0; f <= visibleFrets; f++) {
-        const x = boardX + ((isLeftHanded()?visibleFrets-f:f) * fw);
-        if (f === 0) {
-          ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--string');
-          ctx.lineWidth = 6;
-        } else {
-          ctx.strokeStyle = fretMetal;
-          ctx.lineWidth = 2.6;
-        }
-        ctx.beginPath();
-        ctx.moveTo(x, padY);
-        ctx.lineTo(x, padY + boardH);
-        ctx.stroke();
-        if (f > 0) {
-          ctx.save();
-          ctx.globalAlpha = 0.55;
-          ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--fretmetal-light');
-          ctx.lineWidth = 0.8;
-          ctx.beginPath();
-          ctx.moveTo(x - 1, padY);
-          ctx.lineTo(x - 1, padY + boardH);
-          ctx.stroke();
-          ctx.restore();
-        }
-      }
-
-      // Cuerdas
-      ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--string');
-      for (let s = 0; s < stringCount; s++) {
-        const y = startY + (s * stringGap);
-        ctx.lineWidth = 1.4 + (s * 0.28);
-        ctx.beginPath();
-        ctx.moveTo(boardX, y);
-        ctx.lineTo(boardX + boardW, y);
-        ctx.stroke();
-      }
-
-      ctx.restore();
-
-      roundedRectPath(boardX + 0.5, padY, boardW - 1, boardH, radius);
-      ctx.strokeStyle = 'rgba(243,224,187,0.78)';
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
+      const surfaceStyle=getComputedStyle(document.documentElement);
+      window.CrescendoInstrumentSurfaces.drawFretboardBase(ctx,{stringCount,width,canvasH,boardX,boardW,padY,boardH,stringGap,startY,fw,visibleFrets,offset,leftHanded:isLeftHanded(),radius,colors:{board1:surfaceStyle.getPropertyValue('--board1').trim(),board2:surfaceStyle.getPropertyValue('--board2').trim(),board3:surfaceStyle.getPropertyValue('--board3').trim(),fretmetalLight:surfaceStyle.getPropertyValue('--fretmetal-light'),fretmetalMid:surfaceStyle.getPropertyValue('--fretmetal-mid'),fretmetalDark:surfaceStyle.getPropertyValue('--fretmetal-dark'),string:surfaceStyle.getPropertyValue('--string')}});
 
       // Números de cuerda
       ctx.font = `900 0.78rem Inter, sans-serif`;

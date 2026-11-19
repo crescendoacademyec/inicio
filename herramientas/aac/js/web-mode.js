@@ -554,6 +554,7 @@
 
   window.fetch = async function ataFullFetch(input, init) {
     const url = normalizeUrl(input);
+    if (url.origin === window.location.origin && url.pathname.startsWith('/api/aac-melody/')) return nativeFetch(input, init);
     if (url.origin !== window.location.origin || !url.pathname.startsWith("/api/")) {
       return nativeFetch(input, init);
     }

@@ -183,7 +183,7 @@
    playbackRoute=expand(expansions[0]);if(!playbackRoute.length||playbackRoute.some(i=>!Number.isInteger(i)))throw Error('La expansión MEI no identifica sus compases.');
   }
   const partList=el('part-list',staffNumbers.map((n,i)=>el('score-part',word('part-name',records[0].configs.get(n)?.label||('Pentagrama '+n)),{id:'P'+(i+1)})).join(''));
-  return {content:'<?xml version="1.0" encoding="UTF-8"?>'+el('score-partwise',el('work',word('work-title',title))+el('identification',(composer?word('creator',text(composer),{type:'composer'}):'')+(rights?word('rights',rights):'')+el('encoding',word('software','Crescendo · importador MEI')))+partList+parts,{version:'4.0'}),format:'mei',soundOffset:[...offsets][0]||0,noteCount,restCount,warnings,playbackRoute};
+  return {content:'<?xml version="1.0" encoding="UTF-8"?>'+el('score-partwise',el('work',word('work-title',title))+el('identification',(composer?word('creator',text(composer),{type:'composer'}):'')+(rights?word('rights',rights):'')+el('encoding',word('software','Crescendo · importador MEI'))+(playbackRoute?el('miscellaneous',word('miscellaneous-field',JSON.stringify(playbackRoute),{name:'crescendo:measure-route'})):''))+partList+parts,{version:'4.0'}),format:'mei',soundOffset:[...offsets][0]||0,noteCount,restCount,warnings,playbackRoute};
  }
  function convert(xml,Parser){const doc=parseXML(xml,Parser),name=tag(doc.documentElement);if(name==='mei')return convertElement(doc.documentElement);if(!['score-partwise','score-timewise'].includes(name))throw Error('El XML no contiene una partitura MEI o MusicXML.');return {content:xml,format:'musicxml',soundOffset:null,warnings:[]};}
  async function read(file){

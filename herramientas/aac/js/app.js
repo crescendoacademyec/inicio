@@ -2366,7 +2366,7 @@ function clearEvaluationIssues(render = true) {
 function captureAppState() {
   return {
     app: "analizador-armonico-svg-pro",
-    exportVersion: 44,
+    exportVersion: 45,
     document: serializableSong(),
     uiState: {
       selected,
@@ -2385,7 +2385,7 @@ function captureAppState() {
 function validateImportedState(raw) {
   const object = value => value && typeof value === "object" && !Array.isArray(value);
   if (!object(raw) || (raw.app && raw.app !== "analizador-armonico-svg-pro")) throw new Error("Formato de análisis no reconocido.");
-  if (raw.exportVersion != null && (!Number.isInteger(raw.exportVersion) || raw.exportVersion < 1 || raw.exportVersion > 44)) throw new Error("Versión de exportación no compatible.");
+  if (raw.exportVersion != null && (!Number.isInteger(raw.exportVersion) || raw.exportVersion < 1 || raw.exportVersion > 45)) throw new Error("Versión de exportación no compatible.");
   if (raw.uiState != null && !object(raw.uiState)) throw new Error("Estado de interfaz no válido.");
   const document = raw.document ?? raw;
   const measures = value => Array.isArray(value) && value.every(object);
@@ -2431,6 +2431,7 @@ function pushHistory() {
 }
 
 async function applyAppState(rawState, dirtyAfter = true) {
+  hideCanvasTooltip();
   const state = normalizeImportedState(rawState);
   isRestoringState = true;
   try {
@@ -4126,6 +4127,7 @@ function normalizeSong(raw) {
     studentName: raw?.studentName || "",
     timeSignature: normalizeTimeSignature(raw?.timeSignature || raw?.meter || raw?.TimeSignature || "4/4"),
     updatedAt: raw?.updatedAt || null,
+    melody: normalizeMelodyAttachment(raw?.melody),
     settings,
     pages: pages.length ? pages : [{ measures: [] }]
   };
@@ -4605,6 +4607,7 @@ function renderAll(syncForm = true) {
 
   updateMeasurePanelIfOpen();
   rhythmUpdatePaletteStatus();
+  window.dispatchEvent(new CustomEvent("aac:document-rendered", {detail:{melody:song.melody || null}}));
 }
 
 function renderPageSvg(page, pageIndex) {
@@ -13738,3 +13741,39 @@ function escapeHtml(value) {
 function escapeAttr(value) {
   return escapeHtml(value).replaceAll("\n", " ");
 }
+
+// Optional melody attachment travels with AAC JSON, history and local saves.
+function normalizeMelodyAttachment(value) {
+  if (!value || typeof value !== 'object' || typeof value.xml !== 'string' || value.xml.length > 4*1024*1024 || /<!ENTITY/i.test(value.xml)) return null;
+  const result={schema:'aac-melody-v1',xml:value.xml};
+  for(const key of ['id','title','composer','sourceBook','sourceImage','sourceLabel','sourceFile','sourceFormat','reviewStatus','nativeMscz','reviewSummary','checkSummary'])if(typeof value[key]==='string')result[key]=value[key].slice(0,4000);
+  if(typeof value.originalXml==='string'&&value.originalXml.length<=4*1024*1024&&!/<!ENTITY/i.test(value.originalXml))result.originalXml=value.originalXml;
+  for(const key of ['pdfPage','printedPage','transpose','tempo'])if(Number.isFinite(value[key]))result[key]=value[key];
+  for(const key of ['practiceStart','loopStartMeasure','loopEndMeasure'])if(Number.isInteger(value[key])&&value[key]>=0&&value[key]<10000)result[key]=value[key];
+  for(const key of ['originalBreaks','studyBreaks'])if(Array.isArray(value[key]))result[key]=[...new Set(value[key].filter(n=>Number.isInteger(n)&&n>=0&&n<10000))].slice(0,10000);
+  result.harmonyMode=value.harmonyMode==='study'?'study':'original';result.linked=value.linked===true;result.swing=value.swing===true;result.loopEnabled=value.loopEnabled===true;
+  result.reviewLog=Array.isArray(value.reviewLog)?value.reviewLog.filter(item=>typeof item==='string').map(item=>item.slice(0,1000)).slice(0,200):[];
+  return result;
+}
+window.CrescendoAACMelodyBridge={
+  getMelody:()=>song.melody||null,
+  getDocumentInfo:()=>({title:song.title,composer:song.composer}),
+  captureWorkspace:()=>structuredClone(captureAppState()),
+  async restoreWorkspace(state){pushHistory();await applyAppState(state,true);clearCurrentStandardSource();},
+  openScoreTarget(target,x,y){if(target.dataset.field==='chord')showReharmonizationMenu(target,x,y);else showInlineEditor(target,x,y);},
+  analyzeMelody(){return autoAnalyzeCurrentSong(true,{confirm:false,alert:false});},
+  getAnalysis(){return song.pages.flatMap((page,p)=>page.measures.map((measure,m)=>{const entries=visibleSlotEntries(measure),layout=layoutSlots(entries.map(e=>e.slot),100,song.settings,measure);return {page:p,measure:m,sectionLabel:measure.sectionLabel||'',slots:entries.map((e,i)=>({...e.slot,index:e.slotIndex,beat:(Number(e.slot.pulse||layout[i]?.position||1)-1)*4/(Number(song.timeSignature.split('/')[1])||4)}))};}));},
+  editAnalysis(page,measure,slot,values){const target=song.pages[page]?.measures[measure]?.slots[slot];if(!target)throw Error('El acorde ya no existe.');for(const field of ['chord','degree','mode','sectionLabel','originScale'])if(field in values)setValueFromContext({kind:'slot',page,measure,slot,field},values[field]);setDirty(true);renderAll(false);},
+  setMelody(value){const attachment=normalizeMelodyAttachment(value);if(JSON.stringify(song.melody)===JSON.stringify(attachment))return;song.melody=attachment;setDirty(true);},
+  async loadHarmony(rows,info,attachment){
+    if(!Array.isArray(rows)||!rows.length||rows.length>256)throw Error('La edición debe contener entre 1 y 256 compases para este lienzo.');
+    const next=makeBlankSong(rows.length),flat=next.pages.flatMap(page=>page.measures);let carry='';
+    next.title=info.title;next.composer=info.composer;next.timeSignature=info.meter;next.melody=normalizeMelodyAttachment({...attachment,linked:true});
+    for(let i=0;i<rows.length;i++){const row=rows[i],measure=flat[i];if(row.chords.length>4)throw Error('Este compás contiene más cambios que los cuatro espacios de AAC. Conserva la partitura y revisa la armonía manualmente.');
+      for(const chord of row.chords){const [beats,unit]=info.meter.split('/').map(Number),length=(beats||4)*4/(unit||4),slot=Math.max(0,Math.min(3,Math.round(chord.beat*4/length)));measure.slots[slot].chord=chord.symbol;measure.slots[slot].pulse=chord.beat*(unit||4)/4+1;carry=chord.symbol;}
+      if(!row.chords.length&&carry)measure.slots[0].chord=carry;
+      measure.form=row.form||'';measure.ending=row.ending||'';measure.jump=row.jump||'';measure.leftBar=row.leftBar||'|';measure.rightBar=row.rightBar||'|';if(row.implicit)measure.note='Anacrusa · ver partitura';
+    }
+    pushHistory();await applyAppState({app:'analizador-armonico-svg-pro',exportVersion:45,document:next,uiState:{selected:{page:0,measure:0},assistanceMode:'manual',analysisVisibility:'visible',currentFilename:null,currentStandardFilename:null}},true);clearCurrentStandardSource();autoAnalyzeCurrentSong(false,{confirm:false,alert:false});setDirty(true);return true;
+  }
+};

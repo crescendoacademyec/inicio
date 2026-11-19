@@ -8,6 +8,8 @@
 <title>Analizador Armónico Crescendo</title>
   <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="css/styles.css?v=20261012-rutas">
+<link rel="stylesheet" href="../../shared/piano-surface.css">
+<link rel="stylesheet" href="css/melody.css?v=20261119-library">
 <style>
   body.webFullMode #status::before {
     content: "AAC · ";
@@ -110,30 +112,20 @@
   <section id="rhythmPaletteBar" class="rhythmPaletteBar" aria-label="Paleta rítmica">
     <div class="rhythmPaletteGroup">
       <button type="button" class="rhythmMusicBtn" data-rhythm-insert="1" aria-label="Redonda" data-tooltip="Redonda" data-native-title="Redonda"></button>
-      <button type="button" class="rhythmMusicBtn rhythmSvgNoteBtn" data-rhythm-insert="/2" aria-label="Blanca" data-tooltip="Blanca" data-native-title="Blanca">
-        <svg class="rhythmPaletteNoteIcon" viewBox="0 0 24 28" aria-hidden="true">
-          <ellipse cx="9" cy="21" rx="4.8" ry="3.2" fill="none" stroke="currentColor" stroke-width="2" transform="rotate(-18 9 21)"></ellipse>
-          <path d="M13 20 V5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"></path>
-        </svg>
-      </button>
-      <button type="button" class="rhythmMusicBtn rhythmSvgNoteBtn" data-rhythm-insert="/4" aria-label="Negra" data-tooltip="Negra" data-native-title="Negra">
-        <svg class="rhythmPaletteNoteIcon" viewBox="0 0 24 28" aria-hidden="true">
-          <ellipse cx="9" cy="21" rx="4.8" ry="3.2" fill="currentColor" transform="rotate(-18 9 21)"></ellipse>
-          <path d="M13 20 V5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"></path>
-        </svg>
-      </button>
-      <button type="button" class="rhythmMusicBtn" data-rhythm-insert="/8" aria-label="Corchea" data-tooltip="Corchea" data-native-title="Corchea"></button>
-      <button type="button" class="rhythmMusicBtn" data-rhythm-insert="/16" aria-label="Semicorchea" data-tooltip="Semicorchea" data-native-title="Semicorchea"></button>
-      <button type="button" class="rhythmMusicBtn" data-rhythm-insert="/32" aria-label="Fusa" data-tooltip="Fusa" data-native-title="Fusa"></button>
+      <button type="button" class="rhythmMusicBtn rhythmSvgNoteBtn" data-rhythm-insert="/2" aria-label="Blanca" data-tooltip="Blanca" data-native-title="Blanca">&#xE1D3;</button>
+      <button type="button" class="rhythmMusicBtn rhythmSvgNoteBtn" data-rhythm-insert="/4" aria-label="Negra" data-tooltip="Negra" data-native-title="Negra">&#xE1D5;</button>
+      <button type="button" class="rhythmMusicBtn" data-rhythm-insert="/8" aria-label="Corchea" data-tooltip="Corchea" data-native-title="Corchea">&#xE1D7;</button>
+      <button type="button" class="rhythmMusicBtn" data-rhythm-insert="/16" aria-label="Semicorchea" data-tooltip="Semicorchea" data-native-title="Semicorchea">&#xE1D9;</button>
+      <button type="button" class="rhythmMusicBtn" data-rhythm-insert="/32" aria-label="Fusa" data-tooltip="Fusa" data-native-title="Fusa">&#xE1DB;</button>
       <button type="button" class="rhythmSlashBtn" data-rhythm-action="slash-cycle" aria-label="Slash normal" data-tooltip="Slash normal: negra" data-native-title="Slash rítmico">/</button>
     </div>
     <div class="rhythmPaletteGroup">
-      <button type="button" class="rhythmMusicBtn" data-rhythm-insert="x1" aria-label="Silencio de redonda" data-tooltip="Silencio de redonda" data-native-title="Silencio de redonda"></button>
-      <button type="button" class="rhythmMusicBtn" data-rhythm-insert="x/2" aria-label="Silencio de blanca" data-tooltip="Silencio de blanca" data-native-title="Silencio de blanca"></button>
-      <button type="button" class="rhythmMusicBtn" data-rhythm-insert="x/4" aria-label="Silencio de negra" data-tooltip="Silencio de negra" data-native-title="Silencio de negra"></button>
-      <button type="button" class="rhythmMusicBtn" data-rhythm-insert="x/8" aria-label="Silencio de corchea" data-tooltip="Silencio de corchea" data-native-title="Silencio de corchea"></button>
-      <button type="button" class="rhythmMusicBtn" data-rhythm-insert="x/16" aria-label="Silencio de semicorchea" data-tooltip="Silencio de semicorchea" data-native-title="Silencio de semicorchea"></button>
-      <button type="button" class="rhythmMusicBtn" data-rhythm-insert="x/32" aria-label="Silencio de fusa" data-tooltip="Silencio de fusa" data-native-title="Silencio de fusa"></button>
+      <button type="button" class="rhythmMusicBtn" data-rhythm-insert="x1" aria-label="Silencio de redonda" data-tooltip="Silencio de redonda" data-native-title="Silencio de redonda">&#xE4E3;</button>
+      <button type="button" class="rhythmMusicBtn" data-rhythm-insert="x/2" aria-label="Silencio de blanca" data-tooltip="Silencio de blanca" data-native-title="Silencio de blanca">&#xE4E4;</button>
+      <button type="button" class="rhythmMusicBtn" data-rhythm-insert="x/4" aria-label="Silencio de negra" data-tooltip="Silencio de negra" data-native-title="Silencio de negra">&#xE4E5;</button>
+      <button type="button" class="rhythmMusicBtn" data-rhythm-insert="x/8" aria-label="Silencio de corchea" data-tooltip="Silencio de corchea" data-native-title="Silencio de corchea">&#xE4E6;</button>
+      <button type="button" class="rhythmMusicBtn" data-rhythm-insert="x/16" aria-label="Silencio de semicorchea" data-tooltip="Silencio de semicorchea" data-native-title="Silencio de semicorchea">&#xE4E7;</button>
+      <button type="button" class="rhythmMusicBtn" data-rhythm-insert="x/32" aria-label="Silencio de fusa" data-tooltip="Silencio de fusa" data-native-title="Silencio de fusa">&#xE4E8;</button>
     </div>
     <div class="rhythmPaletteGroup">
       <button type="button" class="rhythmIconBtn" data-rhythm-insert="." aria-label="Puntillo" data-tooltip="Puntillo" data-native-title="Puntillo">•</button>
@@ -470,7 +462,7 @@
 
   <footer class="site-footer suite-footer">Crescendo Academy · &copy; <span id="footerYear"></span>. Todos los derechos reservados.</footer>
 
-  <div id="canvasTooltip" class="canvasTooltip" style="left: 631.705px; top: 148.794px;">Título</div>
+  <div id="canvasTooltip" class="canvasTooltip hidden" style="left: 631.705px; top: 148.794px;">Título</div>
   <input id="inlineEditor" class="inlineEditor hidden" type="text">
   <div id="degreeSuggestionMenu" class="degreeSuggestionMenu hidden"></div>
   <div id="reharmonizationMenu" class="reharmonizationMenu hidden"></div>
@@ -480,7 +472,19 @@
   <script>document.getElementById('footerYear').textContent = new Date().getFullYear();</script>
   <script src="js/tonal-analysis.js?v=20261118-musical-fixes-2"></script>
   <script src="js/reharmonization.js"></script>
-  <script src="js/app.js?v=20261118-musical-fixes-2"></script>
+  <script src="js/app.js?v=20261119-library"></script>
+  <script src="../../shared/opensheetmusicdisplay-1.8.4.min.js"></script>
+
+  <script src="../../shared/score-file-reader.js?v=20261119-library"></script>
+  <script src="js/melody-transport.js?v=20261119-library"></script>
+  <script src="js/melody-core.js?v=1"></script>
+  <script src="js/melody-workspaces.js"></script>
+  <script src="js/melody-practice.js"></script>
+  <script src="../../shared/instrument-pitch-model.js"></script>
+  <script src="../../shared/instrument-surfaces.js"></script>
+  <script src="js/melody-score-view.js"></script>
+  <script src="js/melody-instruments.js?v=1"></script>
+  <script src="js/melody.js?v=20261119-library"></script>
 
 
 

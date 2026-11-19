@@ -29,13 +29,7 @@ function getNoteNames(lang, idx) {
   return NOTE_NAMES_EN[idx];
 }
 
-function midiToInfo(m){
-  const idx = m % 12;
-  const octave = Math.floor(m/12) - 1;
-  const name = NOTE_NAMES_EN[idx];
-  const isBlack = name.includes('#');
-  return {midi:m, name, octave, isBlack, freq: 440 * Math.pow(2,(m-69)/12), idx};
-}
+function midiToInfo(m){return window.CrescendoInstrumentPitch.noteInfo(m);}
 
 function diatonicStep(name, octave){
   const letter = name.charAt(0);
@@ -205,24 +199,15 @@ function buildKeyboard(minMidi, maxMidi) {
   keyboardEl.classList.toggle('show-hand-left', showHandLeft);
   keyboardEl.classList.toggle('show-hand-right', showHandRight);
   keyElByMidi = {};
-  const notes = [];
-  for (let m = minMidi; m <= maxMidi; m++) {
-    notes.push(midiToInfo(m));
-  }
+  const notes = window.CrescendoInstrumentPitch.keyboardLayout(minMidi, maxMidi);
   allNotes = notes;
 
-  const whiteNotes = notes.filter(n => !n.isBlack);
-  const WHITE_COUNT = whiteNotes.length;
-  const whiteWidthPct = 100 / WHITE_COUNT;
-  const blackWidthPct = whiteWidthPct * 0.58;
-
-  let whiteIndex = 0;
   notes.forEach(n => {
     if (n.isBlack) return;
     const el = document.createElement('div');
     el.className = 'white-key ' + handClassFor(n.midi);
-    el.style.left = (whiteIndex * whiteWidthPct) + '%';
-    el.style.width = whiteWidthPct + '%';
+    el.style.left = n.left + '%';
+    el.style.width = n.width + '%';
     el.dataset.midi = n.midi;
     const label = document.createElement('div');
     label.className = 'label';
@@ -230,17 +215,14 @@ function buildKeyboard(minMidi, maxMidi) {
     keyboardEl.appendChild(el);
     keyElByMidi[n.midi] = el;
     attachPointer(el, n);
-    whiteIndex++;
   });
 
-  let wi = 0;
   notes.forEach(n => {
-    if (!n.isBlack) { wi++; return; }
+    if (!n.isBlack) return;
     const el = document.createElement('div');
     el.className = 'black-key ' + handClassFor(n.midi);
-    const left = wi * whiteWidthPct - blackWidthPct / 2;
-    el.style.left = left + '%';
-    el.style.width = blackWidthPct + '%';
+    el.style.left = n.left + '%';
+    el.style.width = n.width + '%';
     el.dataset.midi = n.midi;
     const label = document.createElement('div');
     label.className = 'label';

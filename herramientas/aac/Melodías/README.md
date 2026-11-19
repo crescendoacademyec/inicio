@@ -1,0 +1,34 @@
+# Melodías
+
+Biblioteca oficial de AAC: **42 temas**, con 19 fuentes MEI y 23 MusicXML. Reúne los 37 archivos distintos aportados desde Realbook y los cinco temas iniciales: C-Jam Blues, Blue Bossa, Autumn Leaves, All of Me y Footprints.
+
+## Añadir archivos
+
+Puedes colocar aquí los próximos `.mei`, `.musicxml` o `.xml` que quieras incorporar y avisar para su revisión. Conserva el archivo descargado; no hace falta crear una melodía nueva desde los acordes.
+
+Después de revisar un lote, desde la raíz del repositorio:
+
+```sh
+python3 herramientas/aac/tools/actualizar-melodias.py
+python3 herramientas/aac/tools/actualizar-melodias.py --check
+```
+
+El actualizador detecta el contenido real, informa de extensiones incorrectas, conserva los originales y genera las partituras y el catálogo de AAC. Una entrada nueva se marca **pendiente de revisión musical**. Una edición de un original invalida su revisión anterior. Los errores de entrada impiden reemplazar el catálogo válido.
+
+## Organización
+
+- Archivos en esta carpeta: las 42 fuentes originales, con su extensión correcta.
+- `partituras/`: MusicXML que utiliza AAC; para las fuentes MEI se conserva su recorrido de interpretación en los metadatos.
+- `referencias/`: las cinco imágenes guía iniciales.
+- `correcciones/`: versiones revisadas, vinculadas a la huella de la fuente para conservar las correcciones al regenerar el catálogo.
+- `catalog.json`: títulos, compositores, tempo, procedencia, huellas SHA-256, notas, compases y estado de revisión.
+
+Los originales permanecen intactos. Las correcciones posteriores deben quedar documentadas en el catálogo y conservar una referencia de la edición de origen.
+
+## Revisión e interpretación
+
+Los cinco temas iniciales fueron corregidos contra las fuentes aportadas; el catálogo detalla el alcance de cada ejemplo (tema principal, anacrusas y posibles introducciones/codas excluidas). Los otros 37 tienen comprobación técnica de lectura, conservación de notas y recorrido. Esa comprobación no equivale a una revisión editorial de cada nota contra otra edición.
+
+AAC reproduce repeticiones, casillas, D.C./D.S., coda y Fine codificados en MusicXML. En MEI sigue `expansion/@plist`. Sonido, cursor, piano, guitarra y MIDI comparten el recorrido. Una indicación escrita únicamente como texto ambiguo requiere revisión manual; el programa no inventa secciones de solos.
+
+La armonía original se conserva; los cambios de acordes y el análisis automático pertenecen al estudio editable del usuario. Los borradores del navegador no modifican estos originales.

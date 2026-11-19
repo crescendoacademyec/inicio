@@ -61,8 +61,8 @@ test('M05/M12 chord inversions have an audible fundamental and error review keep
 
 test('M06 import validator rejects foreign data while retaining current and legacy exports',()=>{
  const source=read('herramientas/aac/js/app.js'),c=ctx({});run(fn(source,'validateImportedState','normalizeImportedState'),c);
- for(const raw of [null,[],{},42,{stats:{},sessions:[]},{app:'other-app',document:{pages:[{measures:[]}]}},{document:{pages:[{}]}},{exportVersion:45,pages:[{measures:[]}]}])assert.throws(()=>c.validateImportedState(raw));
- for(const raw of [{app:'analizador-armonico-svg-pro',exportVersion:44,document:{pages:[{measures:[]}]}},{title:'Legacy',measures:[{chord:'C'}]},{pages:[{measures:[]}]}])assert.equal(c.validateImportedState(raw),raw);
+ for(const raw of [null,[],{},42,{stats:{},sessions:[]},{app:'other-app',document:{pages:[{measures:[]}]}},{document:{pages:[{}]}},{exportVersion:46,pages:[{measures:[]}]}])assert.throws(()=>c.validateImportedState(raw));
+ for(const raw of [{app:'analizador-armonico-svg-pro',exportVersion:45,document:{pages:[{measures:[]}]}},{app:'analizador-armonico-svg-pro',exportVersion:44,document:{pages:[{measures:[]}]}},{title:'Legacy',measures:[{chord:'C'}]},{pages:[{measures:[]}]}])assert.equal(c.validateImportedState(raw),raw);
 });
 
 test('M06 failed import preserves document, filename and history; valid imports remain undoable',async()=>{
