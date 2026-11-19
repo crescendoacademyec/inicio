@@ -23,5 +23,5 @@ test('the engraved standard symbols originate from the bundled Bravura font, not
 });
 test('all shared engraving consumers load the local Bravura distribution',()=>{
  const pages=['armonia-funcional','armonia-jazz','teoria-lectura-musical','ear-training','metronomo','piano-virtual','bass-virtual','cuerdas-frotadas','diapason-virtual','requinteando','folk-virtual'];
- for(const name of pages){const html=fs.readFileSync(path.join(root,'herramientas',name,'index.html'),'utf8');assert.match(html,/src="\.\.\/\.\.\/shared\/opensheetmusicdisplay-1\.8\.4\.min\.js\?v=20261019-bravura-1"/,name);assert.doesNotMatch(html,/https:\/\/[^" ]*opensheetmusicdisplay/);}
+ for(const name of pages){const html=fs.readFileSync(path.join(root,'herramientas',name,'index.html'),'utf8');assert.match(html,/src="\.\.\/\.\.\/shared\/opensheetmusicdisplay-1\.8\.4\.min\.js\?v=(?:20261019-bravura-1|20261119-rest-placement)"/,name);assert.doesNotMatch(html,/https:\/\/[^" ]*opensheetmusicdisplay/);}
 });

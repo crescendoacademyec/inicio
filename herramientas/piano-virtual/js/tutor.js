@@ -14,7 +14,7 @@ function getCurrentScoreStepData(){
       try{const m=ve?.ParentSourceStaffEntry?.VerticalContainerParent?.ParentMeasure?.MeasureNumber ?? ve?.ParentStaffEntry?.VerticalContainerParent?.ParentMeasure?.MeasureNumber ?? ve?.ParentMeasure?.MeasureNumber;if(m!==undefined&&m!==null){const nm=Number(m);out.measure=Number.isFinite(nm)?String(nm):String(m)}}catch(e){}
       (ve.Notes||[]).forEach(note=>{
         if(!note||(note.isRest&&note.isRest())||note.Pitch==null)return;
-        const midi=note.Pitch.halfTone+12, hand=scoreNoteHand(midi,ve);
+        const midi=scoreSoundingMidi(note.Pitch.halfTone+12), hand=scoreNoteHand(midi,ve);
         out.all.push({midi,hand});
         const targetHand=tutorHand.value; if(targetHand==='both'||hand===targetHand)out.target.push(midi);
         const f=(note.Length&&typeof note.Length.RealValue==='number')?note.Length.RealValue:0.25,d=f*4*(60/getTempo());if(out.duration===null||d<out.duration)out.duration=d;
@@ -187,9 +187,9 @@ function triggerCurrentStepNotes(tempo, hold) {
     entries.forEach(ve => {
       (ve.Notes || []).forEach(note => {
         if (!note || (note.isRest && note.isRest()) || note.Pitch == null) return;
-        const midi = note.Pitch.halfTone + 12;
+        const midi = scoreSoundingMidi(note.Pitch.halfTone + 12);
         if (!shouldPlayScoreNote(midi, ve)) return;
-        const durSeconds = ScorePlaybackTiming.tiedSeconds(note,tempo);
+        const durSeconds = ScorePlaybackTiming.tiedSeconds(note,tempo,osmd.cursor.Iterator);
         const continuing = note.NoteTie && scoreActiveTies.get(note.NoteTie) === midi && scoreActiveMidis.has(midi);
         if (!continuing) noteOn(midiToInfo(midi));
         if (!stepHands.has(midi)) stepHands.set(midi, new Set());
@@ -341,9 +341,10 @@ function buildScoreStepMap() {
     osmd.cursor.reset();
     osmd.cursor.show();
     const containerRect = osmdContainer.getBoundingClientRect();
-    let guard = 0;
+    let guard = 0;const visited=[],visitIds=new Set();
     while (!osmd.cursor.Iterator.EndReached && guard < 4000) {
       osmd.cursor.update();
+      const routeVisit=osmd.cursor.Iterator.CrescendoVisit;if(Number.isInteger(routeVisit)&&!visitIds.has(routeVisit)){visitIds.add(routeVisit);visited.push(osmd.cursor.Iterator.CurrentMeasureIndex);}
       const cursorEl = osmd.cursor.cursorElement;
       if (cursorEl) {
         const r = cursorEl.getBoundingClientRect();
@@ -360,9 +361,11 @@ function buildScoreStepMap() {
       osmd.cursor.next();
       guard++;
     }
+    osmdContainer.dataset.playbackVisited=visited.join(',');
   } catch(err) { console.warn('No se pudo generar mapa de clics:', err); scoreSteps = []; }
   try { osmd.cursor.reset(); osmd.cursor.hide(); } catch(e) {}
   currentStepIndex = -1;
+  osmdContainer.dataset.playbackSteps=String(scoreSteps.length);
   renderClickOverlay();
 }
 
@@ -394,6 +397,7 @@ function renderClickOverlay() {
 }
 
 function resetScoreView() {
+  scoreImportMetadata=null;
   fullStop();
   loopStart = null;
   loopEnd = null;
@@ -423,7 +427,7 @@ pdfUpload.addEventListener('change', async function(e) {
   if (!file) return;
   const name = file.name.toLowerCase();
   const isPdf = name.endsWith('.pdf') || file.type === 'application/pdf';
-  const isMusicXML = name.endsWith('.xml') || name.endsWith('.musicxml') || name.endsWith('.mxl');
+  const isMusicXML = name.endsWith('.xml') || name.endsWith('.musicxml') || name.endsWith('.mxl') || name.endsWith('.mei');
   const isImage = file.type.startsWith('image/') || /\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(name);
 
   resetScoreView(); currentScoreName=file.name;
@@ -441,16 +445,20 @@ pdfUpload.addEventListener('change', async function(e) {
     try {
       const engine = ensureOSMD();
       const ext = name.split('.').pop();
-      const content = (ext === 'mxl') ? await file.arrayBuffer() : await file.text();
+      const imported = await window.CrescendoScoreFile.read(file);
+      const content = imported.content;scoreImportMetadata = imported;
+      osmdContainer.dataset.scoreFormat=imported.format;osmdContainer.dataset.importNotes=String(imported.noteCount??'');
       await engine.load(content);
       osmdContainer.classList.add('visible');
       engine.render();
+      window.CrescendoScoreRoute.install(engine,imported.playbackRoute);
+      osmdContainer.dataset.playbackRoute=(imported.playbackRoute||[]).join(',');
       requestAnimationFrame(() => {
         try { engine.render(); buildScoreStepMap(); } catch(e) { console.warn('Error final render:', e); }
       });
       scorePlayControls.classList.add('visible');
       pdfClearBtn.classList.add('visible');
-      scoreStatus.textContent = '';
+      scoreStatus.textContent = imported.format==='mei'?['MEI cargado.',...imported.warnings].join(' '):'';
       const bpm = engine.Sheet && engine.Sheet.DefaultStartTempoInBpm;
       if (bpm && bpm > 0) scoreTempoInput.value = Math.round(bpm);
     } catch(err) {
@@ -476,7 +484,7 @@ pdfUpload.addEventListener('change', async function(e) {
     scorePlayControls.classList.remove('visible');
     return;
   }
-  alert('Formato no soportado. Usa PDF, MusicXML (.xml / .musicxml), .mxl o imagen (PNG, JPG, GIF, WEBP, BMP, SVG).');
+  alert('Formato no soportado. Usa PDF, MusicXML (.xml / .musicxml / .mxl), MEI (.mei o .xml) o imagen (PNG, JPG, GIF, WEBP, BMP, SVG).');
   this.value = '';
 });
 

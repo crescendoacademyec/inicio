@@ -13,6 +13,8 @@
     if(typeof iterator.clone==='function'){
       const next=iterator.clone();
       next.moveToNext();
+      const performed=(next.CrescendoPerformedTimestamp-iterator.CrescendoPerformedTimestamp)*240/tempo;
+      if(Number.isFinite(performed)&&performed>0)return performed;
       const delta=(next.CurrentSourceTimestamp?.RealValue-iterator.CurrentSourceTimestamp?.RealValue)*240/tempo;
       if(!next.EndReached && delta>0) return delta;
       // Final step, pickup or repeat jump: finish the current measure.
@@ -23,10 +25,12 @@
     }
     return duration;
   }
-  function tiedSeconds(note,tempo){
+  function tiedSeconds(note,tempo,iterator){
     const notes=note.NoteTie?.Notes;
     const index=notes?.indexOf(note)??-1;
-    return index<0?noteSeconds(note,tempo):notes.slice(index).reduce((sum,n)=>sum+noteSeconds(n,tempo),0);
+    const duration=index<0?noteSeconds(note,tempo):notes.slice(index).reduce((sum,n)=>sum+noteSeconds(n,tempo),0);
+    const untilJump=iterator?.CrescendoUntilJump*240/tempo;
+    return Number.isFinite(untilJump)?Math.min(duration,untilJump):duration;
   }
   const api={noteSeconds,stepSeconds,tiedSeconds};
   root.ScorePlaybackTiming=api;

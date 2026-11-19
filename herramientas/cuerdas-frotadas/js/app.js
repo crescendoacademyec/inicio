@@ -153,7 +153,8 @@
     const blankMode=()=>rootSel.value===""||(chordTypeSel.value===""&&scaleSel.value==="");
     const activeInstrument=()=>INSTRUMENTS[instrumentSel.value]||INSTRUMENTS.violin;
     const activePitches=()=>activeInstrument().pitches;
-    const scoreMidiToSounding=midi=>midi-(activeInstrument().writtenTranspose||0);
+    let scoreImportMetadata=null;
+    const scoreMidiToSounding=midi=>midi+(scoreImportMetadata?.soundOffset??-(activeInstrument().writtenTranspose||0));
 
     function populateTechniquePositions(keep){
       if(!techPositionSel)return;
@@ -721,6 +722,7 @@
       try{
         const doc=new DOMParser().parseFromString(xmlTextValue,'application/xml');
         if(doc.querySelector('parsererror'))return [];
+        const sourceMeasures=[...doc.querySelectorAll('part')][0]?.querySelectorAll(':scope > measure')||[];
         const notes=[...doc.querySelectorAll('note')];
         const events=[]; let current=null;
         notes.forEach(n=>{
@@ -744,7 +746,7 @@
           if(n.querySelector('notations technical up-bow'))bow='↑ arco arriba';
           const note={midi,explicitString,explicitFinger,technique,bow};
           if(n.querySelector('chord')&&current){current.notes.push(note);}
-          else{current={notes:[note]};events.push(current);}
+          else{current={notes:[note],sourceMeasure:[...sourceMeasures].indexOf(n.closest('measure'))};events.push(current);}
         });
         events.forEach((ev,i)=>{
           ev.technique=[...new Set(ev.notes.flatMap(n=>n.technique||[]))];
@@ -752,7 +754,7 @@
           if(!ev.bow&&tutorBowModeEl?.value==='alternate')ev.bow=i%2===0?'↓ arco abajo':'↑ arco arriba';
         });
         tutorPlainXmlAvailable=events.length>0;
-        return events;
+        return scoreImportMetadata?.playbackRoute?scoreImportMetadata.playbackRoute.flatMap(index=>events.filter(event=>event.sourceMeasure===index)):events;
       }catch(e){console.warn('No se pudo analizar MusicXML para Tutor:',e);return [];}
     }
 
@@ -977,7 +979,7 @@
       const mode=intonationTargetModeEl?.value||'open';
       if(intonationStringEl)intonationStringEl.disabled=mode==='manual';
       if(intonationNoteEl)intonationNoteEl.disabled=mode!=='manual';
-      if(mode==='tutor'&&!tutorPlan?.length&&intonationStatus)intonationStatus.textContent='Carga y analiza un MusicXML para usar la nota del Tutor.';
+      if(mode==='tutor'&&!tutorPlan?.length&&intonationStatus)intonationStatus.textContent='Carga y analiza un MusicXML o MEI para usar la nota del Tutor.';
       if(intonationDroneOsc)restartIntonationDrone();
     }
     function autoCorrelatePitch(buffer,sampleRate){
@@ -2063,9 +2065,10 @@
         osmd.cursor.reset();
         osmd.cursor.show();
         const containerRect = osmdContainer.getBoundingClientRect();
-        let guard = 0;
+        let guard = 0;const visited=[],visitIds=new Set();
         while (!osmd.cursor.Iterator.EndReached && guard < 4000) {
           osmd.cursor.update();
+      const routeVisit=osmd.cursor.Iterator.CrescendoVisit;if(Number.isInteger(routeVisit)&&!visitIds.has(routeVisit)){visitIds.add(routeVisit);visited.push(osmd.cursor.Iterator.CurrentMeasureIndex);}
           const cursorEl = osmd.cursor.cursorElement;
           if (cursorEl) {
             const r = cursorEl.getBoundingClientRect();
@@ -2082,7 +2085,10 @@
           osmd.cursor.next();
           guard++;
         }
-      } catch(err) { console.warn('No se pudo generar mapa de clics:', err); scoreSteps = []; }
+
+      osmdContainer.dataset.playbackVisited=visited.join(',');
+
+    } catch(err) { console.warn('No se pudo generar mapa de clics:', err); scoreSteps = []; }
       try { osmd.cursor.reset(); osmd.cursor.hide(); } catch(e) {}
       currentStepIndex = -1;
       renderClickOverlay();
@@ -2116,6 +2122,7 @@
     }
 
     function resetScoreView() {
+      scoreImportMetadata=null;
       fullStop();
       loopStart = null;
       loopEnd = null;
@@ -2136,7 +2143,7 @@
       resetImageTransform();
       scoreSteps = [];
       tutorXmlEvents=[]; tutorPlan=[]; tutorExpectedCells=[]; tutorCompletedCells.clear(); tutorCurrentIndex=-1; tutorLastAssignment=null; tutorPlainXmlAvailable=false;
-      if(tutorStepEl){tutorStepEl.textContent='—';tutorNoteEl.textContent='—';tutorStringEl.textContent='—';tutorFingerEl.textContent='—';tutorPositionEl.textContent='—';tutorBowEl.textContent='—';tutorTechniqueEl.textContent='Carga un MusicXML para analizar digitación, cambios de posición y articulaciones.';tutorStatusEl.textContent='';}
+      if(tutorStepEl){tutorStepEl.textContent='—';tutorNoteEl.textContent='—';tutorStringEl.textContent='—';tutorFingerEl.textContent='—';tutorPositionEl.textContent='—';tutorBowEl.textContent='—';tutorTechniqueEl.textContent='Carga un MusicXML o MEI para analizar digitación, cambios de posición y articulaciones.';tutorStatusEl.textContent='';}
       scorePlayControls.classList.remove('visible');
       scoreStatus.textContent = '';
       pdfClearBtn.classList.remove('visible');
@@ -2150,7 +2157,7 @@
       if (!file) return;
       const name = file.name.toLowerCase();
       const isPdf = name.endsWith('.pdf') || file.type === 'application/pdf';
-      const isMusicXML = name.endsWith('.xml') || name.endsWith('.musicxml') || name.endsWith('.mxl');
+      const isMusicXML = name.endsWith('.xml') || name.endsWith('.musicxml') || name.endsWith('.mxl') || name.endsWith('.mei');
       const isImage = file.type.startsWith('image/') || /\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(name);
 
       resetScoreView();
@@ -2168,19 +2175,23 @@
         try {
           const engine = ensureOSMD();
           const ext = name.split('.').pop();
-          const content = (ext === 'mxl') ? await file.arrayBuffer() : await file.text();
+          const imported = await window.CrescendoScoreFile.read(file);
+          const content = imported.content;scoreImportMetadata = imported;
+          osmdContainer.dataset.scoreFormat=imported.format;osmdContainer.dataset.importNotes=String(imported.noteCount??'');
           tutorXmlEvents = (ext === 'mxl') ? [] : parseMusicXMLTutor(content);
           if(tutorXmlEvents.length)buildTutorPlan();
           await engine.load(content);
           osmdContainer.classList.add('visible');
           engine.render();
+      window.CrescendoScoreRoute.install(engine,imported.playbackRoute);
+      osmdContainer.dataset.playbackRoute=(imported.playbackRoute||[]).join(',');
           requestAnimationFrame(() => {
             try { engine.render(); buildScoreStepMap(); } catch(e) { console.warn('Error final render:', e); }
           });
           scorePlayControls.classList.add('visible');
           pdfClearBtn.classList.add('visible');
-          scoreStatus.textContent = '';
-          if(tutorStatusEl)tutorStatusEl.textContent=tutorXmlEvents.length?`MusicXML listo para Tutor · ${tutorXmlEvents.length} eventos detectados.`:'Partitura lista. Para técnicas completas, usa .musicxml/.xml sin comprimir.';
+          scoreStatus.textContent = imported.format==='mei'?['MEI cargado.',...imported.warnings].join(' '):'';
+          if(tutorStatusEl)tutorStatusEl.textContent=tutorXmlEvents.length?`Partitura lista para Tutor · ${tutorXmlEvents.length} eventos detectados.`:'Partitura lista. Para técnicas completas, usa .musicxml/.xml sin comprimir.';
           const bpm = engine.Sheet && engine.Sheet.DefaultStartTempoInBpm;
           if (bpm && bpm > 0) scoreTempo.value = Math.round(bpm);
         } catch(err) {
@@ -2206,7 +2217,7 @@
         scorePlayControls.classList.remove('visible');
         return;
       }
-      alert('Formato no soportado. Usa PDF, MusicXML (.xml / .musicxml), .mxl o imagen (PNG, JPG, GIF, WEBP, BMP, SVG).');
+      alert('Formato no soportado. Usa PDF, MusicXML (.xml / .musicxml / .mxl), MEI (.mei o .xml) o imagen (PNG, JPG, GIF, WEBP, BMP, SVG).');
       this.value = '';
     });
 

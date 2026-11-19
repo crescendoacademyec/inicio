@@ -236,6 +236,7 @@
 
     // ---------- Resaltado en el diapasón/pentagrama de la nota que suena ----------
     let loadedMusicXmlText = '';
+    let scoreImportMetadata = null;
     let scoreXmlHints = [];
     const scoreHighlightMidis = new Set();
     let scoreCandidateCells = [];
@@ -283,7 +284,7 @@
         // normalmente recorre primero en partituras solistas.
         const part=parts[0];
         let divisions=1;
-        for(const measure of [...part.querySelectorAll(':scope > measure')]){
+        for(const [sourceMeasure,measure] of [...part.querySelectorAll(':scope > measure')].entries()){
           const div=+(xmlText(measure,'attributes > divisions')||divisions);
           if(Number.isFinite(div)&&div>0)divisions=div;
           let cursor=0,lastStart=0;
@@ -325,7 +326,7 @@
               barreStart:!!child.querySelector('technical barre[type="start"]'),
               barreStop:!!child.querySelector('technical barre[type="stop"]')
             };
-            if(!events.has(start))events.set(start,{notes:[],measure:String(measure.getAttribute('number')||''),time:start/divisions});
+            if(!events.has(start))events.set(start,{notes:[],sourceMeasure,measure:String(measure.getAttribute('number')||''),time:start/divisions});
             events.get(start).notes.push(noteHint);
           }
           [...events.entries()].sort((a,b)=>a[0]-b[0]).forEach(([,e])=>out.push(e));
@@ -335,11 +336,12 @@
     }
     function attachMusicXmlHintsToSteps(){
       if(!scoreSteps.length)return;
-      const octaveOffset=SCORE_OCTAVE_OFFSET[instrumentSel.value]||0;
+      const octaveOffset=scoreOctaveOffset();
       let hi=0;
       for(const step of scoreSteps){
         step.technique={notes:[],labels:[]};
         if(!step.midis?.length)continue;
+        const sourceHint=scoreXmlHints.findIndex(h=>h.sourceMeasure===step.sourceMeasure&&Math.abs(h.time-step.sourceTime)<1e-6);if(sourceHint>=0)hi=sourceHint;
         let best=-1,bestScore=-1;
         for(let j=hi;j<Math.min(scoreXmlHints.length,hi+6);j++){
           const h=scoreXmlHints[j];
@@ -572,7 +574,7 @@
     function rebuildPhrasePlan(){
       phrasePlan=[]; phrasePlanReady=false; phrasePlanVersion++;
       if(!scoreSteps.length||!scoreSteps.some(s=>Array.isArray(s.midis))){
-        if(phrasePlanDetail)phrasePlanDetail.textContent='Carga un MusicXML para analizar la frase.';
+        if(phrasePlanDetail)phrasePlanDetail.textContent='Carga un MusicXML o MEI para analizar la frase.';
         return;
       }
       const n=Math.max(4,+scorePhraseLength?.value||8);
@@ -645,7 +647,7 @@
     }
     function clearFingering(){
       scoreCandidateCells=[]; scoreRecommendedCells=[]; tutorExpectedKeys.clear(); tutorCompletedKeys.clear();
-      if(fingeringCurrent){fingeringCurrent.textContent='Carga un MusicXML para activar la digitación.';fingeringDetail.textContent='La app mostrará posiciones posibles y una recomendación de cuerda/traste.';if(techniqueDetail)techniqueDetail.textContent='Articulación: — · Técnica: análisis automático';if(phrasePlanDetail)phrasePlanDetail.textContent='Fase 5 · carga un MusicXML para analizar articulaciones, cambios de posición y dedos guía.';}
+      if(fingeringCurrent){fingeringCurrent.textContent='Carga un MusicXML o MEI para activar la digitación.';fingeringDetail.textContent='La app mostrará posiciones posibles y una recomendación de cuerda/traste.';if(techniqueDetail)techniqueDetail.textContent='Articulación: — · Técnica: análisis automático';if(phrasePlanDetail)phrasePlanDetail.textContent='Fase 5 · carga un MusicXML o MEI para analizar articulaciones, cambios de posición y dedos guía.';}
     }
     function setTutorMode(on){
       tutorMode=!!on; scoreTutorBtn.classList.toggle('active',tutorMode); scoreTutorBtn.setAttribute('aria-pressed',String(tutorMode)); scoreTutorBtn.textContent=tutorMode?'Tutor · ON':'Tutor · OFF';
@@ -765,8 +767,10 @@
     // de su altura sonora. MusicXML usa la altura escrita; el diapasón/audio usan la sonora.
     const SCORE_OCTAVE_OFFSET = { bass4: -12, bass5: -12 };
 
+    function scoreOctaveOffset(){return scoreImportMetadata?.soundOffset??(SCORE_OCTAVE_OFFSET[instrumentSel.value]||0);}
+
     function getCurrentStepData(tempo){
-      const stepSeconds=ScorePlaybackTiming.stepSeconds(osmd.cursor.Iterator,tempo); const notes=[]; const midis=[]; const octaveOffset=SCORE_OCTAVE_OFFSET[instrumentSel.value]||0;
+      const stepSeconds=ScorePlaybackTiming.stepSeconds(osmd.cursor.Iterator,tempo); const notes=[]; const midis=[]; const octaveOffset=scoreOctaveOffset();
       try{
         const entries=osmd.cursor.Iterator.CurrentVoiceEntries||[];
         entries.forEach(ve=>(ve.Notes||[]).forEach(note=>{
@@ -886,7 +890,7 @@
     ;[scoreCountIn,scoreMetroSync,scoreLoopRepeats,scoreLoopBpmAdd,scoreLoopBpmEvery].forEach(e=>e.addEventListener('change',saveSettings));
     ;[scoreFingeringView,scoreFingeringStrategy,scoreTechniqueMode].forEach(e=>e&&e.addEventListener('change',()=>{saveSettings(); rebuildPhrasePlan(); if(scoreHighlightMidis.size){updateFingeringForMidis([...scoreHighlightMidis],{remember:false});draw();}}));
     scorePhraseLength?.addEventListener('change',()=>{saveSettings();rebuildPhrasePlan();if(scoreHighlightMidis.size){updateFingeringForMidis([...scoreHighlightMidis],{remember:false});draw();}});
-    scoreAnalyzePhraseBtn?.addEventListener('click',()=>{rebuildPhrasePlan();if(scoreHighlightMidis.size){updateFingeringForMidis([...scoreHighlightMidis],{remember:false});draw();}practiceStatus.textContent=phrasePlanReady?'Digitación de frase recalculada':'No hay MusicXML para analizar';setTimeout(()=>{if(!tutorMode)practiceStatus.textContent='';},1800);});
+    scoreAnalyzePhraseBtn?.addEventListener('click',()=>{rebuildPhrasePlan();if(scoreHighlightMidis.size){updateFingeringForMidis([...scoreHighlightMidis],{remember:false});draw();}practiceStatus.textContent=phrasePlanReady?'Digitación de frase recalculada':'No hay MusicXML o MEI para analizar';setTimeout(()=>{if(!tutorMode)practiceStatus.textContent='';},1800);});
     scoreTutorBtn?.addEventListener('click',()=>setTutorMode(!tutorMode));
 
     // Atajo de barra espaciadora para Play/Pausa, y flechas para avanzar/retroceder nota
@@ -928,9 +932,10 @@
         osmd.cursor.reset();
         osmd.cursor.show();
         const containerRect = osmdContainer.getBoundingClientRect();
-        let guard = 0;
+        let guard = 0;const visited=[],visitIds=new Set();
         while (!osmd.cursor.Iterator.EndReached && guard < 4000) {
           osmd.cursor.update();
+      const routeVisit=osmd.cursor.Iterator.CrescendoVisit;if(Number.isInteger(routeVisit)&&!visitIds.has(routeVisit)){visitIds.add(routeVisit);visited.push(osmd.cursor.Iterator.CurrentMeasureIndex);}
           const cursorEl = osmd.cursor.cursorElement;
           if (cursorEl) {
             const r = cursorEl.getBoundingClientRect();
@@ -942,6 +947,8 @@
                 top: r.top - containerRect.top + osmdContainer.scrollTop,
                 width: Math.max(r.width, 10),
                 height: Math.max(r.height, 20),
+                sourceMeasure:osmd.cursor.Iterator.CurrentMeasureIndex,
+                sourceTime:(osmd.cursor.Iterator.CurrentSourceTimestamp.RealValue-osmd.cursor.Iterator.CurrentMeasure.AbsoluteTimestamp.RealValue)*4,
                 midis:[...stepData.midis],
                 stepSeconds:stepData.stepSeconds
               });
@@ -950,7 +957,10 @@
           osmd.cursor.next();
           guard++;
         }
-      } catch(err) { console.warn('No se pudo generar mapa de clics:', err); scoreSteps = []; }
+
+      osmdContainer.dataset.playbackVisited=visited.join(',');
+
+    } catch(err) { console.warn('No se pudo generar mapa de clics:', err); scoreSteps = []; }
       try { osmd.cursor.reset(); osmd.cursor.hide(); } catch(e) {}
       currentStepIndex = -1;
       attachMusicXmlHintsToSteps();
@@ -1005,7 +1015,7 @@
       imageViewer.src = '';
       resetImageTransform();
       scoreSteps = [];
-      scoreXmlHints=[]; loadedMusicXmlText='';
+      scoreXmlHints=[]; loadedMusicXmlText='';scoreImportMetadata=null;
       phrasePlan=[]; phrasePlanReady=false;
       scorePlayControls.classList.remove('visible');
       scoreStatus.textContent = '';
@@ -1019,7 +1029,7 @@
       if (!file) return;
       const name = file.name.toLowerCase();
       const isPdf = name.endsWith('.pdf') || file.type === 'application/pdf';
-      const isMusicXML = name.endsWith('.xml') || name.endsWith('.musicxml') || name.endsWith('.mxl');
+      const isMusicXML = name.endsWith('.xml') || name.endsWith('.musicxml') || name.endsWith('.mxl') || name.endsWith('.mei');
       const isImage = file.type.startsWith('image/') || /\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(name);
 
       resetScoreView();
@@ -1038,19 +1048,23 @@
         try {
           const engine = ensureOSMD();
           const ext = name.split('.').pop();
-          const content = (ext === 'mxl') ? await file.arrayBuffer() : await file.text();
+          const imported = await window.CrescendoScoreFile.read(file);
+          const content = imported.content;scoreImportMetadata = imported;
+          osmdContainer.dataset.scoreFormat=imported.format;osmdContainer.dataset.importNotes=String(imported.noteCount??'');
           loadedMusicXmlText = typeof content==='string'?content:'';
           scoreXmlHints = loadedMusicXmlText?parseMusicXmlHints(loadedMusicXmlText):[];
           await engine.load(content);
           osmdContainer.classList.add('visible');
           engine.render();
+      window.CrescendoScoreRoute.install(engine,imported.playbackRoute);
+      osmdContainer.dataset.playbackRoute=(imported.playbackRoute||[]).join(',');
           requestAnimationFrame(() => {
             try { engine.render(); buildScoreStepMap(); } catch(e) { console.warn('Error final render:', e); }
           });
           scorePlayControls.classList.add('visible');
           pdfClearBtn.classList.add('visible');
-          scoreStatus.textContent = '';
-          if(techniqueDetail)techniqueDetail.textContent=ext==='mxl'?'Técnica: análisis geométrico activo · para articulaciones explícitas usa .musicxml/.xml':'Técnica: MusicXML leído · articulaciones y digitaciones técnicas activas';
+          scoreStatus.textContent = imported.format==='mei'?['MEI cargado.',...imported.warnings].join(' '):'';
+          if(techniqueDetail)techniqueDetail.textContent=imported.format==='mei'?'Técnica: MEI leído · articulaciones y digitaciones activas':ext==='mxl'?'Técnica: análisis geométrico activo · para articulaciones explícitas usa .musicxml/.xml':'Técnica: MusicXML leído · articulaciones y digitaciones técnicas activas';
           const bpm = engine.Sheet && engine.Sheet.DefaultStartTempoInBpm;
           if (bpm && bpm > 0) scoreTempoInput.value = Math.round(bpm);
         } catch(err) {
@@ -1076,7 +1090,7 @@
         scorePlayControls.classList.remove('visible');
         return;
       }
-      alert('Formato no soportado. Usa PDF, MusicXML (.xml / .musicxml), .mxl o imagen (PNG, JPG, GIF, WEBP, BMP, SVG).');
+      alert('Formato no soportado. Usa PDF, MusicXML (.xml / .musicxml / .mxl), MEI (.mei o .xml) o imagen (PNG, JPG, GIF, WEBP, BMP, SVG).');
       this.value = '';
     });
 

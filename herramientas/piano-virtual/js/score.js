@@ -1,3 +1,5 @@
+let scoreImportMetadata=null;
+const scoreSoundingMidi=midi=>midi+(scoreImportMetadata?.soundOffset??0);
 // ---------- PARTITURA (PDF, MUSICXML, IMAGEN) ----------
 const pdfUpload = document.getElementById('pdfUpload');
 const pdfViewer = document.getElementById('pdfViewer');

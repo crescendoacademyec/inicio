@@ -179,7 +179,7 @@
       <div class="strings-tutor-head">
         <div>
           <strong>Tutor de partitura</strong>
-          <span>MusicXML → cuerda · posición · dedo · arco</span>
+          <span>MusicXML / MEI → cuerda · posición · dedo · arco</span>
         </div>
         <label class="tutor-toggle"><input type="checkbox" id="tutorEnabled"> Activar Tutor</label>
       </div>
@@ -223,7 +223,7 @@
         <div><small>Posición</small><strong id="tutorPosition">—</strong></div>
         <div><small>Arco</small><strong id="tutorBow">—</strong></div>
       </div>
-      <div class="strings-tutor-technique" id="tutorTechnique">Carga un MusicXML para analizar digitación, cambios de posición y articulaciones.</div>
+      <div class="strings-tutor-technique" id="tutorTechnique">Carga un MusicXML o MEI para analizar digitación, cambios de posición y articulaciones.</div>
       <div class="strings-tutor-status" id="tutorStatus" aria-live="polite"></div>
     </section>
 
@@ -867,7 +867,7 @@
         </div>
 
         <div class="pdf-controls">
-          <label for="pdfUpload" title="Selecciona un archivo PDF, MusicXML o imagen con la partitura o foto">
+          <label for="pdfUpload" title="Selecciona un archivo PDF, MusicXML, MEI o imagen con la partitura o foto">
             <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
               <polyline points="17 8 12 3 7 8"/>
@@ -875,7 +875,7 @@
             </svg>
             Cargar partitura
           </label>
-          <input type="file" id="pdfUpload" accept=".pdf,.xml,.musicxml,.mxl,.png,.jpg,.jpeg,.gif,.webp,.bmp,.svg" class="file-input-hidden">
+          <input type="file" id="pdfUpload" accept=".pdf,.xml,.musicxml,.mxl,.mei,application/mei+xml,.png,.jpg,.jpeg,.gif,.webp,.bmp,.svg" class="file-input-hidden">
           <span class="score-status" id="scoreStatus"></span>
           <button type="button" class="pdf-clear-btn" id="pdfClearBtn" title="Quitar la partitura actual">
             <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none">
@@ -902,12 +902,14 @@
 </footer>
 
   <!-- ===== SCRIPTS ===== -->
-  <script src="../../shared/score-playback-timing.js?v=20260925"></script>
+  <script src="../../shared/score-playback-timing.js?v=20261119-route"></script>
 <script src="https://cdn.jsdelivr.net/npm/soundfont-player@0.12.0/dist/soundfont-player.min.js"></script>
-  <script src="../../shared/opensheetmusicdisplay-1.8.4.min.js?v=20261019-bravura-1"></script>
+  <script src="../../shared/score-playback-route.js?v=20261119-mei-1"></script>
+<script src="../../shared/score-file-reader.js?v=20261119-mei-1"></script>
+<script src="../../shared/opensheetmusicdisplay-1.8.4.min.js?v=20261119-rest-placement"></script>
   <script src="../../shared/pitch-spelling.js?v=20261022-1"></script>
   <script src="js/live-staff.js?v=20261022-enharmonics-1"></script>
-  <script src="js/app.js?v=20261118-musical-fixes-1"></script>
+  <script src="js/app.js?v=20261119-mei-1"></script>
   <script src="js/vibrato.js?v=20261118-musical-fixes-1"></script>
   <script src="js/metronome.js?v=20260925-beat-stop"></script>
   <script src="js/workspace-tabs.js"></script>

@@ -10,17 +10,21 @@ function iterator(notes){return {CurrentVoiceEntries:[{Notes:notes}]};}
 function context(extra={}){const c={ScorePlaybackTiming:timing,console,...extra};vm.createContext(c);return c;}
 function timers(){let id=0;const pending=new Map();return {pending,setTimeout:(f,ms)=>{pending.set(++id,{f,ms});return id;},clearTimeout:i=>pending.delete(i)};}
 (async()=>{
- for(const app of ['diapason-virtual','bass-virtual','folk-virtual'])for(const file of ['js/score.js','index.html']){
+ for(const app of ['diapason-virtual','bass-virtual','requinteando','folk-virtual'])for(const file of ['js/score.js','index.html']){
   const src=read('herramientas/'+app+'/'+file),heard=[];
   const c=context({osmd:{cursor:{Iterator:iterator([note(4,true)])}},SCORE_OCTAVE_OFFSET:{test:-12},instrumentSel:{value:'test'},activeInstrument:()=>({writtenTranspose:12}),playNote:(m,d)=>heard.push([m,d]),scoreActiveHandles:[],setScoreHighlight(){}});
+  if(src.includes('function scoreOctaveOffset(')){c.scoreImportMetadata=null;vm.runInContext(src.match(/function scoreOctaveOffset\(\)\{[^}]*\}/)[0],c);}
   vm.runInContext(fn(src,'getCurrentStepData','scheduleScoreStep'),c);
   eq(c.triggerCurrentStepNotes(120),2,app+' '+file+' whole rest');eq(heard.length,0,'rest silent');
   c.osmd.cursor.Iterator=iterator([note(4),note(1)]);
   eq(c.triggerCurrentStepNotes(120),.5,'polyphonic step');eq(JSON.stringify(heard),JSON.stringify([[48,2],[48,.5]]),'individual durations and written transposition');
+  if(c.scoreOctaveOffset){for(const offset of [0,-12]){heard.length=0;c.scoreImportMetadata={soundOffset:offset};c.triggerCurrentStepNotes(120);eq(heard[0][0],60+offset,'MEI sounding offset applied once');}}
  }
  const t=timers(),attacks=[],releases=[];
  const src=read('herramientas/piano-virtual/js/tutor.js');
  const c=context({...t,osmd:{cursor:{Iterator:iterator([note(4,true)])}},shouldPlayScoreNote:()=>true,scoreNoteHand:()=> 'right',scoreActiveMidis:new Set(),keyElByMidi:{},noteOn:m=>attacks.push(m),noteOff:m=>releases.push(m),midiToInfo:m=>m,scorePlaying:false,scorePlaybackTimer:null,syncTransportButton(){}});
+ vm.runInContext(read('herramientas/piano-virtual/js/score.js').split('// ---------- PARTITURA')[0]+'\nthis.scoreSoundingMidi=scoreSoundingMidi;',c);
+ eq(c.scoreSoundingMidi(60),60,'piano concert pitch');vm.runInContext('scoreImportMetadata={soundOffset:-12}',c);eq(c.scoreSoundingMidi(60),48,'piano declared offset');vm.runInContext('scoreImportMetadata=null',c);
  vm.runInContext(src.slice(src.indexOf('const scoreReleaseTimers'),src.indexOf('function pausePlayback'))+fn(src,'triggerCurrentStepNotes','scheduleScoreStep'),c);
  eq(c.triggerCurrentStepNotes(120),2,'piano rest');eq(attacks.length,0,'no rest attack');
  c.osmd.cursor.Iterator=iterator([note(1)]);c.shouldPlayScoreNote=()=>false;eq(c.triggerCurrentStepNotes(120),.5,'muted hand preserves timing');eq(attacks.length,0,'muted hand silent');c.shouldPlayScoreNote=()=>true;
