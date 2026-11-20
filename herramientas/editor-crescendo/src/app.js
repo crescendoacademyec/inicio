@@ -13734,21 +13734,31 @@
     }
     document.querySelectorAll(".guitar-fretboard button").forEach(button=>{
       const position=positions.find(p=>p.string===Number(button.dataset.string)&&p.fret===Number(button.dataset.fret));
-      button.classList.toggle("is-playing",!!position);button.textContent=position?.label||button.dataset.noteLabel||"";
+      button.classList.toggle("is-playing",!!position);button.textContent=position?.label||button.dataset.noteLabel||"";button.dataset.hoverLabel=position?.label||button.dataset.noteLabel||button.dataset.positionLabel||"";
     });
   }
 
-  function stringInstrument() { return Guitar.forInstrument(state.playbackInstrument); }
+  function stringInstrument() { return Guitar.forInstrument(state.playbackInstrument,{maxFret:22}); }
   function stringMidisForEntry(entry,measureIndex,steps=entryStaffSteps(entry)){const ins=stringInstrument();return midiNotesForEntry(entry,measureIndex,steps).map(n=>ins?ins.soundingMidi(n):n);}
   function stringNoteLabels(entry,measureIndex){
-    const labels=new Map(),instrument=stringInstrument(),letters=["C","D","E","F","G","A","B"],natural=[0,2,4,5,7,9,11];
+    const labels=new Map(),instrument=stringInstrument();
     for(const staffStep of entryStaffSteps(entry)){
-      const written=entryDiatonicStepForStaffStep(entry,staffStep),shift=instrument?.id==="requinto"?-4:instrument?.id==="guitar"?-7:0;
-      const degree=((written+shift)%7+7)%7,midi=stringMidisForEntry(entry,measureIndex,[staffStep])[0];
-      const alter=(((midi%12)-natural[degree]+18)%12)-6;
-      labels.set(midi,letters[degree]+(alter>0?"#".repeat(alter):"b".repeat(-alter)));
+      const written=entryDiatonicStepForStaffStep(entry,staffStep),midi=stringMidisForEntry(entry,measureIndex,[staffStep])[0];
+      labels.set(midi,stringPitchLabel(instrument,midi,written));
     }
     return labels;
+  }
+  function stringPitchLabel(instrument,midi,written){
+    const letters=["C","D","E","F","G","A","B"],natural=[0,2,4,5,7,9,11];
+    const shift=instrument?.id==="requinto"?-4:instrument?.id==="guitar"?-7:0,degree=((written+shift)%7+7)%7;
+    const alter=(((midi%12)-natural[degree]+18)%12)-6;
+    return letters[degree]+(alter>0?"#".repeat(alter):"b".repeat(-alter));
+  }
+  function stringPositionLabel(instrument,string,fret){
+    const midi=instrument.midi(string,fret);
+    if(midi===null)return "";
+    const info=midiNoteInfo(instrument.writtenMidi(midi),state.cursorMeasure);
+    return stringPitchLabel(instrument,midi,info.diatonicStep);
   }
   function savedStringFingering(entry) { return entry.stringFingerings?.[state.playbackInstrument] || (state.playbackInstrument === "guitar" ? entry.guitarFingering : []) || []; }
   function storeStringFingering(entry, positions) {
@@ -13867,11 +13877,11 @@
       panel.querySelector(".guitar-fretboard").setAttribute("aria-label",`Diapasón de ${instrument.name}`);
       const board = panel.querySelector(".guitar-fretboard");
       instrument.tuning.forEach((_,i)=>{
-        const name=document.createElement("span");name.className="guitar-string-name";name.textContent=`${i+1} · ${instrument.labels[i]}`;board.appendChild(name);
-        for(let fret=0;fret<=24;fret++){
+        const name=document.createElement("span");name.className="guitar-string-name";name.textContent=String(i+1);name.dataset.string=String(i+1);board.appendChild(name);
+        for(let fret=0;fret<=instrument.maxFret;fret++){
         const button=document.createElement("button");button.type="button";button.textContent="";button.dataset.string=String(i+1);button.dataset.fret=String(fret);button.style.setProperty("--string-thickness",`${.7+i*.3}px`);
         button.setAttribute("aria-label",`Cuerda ${i+1}, ${instrument.fretted?"traste":"banda"} ${fret}`);
-        if(!instrument.fretted&&[2,4,5,7,9,11,12].includes(fret))button.classList.add("finger-guide");
+        if(!instrument.fretted&&window.CrescendoEditorStringBoard.bandColor(fret))button.classList.add("finger-guide");
         button.onclick=()=>applyGuitarPosition(i+1,fret);board.appendChild(button);
       }});
       board.addEventListener("keydown",event=>{
@@ -13879,7 +13889,7 @@
         if(!button||!["ArrowLeft","ArrowRight","ArrowUp","ArrowDown"].includes(event.key)||event.ctrlKey||event.metaKey||event.altKey)return;
         event.preventDefault();event.stopPropagation();
         const string=Math.max(1,Math.min(instrument.tuning.length,Number(button.dataset.string)+(event.key==="ArrowDown"?1:event.key==="ArrowUp"?-1:0)));
-        const fret=Math.max(0,Math.min(24,Number(button.dataset.fret)+(event.key==="ArrowRight"?1:event.key==="ArrowLeft"?-1:0)));
+        const fret=Math.max(0,Math.min(instrument.maxFret,Number(button.dataset.fret)+(event.key==="ArrowRight"?1:event.key==="ArrowLeft"?-1:0)));
         applyGuitarPosition(string,fret);const next=board.querySelector(`button[data-string="${string}"][data-fret="${fret}"]`);next?.focus({preventScroll:true});next?.scrollIntoView({block:"nearest",inline:"nearest"});
       });
       panel._boardCleanup=window.CrescendoEditorStringBoard.mount(board,instrument);
@@ -13894,8 +13904,11 @@
       button.classList.toggle("is-active",active);button.setAttribute("aria-pressed",String(active));
       button.dataset.noteLabel=active?labels.get(position.midi)||"":"";
       button.textContent=button.dataset.noteLabel;
-      button.classList.toggle("fret-guide",instrument.fretted&&Number(button.dataset.string)===Math.ceil(instrument.tuning.length/2)&&[3,5,7,9,12,15,17,19,21,24].includes(Number(button.dataset.fret)));
-      button.classList.toggle("double-guide",[12,24].includes(Number(button.dataset.fret)));
+      button.dataset.positionLabel=stringPositionLabel(instrument,Number(button.dataset.string),Number(button.dataset.fret));
+      button.dataset.hoverLabel=button.dataset.noteLabel||button.dataset.positionLabel;
+      button.setAttribute("aria-label",`Cuerda ${button.dataset.string}, ${instrument.fretted?"traste":"banda"} ${button.dataset.fret}: ${button.dataset.hoverLabel}`);
+      button.classList.toggle("fret-guide",instrument.fretted&&Number(button.dataset.string)===Math.ceil(instrument.tuning.length/2)&&[3,5,7,9,12,15,17,19,21].includes(Number(button.dataset.fret)));
+      button.classList.toggle("double-guide",Number(button.dataset.fret)===12);
 
     });
   }

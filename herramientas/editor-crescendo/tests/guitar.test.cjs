@@ -27,3 +27,15 @@ test('saved fingerings from another instrument are validated against the current
  const uke=guitar.forInstrument('ukulele').fingering([64],original);
  assert.notDeepEqual(uke,original);uke.forEach(p=>assert.equal(guitar.forInstrument('ukulele').midi(p.string,p.fret),64));
 });
+test('22-fret editor profiles reject unreachable positions and replace saved higher frets',()=>{
+ for(const id of ['guitar','requinto','bass','ukulele']){
+  const instrument=guitar.forInstrument(id,{maxFret:22});assert.equal(instrument.maxFret,22);
+  instrument.tuning.forEach((open,index)=>{assert.equal(instrument.midi(index+1,22),open+22);assert.equal(instrument.midi(index+1,23),null);assert.ok(instrument.positions(open+22).every(p=>p.fret<=22));});
+ }
+ const instrument=guitar.forInstrument('guitar',{maxFret:22});
+ const replacement=instrument.fingering([83],[{string:2,fret:24,midi:83}]);
+ assert.deepEqual(replacement,[{string:1,fret:19,midi:83}]);
+ assert.deepEqual(instrument.positions(87),[]);
+ assert.equal(guitar.forInstrument('guitar').midi(1,24),88);
+ assert.equal(guitar.forInstrument('violin',{maxFret:22}).midi(1,24),100);
+});

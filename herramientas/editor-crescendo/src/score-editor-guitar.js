@@ -16,10 +16,11 @@
   }
   return {finger:null,position:'libre'};
  }
- function create(profile){
- const tuning=profile.tuning;
- function midi(string,fret){return Number.isInteger(string)&&string>=1&&string<=tuning.length&&Number.isInteger(fret)&&fret>=0&&fret<=24?tuning[string-1]+fret:null;}
- function positions(note){return tuning.flatMap((open,index)=>note>=open&&note<=open+24?[{string:index+1,fret:note-open,midi:note}]:[]);}
+ function create(profile,options={}){
+ // The Crescendo editor limits fretted boards; other consumers retain their range.
+ const tuning=profile.tuning,maxFret=profile.fretted&&Number.isInteger(options.maxFret)?Math.max(0,Math.min(24,options.maxFret)):24;
+ function midi(string,fret){return Number.isInteger(string)&&string>=1&&string<=tuning.length&&Number.isInteger(fret)&&fret>=0&&fret<=maxFret?tuning[string-1]+fret:null;}
+ function positions(note){return tuning.flatMap((open,index)=>note>=open&&note<=open+maxFret?[{string:index+1,fret:note-open,midi:note}]:[]);}
  // One playable position per pitch; never place two chord notes on the same string.
  function fingering(notes,saved=[]){
   const ordered=[...new Set(notes)].sort((a,b)=>a-b);let best=null,bestCost=Infinity;
@@ -30,8 +31,8 @@
   }
   visit(0,[],new Set());return best||[];
  }
- return {...profile,midi,positions,fingering,soundingMidi:written=>written+(profile.transpose||0),writtenMidi:sounding=>sounding-(profile.transpose||0)};
+ return {...profile,maxFret,midi,positions,fingering,soundingMidi:written=>written+(profile.transpose||0),writtenMidi:sounding=>sounding-(profile.transpose||0)};
  }
- const forInstrument=id=>profiles[id]?create(profiles[id]):null;
+ const forInstrument=(id,options)=>profiles[id]?create(profiles[id],options):null;
  const api={...forInstrument('guitar'),profiles,forInstrument,violinPositions,technique};if(typeof module!=='undefined')module.exports=api;else root.JMLScoreGuitar=api;
 })(typeof window==='undefined'?globalThis:window);

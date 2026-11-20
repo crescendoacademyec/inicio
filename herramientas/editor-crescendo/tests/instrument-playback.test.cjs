@@ -28,3 +28,12 @@ test('fretboard labels follow written accidentals and the instrument transpositi
   const c={entryStaffSteps:()=>[0],entryDiatonicStepForStaffStep:()=>written,stringInstrument:()=>Guitar.forInstrument(instrument),stringMidisForEntry:()=>[midi]};vm.createContext(c);vm.runInContext(fn,c);assert.equal(c.stringNoteLabels({},0).get(midi),label);
  }
 });
+test('hover labels show sounding pitches with the same spelling as the score',()=>{
+ const source=fs.readFileSync(require('node:path').join(__dirname,'../src/app.js'),'utf8'),fn=source.slice(source.indexOf('  function stringPitchLabel('),source.indexOf('  function savedStringFingering('));
+ for(const [id,string,fret,writtenStep,expected] of [['guitar',1,0,9,'E'],['requinto',1,0,9,'A'],['bass',4,0,-12,'E'],['violin',1,2,10,'F#'],['ukulele',4,0,4,'G']]){
+  const instrument=Guitar.forInstrument(id,{maxFret:22});let received;
+  const c={state:{cursorMeasure:3},midiNoteInfo:(midi,measure)=>{received=[midi,measure];return {diatonicStep:writtenStep};}};vm.createContext(c);vm.runInContext(fn,c);
+  assert.equal(c.stringPositionLabel(instrument,string,fret),expected);
+  assert.deepEqual(received,[instrument.writtenMidi(instrument.midi(string,fret)),3]);
+ }
+});

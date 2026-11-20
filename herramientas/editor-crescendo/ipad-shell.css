@@ -1695,8 +1695,6 @@ html{--ipad-inspector-width:146px!important}.ipad-inspector-panel .ipad-side-con
 /* Bowed strings: continuous ebony fingerboard, with teaching bands rather than metal frets. */
 #editorGuitarPanel.is-fretless .guitar-fretboard { background:linear-gradient(#161616,#34302c,#171717); }
 #editorGuitarPanel.is-fretless .guitar-fretboard button { border-right:0; }
-#editorGuitarPanel.is-fretless .guitar-fretboard button.finger-guide::before { content:""; position:absolute; top:0; bottom:0; left:50%; border-left:1px dashed #d7b86466; pointer-events:none; }
-#editorGuitarPanel.is-fretless .guitar-fretboard button.is-active::before { display:none; }
 #editorGuitarPanel.is-fretless .guitar-fretboard button.is-active { font-weight:700; background:#d5aa45; color:#111; }
 .guitar-fretboard button { background:linear-gradient(transparent calc(50% - var(--string-thickness,.8px)),#bdb5a5 50%,transparent calc(50% + var(--string-thickness,.8px))); }
 .editor-workbench.is-ipad-workbench.has-string-instrument .midi-keyboard-panel { max-height:57%; overflow:auto; flex:0 1 auto; min-height:0; }
@@ -1834,3 +1832,9 @@ html{--ipad-inspector-width:146px!important}.ipad-inspector-panel .ipad-side-con
 .is-compact-menubar .ipad-sound-selector{gap:0;padding:0 6px}
 .is-compact-menubar .ipad-sound-selector select{width:auto;min-width:62px;max-width:90px;font-size:12px}
 @media(min-width:901px){.is-compact-menubar .ipad-header-left{flex-basis:180px}}
+
+/* Show a note on hover without changing the score, selection or playback. */
+#editorGuitarPanel .guitar-fretboard{grid-template-columns:32px 44px repeat(22,minmax(44px,1fr))}
+#editorGuitarPanel .guitar-string-name{justify-content:center;padding-left:0;font-size:11px}
+#editorGuitarPanel .guitar-fretboard button:is(:hover,:focus-visible)::before{content:attr(data-hover-label);display:grid!important;place-items:center;position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:26px;height:26px;border-radius:50%;background:#fffaf0;color:#161514;box-shadow:0 2px 8px #0007;font:900 12px/1 system-ui,sans-serif;pointer-events:none;z-index:2}
+#editorGuitarPanel .guitar-fretboard button:is(.is-active,.is-playing):is(:hover,:focus-visible)::before{background:#d4a84f}
