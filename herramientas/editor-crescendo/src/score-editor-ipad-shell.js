@@ -40,12 +40,12 @@
       '<rect x="6" y="4" width="4" height="16" rx="1"/>',
       '<rect x="14" y="4" width="4" height="16" rx="1"/>'
     ].join(""),
-    piano: '<rect x="3" y="5" width="18" height="14" rx="1.5"/><path d="M7.5 12v7M12 12v7M16.5 12v7"/><path fill="currentColor" stroke="none" d="M6.2 5h2.5v7H6.2zM10.7 5h2.5v7h-2.5zM15.2 5h2.5v7h-2.5z"/>',
-    guitar: '<g stroke-width="1.5"><path d="M12 8c-1.3-1.3-3.2-1.5-4.4-.4-.7.7-.8 1.6-.5 2.4-2.1.1-3.7 1.6-4 3.6-.4 2.8 1.9 5.5 4.8 5.4 2.2-.1 3.8-1.7 4-3.9.8.3 1.7.2 2.4-.5 1.1-1.2.9-3.1-.4-4.4l6-6-2-2-6 6Z"/><circle cx="9" cy="13" r="1.6"/><path d="m6 17 2 2m3-8 8-8m-2 1 2 2"/></g>',
-    requinto: '<g stroke-width="1.5"><path d="M11.5 10c-1.2-1.2-2.7-1.4-3.6-.4-.5.5-.6 1.2-.3 1.9-1.8.1-3.1 1.3-3.4 3-.4 2.5 1.5 4.8 4 4.7 1.8-.1 3.3-1.5 3.5-3.3.7.3 1.4.2 1.9-.3 1-1 .8-2.5-.4-3.7l7-7-2-2-6.7 7.1Z"/><circle cx="9" cy="14" r="1.3"/><path d="m6.5 17 2 2m3.5-6 7-8m-1.5.5 2 2"/></g>',
-    bass: '<g stroke-width="1.5"><path d="m12 11 7-8 2 2-7 8c1.4 1.4 1.1 3.7-.3 5.2-1.9 2-5.4 3-7.4 1-2.1-2.1-.9-5.6 1.1-7.5l1.3-1.2-.6 3 2.5.3L12 11Z"/><path d="m7 17 2 2m1-5 2 2m-.5-3.5 1 1M18 3l1-1 3 3-1 1"/></g>',
-    ukulele: '<g stroke-width="1.5"><rect x="10.5" y="2" width="3" height="3" rx=".7"/><path d="M11 5v5c-2-1-4 0-4 2 0 1 .8 1.7 1.5 2C6.5 15 6 16 6 18c0 2.4 2.7 4 6 4s6-1.6 6-4c0-2-.5-3-2.5-4 .7-.3 1.5-1 1.5-2 0-2-2-3-4-2V5"/><circle cx="12" cy="14" r="1.6"/><path d="M9.5 19h5M9 3h1.5M13.5 3H15M11 7h2"/></g>',
-    violin: '<g stroke-width="1.5"><path d="M11 7V3a1 1 0 0 1 2 0v4m-3 0h4M9 8c-2 0-3 2-2 4l2 2-2 2c-2 3 .5 6 5 6s7-3 5-6l-2-2 2-2c1-2 0-4-2-4"/><path d="M11 7v12m2-12v12m-3-1h4M8.5 16l1-1m5 1-1-1M22 3l-4 18"/></g>',
+    piano: '<rect x="5" y="11" width="38" height="40" rx="3" fill="#25282d" stroke="#d5d9df" stroke-width="1.5"/><path d="M8 20h32v26H8z" fill="#f8f3e8" stroke="#c7c8ca" stroke-width="1"/><path d="M12.6 20v26m4.6-26v26m4.6-26v26m4.6-26v26M31 20v26m4.6-26v26" stroke="#4b4f55" stroke-width=".8"/><path d="M11 20h3v15h-3zm5 0h3v15h-3zm9 0h3v15h-3zm5 0h3v15h-3zm5 0h3v15h-3z" fill="#22252b" stroke="none"/><path d="M9 15h30" stroke="#d6ac61" stroke-width="1.5"/>',
+    guitar: '<path d="M20 27c-7-5-13-1-12 5 .3 3 4 5 3 8-1 2-7 5-6 12 1 7 9 10 19 10s18-3 19-10c1-7-5-10-6-12-1-3 3-5 3-8 1-6-5-10-12-5" fill="#ba773d" stroke="#f0c587" stroke-width="1.7"/><path d="M21 12h6v29h-6z" fill="#3a2923" stroke="#e1b77c" stroke-width="1"/><rect x="19" y="2" width="10" height="12" rx="2" fill="#9e6134" stroke="#eac58f" stroke-width="1.3"/><path d="M17 5h2m10 0h2M17 9h2m10 0h2M17 12h2m10 0h2" stroke="#d5d9df" stroke-width="2"/><circle cx="24" cy="43" r="5" fill="#242124" stroke="#f1d19c" stroke-width="1.5"/><path d="M17 54h14" stroke="#382923" stroke-width="3"/><path d="M22.5 5v49M24 5v49M25.5 5v49" stroke="#eee0c9" stroke-width=".6"/><path d="M21 19h6m-6 5h6m-6 5h6m-6 5h6" stroke="#b6b9bd" stroke-width=".7"/>',
+    requinto: '<path d="M20 31c-6-4-12-1-11 4 .4 3 4 5 3 7-1 2-6 5-5 11 1 6 8 9 17 9s16-3 17-9c1-6-4-9-5-11-1-2 3-4 3-7 1-5-5-8-11-4" fill="#d09a52" stroke="#f0d49b" stroke-width="1.7"/><path d="M21 14h6v29h-6z" fill="#3b2924" stroke="#e0bd8b" stroke-width="1"/><rect x="19" y="3" width="10" height="12" rx="2" fill="#a57243" stroke="#efd3a0" stroke-width="1.3"/><path d="M17 6h2m10 0h2M17 10h2m10 0h2M17 13h2m10 0h2" stroke="#d5d9df" stroke-width="2"/><circle cx="24" cy="45" r="4.5" fill="#242124" stroke="#f1d19c" stroke-width="1.5"/><path d="M18 55h12" stroke="#382923" stroke-width="3"/><path d="M22.5 6v49M24 6v49M25.5 6v49" stroke="#eee0c9" stroke-width=".6"/><path d="M21 20h6m-6 5h6m-6 5h6m-6 5h6m-6 5h6" stroke="#b6b9bd" stroke-width=".7"/>',
+    bass: '<path d="M20 31c-1-9-7-9-8-6 4 9-1 11-5 17-6 9-3 18 7 20 9 2 20 0 24-7 4-8-4-13-7-16-3-3-1-8 2-11-5-2-8 3-8 9" fill="#804b34" stroke="#d9b793" stroke-width="1.5"/><path d="M20 12h6v35h-6z" fill="#30282a" stroke="#c0a784" stroke-width="1"/><path d="M20 13V3l7-2 1 12z" fill="#b78752" stroke="#efd1a3" stroke-width="1.2"/><path d="M27 3h4m-4 4h4m-4 4h4M20 5h-3" stroke="#d9dee5" stroke-width="2"/><path d="M17 46h14m-14 5h14m-12 6h10" stroke="#dedfe1" stroke-width="2.3"/><path d="M21.5 5v52M23 4v53M24.5 3v54" stroke="#eee0c9" stroke-width=".65"/><path d="M20 20h6m-6 5h6m-6 5h6m-6 5h6" stroke="#b6b9bd" stroke-width=".7"/><circle cx="33" cy="52" r="1.4" fill="#e5c896" stroke="none"/>',
+    ukulele: '<path d="M21 27c-7-4-12 0-11 5 .5 3 4 5 3 7-1 3-7 6-6 13 1 7 8 10 17 10s16-3 17-10c1-7-5-10-6-13-1-2 2-4 3-7 1-5-4-9-11-5" fill="#a36c42" stroke="#e0bc8c" stroke-width="1.7"/><path d="M21 13h6v27h-6z" fill="#3a2a25" stroke="#c69c6c" stroke-width="1"/><rect x="19" y="2" width="10" height="12" rx="2" fill="#a36c42" stroke="#e0bc8c" stroke-width="1.3"/><path d="M16 5h3m10 0h3M16 11h3m10 0h3" stroke="#d9dee5" stroke-width="2"/><circle cx="24" cy="42" r="4.5" fill="#252124" stroke="#e5c998" stroke-width="1.3"/><path d="M18 54h12" stroke="#322624" stroke-width="3"/><path d="M22 5v49m1.3-49v49m1.4-49v49M26 5v49" stroke="#eee0c9" stroke-width=".6"/><path d="M21 19h6m-6 5h6m-6 5h6m-6 5h6" stroke="#b6b9bd" stroke-width=".7"/>',
+    violin: '<path d="M19 24c-9-4-13 4-9 10 4 1 4 6 0 7-7 10-2 20 11 20s18-10 11-20c-4-1-4-6 0-7 4-6 0-14-9-10" fill="#ad6532" stroke="#edbd78" stroke-width="1.7"/><path d="M19 12h4v27h-4z" fill="#30272a" stroke="#e3b274" stroke-width="1"/><path d="M19 14V8c-7-6-1-10 3-6 2 3 0 5-1 6" fill="#b4773c" stroke="#edbd78" stroke-width="1.5"/><path d="M17 10h8m-8 3h8" stroke="#d5d9df" stroke-width="1.7"/><path d="M15 39c-5-2-4 4-2 5l-1 5m15-10c5-2 4 4 2 5l1 5" stroke="#442a23" stroke-width="1.3"/><path d="M17 47h8l-2 11h-4z" fill="#35282a" stroke="none"/><path d="M17 44h8" stroke="#f0cf9e" stroke-width="2"/><path d="M20 8v47m2-47v47" stroke="#eee0c9" stroke-width=".6"/><path d="m43 4-7 56m9-55-7 56" stroke="#c39a63" stroke-width="1.3"/>',
     maximize: [
       '<path d="M8 3H5a2 2 0 0 0-2 2v3"/>',
       '<path d="M21 8V5a2 2 0 0 0-2-2h-3"/>',
@@ -240,7 +240,7 @@
     const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     if (className) svg.setAttribute("class", className);
     svg.setAttribute("aria-hidden", "true");
-    svg.setAttribute("viewBox", "0 0 24 24");
+    svg.setAttribute("viewBox", ["piano", "guitar", "requinto", "bass", "ukulele", "violin"].includes(name) ? "0 0 48 64" : "0 0 24 24");
     svg.innerHTML = INLINE_ICONS[name] || "";
     return svg;
   }
@@ -368,17 +368,18 @@
     const preferences = readLayoutPreferences();
     const state = {
       ...preferences,
+      leftVisible: false,
       lastFocus: null
     };
 
-    const root = element("div", "cuaderno-ipad-shell");
+    const root = element("div", "cuaderno-ipad-shell is-compact-menubar");
     root.dataset.leftVisible = String(state.leftVisible);
     root.dataset.rightVisible = String(state.rightVisible);
     root.dataset.keyboardVisible = String(state.keyboardVisible);
 
     const rail = element("nav", "ipad-navigation-rail");
     rail.setAttribute("aria-label", "Áreas del editor");
-    rail.setAttribute("role", "tablist");
+
     const brand = element("a", "ipad-navigation-brand");
     brand.href = "https://crescendoacademyec.github.io/inicio/";
     brand.title = "Volver a Herramientas";
@@ -395,8 +396,9 @@
       button.type = "button";
       button.id = `ipad-nav-${item.id}`;
       button.dataset.panel = item.id;
-      button.setAttribute("role", "tab");
-      button.setAttribute("aria-controls", `ipad-panel-${item.id}`);
+      button.setAttribute("aria-haspopup", "dialog");
+      button.setAttribute("aria-expanded", "false");
+      button.setAttribute("aria-controls", "ipadToolsMenu");
       button.append(icon(item.icon), element("span", "", item.label));
       rail.appendChild(button);
       navButtons.set(item.id, button);
@@ -434,7 +436,7 @@
     bpmGroup.append(bpmDown, bpmValue, bpmUp);
     function createSoundSelector(mobile = false) {
       const label = element("label", `ipad-sound-selector${mobile ? " ipad-sound-selector--mobile" : ""}`);
-      label.appendChild(icon("speaker"));
+      label.appendChild(icon(global.JMLScoreInstruments.readPreference()));
       const select = document.createElement("select");
       select.setAttribute("aria-label", "Instrumento de reproducción");
       select.title = "Instrumento de reproducción";
@@ -442,6 +444,10 @@
         const option = document.createElement("option");option.value = value;option.textContent = sound.name;select.appendChild(option);
       }
       select.value = global.JMLScoreInstruments.readPreference();
+      document.addEventListener("editor-instrument-select", event => {
+        const selected = global.JMLScoreInstruments.normalize(event.detail?.instrument);
+        select.value = selected;label.querySelector("svg").replaceWith(icon(selected));
+      });
       select.addEventListener("change", () => {
         document.querySelectorAll('.ipad-sound-selector select').forEach(other => { other.value = select.value; });
         document.dispatchEvent(new CustomEvent("editor-instrument-select", { detail: { instrument: select.value } }));
@@ -479,7 +485,10 @@
 
     const body = element("div", "ipad-workspace-body");
     const leftPanel = element("aside", "ipad-tools-panel");
+    leftPanel.id = "ipadToolsMenu";
+    leftPanel.setAttribute("role", "dialog");
     leftPanel.setAttribute("aria-label", "Herramientas");
+    leftPanel.hidden = true;
     const leftHeader = element("div", "ipad-side-header");
     const leftHeading = element("div");
     leftHeading.append(element("span", "ipad-eyebrow", "HERRAMIENTAS"), element("h2", "", "Escribir"));
@@ -552,7 +561,7 @@
       const panel = element("section", "ipad-panel-page");
       panel.id = `ipad-panel-${item.id}`;
       panel.dataset.panelPage = item.id;
-      panel.setAttribute("role", "tabpanel");
+      panel.setAttribute("role", "region");
       panel.setAttribute("aria-labelledby", `ipad-nav-${item.id}`);
       leftContent.appendChild(panel);
       panels.set(item.id, panel);
@@ -597,11 +606,7 @@
 
     const context = {
       setRightVisible(visible) {
-        if (visible && window.matchMedia("(max-width: 1180px)").matches) {
-          state.leftVisible = false;
-          root.dataset.leftVisible = "false";
-          toggleLeft.setAttribute("aria-pressed", "false");
-        }
+        if (visible) setLeftVisible(false);
         state.rightVisible = visible;
         root.dataset.rightVisible = String(visible);
         toggleRight.setAttribute("aria-pressed", visible ? "true" : "false");
@@ -843,8 +848,29 @@
       state.leftVisible = visible;
       root.dataset.leftVisible = String(visible);
       toggleLeft.setAttribute("aria-pressed", visible ? "true" : "false");
+      leftPanel.hidden = !visible;
+      navButtons.forEach((button, id) => {
+        const open = visible && id === state.activePanel;
+        button.setAttribute("aria-expanded", String(open));
+        button.classList.toggle("is-active", open);
+      });
+      if (visible) positionMenu();
       saveLayoutPreferences(state);
     }
+
+    function positionMenu() {
+      const button = navButtons.get(state.activePanel);
+      if (!button) return;
+      const bounds = button.getBoundingClientRect();
+      const width = Math.min(360, window.innerWidth - 16);
+      leftPanel.style.left = `${Math.max(8, Math.min(bounds.left, window.innerWidth - width - 8))}px`;
+      leftPanel.style.top = `${Math.ceil(rail.getBoundingClientRect().bottom)}px`;
+    }
+    window.addEventListener("resize", () => { if (state.leftVisible) positionMenu(); });
+    rail.addEventListener("scroll", () => { if (state.leftVisible) positionMenu(); });
+    document.addEventListener("pointerdown", event => {
+      if (state.leftVisible && !leftPanel.contains(event.target) && !rail.contains(event.target) && !toggleLeft.contains(event.target)) setLeftVisible(false);
+    });
 
     function setKeyboardVisible(visible) {
       state.keyboardVisible = visible;
@@ -872,19 +898,25 @@
       });
       navButtons.forEach((button, id) => {
         const active = id === nextId;
-        button.classList.toggle("is-active", active);
-        button.setAttribute("aria-selected", active ? "true" : "false");
-        button.tabIndex = active ? 0 : -1;
+        button.classList.toggle("is-active", active && state.leftVisible);
+        button.setAttribute("aria-expanded", String(active && state.leftVisible));
+        button.tabIndex = 0;
       });
       const navItem = NAV_ITEMS.find((item) => item.id === nextId);
       leftHeading.querySelector("h2").textContent = navItem?.label || "Herramientas";
+      leftPanel.setAttribute("aria-label", navItem?.label || "Herramientas");
+      if (state.leftVisible) positionMenu();
       saveLayoutPreferences(state);
     }
 
     navButtons.forEach((button, panelId) => {
       button.addEventListener("click", () => activatePanel(panelId, { toggle: true }));
       button.addEventListener("keydown", (event) => {
-        if (!["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)) return;
+        if (event.key === "ArrowDown") {
+          event.preventDefault();activatePanel(panelId);
+          panels.get(panelId).querySelector('button:not([disabled]), input:not([disabled]), select:not([disabled])')?.focus();return;
+        }
+        if (!["ArrowRight", "ArrowLeft", "Home", "End"].includes(event.key)) return;
         event.preventDefault();
         const items = [...navButtons.values()];
         const index = items.indexOf(button);
@@ -892,14 +924,20 @@
           ? 0
           : event.key === "End"
             ? items.length - 1
-            : (index + (event.key === "ArrowDown" ? 1 : -1) + items.length) % items.length;
+            : (index + (event.key === "ArrowRight" ? 1 : -1) + items.length) % items.length;
         items[nextIndex].focus();
-        activatePanel(items[nextIndex].dataset.panel);
+        if (state.leftVisible) activatePanel(items[nextIndex].dataset.panel);
       });
     });
 
     toggleLeft.addEventListener("click", () => setLeftVisible(!state.leftVisible));
-    leftClose.addEventListener("click", () => setLeftVisible(false));
+    leftClose.addEventListener("click", () => { setLeftVisible(false);navButtons.get(state.activePanel)?.focus(); });
+    leftPanel.addEventListener("focusout", event => {
+      if (event.relatedTarget && !leftPanel.contains(event.relatedTarget) && !rail.contains(event.relatedTarget) && !toggleLeft.contains(event.relatedTarget)) setLeftVisible(false);
+    });
+    leftPanel.addEventListener("click", event => {
+      if (event.target.closest("button")) setLeftVisible(false);
+    });
     toggleRight.addEventListener("click", () => context.setRightVisible(!state.rightVisible));
     rightClose.addEventListener("click", () => context.setRightVisible(false));
     keyboardToggle.addEventListener("click", () => setKeyboardVisible(!state.keyboardVisible));
@@ -913,11 +951,11 @@
 
     document.addEventListener("keydown", (event) => {
       if (event.key !== "Escape") return;
-      if (window.matchMedia("(max-width: 1180px)").matches && (state.leftVisible || state.rightVisible)) {
-        setLeftVisible(false);
-        context.setRightVisible(false);
-      }
-    });
+      if (state.leftVisible) {
+        event.preventDefault();event.stopPropagation();setLeftVisible(false);
+        navButtons.get(state.activePanel)?.focus();
+      } else if (window.matchMedia("(max-width: 1180px)").matches && state.rightVisible) context.setRightVisible(false);
+    }, true);
 
     function syncInputState() {
       const html = document.documentElement;

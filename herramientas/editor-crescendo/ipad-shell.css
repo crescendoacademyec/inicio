@@ -1763,3 +1763,57 @@ html{--ipad-inspector-width:146px!important}.ipad-inspector-panel .ipad-side-con
 
 .recording-dock.has-recording .recording-panel-description{display:none}.recording-dock .recording-meta-row{font-size:.72rem;margin:5px 0}.recording-dock .recording-controls-row{display:flex;flex-wrap:wrap}.recording-dock .recording-controls-row button{width:auto!important;min-height:32px!important}.recording-dock.has-recording .recording-dock-source{padding-top:0!important}
 @media(min-width:1000px){.recording-dock.has-recording:has(iframe),.recording-dock.has-recording:has(video){display:grid;grid-template-columns:minmax(0,1fr) 280px;column-gap:14px;align-content:start;max-height:38vh}.recording-dock.has-recording:has(iframe)>:not(.recording-dock-source),.recording-dock.has-recording:has(video)>:not(.recording-dock-source){grid-column:1}.recording-dock.has-recording:has(iframe)>.recording-dock-source,.recording-dock.has-recording:has(video)>.recording-dock-source{grid-column:2;grid-row:1/span 5}.recording-dock iframe{height:200px}.recording-dock .recording-all-anchors{margin-top:3px}}
+
+/* Compact desktop menus and transport share the top of the workspace. */
+.cuaderno-ipad-shell.is-compact-menubar{--ipad-header-height:48px;grid-template-rows:34px minmax(0,1fr) auto}
+.is-compact-menubar .ipad-navigation-rail{grid-row:1;justify-content:flex-start;gap:1px;padding:0 8px;border-top:0;border-bottom:1px solid var(--ipad-line);height:34px;min-height:34px;overflow-y:hidden;z-index:40}
+.is-compact-menubar .ipad-navigation-brand{display:flex;flex-direction:row;min-height:0;height:28px;margin:0 14px 0 0;gap:7px;text-decoration:none;flex-shrink:0}
+.is-compact-menubar .ipad-brand-mark{width:26px;height:22px;border:0;border-radius:4px;background:#d3a744;color:#19150e;font-size:12px}
+.is-compact-menubar .ipad-brand-caption{display:block;font-size:12px;font-weight:700}
+.is-compact-menubar .ipad-navigation-button{flex:0 0 auto;flex-direction:row;gap:0;min-width:0;min-height:28px;height:28px;padding:4px 11px;border-radius:4px}
+.is-compact-menubar .ipad-navigation-button>svg{display:none}
+.is-compact-menubar .ipad-navigation-button span{font-size:12px;font-weight:500;line-height:18px}
+.is-compact-menubar .ipad-navigation-button.is-active{background:#d3a744;color:#18140b}
+.is-compact-menubar .ipad-navigation-button:focus-visible{outline:2px solid var(--ipad-accent);outline-offset:-2px}
+.is-compact-menubar .ipad-app-main{grid-row:2;grid-column:1}
+.is-compact-menubar>.midi-keyboard-panel{grid-row:3}
+.is-compact-menubar .ipad-workspace-header{padding:5px 10px;gap:8px;min-height:48px}
+.is-compact-menubar .ipad-screen-heading>.ipad-eyebrow,.is-compact-menubar .ipad-document-subtitle{display:none}
+.is-compact-menubar .ipad-screen-heading h1{font-size:14px;max-width:21vw;line-height:20px}
+.is-compact-menubar .ipad-header-left{gap:7px;flex:0 1 230px}
+.is-compact-menubar .ipad-header-center{position:static;transform:none;display:flex;gap:4px;min-width:0;flex:1 1 auto;justify-content:center}
+.is-compact-menubar .ipad-header-actions{flex:0 0 auto;gap:4px;max-width:none}
+.is-compact-menubar .ipad-workspace-header .ipad-icon-button{width:34px;height:34px;min-width:34px;min-height:34px;padding:6px}
+.is-compact-menubar #instrumentViewToggle{padding:2px}
+.is-compact-menubar #instrumentViewToggle>svg{width:30px;height:30px}
+.is-compact-menubar .ipad-workspace-body{display:grid!important;grid-template-columns:minmax(0,1fr) var(--ipad-inspector-width)!important}
+.is-compact-menubar[data-right-visible=false] .ipad-workspace-body{grid-template-columns:minmax(0,1fr) 0!important}
+.is-compact-menubar .ipad-score-workspace{grid-column:1;min-height:0}
+.is-compact-menubar .ipad-inspector-panel{grid-column:2}
+.is-compact-menubar .ipad-tools-panel{position:fixed;width:min(360px,calc(100vw - 16px));height:auto;max-height:calc(100dvh - 42px);bottom:auto;border:1px solid var(--ipad-line);border-radius:0 0 8px 8px;box-shadow:0 10px 32px #0007;z-index:45;display:flex;flex-direction:column;transition:none;transform:none!important}
+.is-compact-menubar .ipad-tools-panel[hidden]{display:none!important}
+.is-compact-menubar .ipad-tools-panel .ipad-side-header{padding:8px 12px;min-height:40px;flex:0 0 auto}
+.is-compact-menubar .ipad-tools-panel .ipad-side-header .ipad-eyebrow{display:none}
+.is-compact-menubar .ipad-tools-panel .ipad-side-header h2{font-size:14px}
+.is-compact-menubar .ipad-tools-panel .ipad-side-content{overflow:auto;min-height:0;padding:10px 12px;overscroll-behavior:contain}
+.is-compact-menubar .ipad-tools-panel .ipad-section-header h2{font-size:18px}
+.is-compact-menubar[data-left-visible=true] .ipad-panel-scrim{display:none}
+@media(max-width:1180px){.is-compact-menubar .ipad-inspector-panel{position:absolute;grid-column:1 / -1}.is-compact-menubar .ipad-workspace-body{grid-template-columns:minmax(0,1fr)!important}.is-compact-menubar .ipad-screen-heading h1{max-width:17vw}.is-compact-menubar .ipad-save-status{display:none}}
+@media(max-width:900px){.is-compact-menubar .ipad-brand-caption{display:none}.is-compact-menubar .ipad-navigation-brand{margin-right:5px}.is-compact-menubar .ipad-header-left{flex:0 1 150px}.is-compact-menubar .ipad-sound-selector--mobile{display:none}.is-compact-menubar .ipad-header-center{justify-content:flex-start;overflow-x:auto}.is-compact-menubar .ipad-header-actions{flex-shrink:0}.is-compact-menubar .ipad-header-center>*{flex-shrink:0}.is-compact-menubar .ipad-navigation-button{padding-inline:9px}}
+@media(max-width:600px){.is-compact-menubar .ipad-brand-caption{display:none}.is-compact-menubar .ipad-navigation-button{padding-inline:8px}.is-compact-menubar .ipad-header-left{flex:0 0 auto}.is-compact-menubar .ipad-header-left{max-width:118px}.is-compact-menubar .ipad-screen-heading{max-width:74px}.is-compact-menubar .ipad-screen-heading h1{max-width:74px;font-size:12px}.is-compact-menubar .ipad-header-actions>.ipad-icon-button:last-child{display:none}.is-compact-menubar .ipad-bpm-group{display:flex}}
+.is-compact-menubar .ipad-tools-panel .ipad-tool-grid{grid-template-columns:1fr;gap:3px}
+.is-compact-menubar .ipad-tools-panel .ipad-tool-button{flex-direction:row;justify-content:flex-start;min-height:34px;padding:6px 9px;gap:10px;text-align:left;border-color:transparent;background:transparent;font-size:12px}
+.is-compact-menubar .ipad-tools-panel .ipad-tool-button svg{width:19px;height:19px;flex-shrink:0}
+.is-compact-menubar .ipad-tools-panel .ipad-tool-button:hover{background:var(--ipad-surface-soft)}
+.is-compact-menubar .ipad-tools-panel .ipad-tool-button.is-active{background:#d3a744;color:#18140b}
+.is-compact-menubar .ipad-tools-panel .ipad-panel-heading{margin-bottom:12px}
+.is-compact-menubar .ipad-tools-panel .ipad-panel-heading h2{font-size:17px;margin:3px 0}
+.is-compact-menubar .ipad-tools-panel .ipad-panel-heading p{font-size:12px;line-height:1.4}
+.is-compact-menubar .ipad-tools-panel .ipad-control-section{padding-top:10px;margin-top:10px}
+.is-compact-menubar .ipad-header-center .editor-metronome-beat{height:34px;width:32px}
+.is-compact-menubar .ipad-sound-selector{height:34px}
+
+.is-compact-menubar .ipad-sound-selector>svg{width:24px;height:30px}
+.is-compact-menubar .ipad-tools-panel .ipad-primary-action{display:flex;justify-content:flex-start;gap:10px;min-height:34px;padding:7px 9px;border:1px solid transparent;border-radius:5px;background:transparent;color:var(--ipad-text);font-size:12px}
+.is-compact-menubar .ipad-tools-panel .ipad-primary-action:hover{background:var(--ipad-surface-soft)}
+.is-compact-menubar .ipad-tools-panel .ipad-primary-action svg{width:19px;height:19px}
