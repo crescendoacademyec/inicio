@@ -436,7 +436,6 @@
     bpmGroup.append(bpmDown, bpmValue, bpmUp);
     function createSoundSelector(mobile = false) {
       const label = element("label", `ipad-sound-selector${mobile ? " ipad-sound-selector--mobile" : ""}`);
-      label.appendChild(icon(global.JMLScoreInstruments.readPreference()));
       const select = document.createElement("select");
       select.setAttribute("aria-label", "Instrumento de reproducción");
       select.title = "Instrumento de reproducción";
@@ -446,7 +445,7 @@
       select.value = global.JMLScoreInstruments.readPreference();
       document.addEventListener("editor-instrument-select", event => {
         const selected = global.JMLScoreInstruments.normalize(event.detail?.instrument);
-        select.value = selected;label.querySelector("svg").replaceWith(icon(selected));
+        select.value = selected;
       });
       select.addEventListener("change", () => {
         document.querySelectorAll('.ipad-sound-selector select').forEach(other => { other.value = select.value; });
@@ -499,11 +498,7 @@
 
     const workspace = element("section", "ipad-score-workspace");
     workspace.setAttribute("aria-label", "Partitura");
-    const workspaceStatus = element("div", "ipad-score-status");
-    const cursorStatus = element("strong", "", "Selección · Compás 1");
-    const sceneStatus = element("span", "", "Repaso");
-    workspaceStatus.append(cursorStatus, sceneStatus);
-    workspace.append(workspaceStatus, workbench);
+    workspace.append(workbench);
 
     const rightPanel = element("aside", "ipad-inspector-panel");
     rightPanel.setAttribute("aria-label", "Inspector");
@@ -772,7 +767,7 @@
     minusMeasure.replaceChildren(element('span','','−'));plusMeasure.replaceChildren(element('span','','+'));
     minusMeasure.onclick=()=>document.dispatchEvent(new CustomEvent('editor-measures',{detail:{delta:-1}}));
     plusMeasure.onclick=()=>document.dispatchEvent(new CustomEvent('editor-measures',{detail:{delta:1}}));
-    measureControls.setAttribute('aria-label','Compases');measureControls.append(element('span','','Compases'),minusMeasure,measureCount,plusMeasure);workspaceStatus.insertBefore(measureControls,sceneStatus);
+    measureControls.setAttribute('aria-label','Compases');measureControls.append(element('span','','Compases'),minusMeasure,measureCount,plusMeasure);headerCenter.append(measureControls);
     document.addEventListener('editor-measure-count',event=>{measureCount.textContent=String(event.detail.count);minusMeasure.disabled=event.detail.count<=1;});
     document.addEventListener('editor-autosaved',()=>{saveStatus.dataset.state='saved';saveStatus.title='Guardado automáticamente en este navegador';saveStatus.setAttribute('aria-label',saveStatus.title);});
     proxyClick(clearButton, "#clearScoreButton");
@@ -988,7 +983,6 @@
     const cursorSource = document.getElementById("cursorLabel");
     const syncCursor = () => {
       const text = cursorSource?.textContent?.trim() || "Selección · Compás 1";
-      cursorStatus.textContent = text;
       positionText.textContent = text;
     };
     if (cursorSource) {
@@ -1010,10 +1004,6 @@
         ? (detail.status || "El almacenamiento local no está disponible.")
         : "Guardado automático en este navegador. Puedes deshacer y rehacer los cambios.";
       if (detail.sceneMode) {
-        const progress = Number.isFinite(detail.sceneIndex) && Number.isFinite(detail.sceneCount)
-          ? ` · ${detail.sceneIndex + 1}/${detail.sceneCount}`
-          : "";
-        sceneStatus.textContent = `${detail.sceneMode === "exercise" ? "Ejercicio" : "Repaso"}${progress}`;
         root.dataset.sceneMode = detail.sceneMode;
       }
       if (detail.midiStatus) midiState.textContent = detail.midiStatus;

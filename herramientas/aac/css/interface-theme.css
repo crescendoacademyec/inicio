@@ -1,0 +1,97 @@
+/* Application chrome shares Editor Crescendo's charcoal and gold identity.
+   Screen-only rules leave score artwork, source photographs and exports intact. */
+@media screen {
+  :root {
+    --aac-canvas: #212121;
+    --aac-surface: #292929;
+    --aac-raised: #343434;
+    --aac-field: #202020;
+    --aac-line: #505050;
+    --aac-text: #f5f2e9;
+    --aac-muted: #bbb8b1;
+    --aac-gold: #d4a84f;
+    --aac-gold-light: #f0c96e;
+    --panel: var(--aac-surface);
+    --accent: var(--aac-gold);
+    --accent-strong: var(--aac-gold-light);
+    --accent-soft: #423721;
+    --accent-line: #96783d;
+    --border: var(--aac-line);
+    --focus: #d4a84f55;
+  }
+  html, body.webFullMode { background: var(--aac-canvas) !important; }
+  body.webFullMode { color: var(--aac-text); color-scheme: dark; }
+  body.webFullMode :is(.topbar, .rhythmPaletteBar) {
+    background: #262626;
+    border-color: var(--aac-line);
+    box-shadow: none;
+  }
+  body.webFullMode :is(.appMenuTitle, .appMenu summary, .topbarPlainButton) { color: var(--aac-text); }
+  body.webFullMode #status::before { color: var(--aac-gold); }
+  body.webFullMode .appMenuMark { background: var(--aac-gold); color: #211b10; box-shadow: none; }
+  body.webFullMode :is(.appMenu summary:hover, .appMenu[open] summary, .topbarPlainButton:hover) {
+    background: var(--aac-raised); color: var(--aac-gold-light);
+  }
+  body.webFullMode :is(button, .fileBtn) {
+    background: var(--aac-raised); border-color: var(--aac-line); color: var(--aac-text);
+  }
+  body.webFullMode :is(button:not(:disabled):hover, .fileBtn:hover) {
+    background: #444039; border-color: var(--aac-gold); color: var(--aac-gold-light);
+  }
+  body.webFullMode :is(input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=color]):not(.inlineEditor), select, textarea:not(.inlineTextarea)) {
+    background: var(--aac-field); border-color: var(--aac-line); color: var(--aac-text);
+  }
+  body.webFullMode :is(input, textarea)::placeholder { color: #a9a59d; }
+  body.webFullMode :is(button, input, select, textarea, summary):focus-visible {
+    outline: 2px solid var(--aac-gold-light); outline-offset: 2px;
+  }
+  body.webFullMode :is(.appMenuPanel, .degreeSuggestionMenu, .reharmonizationMenu, dialog, .melody-settings-panel, .melody-library-popup) {
+    background: var(--aac-surface); border-color: var(--aac-line); color: var(--aac-text);
+    box-shadow: 0 12px 32px #0007;
+  }
+  body.webFullMode dialog::backdrop { background: #0008; }
+  body.webFullMode .appMenuPanel :is(button, .fileBtn) { background: transparent; color: var(--aac-text); }
+  body.webFullMode .appMenuPanel :is(button:not(:disabled):hover, button:focus-visible, .fileBtn:hover, .fileBtn:focus-within) {
+    background: var(--aac-gold); color: #211b10;
+  }
+  body.webFullMode :is(.appMenuPanel button:disabled, #melodyPanel button:disabled) {
+    color: #8e8b85; background: transparent; opacity: .65; cursor: default;
+  }
+  body.webFullMode :is(.appMenuSeparator, .topbarDivider) { background: var(--aac-line); }
+  body.webFullMode :is(.rhythmPaletteGroup, .melody-controls, .melody-file-exports, .dialogHead, .librarySection, .settingsSection, .settingsSearchRow, .theoryCardToolbar, .reharmonizationHeader) { border-color: var(--aac-line); }
+  body.webFullMode .rhythmPaletteBar button { background: var(--aac-raised); color: var(--aac-text); border-color: var(--aac-line); }
+  body.webFullMode .rhythmPaletteBar :is(button.rhythmActiveTuplet, button[aria-pressed=true]) {
+    background: var(--aac-gold); color: #211b10; border-color: var(--aac-gold);
+  }
+  body.webFullMode :is(.rhythmPaletteStatus, .melody-file-exports strong, .reharmonizationGroupHeader, .curatedStandardsHead, .libraryLibraryHint code) { color: var(--aac-gold-light); }
+  body.webFullMode :is(#status, .pageLabel, .menuSelectRow, .settingRow label, .quickGrid label, .measureGrid label, .slotField label, .libraryCount, .libraryHint, .libraryLibraryHint, .libraryItem span, .textImportWarning, .adminPanelBody p, .adminPanelStatus, .measureCountStatus, .theoryCardButton span, .theoryCardToolbar, .localFontsBox p, .localFontEmpty, .localFontRow span, .systemFontsStatus, .degreeSuggestionDetail, .reharmonizationHeader span, .reharmonizationDetail, .reharmonizationEmpty, .textPromptForm p, .randomReharmIntro, .randomReharmPreviewEmpty, .randomReharmPreviewMeta, .randomReharmPreviewFamily) { color: var(--aac-muted); }
+  body.webFullMode :is(.panelHeader, .settingsSearchRow, .advancedSettings > summary, .slotBlock, .localFontRow, .systemFontSummary, .simpleSlotHead strong, .randomReharmPreview, .aboutBody) {
+    background: var(--aac-surface); color: var(--aac-text); border-color: var(--aac-line);
+  }
+  body.webFullMode :is(.settingsPanel, .measurePanel, .adminPanel, .measureCountPanel) { border-color: var(--aac-line) !important; }
+  body.webFullMode :is(.degreeSuggestionOption, .reharmonizationOption) { background: transparent; color: var(--aac-text); }
+  body.webFullMode :is(.degreeSuggestionOption:hover, .degreeSuggestionOption:focus-visible, .reharmonizationOption:hover, .reharmonizationOption:focus-visible, .connectorBtn:hover) { background: var(--aac-raised); color: var(--aac-gold-light); }
+  body.webFullMode :is(.curatedStandardsBox, .libraryItem.curatedFavorite, .libraryItem.current, .theoryCardButton.current, .connectorBtn.active) { background: #342e22; border-color: var(--aac-gold); }
+  body.webFullMode :is(.libraryDeleteBtn, #copySaveApplyBtn, #textImportApplyBtn, #printAboutBtn, #printTheoryCardBtn) { background: var(--aac-raised); color: var(--aac-gold-light); border-color: var(--aac-line); }
+  body.webFullMode :is(.adminPanelActions button:first-child, .measureCountPanelBody > button, .textPromptActions button[value=ok], #randomReharmApplyBtn:not(:disabled)) { background: var(--aac-gold); color: #211b10; border-color: var(--aac-gold); }
+  body.webFullMode :is(.randomReharmControls label, .randomReharmWeightRow) { color: var(--aac-text); }
+  body.webFullMode :is(.adminPanelStatus[data-tone=ok], .measureCountStatus[data-tone=ok]) { color: #7dd6a0; }
+  body.webFullMode :is(.adminPanelStatus[data-tone=error], .measureCountStatus[data-tone=error]) { color: #ffaaa2; }
+  body.webFullMode .inlineEditor:not(.noteTextEditor) { background: var(--aac-field); color: var(--aac-text); border-color: var(--aac-gold); }
+
+  body.webFullMode #melodyPanel { background: #242424; color: var(--aac-text); border-color: var(--aac-line); }
+  body.webFullMode #melodyPanel :is(.melody-head, .melody-sticky) { background: #242424; border-color: var(--aac-line); box-shadow: none; }
+  body.webFullMode #melodyPanel :is(button, .melody-file, .melody-play-settings > summary) { background: var(--aac-raised); color: var(--aac-text); border-color: var(--aac-line); }
+  body.webFullMode #melodyPanel :is(button:not(:disabled):hover, .melody-file:hover, .melody-play-settings[open] > summary) { background: #444039; color: var(--aac-gold-light); border-color: var(--aac-gold); }
+  body.webFullMode #melodyPanel :is(.melody-primary, button[aria-pressed=true]) { background: var(--aac-gold) !important; color: #211b10 !important; border-color: var(--aac-gold) !important; }
+  body.webFullMode :is(.melody-kicker, #melodyStatus, #melodySearchStatus) { color: var(--aac-gold-light); }
+  body.webFullMode #melodyStatus[data-error=true] { color: #ffaaa2; }
+  body.webFullMode :is(.melody-source-help, .melody-layout-help, .melody-settings-panel p, #melodySearchResults small) { color: var(--aac-muted); }
+  body.webFullMode .melody-notice { background: #332e22; color: #ead39f; }
+  body.webFullMode :is(#melodyScore, .melody-paper, #melodySearchStatus, #melodySearchResults [role=option], .melody-settings-panel fieldset, #melodyEditFields fieldset) { border-color: var(--aac-line); }
+  body.webFullMode #melodySearchResults :is([role=option]:hover, [aria-selected=true]) { background: #49402c; }
+  body.webFullMode .melody-launch[aria-pressed=false] { background: var(--aac-raised) !important; color: var(--aac-text) !important; border-color: var(--aac-line) !important; }
+  body.webFullMode .melody-launch[aria-pressed=true] { background: var(--aac-gold) !important; color: #211b10 !important; }
+  body.webFullMode #melodyEditDialog { background: var(--aac-surface); color: var(--aac-text); border-color: var(--aac-line); }
+  .melody-file-exports [hidden] { display: none !important; }
+}

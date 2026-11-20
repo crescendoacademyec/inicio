@@ -1817,3 +1817,20 @@ html{--ipad-inspector-width:146px!important}.ipad-inspector-panel .ipad-side-con
 .is-compact-menubar .ipad-tools-panel .ipad-primary-action{display:flex;justify-content:flex-start;gap:10px;min-height:34px;padding:7px 9px;border:1px solid transparent;border-radius:5px;background:transparent;color:var(--ipad-text);font-size:12px}
 .is-compact-menubar .ipad-tools-panel .ipad-primary-action:hover{background:var(--ipad-surface-soft)}
 .is-compact-menubar .ipad-tools-panel .ipad-primary-action svg{width:19px;height:19px}
+
+/* All persistent controls now share the transport row; the score needs no status row. */
+.is-compact-menubar .ipad-score-workspace{grid-template-rows:minmax(0,1fr)}
+.is-compact-menubar .ipad-score-workspace:has(>.recording-dock:not([hidden])){grid-template-rows:auto minmax(0,1fr)}
+.is-compact-menubar .ipad-header-center{overflow-x:auto;justify-content:flex-start;scrollbar-width:thin}
+.is-compact-menubar .ipad-header-center>*{flex-shrink:0}
+.is-compact-menubar .ipad-workspace-header .ipad-header-action{width:34px;min-width:34px;height:34px;min-height:34px;padding:6px}
+.is-compact-menubar .ipad-header-action .ipad-button-text{display:none}
+.is-compact-menubar .ipad-bpm-group{height:34px;min-height:34px;padding:0;gap:0;border:1px solid var(--ipad-line-soft);border-radius:7px;background:var(--ipad-surface-raised);overflow:hidden}
+.is-compact-menubar .ipad-bpm-group .ipad-bpm-step{width:27px;min-width:27px;height:32px;min-height:32px;padding:5px;border:0;border-radius:0;background:transparent}
+.is-compact-menubar .ipad-bpm-group input.ipad-bpm-value{width:42px;height:32px;min-height:32px;font-size:12px;padding:0 2px;border-radius:0}
+.is-compact-menubar .ipad-header-center .ipad-measure-controls{height:34px;padding:0 0 0 7px;margin-left:3px;border-left:1px solid var(--ipad-line);gap:4px;color:var(--ipad-muted);font-size:10px}
+.is-compact-menubar .ipad-measure-controls .ipad-measure-count{min-width:24px;font-size:11px;color:var(--ipad-text);font-variant-numeric:tabular-nums}
+.is-compact-menubar .ipad-header-center .recording-dock-toggle{height:34px;min-height:34px;padding:6px 9px}
+.is-compact-menubar .ipad-sound-selector{gap:0;padding:0 6px}
+.is-compact-menubar .ipad-sound-selector select{width:auto;min-width:62px;max-width:90px;font-size:12px}
+@media(min-width:901px){.is-compact-menubar .ipad-header-left{flex-basis:180px}}
