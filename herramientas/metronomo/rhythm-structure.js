@@ -1,10 +1,10 @@
 (function(root){'use strict';
-const EPS=1e-7;
+const EPS=1e-7,MAX_BARS=256;
 const keyNames=[['Do♭ mayor / La♭ menor',-7],['Sol♭ mayor / Mi♭ menor',-6],['Re♭ mayor / Si♭ menor',-5],['La♭ mayor / Fa menor',-4],['Mi♭ mayor / Do menor',-3],['Si♭ mayor / Sol menor',-2],['Fa mayor / Re menor',-1],['Do mayor / La menor',0],['Sol mayor / Mi menor',1],['Re mayor / Si menor',2],['La mayor / Fa♯ menor',3],['Mi mayor / Do♯ menor',4],['Si mayor / Sol♯ menor',5],['Fa♯ mayor / Re♯ menor',6],['Do♯ mayor / La♯ menor',7]];
 function meter(value='4/4'){const m=/^(\d+)\/(1|2|4|8|16|32)$/.exec(String(value));if(!m||+m[1]<1||+m[1]>32)throw Error('Compás no válido.');return {label:`${+m[1]}/${+m[2]}`,top:+m[1],bottom:+m[2],capacity:+m[1]*4/+m[2]};}
 function at(marks,type,bar,fallback){const changes=marks.filter(m=>m.type===type&&m.bar<=bar).sort((a,b)=>a.bar-b.bar);return changes.length?changes.at(-1):fallback;}
 function keyAt(marks,bar){return Math.max(-7,Math.min(7,Math.round(Number(at(marks,'key',bar,{fifths:0}).fifths)||0)));}
-function timeline(base='4/4',marks=[],bars=4){const starts=[0],capacities=[],meters=[],keys=[];for(let bar=0;bar<bars;bar++){const m=meter(at(marks,'meter',bar,{meter:base}).meter);meters.push(m);capacities.push(m.capacity);keys.push(keyAt(marks,bar));starts.push(starts.at(-1)+m.capacity);}return {starts,capacities,meters,keys,total:starts.at(-1),absolute:(bar,offset=0)=>(starts[bar]??starts.at(-1))+offset,locate(beat){if(beat>=starts.at(-1))return {bar:bars-1,beat:capacities.at(-1)};const bar=Math.max(0,Math.min(bars-1,starts.findIndex((s,i)=>i<bars&&beat<starts[i+1]-EPS)));return {bar,beat:Math.max(0,beat-starts[bar])};}};}
+function timeline(base='4/4',marks=[],bars=4){const starts=[0],capacities=[],meters=[],keys=[];for(let bar=0;bar<bars;bar++){const m=meter(at(marks,'meter',bar,{meter:base}).meter);meters.push(m);const actual=marks.find(x=>x.type==='measureDuration'&&x.bar===bar)?.beats,capacity=actual>0?actual:m.capacity;capacities.push(capacity);keys.push(keyAt(marks,bar));starts.push(starts.at(-1)+capacity);}return {starts,capacities,meters,keys,total:starts.at(-1),absolute:(bar,offset=0)=>(starts[bar]??starts.at(-1))+offset,locate(beat){if(beat>=starts.at(-1))return {bar:bars-1,beat:capacities.at(-1)};const bar=Math.max(0,Math.min(bars-1,starts.findIndex((s,i)=>i<bars&&beat<starts[i+1]-EPS)));return {bar,beat:Math.max(0,beat-starts[bar])};}};}
 function signatureAccidental(letter,fifths){return (fifths>0?'FCGDAEB':'BEADGCF').slice(0,Math.abs(fifths)).includes(letter)?(fifths>0?'sharp':'flat'):'natural';}
 const symbols={sharp:'#',flat:'b',natural:''};
 function parsePitch(note){const m=/^([A-G])([#b♯♭]?)(-?\d+)$/.exec(String(note));if(!m)throw Error('Nota no válida: '+note);return {letter:m[1],octave:+m[3],plain:m[1]+m[3],explicit:m[2]?['#','♯'].includes(m[2])?'sharp':'flat':null};}
@@ -62,7 +62,7 @@ function transposeKey(events,marks,nextMarks,startBar){
 function editBars(events,marks,bars,index,operation){
  const inserting=operation==='insert';
  if(!['insert','remove'].includes(operation)||!Number.isInteger(index)||index<0||index>(inserting?bars:bars-1))return {message:'Compás no válido.'};
- if(inserting&&bars>=16)return {message:'El máximo es de 16 compases.'};
+ if(inserting&&bars>=MAX_BARS)return {message:`El máximo es de ${MAX_BARS} compases.`};
  if(!inserting&&bars<=1)return {message:'Debe quedar al menos un compás.'};
  const delta=inserting?1:-1,nextEvents=events.filter(e=>inserting||(e.bar||0)!==index).map(e=>({...e,bar:(e.bar||0)+((e.bar||0)>=index?delta:0)}));
  const ids=new Set(nextEvents.map(e=>e.id).filter(Boolean));
@@ -70,6 +70,8 @@ function editBars(events,marks,bars,index,operation){
  const nextMarks=[];
  for(const mark of marks){
   const m={...mark};
+  if(m.type==='systemLayout'){const Layout=root.CrescendoSystemLayout||(typeof require==='function'?require('../../shared/score-system-layout.js'):null);nextMarks.push({...m,bar:0,breaks:Layout.edit(m.breaks,index,operation,bars+delta)});continue;}
+  if(m.type==='playbackRoute'){const Performance=root.CrescendoPerformancePlan||(typeof require==='function'?require('../../shared/score-performance-plan.js'):null);nextMarks.push({...m,...Performance.edit(m,index,operation),bar:0});continue;}
   if(inserting){if(m.bar>=index)m.bar++;if(m.endBar!==undefined&&m.endBar>=index)m.endBar++;nextMarks.push(m);continue;}
   if(m.endBar!==undefined){
    if(m.bar===index&&m.endBar===index)continue;
@@ -85,13 +87,16 @@ function editBars(events,marks,bars,index,operation){
  return {events:nextEvents,marks:nextMarks,bars:bars+delta};
 }
 // Preserve musical time when bar boundaries move, rather than retaining bar indices.
-function rebar(events,marks,oldTimeline,base,nextMarks,bars,maxBars=16){
+function rebar(events,marks,oldTimeline,base,nextMarks,bars,maxBars=MAX_BARS){
  const absolute=e=>oldTimeline.absolute(e.bar||0,e.offset||0);
  const sounding=resolve(events,marks),items=sounding.map(e=>({event:e,start:absolute(e)}));
- const end=Math.max(0,...items.map(({event:e,start})=>start+(e.grace?0:e.beats||0)));
+ const encoded=marks.find(m=>m.type==='playbackRoute');
+ const end=Math.max(encoded?oldTimeline.total:0,...items.map(({event:e,start})=>start+(e.grace?0:e.beats||0)));
  let count=Math.max(1,bars),tl=timeline(base,nextMarks,count);
  while(tl.total<end-EPS&&count<maxBars)tl=timeline(base,nextMarks,++count);
  if(tl.total<end-EPS)return {message:'La música necesita más de '+maxBars+' compases. No se modificó el ejercicio.'};
+ let remappedRoute=null;
+ if(encoded){try{const Performance=root.CrescendoPerformancePlan||(typeof require==='function'?require('../../shared/score-performance-plan.js'):null);remappedRoute=Performance.rebar(encoded,oldTimeline.starts,tl.starts);}catch(error){return {message:error.message};}}
  const values=[8,4,2,1,.5,.25,.125,.0625,.03125].flatMap(v=>[v,v*1.5,v*1.75]).sort((a,b)=>b-a);
  const result=[],tails=new Map(),ids=new Set(events.map(e=>e.id).filter(Boolean));let serial=0;
  const newId=(prefix="rebar")=>{let id;do{id=prefix+"-part-"+(++serial);}while(ids.has(id));ids.add(id);return id;};
@@ -118,6 +123,7 @@ function rebar(events,marks,oldTimeline,base,nextMarks,bars,maxBars=16){
  // Outgoing links belong to the final fragment; incoming links keep the first ID.
  for(const e of result)if(tails.has(e.id)&&tails.get(e.id)!==e){const tail=tails.get(e.id);for(const field of ['slurToId','glissandoToId'])if(e[field]){tail[field]=e[field];delete e[field];}}
  const remapped=nextMarks.map(mark=>{
+  if(mark.type==='playbackRoute')return {...mark,...remappedRoute,bar:0};
   if(['meter','key'].includes(mark.type))return {...mark};
   const m={...mark},target=tl.locate(oldTimeline.absolute(m.bar||0,m.offset||0));m.bar=target.bar;if(m.offset!==undefined)m.offset=target.beat;
   if(m.endBar!==undefined){const end=tl.locate(oldTimeline.absolute(m.endBar,m.endOffset??oldTimeline.capacities[m.endBar]));m.endBar=end.bar;m.endOffset=end.beat;}
@@ -130,5 +136,5 @@ function keyWidth(fifths,previous=0){const count=keyGlyphs(fifths,previous).leng
 function keySVG(fifths,previous,x,top,staff){return keyGlyphs(fifths,previous).map((g,i)=>`<text class="rhythm-key-accidental" x="${x+i*11}" y="${top+20-(g.step-(staff===2?2:0))*5}" font-family="Bravura Metronome" font-size="40">${String.fromCodePoint(g.code)}</text>`).join('');}
 function slots(duration,capacity,events=[],pulse=1,span=duration){const step=Math.min(duration,pulse),values=new Set([0]);for(let beat=0,n=0;beat<capacity-EPS&&n<2048;beat+=step,n++)values.add(Number(beat.toFixed(7)));for(const e of events){if(e.grace)continue;values.add(e.offset||0);values.add((e.offset||0)+e.beats);}return [...values].filter(beat=>beat>=0&&beat<capacity-EPS&&beat+span<=capacity+EPS).sort((a,b)=>a-b);}
 function validate(events,tl,marks=[]){return marks.every(m=>(m.offset===undefined||m.offset>=0&&m.offset<tl.capacities[m.bar])&&(m.endOffset===undefined||m.endOffset>=0&&m.endOffset<=tl.capacities[m.endBar??m.bar]))&&events.every(e=>e.bar>=0&&e.bar<tl.capacities.length&&(e.offset||0)>=0&&(e.offset||0)+(e.beats||0)<=tl.capacities[e.bar]+.0001);}
-const api={transposeKey,rebar,editBars,chromaticPitch,transposeHead,meter,timeline,keyAt,keyNames,signatureAccidental,parsePitch,resolve,keyGlyphs,keyWidth,keySVG,slots,validate};if(typeof module!=='undefined')module.exports=api;else root.CrescendoRhythmStructure=api;
+const api={MAX_BARS,transposeKey,rebar,editBars,chromaticPitch,transposeHead,meter,timeline,keyAt,keyNames,signatureAccidental,parsePitch,resolve,keyGlyphs,keyWidth,keySVG,slots,validate};if(typeof module!=='undefined')module.exports=api;else root.CrescendoRhythmStructure=api;
 })(typeof window==='undefined'?globalThis:window);

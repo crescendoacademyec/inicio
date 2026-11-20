@@ -77,6 +77,8 @@
                 <span>Título</span>
                 <input id="exerciseTitleInput" type="text" placeholder="Ej. Ligaduras en 6/8">
               </label>
+              <label><span>Crédito</span><select id="scoreCreditRole"><option value="transcriber">Transcripción</option><option value="composer">Composición</option><option value="arranger">Arreglo</option></select></label>
+              <label><span>Nombre para el crédito</span><input id="scoreCreditName" type="text" maxlength="240" placeholder="Nombre de quien escribe o transcribe"></label>
               <label>
                 <span>Descripción</span>
                 <input id="exerciseDescriptionInput" type="text" placeholder="Indicaciones breves para el estudiante">
@@ -87,8 +89,8 @@
                 <button id="exportExerciseButton" type="button">Guardar archivo de proyecto</button>
                 <button id="exportMusicXmlButton" type="button">Guardar MusicXML</button>
                 <label class="exercise-import">
-                  Importar XML
-                  <input id="importMusicXmlInput" type="file" accept=".musicxml,.xml,application/xml,text/xml">
+                  Importar partitura
+                  <input id="importMusicXmlInput" type="file" accept=".mei,.mxl,.musicxml,.xml,application/xml,text/xml">
                 </label>
                 <label class="exercise-import">
                   Importar
@@ -415,13 +417,22 @@
     <script src="score-editor-midi-recognition.js?v=20260814"></script>
     <script src="score-editor-midi-capture.js?v=20260814"></script>
     <script src="score-editor-midi-keyboard.js?v=20261014-input-10"></script>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<script src="../../../shared/score-playback-route.js?v=20261120-editor-2"></script>
+<link rel="stylesheet" href="../../../shared/score-document-heading.css?v=20261120-1">
+<script src="../../../shared/score-document-heading.js?v=20261120-1"></script>
+<script src="../../../shared/score-print.js?v=20261120-heading-1"></script>
+<script src="../../../shared/score-system-layout.js?v=20261120-2"></script>
+<script src="../../../shared/score-performance-plan.js?v=20261120-2"></script>
+<script src="../../../shared/score-file-reader.js?v=20261120-editor-2"></script>
+<script src="../../../shared/score-import-details.js?v=20261120-2"></script>
     <script src="score-editor-midi-playback.js?v=20260814"></script>
-    <script src="score-editor-musicxml-export.js?v=20261015-navigation-2"></script>
+    <script src="score-editor-musicxml-export.js?v=20261120-heading-1"></script>
     <script src="score-editor-geometry.js?v=20260814"></script>
     <script src="score-editor-performance.js?v=20260814"></script>
     <script src="score-editor-engraving.js?v=20260814"></script>
     <script src="https://cdn.jsdelivr.net/npm/soundfont-player@0.12.0/dist/soundfont-player.min.js"></script>
-    <script src="../../../shared/score-file-name.js?v=20261022-1"></script>
+    <script src="../../../shared/score-file-name.js?v=20261120-stage3-1"></script>
     <script src="../../../shared/measure-clipboard.js?v=20261022-1"></script>
     <script src="../../../shared/string-tablature.js?v=20261022-auto-fret-3"></script>
     <script src="../../../shared/editor-string-board.js?v=20261022-1"></script>
@@ -432,6 +443,6 @@
   <script src="../../../shared/overflow-writing.js?v=20261022-1"></script>
   <script src="../../metronomo/rhythm-export.js?v=20261022-1"></script>
   <script src="score-editor-recording-sync.js?v=20261029-6"></script>
-  <script src="app.js?v=20261029-recording-6"></script>
+  <script src="app.js?v=20261120-accidental-spacing-1"></script>
   </body>
 </html>

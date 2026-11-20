@@ -1,0 +1,20 @@
+<!doctype html><meta charset="utf-8"><title>Comprobación de exportación local</title>
+<style>body{margin:0}iframe{width:100%;height:85vh;border:0}textarea{width:95%;height:40px}</style>
+<p id="result">Esperando una exportación del editor…</p>
+<textarea id="export-data" aria-label="Archivo exportado para verificación" readonly></textarea>
+<iframe title="Editor en prueba"></iframe>
+<script>
+const frame=document.querySelector('iframe');
+frame.onload=()=>{
+ const win=frame.contentWindow;
+ win.HTMLAnchorElement.prototype.click=async function(){
+  if(!this.download||!this.href.startsWith('blob:'))return;
+  try{
+   const blob=await(await fetch(this.href)).blob(),reader=new FileReader();
+   reader.onload=()=>{document.querySelector('textarea').value=reader.result;document.querySelector('#result').textContent=JSON.stringify({name:this.download,type:blob.type,bytes:blob.size});};
+   reader.readAsDataURL(blob);
+  }catch(error){document.querySelector('#result').textContent=error.message;}
+ };
+};
+frame.src=new URLSearchParams(location.search).get('editor')==='metronomo'?'../herramientas/metronomo/':'../herramientas/editor-crescendo/';
+</script>

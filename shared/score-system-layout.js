@@ -1,0 +1,8 @@
+/* Pure system packing and ordered manual boundary edits. */
+(function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.CrescendoSystemLayout=api;})(typeof globalThis==='object'?globalThis:this,function(){
+ function normalize(breaks,count){return [...new Set((breaks||[]).filter(i=>Number.isInteger(i)&&i>0&&i<count))].sort((a,b)=>a-b);}
+ function pack({starts,widths,header=0,available=Infinity,max=4,breaks=null}){const rows=[],manual=Array.isArray(breaks),boundaries=normalize(breaks,widths.length);for(let first=0;first<widths.length;){const origin=first?starts[first]-header:0;let last=first;if(manual)last=(boundaries.find(i=>i>first)??widths.length)-1;else while(last+1<widths.length&&last-first<max-1&&starts[last+1]+widths[last+1]-origin+24<=available)last++;const end=starts[last]+widths[last];rows.push({first,last,origin,end,width:end-origin+24});first=last+1;}return rows;}
+ function move(rows,index,direction){const at=rows.findIndex(r=>index>=r.first&&index<=r.last);if(at<0||direction<0&&at===0||direction>0&&index===rows[at].first)return null;const breaks=rows.slice(1).map(r=>r.first),row=rows[at];if(direction<0){const pos=breaks.indexOf(row.first);breaks.splice(pos,1);if(index<row.last)breaks.push(index+1);}else{if(rows[at+1])breaks.splice(breaks.indexOf(rows[at+1].first),1);breaks.push(index);}return normalize(breaks,rows.at(-1).last+1);}
+ function edit(breaks,index,operation,count){if(!Array.isArray(breaks))return null;return normalize(breaks.filter(i=>operation==='insert'||i!==index).map(i=>i>=index?i+(operation==='insert'?1:-1):i),count);}
+ return {normalize,pack,move,edit};
+});

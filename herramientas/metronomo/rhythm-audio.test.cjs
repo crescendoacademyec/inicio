@@ -15,3 +15,5 @@ test('pause silences the actual sample source and resumes the remaining duration
  await player.play([{note:'C4',beats:4}],{bars:1,tempo:60,countIn:false});context.currentTime=1;tick();player.pause();assert.deepEqual(cut,[1]);assert.deepEqual(gains,[[0,1]]);
  context.currentTime=8;await player.resume();assert.equal(played.length,2);assert.ok(played[1].duration<played[0].duration);player.stop();
 });
+
+test('pickup capacity advances to the next bar without padding the melody',()=>{const plan=A.compile([{bar:0,offset:0,beats:.5,note:'G4',staff:1},{bar:1,offset:0,beats:4,note:'C5',staff:1}],{bars:2,tempo:60,marks:[{type:'measureDuration',bar:0,beats:.5,implicit:true}]});assert.deepEqual(plan.notes.map(n=>n.start),[0,.5]);assert.equal(plan.duration,4.5);assert.equal(plan.timeline.meters[0].capacity,4);});

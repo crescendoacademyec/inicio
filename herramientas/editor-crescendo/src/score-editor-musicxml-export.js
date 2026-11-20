@@ -331,7 +331,7 @@
     const kind=direction.navigation,defs={dc:['D.C.','dacapo="yes"'],dcFine:['D.C. al Fine','dacapo="yes"'],dcCoda:['D.C. al Coda','dacapo="yes"'],ds:['D.S.','dalsegno="segno"'],dsFine:['D.S. al Fine','dalsegno="segno"'],dsCoda:['D.S. al Coda','dalsegno="segno"'],segno:['','segno="segno"'],coda:['','coda="coda"'],toCoda:['Al Coda','tocoda="coda"'],fine:['Fine','fine="yes"']},definition=defs[kind];
     if(!definition)return wordsDirectionRows(direction,level);
     const body=['segno','coda'].includes(kind)?`<${kind}/>`:`<words>${escapeXml(definition[0])}</words>`;
-    return [line(level,'<direction placement="above">'),line(level+1,'<direction-type>'),line(level+2,body),line(level+1,'</direction-type>'),line(level+1,`<staff>${Math.max(1,Number(direction.staff)||1)}</staff>`),line(level+1,`<sound ${definition[1]}/>`),line(level,'</direction>')];
+    return [line(level,'<direction placement="above">'),line(level+1,'<direction-type>'),line(level+2,body),line(level+1,'</direction-type>'),line(level+1,`<staff>${Math.max(1,Number(direction.staff)||1)}</staff>`),line(level+1,`<sound ${direction.target ? definition[1].replace(/"(?:segno|coda)"/,`"${escapeXml(direction.target)}"`) : definition[1]}/>`),line(level,'</direction>')];
   }
   function directionRows(direction, level = 3) {
     if (direction?.type === "navigation") return navigationDirectionRows(direction,level);
@@ -489,7 +489,7 @@
   function noteRows(event, staffNumber, voiceNumber, tieState, divisions = DEFAULT_DIVISIONS, level = 3) {
     const duration = xmlDuration(event.duration, divisions);
     const rows = [line(level, "<note>")];
-    if (event.grace) rows.push(line(level + 1, '<grace slash="yes"/>'));
+    if (event.grace) rows.push(line(level + 1, `<grace slash="${event.graceSlash===false?'no':'yes'}"/>`));
     if (event.chord) rows.push(line(level + 1, "<chord/>"));
     if (event.type === "rest") {
       const measureAttr = event.measureRest ? ' measure="yes"' : "";
@@ -547,7 +547,7 @@
     (barline.endings || []).forEach((ending) => {
       rows.push(line(level + 1, `<ending number="${escapeXml(ending.number || "1")}" type="${escapeXml(ending.type || "start")}"/>`));
     });
-    if (barline.repeat) rows.push(line(level + 1, `<repeat direction="${escapeXml(barline.repeat)}"/>`));
+    if (barline.repeat) rows.push(line(level + 1, `<repeat direction="${escapeXml(barline.repeat)}"${barline.times ? ` times="${Number(barline.times)}"` : ""}${barline.afterJump ? ' after-jump="yes"' : ""}/>`));
     rows.push(line(level, "</barline>"));
     return rows;
   }
@@ -559,7 +559,8 @@
     }
     const safeAttributeState = attributeState || createAttributeExportState();
     const attributeOptions = measureAttributeOptions(measure, model, safeAttributeState);
-    const rows = [line(level, `<measure number="${measure.number}">`)];
+    const rows = [line(level, `<measure number="${measure.number}"${measure.implicit ? ' implicit="yes"' : ""}>`)];
+    if(measure.newSystem)rows.push(line(level+1,'<print new-system="yes"/>'));
     rows.push(...measureAttributesXml(measure, model, attributeOptions, level + 1));
     updateAttributeExportState(safeAttributeState, attributeOptions.current);
     rows.push(...(measure.barlines || []).filter((barline) => barline.location === "left").flatMap((barline) => barlineRows(barline, level + 1)));
@@ -627,6 +628,7 @@
       line(2, `<work-title>${escapeXml(title)}</work-title>`),
       line(1, "</work>"),
       line(1, "<identification>"),
+      ...(safeModel.creators||[]).filter(c=>c.name).map(c=>line(2,`<creator type="${escapeXml(c.type||'composer')}">${escapeXml(c.name)}</creator>`)),
       line(2, "<encoding>"),
       line(3, "<software>Jaramillo Music Lab - Cuaderno de estudio</software>"),
       line(2, "</encoding>"),
@@ -639,6 +641,11 @@
       line(1, "</part-list>"),
       line(1, '<part id="P1">')
     ];
+    const layoutFields=[];
+    if(Array.isArray(safeModel.importedRoute)&&safeModel.importedRoute.length)layoutFields.push(`<miscellaneous-field name="crescendo:measure-route">${escapeXml(JSON.stringify(safeModel.importedRoute))}</miscellaneous-field>`);
+    if(Array.isArray(safeModel.systemBreaks))layoutFields.push(`<miscellaneous-field name="crescendo:system-breaks">${escapeXml(JSON.stringify(safeModel.systemBreaks))}</miscellaneous-field>`);
+    if(layoutFields.length){const at=rows.findIndex(r=>r.includes('</identification>'));rows.splice(at,0,line(2,`<miscellaneous>${layoutFields.join('')}</miscellaneous>`));}
+
     const tieState = new Set();
     const attributeState = createAttributeExportState();
     measures.forEach((measure, index) => rows.push(...measureXml(measure, safeModel, tieState, attributeState, index, 2)));

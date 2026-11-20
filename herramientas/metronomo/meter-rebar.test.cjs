@@ -20,5 +20,5 @@ test('rebar preserves accidentals, dynamics and fractional tuplet timing',()=>{
 test('changing meter from a later bar keeps earlier music in place and never silently truncates',()=>{
  const events=[note('a',0,0,4),note('b',1,0,4)];const r=S.rebar(events,[],S.timeline('4/4',[],2),'4/4',[{type:'meter',bar:1,meter:'2/4'}],2);
  assert.equal(r.events[0].beats,4);assert.equal(r.events[0].bar,0);assert.equal(r.bars,3);
- const before=JSON.stringify(events),fail=S.rebar(events,[],S.timeline('4/4',[],2),'1/16',[],2);assert.match(fail.message,/No se modificó/);assert.equal(JSON.stringify(events),before);
+ const before=JSON.stringify(events),fail=S.rebar(events,[],S.timeline('4/4',[],2),'1/16',[],2,16);assert.match(fail.message,/No se modificó/);assert.equal(JSON.stringify(events),before);
 });

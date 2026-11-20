@@ -462,7 +462,9 @@
   }
 
   function measureTicksForIndex(measureIndex) {
-    return Meter.measureTicks(meterForMeasureIndex(measureIndex));
+    const measures = state.systems?.[0]?.measures || state.measures || [];
+    const actual = Number(measures[measureIndex]?.actualTicks);
+    return actual > 0 ? actual : Meter.measureTicks(meterForMeasureIndex(measureIndex));
   }
 
   function syncActiveMeterToCursor() {
@@ -1219,8 +1221,21 @@
     return Engraving.restOpticalOffset(durationId, appearanceValue);
   }
 
-  function measureLeftInset() {
-    return Math.max(8, appearanceValue("measureLeftInset"));
+  function measureLeftInset(measureIndex = -1) {
+    const inset=Math.max(8,appearanceValue("measureLeftInset"));
+    // The writing grid places note centres directly. Reserve the full left
+    // extent of the first column, including accidentals, in every measure.
+    // Optical engraving already accounts for those extents separately.
+    let extent=0;
+    if(measureIndex>=0&&isNoteInputMode())scoreSystems().forEach((system,index)=>withSystemContext(index,()=>{
+      const first=(system.measures?.[measureIndex]?.entries||[]).filter(entry=>!entry.hiddenTupletReserve&&Math.abs(Number(entry.tickStart)||0)<EPSILON);
+      extent=Math.max(extent,...first.map(entry=>entryLeftExtent(entry)+Math.max(0,appearanceValue("accidentalExtentCorrection"))));
+    }));
+    const forward=(state.marks||[]).some(mark=>mark.type==='barline'&&Number(mark.boundaryIndex)===measureIndex&&['repeat-start','repeat-both'].includes(mark.barlineType));
+    if(!forward)return inset+extent;
+    const thin=barLineWidth(),thick=Math.max(thin*3.2,3.2),gap=Math.max(10,thick/2+thin/2+5);
+    const dotsRight=appearanceValue("barLineOffsetX")+gap/2+8+2.35;
+    return Math.max(inset,dotsRight+12)+extent;
   }
 
   function measureRightInset() {
@@ -1353,9 +1368,19 @@
     });
   }
 
+  function syncScoreDocumentHeading(){
+    window.CrescendoScoreHeading.update(scoreShell,{title:exerciseTitleInput?.value,creators:state.scoreCreators});
+    const role=document.getElementById('scoreCreditRole'),name=document.getElementById('scoreCreditName');
+    if(role&&name&&document.activeElement!==name)name.value=(state.scoreCreators||[]).find(c=>c.type===role.value)?.name||'';
+  }
+
   function stateSnapshot() {
     syncActiveSystemMeasures();
     return JSON.stringify({
+      scoreCreators: state.scoreCreators || [],
+      systemBreaks: state.systemBreaks ?? null,
+      importedRoute: state.importedRoute || null,
+      importedTempoBase: state.importedTempoBase || null,
       cursorMeasure: state.cursorMeasure,
       cursorTick: state.cursorTick,
       cursorStaffStep: state.cursorStaffStep,
@@ -1783,6 +1808,7 @@
   }
 
   function setDocumentDirty(dirty, status = "") {
+    syncScoreDocumentHeading();
     documentDirty = dirty === true;
     document.documentElement.dataset.documentDirty = documentDirty ? "true" : "false";
     emitEditorState(status);
@@ -2310,6 +2336,7 @@
     currentExerciseScenes = [];
     activeSceneIndex = -1;
     activeExerciseReference = { source: "", id: "" };
+    state.scoreCreators=[];
     if (exerciseTitleInput) exerciseTitleInput.value = "";
     if (exerciseDescriptionInput) exerciseDescriptionInput.value = "";
     if (exerciseSelect) exerciseSelect.value = "";
@@ -2347,6 +2374,10 @@
     const data = JSON.parse(snapshot);
     pointerInputPreview = null;
     state.staffView = data.staffView || (["guitar","requinto"].includes(state.playbackInstrument) ? "treble" : "both");
+    state.scoreCreators=window.CrescendoScoreHeading.normalize(data.scoreCreators);
+    state.systemBreaks=Array.isArray(data.systemBreaks)?data.systemBreaks:null;
+    state.importedRoute = data.importedRoute || null;
+    state.importedTempoBase = data.importedTempoBase || null;
     state.cursorMeasure = data.cursorMeasure;
     state.cursorTick = data.cursorTick;
     state.cursorStaffStep = Number.isFinite(data.cursorStaffStep) ? data.cursorStaffStep : 0;
@@ -2612,6 +2643,8 @@
       if (!Array.isArray(system.measures)) system.measures = [];
       system.measures.splice(insertIndex, 0, createMeasureForSystemIndex(insertIndex));
     });
+    if(Array.isArray(state.systemBreaks))state.systemBreaks=window.CrescendoSystemLayout.edit(state.systemBreaks,insertIndex,'insert',state.measures.length);
+    if(state.importedRoute)state.importedRoute=window.CrescendoPerformancePlan.edit(state.importedRoute,insertIndex,'insert');
     shiftAnchoredItemsForMeasureInsert(insertIndex);
     setActiveSystemIndex(activeSystemIndex());
     state.selectedMeasureIndex = insertIndex;
@@ -2683,6 +2716,8 @@
         system.measures.splice(removeIndex, 1);
       }
     });
+    if(Array.isArray(state.systemBreaks))state.systemBreaks=window.CrescendoSystemLayout.edit(state.systemBreaks,removeIndex,'remove',state.measures.length);
+    if(state.importedRoute)state.importedRoute=window.CrescendoPerformancePlan.edit(state.importedRoute,removeIndex,'remove');
     shiftAnchoredItemsForMeasureRemove(removeIndex);
     setActiveSystemIndex(activeSystemIndex());
     state.selectedMeasureIndex = Math.max(0, Math.min(removeIndex, state.measures.length - 1));
@@ -4997,24 +5032,36 @@
     return true;
   }
 
+  let scorePrintWidth=null;
   function scoreFlow(layout = buildLayout()) {
     const header = layout.starts[0] || staffLeft();
-    const rowHeight = Math.ceil(scoreStaffBottomY() + (stringInstrument() && guitarTabVisible ? stringInstrument().tuning.length * 17 + 100 : 95));
-    const rows = [];
-    for (let first = 0; first < layout.starts.length; first += 4) {
-      const last = Math.min(first + 3, layout.starts.length - 1);
+    const freeTexts=typeof state!=='undefined'?(state.textItems||[]).filter(item=>item.kind==='text'&&Number.isFinite(item.y)):[];
+    const extraTop=Math.max(0,...freeTexts.map(item=>24-(item.y-(Number(item.style?.size)||24))));
+    const rowHeight = Math.ceil(scoreStaffBottomY() + (stringInstrument() && guitarTabVisible ? stringInstrument().tuning.length * 17 + 100 : 95)+extraTop);
+    const available=typeof scorePrintWidth!=='undefined'&&scorePrintWidth ? scorePrintWidth : typeof svg!=='undefined'&&svg?.parentElement?.clientWidth ? Math.max(240,svg.parentElement.clientWidth/(Number(state.zoom)||1)) : Infinity;
+    const rows = typeof window!=='undefined'&&window.CrescendoSystemLayout ? window.CrescendoSystemLayout.pack({starts:layout.starts,widths:layout.widths,header,available,breaks:state.systemBreaks??null}).map((row,i)=>({...row,y:i*rowHeight})) : [];
+    if(!rows.length)
+    for (let first = 0; first < layout.starts.length;) {
       const origin = first ? layout.starts[first] - header : 0;
+      let last=first;
+      while(last+1<layout.starts.length&&last-first<3&&layout.starts[last+1]+layout.widths[last+1]-origin+24<=available)last++;
       const end = layout.starts[last] + layout.widths[last];
-      rows.push({first, last, origin, end, width:end-origin+24, y:rows.length*rowHeight});
+      rows.push({first, last, origin, end, width:end-origin+24, y:rows.length*rowHeight});first=last+1;
     }
-    return {rows, rowHeight, width:Math.max(1,...rows.map(row=>row.width)), height:Math.max(rowHeight,rows.length*rowHeight)};
+    return {rows, rowHeight, extraTop, width:Math.max(1,...rows.map(row=>row.width)), height:Math.max(rowHeight,rows.length*rowHeight)};
   }
+
+  function moveMeasureSystem(index,direction){
+    const flow=scoreFlow(lastRenderedLayout||buildLayout()),next=window.CrescendoSystemLayout.move(flow.rows,index,direction);
+    if(next===null)return false;saveHistory();state.systemBreaks=next;render();return true;
+  }
+  function resetSystemLayout(){saveHistory();state.systemBreaks=null;render();}
 
   function flowPlaybackPoint(x, absoluteTick) {
     const layout = lastRenderedLayout || buildLayout(), flow = scoreFlow(layout);
     const measure = measureIndexAndTickFromAbsolute(absoluteTick).measureIndex;
-    const row = flow.rows[Math.floor(measure / 4)] || flow.rows.at(-1);
-    return {x:x-row.origin, y:row.y};
+    const row = flow.rows.find(row=>measure>=row.first&&measure<=row.last) || flow.rows.at(-1);
+    return {x:x-row.origin, y:row.y+(flow.extraTop||0)};
   }
 
   function svgPointFromEvent(event) {
@@ -5029,7 +5076,7 @@
     const mapped = point.matrixTransform(matrix.inverse());
     const flow = scoreFlow(lastRenderedLayout || buildLayout());
     const row = flow.rows[Math.max(0, Math.min(flow.rows.length-1, Math.floor(mapped.y / flow.rowHeight)))];
-    mapped.x += row.origin; mapped.y -= row.y;
+    mapped.x += row.origin; mapped.y -= row.y+(flow.extraTop||0);
     return mapped;
   }
 
@@ -5445,7 +5492,7 @@
   function fillVoiceWithRestsExact(measure, measureIndex, voice = 2) {
     if (!measure) return false;
     const targetTicks = measureTicksForIndex(measureIndex);
-    const normalizedVoice = Number(voice) === 2 ? 2 : 1;
+    const normalizedVoice = Math.max(1,Math.min(4,Math.round(Number(voice))||1));
     measure.entries = measure.entries.filter((entry) => !(
       entryVoice(entry) === normalizedVoice &&
       entry.type === "rest" &&
@@ -7872,6 +7919,7 @@
 
   function clearScore() {
     saveHistory();
+    state.importedRoute=null;state.importedTempoBase=null;state.systemBreaks=null;
     state.writingLigature = null;
     state.cursorMeasure = 0;
     state.cursorTick = 0;
@@ -8135,7 +8183,8 @@
 
   function svgPointToClient(point) {
     const layout=lastRenderedLayout||buildLayout(), index=measureIndexFromX(layout,point.x);
-    const viewport=svg.querySelector(`svg[data-score-row="${Math.floor(index/4)}"]`);
+    const flow=scoreFlow(layout),rowIndex=flow.rows.findIndex(row=>index>=row.first&&index<=row.last);
+    const viewport=svg.querySelector(`svg[data-score-row="${Math.max(0,rowIndex)}"]`);
     if(viewport?.getScreenCTM()){
       const local=svg.createSVGPoint();local.x=point.x;local.y=point.y;
       return local.matrixTransform(viewport.getScreenCTM());
@@ -9592,7 +9641,7 @@
             staff: markSystemIndex(mark) + 1
           };
         }
-        if(mark.type==='navigation'&&Number(mark.measureIndex)===measureIndex)return {type:'navigation',navigation:mark.navigation,text:mark.text,placement:'above',tick:Math.max(0,Math.min(measureTicksValue,Number(mark.tick)||0)),staff:1};
+        if(mark.type==='navigation'&&Number(mark.measureIndex)===measureIndex)return {type:'navigation',navigation:mark.navigation,target:mark.target,text:mark.text,placement:'above',tick:Math.max(0,Math.min(measureTicksValue,Number(mark.tick)||0)),staff:1};
         return musicXmlTempoDirectionForMark(mark, measureIndex, measureTicksValue);
       })
     ].filter(Boolean);
@@ -9669,7 +9718,7 @@
           const barline = ensure(location);
           barline.style = musicXmlBarlineStyle(type, location);
           const repeat = musicXmlRepeatForBarline(type, location);
-          if (repeat) barline.repeat = repeat;
+          if (repeat) {barline.repeat = repeat;barline.times=mark.times;barline.afterJump=mark.afterJump;}
         });
       } else if (mark?.type === "ending") {
         const start = Math.max(0, Number(mark.startMeasureIndex ?? mark.measureIndex) || 0);
@@ -9949,7 +9998,7 @@
       if (start > cursor + EPSILON) {
         events.push(musicXmlRestEvent(start - cursor));
       }
-      (state.marks||[]).filter(m=>m.type==="grace-note"&&markSystemIndex(m)===systemIndex&&m.measureIndex===measureIndex&&Math.abs(m.tick-start)<EPSILON&&(m.voice||1)===entryVoice(entry)).forEach(m=>events.push({type:"note",grace:true,duration:0,durationId:m.durationId,pitch:musicXmlPitchForDiatonicStep(m.diatonicStep,"natural")}));
+      (state.marks||[]).filter(m=>m.type==="grace-note"&&markSystemIndex(m)===systemIndex&&m.measureIndex===measureIndex&&Math.abs(m.tick-start)<EPSILON&&(m.voice||1)===entryVoice(entry)).forEach(m=>events.push({type:"note",grace:true,graceSlash:m.slash!==false,duration:0,durationId:m.durationId,pitch:musicXmlPitchForDiatonicStep(m.diatonicStep,m.accidental || "natural")}));
       events.push(...musicXmlEventsForEntry(entry, measureIndex, systemIndex));
       cursor = Math.max(cursor, start + ticks);
     });
@@ -9975,7 +10024,9 @@
       if (measureIsHidden(measureIndex)) continue;
       const ticks = measureTicksForIndex(measureIndex);
       const measure = {
-        number: measures.length + 1,
+        number: measures.length + (systems[0]?.measures?.[0]?.implicit ? 0 : 1),
+        implicit: systems[0]?.measures?.[measureIndex]?.implicit === true,
+        newSystem:state.systemBreaks?.includes(measureIndex)||false,
         sourceMeasureIndex: measureIndex,
         ticks,
         meter: meterForMeasureIndex(measureIndex),
@@ -10011,6 +10062,9 @@
       measures.push(measure);
     }
     return {
+      systemBreaks:Array.isArray(state.systemBreaks)?state.systemBreaks.flatMap(index=>{const at=measures.findIndex(m=>m.sourceMeasureIndex===index);return at>0?[at]:[];}):null,
+      importedRoute: state.importedRoute ? (()=>{const indices=new Map(measures.map((m,i)=>[m.sourceMeasureIndex,i]));return window.CrescendoPerformancePlan.resize(state.importedRoute,measureCount).route.filter(i=>indices.has(i)).map(i=>indices.get(i));})() : null,
+      creators: state.scoreCreators || [],
       title: String(exerciseTitleInput?.value || "").trim() || "Cuaderno JML",
       partName: "Cuaderno",
       divisions: MusicXml.DEFAULT_DIVISIONS,
@@ -10300,21 +10354,11 @@
   }
 
   function musicXmlImportChordText(harmonyEl) {
-    const rootEl = xmlFirstChild(harmonyEl, "root");
-    if (!rootEl) return null;
-    const rootStep = xmlFirstChild(rootEl, "root-step")?.textContent?.trim() || "C";
-    const rootAlter = xmlNumberContent(xmlFirstChild(rootEl, "root-alter"), 0);
-    const alterSymbol = rootAlter > 0 ? "#".repeat(Math.round(rootAlter)) : rootAlter < 0 ? "b".repeat(Math.round(-rootAlter)) : "";
-    const suffix = musicXmlImportChordSuffix(harmonyEl);
-    const bassEl = xmlFirstChild(harmonyEl, "bass");
-    let bassText = "";
-    if (bassEl) {
-      const bassStep = xmlFirstChild(bassEl, "bass-step")?.textContent?.trim() || "";
-      const bassAlter = xmlNumberContent(xmlFirstChild(bassEl, "bass-alter"), 0);
-      const bassAlterSymbol = bassAlter > 0 ? "#".repeat(Math.round(bassAlter)) : bassAlter < 0 ? "b".repeat(Math.round(-bassAlter)) : "";
-      if (bassStep) bassText = `/${bassStep}${bassAlterSymbol}`;
-    }
-    return `${rootStep}${alterSymbol}${suffix}${bassText}`;
+    return window.CrescendoScoreImportDetails.harmony(harmonyEl);
+  }
+
+  function musicXmlImportDirections(directionEl, tick, divisions = 1) {
+    return window.CrescendoScoreImportDetails.directions(directionEl, tick, divisions, 4);
   }
 
   function musicXmlImportNoteElement(noteEl) {
@@ -10405,7 +10449,7 @@
       const staffVoiceSets = new Map();
       xmlChildren(partEl, "measure").forEach((measureEl) => {
         xmlChildren(measureEl, "note").forEach((noteEl) => {
-          if (xmlFirstChild(noteEl, "grace")) return;
+          if (xmlFirstChild(noteEl, "grace") || (xmlFirstChild(noteEl,"chord") && !xmlFirstChild(noteEl,"voice"))) return;
           const staffNumber = Math.max(1, Math.round(xmlNumberContent(xmlFirstChild(noteEl, "staff"), 1)));
           const voiceNumber = Math.max(1, Math.round(xmlNumberContent(xmlFirstChild(noteEl, "voice"), 1)));
           if (!staffVoiceSets.has(staffNumber)) staffVoiceSets.set(staffNumber, new Set());
@@ -10414,6 +10458,7 @@
       });
       staffVoiceSets.forEach((voiceSet, staffNumber) => {
         const sortedVoices = Array.from(voiceSet).sort((a, b) => a - b);
+        if(sortedVoices.length>4)throw new Error("El archivo contiene más de cuatro voces en un pentagrama; no se importará parcialmente.");
         const map = new Map();
         sortedVoices.forEach((voiceNumber, index) => map.set(voiceNumber, Math.min(4, index + 1)));
         voiceRankByStaff.set(staffNumber, map);
@@ -10425,6 +10470,7 @@
       let cursor = 0;
       const noteBuckets = new Map();
       const lastGroupByKey = new Map();
+      const lastVoiceByStaff = new Map();
       const measureDirections = [];
       let measureFifths = null;
       let measureKeyMode = null;
@@ -10465,9 +10511,12 @@
             }
             clefByStaff.set(staffNumber, clefId);
           });
+        } else if (tag === "harmony") {
+          const text = musicXmlImportChordText(child);
+          if(text)measureDirections.push({kind:"chord",tick:(cursor+ xmlNumberContent(xmlFirstChild(child,"offset"),0))/divisions*4,text});
         } else if (tag === "direction") {
           const internalTick = (cursor / Math.max(1, divisions)) * 4;
-          measureDirections.push(...musicXmlImportDirections(child, internalTick));
+          measureDirections.push(...musicXmlImportDirections(child, internalTick, divisions));
         } else if (tag === "backup") {
           cursor = Math.max(0, cursor - xmlNumberContent(xmlFirstChild(child, "duration"), 0));
         } else if (tag === "forward") {
@@ -10489,7 +10538,7 @@
           if (repeatDirection === "forward") {
             barlineMarksOut.push({ boundaryIndex: measureIndex, barlineType: "repeat-start" });
           } else if (repeatDirection === "backward") {
-            barlineMarksOut.push({ boundaryIndex: measureIndex + 1, barlineType: "repeat-end" });
+            barlineMarksOut.push({ boundaryIndex: measureIndex + 1, barlineType: "repeat-end",times:Number(repeatEl.getAttribute("times"))||2,afterJump:repeatEl.getAttribute("after-jump")==="yes" });
           } else if (barStyle === "light-heavy" || barStyle === "final") {
             barlineMarksOut.push({ boundaryIndex: measureIndex + 1, barlineType: "final" });
           } else if (barStyle === "light-light") {
@@ -10497,7 +10546,12 @@
           }
         } else if (tag === "note") {
           const parsed = musicXmlImportNoteElement(child);
-          if (parsed.isGrace) return;
+          if(parsed.isChordFlag && !xmlFirstChild(child,"voice"))parsed.voice=lastVoiceByStaff.get(parsed.staff)||1;
+          if(!parsed.isChordFlag&&!parsed.isGrace)lastVoiceByStaff.set(parsed.staff,parsed.voice);
+          if (parsed.isGrace) {
+            if (parsed.pitch) scoreMarksOut.push({kind:"grace-note", measureIndex, tick:cursor / divisions * 4, staff:parsed.staff, voice:voiceRankByStaff.get(parsed.staff)?.get(parsed.voice) || 1, durationId:parsed.durationId || "eighth", diatonicStep:parsed.pitch.diatonicStep, accidental:accidentalBySemitone(parsed.pitch.alter) || "natural", staffStep:staffStepForDiatonicStep(parsed.pitch.diatonicStep,clefByStaff.get(parsed.staff) || DEFAULT_CLEF_ID), slash:xmlFirstChild(child,"grace")?.getAttribute("slash") !== "no"});
+            return;
+          }
           const key = `${parsed.staff}:${parsed.voice}`;
           if (parsed.isChordFlag && lastGroupByKey.has(key)) {
             const group = lastGroupByKey.get(key);
@@ -10551,7 +10605,12 @@
       }
       systemsData.forEach((system) => { system.lastMeter = currentMeter; });
 
-      const measureTicksInternal = Math.round((Number(currentMeter.top) || 4) * 16 / (Number(currentMeter.bottom) || 4)) || 16;
+      const nominalTicks = Math.round((Number(currentMeter.top) || 4) * 16 / (Number(currentMeter.bottom) || 4)) || 16;
+      const extent = Math.max(cursor, ...Array.from(noteBuckets.values()).flatMap(groups=>groups.map(g=>g.tickStart+g.durationXml))) / divisions * 4;
+      if(extent>nominalTicks+EPSILON)throw new Error(`La duración excede el compás ${measureEl.getAttribute("number") || measureIndex+1}. Revisa la partitura de origen.`);
+      const incomplete = (measureEl.getAttribute("implicit") === "yes" || measureEl.getAttribute("number") === "0") && extent > EPSILON && extent < nominalTicks-EPSILON;
+      const measureTicksInternal = incomplete ? extent : nominalTicks;
+      if (incomplete) systemsData.forEach(system=>{while(system.measures.length<=measureIndex)system.measures.push({entries:[]});Object.assign(system.measures[measureIndex],{actualTicks:extent,implicit:true});});
 
       noteBuckets.forEach((groups, key) => {
         const [staffStr, voiceStr] = key.split(":");
@@ -10561,6 +10620,7 @@
         const system = ensureSystemData(staffNumber);
         while (system.measures.length <= measureIndex) system.measures.push({ entries: [] });
         const measureObj = system.measures[measureIndex];
+        if(incomplete)Object.assign(measureObj,{actualTicks:extent,implicit:true});
         groups.sort((a, b) => a.tickStart - b.tickStart);
 
         const tupletRuns = [];
@@ -10587,7 +10647,7 @@
           entry.dots = group.dots || durationInfo.dots || 0;
           entry.dotted = entry.dots > 0;
           entry.tickStart = (group.tickStart / Math.max(1, divisions)) * 4;
-          if (internalVoice === 2) entry.voice = 2;
+          entry.voice = internalVoice;
           if (!group.isRest && group.notes.length) {
             const staffSteps = group.notes.map((pitch) => staffStepForDiatonicStep(pitch.diatonicStep, clefIdHere));
             const diatonicSteps = group.notes.map((pitch) => pitch.diatonicStep);
@@ -10623,9 +10683,6 @@
           });
         });
 
-        if (voiceNumber > 2) {
-          // v1: solo se admiten 2 voces por pentagrama; el resto se descarta.
-        }
 
         measureObj.entries.sort((a, b) => (a.tickStart - b.tickStart) || (entryVoice(a) - entryVoice(b)));
 
@@ -10667,7 +10724,9 @@
         scoreMarksOut.push({ kind: "clef", measureIndex, tick: change.tick, staff: change.staff, clefId: change.clefId });
       });
       measureDirections.forEach((direction) => {
-        if (direction.kind === "tempo") {
+        if (direction.kind === "navigation") {
+          scoreMarksOut.push({...direction,measureIndex});
+        } else if (direction.kind === "tempo") {
           scoreMarksOut.push({ kind: "tempo", measureIndex, tick: direction.tick, bpm: direction.bpm, unitDurationId: direction.unitDurationId, dots: direction.dots });
         } else if (direction.kind === "dynamic") {
           textItemsOut.push({ kind: "dynamic", measureIndex, tick: direction.tick, text: direction.text });
@@ -10681,6 +10740,7 @@
 
     return {
       title,
+      creators: window.CrescendoScoreHeading.fromXml(doc),
       systemsData,
       meter: firstMeterRecorded || { ...DEFAULT_METER },
       keySignature: firstKeyRecorded,
@@ -10688,18 +10748,21 @@
       textItemsOut,
       barlineMarksOut,
       endingMarksOut,
-      measureCount: measureEls.length
+      systemBreaks: (()=>{const field=doc.querySelector('miscellaneous-field[name="crescendo:system-breaks"]');if(field){const value=JSON.parse(field.textContent);if(!Array.isArray(value))throw Error('Distribución de sistemas no válida.');return window.CrescendoSystemLayout.normalize(value,measureEls.length);}const breaks=measureEls.flatMap((m,i)=>{const p=xmlFirstChild(m,'print');return i>0&&(p?.getAttribute('new-system')==='yes'||p?.getAttribute('new-page')==='yes')?[i]:[];});return breaks.length?breaks:null;})(),
+      importedRoute: (()=>{const field=doc.querySelector('miscellaneous-field[name="crescendo:measure-route"]');if(!field)return null;const route=JSON.parse(field.textContent);window.CrescendoPerformancePlan.route(measureEls.length,[],{count:measureEls.length,route});return {count:measureEls.length,route};})(),
+      measureCount: measureEls.length,
+      warning: xmlChildren(root,"part").length>1 ? "Se importó únicamente la primera parte del archivo." : ""
     };
   }
 
   async function importMusicXmlFile(file) {
     if (!file) return false;
-    if (!(await confirmDiscardCanvasChanges("importar un archivo MusicXML"))) return false;
+    if (!(await confirmDiscardCanvasChanges("importar una partitura"))) return false;
     let text;
     try {
-      text = await file.text();
-    } catch {
-      await showEditorMessage("No se pudo leer el archivo seleccionado.");
+      text = (await window.CrescendoScoreFile.readXml(file)).content;
+    } catch (error) {
+      await showEditorMessage("No se pudo abrir la partitura: " + (error?.message || "archivo no válido"));
       return false;
     }
     let parsed;
@@ -10723,6 +10786,8 @@
     activeExerciseReference = { source: "", id: "" };
 
     const base = JSON.parse(stateSnapshot());
+    base.scoreCreators=parsed.creators;
+    base.importedRoute=parsed.importedRoute;base.systemBreaks=parsed.systemBreaks;
     base.cursorMeasure = 0;
     base.cursorTick = 0;
     base.selectedEntryIds = [];
@@ -10731,6 +10796,9 @@
     base.activeSystemIndex = 0;
     base.meter = parsed.meter;
     base.keySignature = parsed.keySignature;
+    const initialTempo=parsed.scoreMarksOut.find(m=>m.kind==='tempo'&&m.measureIndex===0&&m.tick===0);
+    base.importedTempoBase=initialTempo?initialTempo.bpm*(durationById(initialTempo.unitDurationId)?.ticks||4)/4*(2-2**(-(initialTempo.dots||0))):null;
+    if(base.importedTempoBase)base.playbackBpm=base.importedTempoBase;
     base.systems = parsed.systemsData.map((system) => ({
       id: createSystemId(),
       kind: "staff",
@@ -10740,7 +10808,9 @@
 
     const marks = [];
     parsed.scoreMarksOut.forEach((item) => {
-      if (item.kind === "clef") {
+      if (["navigation","grace-note"].includes(item.kind)) {
+        marks.push({...item,id:createMarkId(),type:item.kind,systemIndex:Math.max(0,(item.staff||1)-1),entryId:null});
+      } else if (item.kind === "clef") {
         marks.push({
           id: createMarkId(),
           type: "clef",
@@ -10771,35 +10841,19 @@
         type: "barline",
         boundaryIndex: item.boundaryIndex,
         barlineType: item.barlineType,
+        times:item.times,afterJump:item.afterJump,
         measureIndex: item.boundaryIndex,
         tick: 0,
         staffStep: 0,
         entryId: null
       });
     });
-    const endingGroups = new Map();
-    parsed.endingMarksOut.forEach((item) => {
-      const key = item.number;
-      if (!endingGroups.has(key)) endingGroups.set(key, { start: null, end: null, label: item.number });
-      const group = endingGroups.get(key);
-      if (item.type === "start") group.start = item.measureIndex;
-      else group.end = item.measureIndex;
+    const endingGroups=[],pendingEndings=new Map();
+    parsed.endingMarksOut.forEach(item=>{
+      if(item.type==='start'){const group={start:item.measureIndex,end:null,label:item.number};endingGroups.push(group);pendingEndings.set(item.number,group);}
+      else {const group=pendingEndings.get(item.number);if(group){group.end=item.measureIndex;pendingEndings.delete(item.number);}}
     });
-    endingGroups.forEach((group) => {
-      if (!Number.isFinite(group.start)) return;
-      marks.push({
-        id: createMarkId(),
-        type: "ending",
-        startMeasureIndex: group.start,
-        endMeasureIndex: Number.isFinite(group.end) ? group.end : group.start,
-        label: group.label,
-        closedEnd: true,
-        measureIndex: group.start,
-        tick: 0,
-        staffStep: 0,
-        entryId: null
-      });
-    });
+    endingGroups.forEach(group=>marks.push({id:createMarkId(),type:"ending",startMeasureIndex:group.start,endMeasureIndex:group.end??group.start,label:group.label,closedEnd:true,measureIndex:group.start,tick:0,staffStep:0,entryId:null}));
     base.marks = marks;
 
     const textItems = [];
@@ -10832,7 +10886,8 @@
         const live = state.textItems.find((candidate) => candidate.id === item.id);
         if (!live) return;
         live.x = xForChordAnchor(layout, live.measureIndex, live.tick);
-        live.y = staffTopYForSystem(live.systemIndex || 0) - 34;
+        const chord=state.textItems.find(candidate=>AnchoredText.isChord(candidate));
+        live.y=chord?chordItemPoint(chord,layout).y-36:Math.max(24,staffTopYForSystem(live.systemIndex || 0)-90);
       });
       render();
     }
@@ -10841,7 +10896,7 @@
     if (exerciseDescriptionInput) exerciseDescriptionInput.value = "";
     if (exerciseSelect) exerciseSelect.value = "";
     renderSceneControls();
-    setDocumentDirty(true, "MusicXML importado. Revisa el resultado y guarda cuando quieras.");
+    setDocumentDirty(true, "Partitura importada. " + (parsed.warning || "Revisa el resultado y guarda cuando quieras."));
     return true;
   }
 
@@ -10913,13 +10968,15 @@
   }
 
   function playbackTempoEvents() {
-    return MidiPlayback.tempoEventsFromMarks({
+    const events = MidiPlayback.tempoEventsFromMarks({
       marks: state.marks || [],
       absoluteTickForMark,
       durationById,
       defaultBpm: normalizePlaybackBpm(state.playbackBpm),
       defaultUnitDurationId: "quarter"
     });
+    const scale=state.importedTempoBase>0?normalizePlaybackBpm(state.playbackBpm)/state.importedTempoBase:1;
+    return events.map(event=>({...event,bpm:event.bpm*scale}));
   }
 
   function playbackMsForTick(absoluteTick, tempoEvents = playbackTempoEvents()) {
@@ -11778,7 +11835,7 @@
     if (state.jazzMode !== true) return events;
     const playbackCache = new Map();
     return (events || [])
-      .map((event) => jazzModeEvent(event, tempoEvents, playbackCache))
+      .map((event) => event.grace ? event : jazzModeEvent(event, tempoEvents, playbackCache))
       .sort((a, b) => a.startMs - b.startMs || a.midi - b.midi);
   }
 
@@ -11814,6 +11871,14 @@
         }));
       });
     });
+    const graceGroups=new Map();
+    for(const mark of (state.marks||[]).filter(m=>m.type==='grace-note')){const key=[markSystemIndex(mark),mark.measureIndex,mark.tick,mark.voice||1].join(':');if(!graceGroups.has(key))graceGroups.set(key,[]);graceGroups.get(key).push(mark);}
+    for(const group of graceGroups.values()){
+      const first=group[0],tick=measureStartAbsoluteTick(first.measureIndex)+(first.tick||0),at=playbackMsForTick(tick,tempoEvents),principal=events.find(e=>e.systemIndex===markSystemIndex(first)&&e.voice===(first.voice||1)&&Math.abs(e.startMs-at)<EPSILON);
+      const length=Math.min(60,Math.max(10,(playbackMsForTick(tick+4,tempoEvents)-at)*.12)),start=Math.max(0,at-group.length*length);
+      group.forEach((m,i)=>{const d=m.diatonicStep,degree=((d%7)+7)%7,alter={natural:0,sharp:1,flat:-1,'double-sharp':2,'double-flat':-2}[m.accidental||'natural']||0;events.push({midi:60+Math.floor(d/7)*12+[0,2,4,5,7,9,11][degree]+alter,startMs:start+i*length,endMs:start+(i+.9)*length,startTick:tick,endTick:tick,entryTicks:0,voice:m.voice||1,systemIndex:markSystemIndex(m),grace:true,velocity:78});});
+      if(start===at&&principal){const delay=Math.min(group.length*length,(principal.endMs-principal.startMs)*.5);principal.startMs+=delay;}
+    }
     return events.map(event=>({...event,midi:stringInstrument()?.soundingMidi(event.midi)??event.midi})).sort((a, b) => a.startMs - b.startMs || a.midi - b.midi);
   }
 
@@ -12124,7 +12189,7 @@
       return;
     }
     const elapsedMs = Math.max(0, performance.now() - (state.midiPlayback.startAt || performance.now()));
-    const absoluteTick = playbackTickForMs(elapsedMs + (state.midiPlayback.startOffsetMs || 0), state.midiPlayback.tempoEvents);
+    const absoluteTick = state.midiPlayback.performancePlan?.tickAtMs(elapsedMs+(state.midiPlayback.startOffsetMs||0)) ?? playbackTickForMs(elapsedMs + (state.midiPlayback.startOffsetMs || 0), state.midiPlayback.tempoEvents);
     const x = playbackLineXForTick(absoluteTick, lastRenderedLayout || buildLayout());
     const y1 = scoreStaffTopY() - 28;
     const y2 = scoreStaffBottomY() + 34;
@@ -12216,6 +12281,8 @@
     state.midiPlayback.scheduledNotes = [];
     state.midiPlayback.suppressInputUntil = performance.now() + 120;
     state.midiPlayback.pausedTick = null;
+    state.midiPlayback.pausedPerformanceMs=null;state.midiPlayback.pausedVisitIndex=null;
+    state.midiPlayback.performancePlan=null;
     state.midiPlayback.startAt = 0;
     state.midiPlayback.startOffsetMs = 0;
     state.midiPlayback.durationMs = 0;
@@ -12346,13 +12413,24 @@
     return candidates.length ? Math.min(...candidates) : null;
   }
 
+  function buildPlaybackPerformancePlan(events,tempoEvents) {
+    const count=state.measures.length,starts=Array.from({length:count+1},(_,i)=>measureStartAbsoluteTick(i)),marks=[];
+    for(const m of state.marks||[]){
+      if(m.type==='barline'){const type={'repeat-start':'repeatStart','repeat-end':'repeatEnd'}[m.barlineType];if(type)marks.push({type,bar:m.boundaryIndex-(type==='repeatEnd'?1:0),times:m.times,afterJump:m.afterJump});if(m.barlineType==='repeat-both'){marks.push({type:'repeatEnd',bar:m.boundaryIndex-1,times:m.times,afterJump:m.afterJump},{type:'repeatStart',bar:m.boundaryIndex});}}
+      else if(m.type==='ending')marks.push({type:'volta',bar:m.startMeasureIndex,endBar:m.endMeasureIndex,number:m.label});
+      else if(m.type==='navigation')marks.push({type:m.navigation,bar:m.measureIndex,target:m.target});
+    }
+    const route=window.CrescendoPerformancePlan.route(count,marks,state.importedRoute);
+    return window.CrescendoPerformancePlan.compile({route,starts,events,msForTick:t=>playbackMsForTick(t,tempoEvents),tickForMs:ms=>MidiPlayback.tickForMs(ms,tempoEvents,EPSILON)});
+  }
+
   function playbackStartAbsoluteTick(options = {}) {
     if (Number.isFinite(Number(options?.startAbsoluteTick))) return Math.max(0, Number(options.startAbsoluteTick));
     return playbackSelectedItemAbsoluteTick() ?? 0;
   }
 
-  function playbackEventsFromAbsoluteTick(events, startAbsoluteTick, tempoEvents) {
-    const startOffsetMs = playbackMsForTick(startAbsoluteTick, tempoEvents);
+  function playbackEventsFromAbsoluteTick(events, startAbsoluteTick, tempoEvents, performedOffsetMs = null) {
+    const startOffsetMs = performedOffsetMs ?? playbackMsForTick(startAbsoluteTick, tempoEvents);
     const adjustedEvents = events
       .filter((event) => event.endMs > startOffsetMs + EPSILON)
       .map((event) => ({
@@ -12412,10 +12490,12 @@
 
   async function toggleMidiPlayback(options = {}) {
     if (state.midiPlayback.active || state.midiPlayback.starting) {
-      const pausedTick=state.midiPlayback.active&&performance.now()>=state.midiPlayback.startAt?playbackTickForMs(Math.max(0,performance.now()-state.midiPlayback.startAt)+(state.midiPlayback.startOffsetMs||0),state.midiPlayback.tempoEvents):null;
-      stopMidiPlayback();state.midiPlayback.pausedTick=pausedTick;updatePlaybackButton();return;
+      const pausedMs=state.midiPlayback.active&&performance.now()>=state.midiPlayback.startAt?Math.max(0,performance.now()-state.midiPlayback.startAt)+(state.midiPlayback.startOffsetMs||0):null;
+      const pausedVisit=pausedMs!==null?state.midiPlayback.performancePlan?.visitAtMs(pausedMs):null;
+      const pausedTick=state.midiPlayback.active&&performance.now()>=state.midiPlayback.startAt?(state.midiPlayback.performancePlan?.tickAtMs(pausedMs)??playbackTickForMs(pausedMs,state.midiPlayback.tempoEvents)):null;
+      stopMidiPlayback();state.midiPlayback.pausedTick=pausedTick;state.midiPlayback.pausedPerformanceMs=pausedMs;state.midiPlayback.pausedVisitIndex=pausedVisit;updatePlaybackButton();return;
     }
-    const resumeTick=state.midiPlayback.pausedTick;
+    const resumeTick=state.midiPlayback.pausedTick,resumePerformanceMs=state.midiPlayback.pausedPerformanceMs,resumeVisit=state.midiPlayback.pausedVisitIndex;
     const resuming=Number.isFinite(resumeTick);
     if(resuming)options={...options,startAbsoluteTick:resumeTick};
     state.midiPlayback.pausedTick=null;
@@ -12427,7 +12507,10 @@
       return;
     }
     const playbackEvents = applyJazzModeToPlaybackEvents(events, tempoEvents);
-    const { adjustedEvents, startOffsetMs } = playbackEventsFromAbsoluteTick(playbackEvents, startAbsoluteTick, tempoEvents);
+    let performancePlan=null;
+    try{performancePlan=window.CrescendoPerformancePlan?buildPlaybackPerformancePlan(playbackEvents,tempoEvents):null;}catch(error){await showEditorMessage("No se pudo interpretar el recorrido: "+error.message);return;}
+    const performedOffset=performancePlan?(resuming&&Number.isInteger(resumeVisit)?performancePlan.offsetForTick(startAbsoluteTick,resumeVisit):resuming&&Number.isFinite(resumePerformanceMs)?resumePerformanceMs:performancePlan.offsetForTick(startAbsoluteTick)):null;
+    const { adjustedEvents, startOffsetMs } = playbackEventsFromAbsoluteTick(performancePlan?.events||playbackEvents, startAbsoluteTick, tempoEvents,performedOffset);
     if (!adjustedEvents.length) {
       await showEditorMessage(events.length ? "No hay notas para reproducir desde la selección." : "No hay notas para reproducir.");
       return;
@@ -12465,7 +12548,8 @@
     state.midiPlayback.startAt = startAt;
     state.midiPlayback.startOffsetMs = startOffsetMs;
     state.midiPlayback.tempoEvents = tempoEvents;
-    const totalMs = Math.max(...adjustedEvents.map((event) => event.endMs), 0);
+    state.midiPlayback.performancePlan=performancePlan;
+    const totalMs = Math.max(...adjustedEvents.map((event) => event.endMs), (performancePlan?.durationMs||0)-startOffsetMs, 0);
     state.midiPlayback.suppressInputUntil = startAt + totalMs + 700;
     state.midiPlayback.scheduledNotes = adjustedEvents;
     state.midiPlayback.durationMs = totalMs;
@@ -13739,7 +13823,7 @@
     state.selectedEntryIds=[];state.selectedNoteRefs=[];invalidateLayoutCache();render();setExerciseStatus(`Compás pegado en ${destination+1}.`);
   }
   function setupMeasureMouse(){
-    const button=document.createElement("button");button.type="button";button.id="measureSelectToggle";button.className="ipad-icon-button measure-select-toggle";button.title="Seleccionar compases · copiar y pegar";button.setAttribute("aria-label","Seleccionar compases");button.setAttribute("aria-pressed","false");button.innerHTML='<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M5 3v16l4-5 4 7 3-2-4-6h7Z" fill="currentColor"/></svg>';
+    const button=document.createElement("button");button.type="button";button.id="measureSelectToggle";button.className="ipad-icon-button measure-select-toggle";button.title="Seleccionar compases · ↑/↓ cambiar de sistema · copiar y pegar";button.setAttribute("aria-label","Seleccionar compases");button.setAttribute("aria-pressed","false");button.innerHTML='<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M5 3v16l4-5 4 7 3-2-4-6h7Z" fill="currentColor"/></svg>';
     document.querySelector(".ipad-header-center")?.prepend(button);
     const sync=()=>{button.classList.toggle("is-active",measureSelectMode);button.setAttribute("aria-pressed",String(measureSelectMode));};
     button.onclick=()=>{measureSelectMode=!measureSelectMode;if(measureSelectMode){setMode("note");state.selectMode=true;state.cursorActive=false;}sync();render();};
@@ -13952,9 +14036,9 @@
     marks.forEach((mark,index)=>{
       const siblings=marks.filter(m=>m.measureIndex===mark.measureIndex&&Math.abs(m.tick-mark.tick)<EPSILON),position=siblings.indexOf(mark),anchor=cursorVisualXForMeasureTick(layout,mark.measureIndex,mark.tick),y=pitchY(0),x=anchor-(siblings.length-position)*22;
       const group=el("g",{class:"grace-note-group",transform:`translate(${anchor*.4} ${y*.4}) scale(.6)`});
-      const entry=makeEntry("note",durationById(mark.durationId)||durationById("eighth"),mark.staffStep);entry.id=mark.id;entry.diatonicStep=mark.diatonicStep;
+      const entry=makeEntry("note",durationById(mark.durationId)||durationById("eighth"),mark.staffStep);entry.id=mark.id;entry.diatonicStep=mark.diatonicStep;entry.accidental=mark.accidental || "natural";
       const flagged=renderNote(group,entry,x);if(flagged)renderFlags(group,[flagged]);
-      group.appendChild(el("line",{x1:x+2,x2:x+14,y1:pitchY(mark.staffStep)-19,y2:pitchY(mark.staffStep)-30,stroke:"currentColor","stroke-width":1.2}));root.appendChild(group);
+      if(mark.slash!==false)group.appendChild(el("line",{x1:x+2,x2:x+14,y1:pitchY(mark.staffStep)-19,y2:pitchY(mark.staffStep)-30,stroke:"currentColor","stroke-width":1.2}));root.appendChild(group);
     });
   }
 
@@ -14435,6 +14519,7 @@
     if (!meter) return;
     const systems = scoreSystems();
     const activeIndex = activeSystemIndex();
+    const previousRouteSnapshot=state.importedRoute?stateSnapshot():null,oldRouteStarts=state.importedRoute?Array.from({length:state.measures.length+1},(_,i)=>measureStartAbsoluteTick(i)):null;
     const entrySnapshots = systems.map((system, systemIndex) => (
       withSystemContext(systemIndex, () => flattenScoreEntries().map((item) => {
         const entry = JSON.parse(JSON.stringify(item.entry));
@@ -14477,6 +14562,7 @@
       // the rebuilt array before the next context or render synchronizes it.
       state.measures = systems[activeIndex].measures;
     });
+    if(state.importedRoute){try{state.importedRoute=window.CrescendoPerformancePlan.rebar(state.importedRoute,oldRouteStarts,Array.from({length:state.measures.length+1},(_,i)=>measureStartAbsoluteTick(i)));}catch(error){restore(previousRouteSnapshot);showEditorMessage(error.message);return false;}}
     anchors.forEach(({item, positions}) => {
       positions.forEach(({key, tickKey, absolute}) => {
         const target = measureIndexAndTickFromAbsolute(absolute);
@@ -15406,6 +15492,11 @@
     menu.appendChild(contextMenuGroup("Casillas", palettes.endings.map((item) => (
       contextMenuButton(item.label, () => applyEndingAtMeasure(item, measureIndex, { ignoreSelection: true }))
     ))));
+    menu.appendChild(contextMenuGroup("Sistemas",[
+      contextMenuButton("Mover al sistema anterior · ↑",()=>moveMeasureSystem(measureIndex,-1)),
+      contextMenuButton("Mover al sistema siguiente · ↓",()=>moveMeasureSystem(measureIndex,1)),
+      contextMenuButton("Distribución automática",resetSystemLayout)
+    ]));
     menu.appendChild(contextMenuGroup("Estructura", [
       contextMenuButton("Insertar compás antes", () => insertMeasureAtIndex(measureIndex)),
       contextMenuButton("Insertar compás después", () => insertMeasureAtIndex(measureIndex + 1)),
@@ -17920,10 +18011,10 @@
     if (!groups.length) return 0;
     const minGap = chordSpacingGap();
     const meterWidth = meterChangeSpacingBeforeMeasure(measureIndex);
-    let width = measureLeftInset() + meterWidth;
+    let width = measureLeftInset(measureIndex) + meterWidth;
     let previousGroup = null;
     groups.forEach((group) => {
-      let x = measureLeftInset() + meterWidth + Math.max(0, -group.left);
+      let x = measureLeftInset(measureIndex) + meterWidth + Math.max(0, -group.left);
       if (previousGroup) {
         x = previousGroup.x + Math.max(0, previousGroup.right + minGap - group.left);
       }
@@ -18047,11 +18138,11 @@
   function sharedMeasureOpticalLayout(measureIndex, start = 0) {
     const events = sharedRhythmicEvents(measureIndex);
     const meterWidth = meterChangeSpacingBeforeMeasure(measureIndex);
-    let width = measureLeftInset() + meterWidth;
+    let width = measureLeftInset(measureIndex) + meterWidth;
     const positionsByTick = new Map();
     let previousEvent = null;
     events.forEach((event) => {
-      let x = start + measureLeftInset() + meterWidth +
+      let x = start + measureLeftInset(measureIndex) + meterWidth +
         sharedClefSpacingBeforeTick(measureIndex, event.tick, true) +
         event.left;
       if (previousEvent) {
@@ -18071,7 +18162,7 @@
       ? (previousEvent.x - start) +
         sharedTrailingEventExtentWithChordSpacing(measureIndex, previousEvent) +
         trailingClefWidth
-      : measureLeftInset() + meterWidth + measureRightInset() + trailingClefWidth;
+      : measureLeftInset(measureIndex) + meterWidth + measureRightInset() + trailingClefWidth;
     return {
       events,
       positionsByTick,
@@ -18084,7 +18175,7 @@
     const tickSpacing = tickSpacingForMaxFlags(sharedMaxFlagsForMeasure(measureIndex));
     const meterWidth = meterChangeSpacingBeforeMeasure(measureIndex);
     const clefWidth = sharedInternalClefSpacingWidthForMeasure(measureIndex);
-    const rhythmicWidth = measureLeftInset() + meterWidth + measureRightInset() + ticks * tickSpacing + clefWidth;
+    const rhythmicWidth = measureLeftInset(measureIndex) + meterWidth + measureRightInset() + ticks * tickSpacing + clefWidth;
     const opticalLayout = sharedMeasureOpticalLayout(measureIndex);
     const compactWidth = opticalLayout.width;
     if (opticalLayout.events.length || state.compactLayout) return Math.max(MEASURE_MIN_WIDTH, compactWidth);
@@ -18094,7 +18185,7 @@
   function compactMultivoiceMeasureWidth(measure, measureIndex, ticks, meterWidth, chordWidth) {
     const events = measureRhythmicEvents(measure);
     if (!events.length) return Math.max(MEASURE_MIN_WIDTH, chordWidth);
-    let width = measureLeftInset() + meterWidth;
+    let width = measureLeftInset(measureIndex) + meterWidth;
     let previousEvent = null;
     events.forEach((event) => {
       if (!previousEvent) {
@@ -18126,7 +18217,7 @@
     const clefWidth = measureIndex >= 0 ? internalClefSpacingWidthForMeasure(measureIndex) : 0;
     const meterWidth = measureIndex >= 0 ? meterChangeSpacingBeforeMeasure(measureIndex) : 0;
     const ticks = measureIndex >= 0 ? measureTicksForIndex(measureIndex) : measureTicks();
-    const rhythmicWidth = measureLeftInset() + meterWidth + measureRightInset() + ticks * tickSpacing + clefWidth;
+    const rhythmicWidth = measureLeftInset(measureIndex) + meterWidth + measureRightInset() + ticks * tickSpacing + clefWidth;
     const chordWidth = measureIndex >= 0 ? chordSpacingWidthForMeasure(measureIndex) + clefWidth : 0;
     if (!measure.entries.length) return Math.max(MEASURE_MIN_WIDTH, rhythmicWidth, chordWidth);
     if (measureHasMultipleVoices(measure)) {
@@ -18140,7 +18231,7 @@
       return width +
         clefSpacingForMeasureRange(measureIndex, entriesList[index - 1].tickStart, entry.tickStart) +
         visualDistanceWithChordSpacing(measureIndex, entriesList[index - 1], entry);
-    }, measureLeftInset() + meterWidth) + trailingExtentWithChordSpacing(measureIndex, measure.entries.at(-1));
+    }, measureLeftInset(measureIndex) + meterWidth) + trailingExtentWithChordSpacing(measureIndex, measure.entries.at(-1));
     const lastEntry = measure.entries.at(-1);
     const trailingClefWidth = lastEntry
       ? clefSpacingForMeasureRange(measureIndex, lastEntry.tickStart, ticks, { includeEnd: true })
@@ -18218,7 +18309,7 @@
     }));
     const sorted = [...onsets].sort((a,b) => a-b);
     sorted.slice(1).forEach((tick,i) => { if (tick-sorted[i] > EPSILON) shortest = Math.min(shortest, tick-sorted[i]); });
-    return measureLeftInset() + measureRightInset() + meterChangeSpacingBeforeMeasure(measureIndex)
+    return measureLeftInset(measureIndex) + measureRightInset() + meterChangeSpacingBeforeMeasure(measureIndex)
       + length / shortest * 28 + sharedInternalClefSpacingWidthForMeasure(measureIndex);
   }
 
@@ -18314,8 +18405,8 @@
 
   function xForTick(start, width, tick, measureIndex = state.cursorMeasure) {
     const meterWidth = meterChangeSpacingBeforeMeasure(measureIndex);
-    const usableStart = start + measureLeftInset() + meterWidth;
-    const usableWidth = Math.max(1, width - measureLeftInset() - meterWidth - measureRightInset());
+    const usableStart = start + measureLeftInset(measureIndex) + meterWidth;
+    const usableWidth = Math.max(1, width - measureLeftInset(measureIndex) - meterWidth - measureRightInset());
     return usableStart + (tick / measureTicksForIndex(measureIndex)) * usableWidth;
   }
 
@@ -18406,7 +18497,7 @@
       ? sharedClefSpacingForMeasureRange
       : clefSpacingForMeasureRange;
     events.forEach((event) => {
-      let x = start + measureLeftInset() + meterChangeSpacingBeforeMeasure(measureIndex) +
+      let x = start + measureLeftInset(measureIndex) + meterChangeSpacingBeforeMeasure(measureIndex) +
         clefBefore(measureIndex, event.tick, true) +
         event.left;
       if (previousEvent) {
@@ -18492,7 +18583,7 @@
       const events = measureRhythmicEvents(measure);
       let previousEvent = null;
       events.forEach((event) => {
-        let x = start + measureLeftInset() + meterChangeSpacingBeforeMeasure(measureIndex) +
+        let x = start + measureLeftInset(measureIndex) + meterChangeSpacingBeforeMeasure(measureIndex) +
           clefSpacingBeforeTick(measureIndex, event.tick, true) +
           Math.max(...event.entries.map(entryLeftExtent));
         if (previousEvent) {
@@ -18507,7 +18598,7 @@
       return positions;
     }
     measure.entries.forEach((entry) => {
-      let x = start + measureLeftInset() + meterChangeSpacingBeforeMeasure(measureIndex) + clefSpacingBeforeTick(measureIndex, entry.tickStart, true) + entryLeftExtent(entry);
+      let x = start + measureLeftInset(measureIndex) + meterChangeSpacingBeforeMeasure(measureIndex) + clefSpacingBeforeTick(measureIndex, entry.tickStart, true) + entryLeftExtent(entry);
       if (previousEntry) {
         x = previousEntry.x +
           clefSpacingForMeasureRange(measureIndex, previousEntry.entry.tickStart, entry.tickStart) +
@@ -18669,8 +18760,8 @@
     const start = layout.starts[measureIndex] ?? staffLeft();
     const width = layout.widths[measureIndex] ?? MEASURE_MIN_WIDTH;
     const meterWidth = meterChangeSpacingBeforeMeasure(measureIndex);
-    const usableStart = start + measureLeftInset() + meterWidth;
-    const usableWidth = Math.max(1, width - measureLeftInset() - meterWidth - measureRightInset());
+    const usableStart = start + measureLeftInset(measureIndex) + meterWidth;
+    const usableWidth = Math.max(1, width - measureLeftInset(measureIndex) - meterWidth - measureRightInset());
     const ticks = measureTicksForIndex(measureIndex);
     const raw = ((x - usableStart) / usableWidth) * ticks;
     return Math.max(0, Math.min(ticks, Math.round(raw)));
@@ -19048,7 +19139,7 @@
       const keyChange = systemIsPercussionLine(currentSystem) ? null : state.measures[index]?.keySignature;
       const meterChange = state.measures[index]?.meter;
       if (index > 0 && keyChange) {
-        const keyX = start + measureLeftInset() + appearanceValue("keySignatureOffsetX");
+        const keyX = start + measureLeftInset(index) + appearanceValue("keySignatureOffsetX");
         renderKeySignature(root, keyChange, keyX, {
           clefId: clefIdAtAbsoluteTick(measureStartAbsoluteTick(index))
         });
@@ -19057,7 +19148,7 @@
         renderTimeSignature(
           root,
           meterChange,
-          start + measureLeftInset() + keySignatureSpacingBeforeTime(index) + appearanceValue("timeSignatureOffsetX")
+          start + measureLeftInset(index) + keySignatureSpacingBeforeTime(index) + appearanceValue("timeSignatureOffsetX")
         );
       }
       if (measureIsHidden(index)) return;
@@ -21362,13 +21453,13 @@
       if (systemsCanvas) {systemsCanvas.style.minHeight = `${visibleShellHeight}px`;systemsCanvas.style.gridTemplateRows = `${visibleShellHeight}px`;}
       svg.innerHTML = "";
       flow.rows.forEach((row, rowIndex) => {
-        const viewport = el("svg", {x:0,y:row.y,width:flow.width,height:flow.rowHeight,viewBox:`${row.origin} 0 ${flow.width} ${flow.rowHeight}`,overflow:"hidden","data-score-row":rowIndex});
+        const viewport = el("svg", {x:0,y:row.y,width:flow.width,height:flow.rowHeight,viewBox:`${row.origin} ${-(flow.extraTop||0)} ${flow.width} ${flow.rowHeight}`,overflow:"hidden","data-score-row":rowIndex});
         svg.appendChild(viewport);
         const root = el("g");viewport.appendChild(root);
         root.addEventListener("pointerdown", beginDragSelection);
         const clipId = `score-row-clip-${rowIndex}`;
         const defs=el("defs"),clip=el("clipPath",{id:clipId});
-        clip.appendChild(el("rect",{x:rowIndex?layout.starts[row.first]:0,y:0,width:row.end-(rowIndex?layout.starts[row.first]:0)+2,height:flow.rowHeight}));defs.appendChild(clip);viewport.appendChild(defs);
+        clip.appendChild(el("rect",{x:rowIndex?layout.starts[row.first]:0,y:-(flow.extraTop||0),width:row.end-(rowIndex?layout.starts[row.first]:0)+2,height:flow.rowHeight}));defs.appendChild(clip);viewport.appendChild(defs);
         root.setAttribute("clip-path",`url(#${clipId})`);
         renderHitZones(root, layout);
         scoreSystems().forEach((system, systemIndex) => {
@@ -21396,9 +21487,16 @@
         });
         setActiveSystemIndex(activeIndex);
         renderTextItems(root, layout);renderMeasureSelection(root, layout);renderDragSelection(root);
+        // Chord labels may extend left of the first barline. Keep them inside the
+        // system viewport but outside the clipping used for neighbouring notes.
+        root.querySelectorAll('[data-text-id]').forEach(node=>{const item=state.textItems.find(item=>item.id===node.dataset.textId);if(item&&((item.measureIndex||0)<row.first||(item.measureIndex||0)>row.last))node.remove();else viewport.appendChild(node);});
+        root.querySelectorAll('[data-mark-id]').forEach(node=>{const mark=state.marks.find(mark=>mark.id===node.dataset.markId);if(!mark)return;if(mark.type==='ending'&&((mark.startMeasureIndex??mark.measureIndex)>row.last||mark.endMeasureIndex<=row.first))node.remove();else if(['tempo','tempo-text','tempo-quarter','navigation','grace-note','clef'].includes(mark.type)&&Number.isFinite(mark.measureIndex)&&(mark.measureIndex<row.first||mark.measureIndex>row.last))node.remove();});
         // Keep live event handlers for the visible row and avoid duplicate note IDs.
-        root.querySelectorAll('[data-entry-id],.string-tab-column').forEach(node=>{try{const box=node.getBBox();if(box.x+box.width<layout.starts[row.first]-1||box.x>row.end+1)node.remove();}catch{}});
+        const rowEntries=new Set(scoreSystems().flatMap(system=>system.measures.slice(row.first,row.last+1).flatMap(measure=>measure.entries.map(entry=>entry.id))));
+        root.querySelectorAll('[data-entry-id]').forEach(node=>{if(!rowEntries.has(node.dataset.entryId))node.remove();});
+        root.querySelectorAll('.string-tab-column').forEach(node=>{try{const box=node.getBBox();if(box.x+box.width<layout.starts[row.first]-1||box.x>row.end+1)node.remove();}catch{}});
       });
+      syncScoreDocumentHeading();
       scheduleRestAlignment();
       updateCursorLabel();
       refreshDurationButtons();
@@ -22155,6 +22253,7 @@
       moveSelectedPitchWithShift(event.key === "ArrowUp" ? 1 : -1);
       return;
     }
+    if(measureSelectMode&&!event.shiftKey&&!event.metaKey&&!event.ctrlKey&&!event.altKey&&Number.isInteger(state.selectedMeasureIndex)&&['ArrowUp','ArrowDown'].includes(event.key)){event.preventDefault();moveMeasureSystem(state.selectedMeasureIndex,event.key==='ArrowUp'?-1:1);return;}
     if (event.metaKey || event.ctrlKey || event.altKey) return;
     if (event.key.toUpperCase() === "Z") {
       event.preventDefault();
@@ -23285,6 +23384,11 @@
     scheduleCanvasAutosave();
   };
   exerciseTitleInput?.addEventListener("input", scheduleExerciseMetadataAutosave);
+  const creditRole=document.getElementById('scoreCreditRole'),creditName=document.getElementById('scoreCreditName');
+  creditRole?.addEventListener('change',()=>{creditName.value=(state.scoreCreators||[]).find(c=>c.type===creditRole.value)?.name||'';syncScoreDocumentHeading();});
+  let creditEditStarted=false;
+  creditName?.addEventListener('focus',()=>{creditEditStarted=false;});
+  creditName?.addEventListener('input',()=>{if(!creditEditStarted){saveHistory();creditEditStarted=true;}state.scoreCreators=window.CrescendoScoreHeading.replace(state.scoreCreators,creditRole.value,creditName.value);scheduleExerciseMetadataAutosave();});
   exerciseDescriptionInput?.addEventListener("input", scheduleExerciseMetadataAutosave);
   manualOverlay?.addEventListener("click", (event) => {
     if (event.target === manualOverlay) closeManualReader();
@@ -23378,8 +23482,13 @@
   document.addEventListener("editor-export-image", async event => {
     const filename=event.detail?.filename || await window.CrescendoScoreFile.ask({suggested:exerciseTitleInput?.value||"Partitura",extension:event.detail?.format==="pdf"?"pdf":"png"});if(!filename){document.dispatchEvent(new CustomEvent("editor-export-finished"));return;}
     try {
+      if(event.detail?.format==='pdf'){
+        let printable;
+        try{scorePrintWidth=1400;render();printable=window.CrescendoScorePrint.clean(svg);}finally{scorePrintWidth=null;render();}
+        const result=await window.CrescendoScorePrint.pdf(printable,{title:exerciseTitleInput?.value||'Partitura',creators:state.scoreCreators});await saveExportBlob(result,filename,event.detail);setExerciseStatus(`Exportado: ${filename}`);return;
+      }
       await document.fonts.ready;
-      const copy = svg.cloneNode(true), originals = [svg, ...svg.querySelectorAll("*")], clones = [copy, ...copy.querySelectorAll("*")];
+      let copy = svg.cloneNode(true);const originals = [svg, ...svg.querySelectorAll("*")], clones = [copy, ...copy.querySelectorAll("*")];
       originals.forEach((node, index) => {
         const style = getComputedStyle(node);
         ["fill","stroke","stroke-width","font-family","font-size","font-weight","font-style","opacity","visibility","display"].forEach(key => clones[index].style.setProperty(key, style.getPropertyValue(key)));
@@ -23390,7 +23499,8 @@
       const bytes = new Uint8Array(await response.arrayBuffer());let binary = "";
       for(let i=0;i<bytes.length;i+=8192)binary+=String.fromCharCode(...bytes.subarray(i,i+8192));
       const defs=el("defs"),style=el("style");style.textContent=`@font-face{font-family:'MTF Improviso Light';src:url(data:font/otf;base64,${btoa(binary)}) format('opentype');}`;defs.appendChild(style);copy.prepend(defs);
-      const box={width:svg.viewBox.baseVal.width,height:svg.viewBox.baseVal.height};copy.setAttribute("viewBox",`0 0 ${box.width} ${box.height}`);copy.setAttribute("width",box.width);copy.setAttribute("height",box.height);
+      copy=window.CrescendoScoreHeading.svg(copy,{title:exerciseTitleInput?.value,creators:state.scoreCreators});
+      const box={width:Number(copy.getAttribute('width')),height:Number(copy.getAttribute('height'))};copy.setAttribute("viewBox",`0 0 ${box.width} ${box.height}`);copy.setAttribute("width",box.width);copy.setAttribute("height",box.height);
       const url=URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(copy)],{type:"image/svg+xml"}));
       try {
         const image=new Image();await new Promise((resolve,reject)=>{image.onload=resolve;image.onerror=reject;image.src=url;});

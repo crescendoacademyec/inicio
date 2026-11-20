@@ -123,7 +123,7 @@ function overflowPlan(state,events,capacity,bars,staff,position,index=null){
  const target=source?{bar:source.bar||0,beat:source.offset||0}:position;
  if(!target)return null;
  const Overflow=root.CrescendoOverflowWriting||(typeof require==='function'?require('../../shared/overflow-writing.js'):null);
- return Overflow?.plan({capacities,bar:target.bar,offset:target.beat,duration:gridStep(state),maxBars:16})||null;
+ return Overflow?.plan({capacities,bar:target.bar,offset:target.beat,duration:gridStep(state),maxBars:Structure.MAX_BARS})||null;
 }
 function writeOverflow(state,events,note,capacity,bars,staff,position,plan,index=null,marks=[]){
  const trial=JSON.parse(JSON.stringify(events)),source=Number.isInteger(index)?trial[index]:null;
@@ -177,7 +177,7 @@ function noteGraphic(id,x,y,down,glyphs,color='#222',className='rhythm-note'){
 }
 
 function render(events,{clef='treble',meter='4/4',bars=4,width=900,glyphs={},marks=[],selected=null,tabHeight=0}={}){
- const timeline=Structure.timeline(meter,marks,bars),grand=clef==='grand',staves=grand?[1,2]:[clef==='bass'?2:1],rowHeight=(grand?380:220)+tabHeight*staves.length,rows=Math.ceil(bars/4),left=24,header=90+Math.max(...timeline.keys.map(key=>Structure.keyWidth(key))),spacing=10;
+ const timeline=Structure.timeline(meter,marks,bars),grand=clef==='grand',staves=grand?[1,2]:[clef==='bass'?2:1],rowHeight=(grand?380:220)+tabHeight*staves.length,left=24,header=90+Math.max(...timeline.keys.map(key=>Structure.keyWidth(key))),spacing=10;
  // Reserve room for the smallest onset gap, using one shared linear time axis.
  // The hit boxes expose this same interval to guides, preview and playback.
  let shortest=1;
@@ -187,17 +187,17 @@ function render(events,{clef='treble',meter='4/4',bars=4,width=900,glyphs={},mar
   points.sort((a,b)=>a-b);for(let i=1;i<points.length;i++)if(points[i]-points[i-1]>.00001)shortest=Math.min(shortest,points[i]-points[i-1]);
  }
  const maxSignatureWidth=Math.max(0,...timeline.keys.map((key,bar)=>bar%4===0?0:(key!==timeline.keys[bar-1]?Structure.keyWidth(key,timeline.keys[bar-1]):0)+(timeline.meters[bar].label!==timeline.meters[bar-1].label?34:0)));
- const barWidth=Math.max(220,(Math.max(680,width)-left*2-header)/4,Math.max(...timeline.capacities)/shortest*(events.some(e=>e.accidental||e.accidentalsByNote||/[#b]/.test(e.note||''))?36:26)+60+maxSignatureWidth),w=left*2+header+barWidth*4;
+ const barWidth=Math.max(220,(Math.max(680,width)-left*2-header)/4,Math.max(...timeline.capacities)/shortest*(events.some(e=>e.accidental||e.accidentalsByNote||/[#b]/.test(e.note||''))?36:26)+60+maxSignatureWidth),layout=root.CrescendoSystemLayout||(typeof require==='function'?require('../../shared/score-system-layout.js'):null),systemRows=layout.pack({starts:Array.from({length:bars},(_,i)=>left+header+i*barWidth),widths:Array(bars).fill(barWidth),header:left+header,available:width,breaks:marks.find(m=>m.type==='systemLayout')?.breaks??null}),rows=systemRows.length,w=Math.max(...systemRows.map(r=>r.width));
  const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[c]));
  const pitches={1:['A5','G5','F5','E5','D5','C5','B4','A4','G4','F4','E4','D4','C4'],2:['C4','B3','A3','G3','F3','E3','D3','C3','B2','A2','G2','F2','E2']};
  const notePositions=new Map();let drawing='';const notationEvents=notation(Structure.resolve(events,marks),timeline.capacities,bars);
  for(let row=0;row<rows;row++)for(let si=0;si<staves.length;si++){
-  const staff=staves[si],top=row*rowHeight+100+si*(160+tabHeight),count=Math.min(4,bars-row*4),right=left+header+count*barWidth;
+  const staff=staves[si],top=row*rowHeight+100+si*(160+tabHeight),count=systemRows[row].last-systemRows[row].first+1,right=left+header+count*barWidth;
   for(let line=0;line<5;line++)drawing+=`<line x1="${left}" y1="${top+line*spacing}" x2="${right}" y2="${top+line*spacing}" stroke="#222"/>`;
   drawing+=`<text x="${left+6}" y="${top+(staff===1?30:10)}" font-family="Bravura Metronome" font-weight="normal" font-style="normal" font-size="40">${String.fromCodePoint(staff===1?0xE050:0xE062)}</text>`;
-  const firstBar=row*4,key=timeline.keys[firstBar],keyWidth=Structure.keyWidth(key),[numerator,denominator]=timeline.meters[firstBar].label.split('/');drawing+=Structure.keySVG(key,0,left+46,top,staff);drawing+=`<text x="${left+55+keyWidth}" y="${top+10}" font-family="Bravura Metronome" font-weight="normal" font-style="normal" font-size="40">${[...numerator].map(n=>String.fromCodePoint(0xE080+Number(n))).join('')}</text><text x="${left+55+keyWidth}" y="${top+30}" font-family="Bravura Metronome" font-weight="normal" font-style="normal" font-size="40">${[...denominator].map(n=>String.fromCodePoint(0xE080+Number(n))).join('')}</text>`;
+  const firstBar=systemRows[row].first,key=timeline.keys[firstBar],keyWidth=Structure.keyWidth(key),[numerator,denominator]=timeline.meters[firstBar].label.split('/');drawing+=Structure.keySVG(key,0,left+46,top,staff);drawing+=`<text x="${left+55+keyWidth}" y="${top+10}" font-family="Bravura Metronome" font-weight="normal" font-style="normal" font-size="40">${[...numerator].map(n=>String.fromCodePoint(0xE080+Number(n))).join('')}</text><text x="${left+55+keyWidth}" y="${top+30}" font-family="Bravura Metronome" font-weight="normal" font-style="normal" font-size="40">${[...denominator].map(n=>String.fromCodePoint(0xE080+Number(n))).join('')}</text>`;
   for(let local=0;local<count;local++){
-   const bar=row*4+local,capacity=timeline.capacities[bar],barMeter=timeline.meters[bar],keyChange=local>0&&timeline.keys[bar]!==timeline.keys[bar-1],meterChange=local>0&&barMeter.label!==timeline.meters[bar-1].label,signatureWidth=(keyChange?Structure.keyWidth(timeline.keys[bar],timeline.keys[bar-1]):0)+(meterChange?34:0),start=left+header+local*barWidth,end=start+barWidth,inputStart=start+signatureWidth+(marks.some(m=>m.bar===bar&&m.type==='repeatStart')?36:24),inputEnd=end-18;
+   const bar=systemRows[row].first+local,capacity=timeline.capacities[bar],barMeter=timeline.meters[bar],keyChange=local>0&&timeline.keys[bar]!==timeline.keys[bar-1],meterChange=local>0&&barMeter.label!==timeline.meters[bar-1].label,signatureWidth=(keyChange?Structure.keyWidth(timeline.keys[bar],timeline.keys[bar-1]):0)+(meterChange?34:0),start=left+header+local*barWidth,end=start+barWidth,inputStart=start+signatureWidth+(marks.some(m=>m.bar===bar&&m.type==='repeatStart')?36:24),inputEnd=end-18;
    drawing+=`<rect class="rhythm-measure-hit" data-bar="${bar}" data-staff="${staff}" data-start="${inputStart}" data-end="${inputEnd}" data-top="${top}" data-capacity="${capacity}" data-meter="${barMeter.label}" x="${start}" y="${top-65}" width="${barWidth}" height="170" fill="transparent"/><line x1="${end}" x2="${end}" y1="${top}" y2="${top+40}" stroke="#222" stroke-width="1.5"/><text x="${start+3}" y="${top-16}" font-size="10" fill="#888">${bar+1}</text>`;
    if(keyChange)drawing+=Structure.keySVG(timeline.keys[bar],timeline.keys[bar-1],start+6,top,staff);
    if(meterChange){const x=start+6+(keyChange?Structure.keyWidth(timeline.keys[bar],timeline.keys[bar-1]):0);for(const [number,y] of [[barMeter.top,top+10],[barMeter.bottom,top+30]])drawing+=`<text class="rhythm-meter-change" x="${x}" y="${y}" font-family="Bravura Metronome" font-size="40">${[...String(number)].map(n=>String.fromCodePoint(0xE080+Number(n))).join('')}</text>`;}
@@ -259,7 +259,7 @@ function render(events,{clef='treble',meter='4/4',bars=4,width=900,glyphs={},mar
   const curve=(x1,y1,x2,y2)=>{if(cls==='rhythm-glissando'){const start=x1+10,end=x2-10;if(end>start)drawing+=`<g class="rhythm-glissando"><path d="M${start} ${y1}L${end} ${y2}" fill="none" stroke="#222" stroke-width="1.2"/><text x="${(start+end)/2}" y="${(y1+y2)/2-5}" text-anchor="middle" font-family="serif" font-size="10">gliss.</text></g>`;return;}const lift=cls==='rhythm-tie'?12:20;drawing+=`<path class="${cls}" d="M${x1} ${y1+8}C${x1+(x2-x1)/3} ${y1+lift} ${x2-(x2-x1)/3} ${y2+lift} ${x2} ${y2+8}" fill="none" stroke="#222" stroke-width="1.4"/>`;};
   if(a.row===b.row)curve(a.x,a.y,b.x,b.y);else{curve(a.x,a.y,w-left,a.y);curve(left+header,b.y,b.x,b.y);}
  }
- return `<svg xmlns="http://www.w3.org/2000/svg" class="rhythm-stable-score" data-grand="${grand}" width="${w}" height="${rows*rowHeight}" viewBox="0 0 ${w} ${rows*rowHeight}" role="img" aria-label="Partitura editable de ${bars} compases">${drawing}</svg>`;
+ return `<svg xmlns="http://www.w3.org/2000/svg" class="rhythm-stable-score" data-system-starts="${systemRows.map(r=>r.first).join(',')}" data-row-height="${rowHeight}" data-grand="${grand}" width="${w}" height="${rows*rowHeight}" viewBox="0 0 ${w} ${rows*rowHeight}" role="img" aria-label="Partitura editable de ${bars} compases">${drawing}</svg>`;
 }
 
 const previousExercises=new Map();

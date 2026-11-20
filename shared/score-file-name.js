@@ -6,5 +6,5 @@
   const input=dialog.querySelector('input');input.value=String(suggested).replace(/\.(png|pdf|xml|musicxml|json)$/i,'');dialog.querySelector('p').textContent='Formato: '+extension.toUpperCase();
   let result=null;dialog.querySelector('form').onsubmit=event=>{event.preventDefault();result=filename(input.value,extension);dialog.close();};dialog.querySelector('button[type=button]').onclick=()=>dialog.close();dialog.addEventListener('close',()=>{dialog.remove();resolve(result);},{once:true});document.body.appendChild(dialog);dialog.showModal();input.focus();input.select();
  });}
- const api={filename,ask};if(typeof module!=='undefined')module.exports=api;else root.CrescendoScoreFile=api;
+ const api={filename,ask};if(typeof module!=='undefined')module.exports=api;else root.CrescendoScoreFile=Object.assign({},root.CrescendoScoreFile,api);
 })(typeof window==='undefined'?globalThis:window);

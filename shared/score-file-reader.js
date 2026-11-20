@@ -1,5 +1,5 @@
 /* Local MEI (modern staff notation) -> MusicXML bridge for the existing score players. */
-(function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.CrescendoScoreFile=api;})(typeof globalThis!=='undefined'?globalThis:this,function(){
+(function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.CrescendoScoreFile=Object.assign({},root.CrescendoScoreFile,api);})(typeof globalThis!=='undefined'?globalThis:this,function(){
  'use strict';
  const tag=n=>n?.localName||n?.tagName?.split(':').at(-1),children=n=>Array.from(n?.children||n?.childNodes||[]).filter(x=>x.nodeType===undefined||x.nodeType===1),attr=(n,k)=>n?.getAttribute(k)??null;
  const descendants=(n,name)=>children(n).flatMap(c=>[...(tag(c)===name?[c]:[]),...descendants(c,name)]),child=(n,name)=>children(n).find(c=>tag(c)===name),text=n=>String(n?.textContent||'').trim();
@@ -194,5 +194,16 @@
   if(!['score-partwise','score-timewise'].includes(name))throw Error('El XML no contiene una partitura MEI o MusicXML.');
   return {content:source,format:'musicxml',soundOffset:null,warnings:[],playbackRoute:globalThis.CrescendoScoreRoute?.fromElement(doc.documentElement)??null};
  }
- return {read,convert,convertElement,parseXML};
+ async function readXml(file){
+  const loaded=await read(file);if(loaded.format!=='mxl')return loaded;
+  const Zip=globalThis.JSZip;if(!Zip)throw Error('No se pudo cargar el lector MXL. Usa MusicXML sin comprimir o MEI.');
+  const zip=await Zip.loadAsync(loaded.content),container=zip.file('META-INF/container.xml');let name;
+  if(container){const doc=parseXML(await container.async('string'));name=doc.querySelector('rootfile')?.getAttribute('full-path');}
+  const entry=name?zip.file(name):Object.values(zip.files).find(f=>!f.dir&&/\.(musicxml|xml)$/i.test(f.name)&&!/^META-INF\//i.test(f.name));
+  if(!entry)throw Error('No hay una partitura MusicXML dentro del MXL.');
+  if(entry._data?.uncompressedSize>8*1024*1024)throw Error('La partitura descomprimida supera 8 MB.');
+  const content=await entry.async('string');if(content.length>8*1024*1024)throw Error('La partitura descomprimida supera 8 MB.');
+  return {...convert(content),format:'mxl'};
+ }
+ return {read,readXml,convert,convertElement,parseXML};
 });
