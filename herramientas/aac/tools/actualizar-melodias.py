@@ -41,7 +41,8 @@ def prepare(path,previous,used):
    if field is None:
     misc=ET.SubElement(identification,'miscellaneous');field=ET.SubElement(misc,'miscellaneous-field',{'name':'crescendo:measure-route'})
    field.text=json.dumps(route,separators=(',',':'))
-   canonical=ET.tostring(converted,encoding='unicode',xml_declaration=True)
+   # Explicit encoding preserves the catalog bytes across Python 3.9 and 3.12+.
+   canonical=ET.tostring(converted,encoding='UTF-8',xml_declaration=True).decode('UTF-8')
   source_notes=len(nodes(root,'note'))
  else:
   canonical=data.decode('utf-8-sig');converted=root;source_notes=sum(1 for n in nodes(root,'note') if any(local(c)=='pitch' for c in n))
