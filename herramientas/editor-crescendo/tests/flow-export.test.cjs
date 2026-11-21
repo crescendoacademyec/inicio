@@ -1,7 +1,7 @@
 const {test}=require('node:test'),assert=require('node:assert/strict'),vm=require('node:vm'),fs=require('node:fs'),path=require('node:path');
 const source=fs.readFileSync(path.join(__dirname,'../src/app.js'),'utf8');
 function fn(name){const normal=source.indexOf('  function '+name+'('),start=normal<0?source.indexOf('  async function '+name+'('):normal;assert.ok(start>=0,name);let p=source.indexOf('(',start),n=1;for(p++;n;p++){if(source[p]==='(')n++;if(source[p]===')')n--;}let i=source.indexOf('{',p),depth=1;for(i++;depth;i++){if(source[i]==='{')depth++;if(source[i]==='}')depth--;}return source.slice(start,i);}
-function geometry(count){const layout={starts:Array.from({length:count},(_,i)=>100+i*200),widths:Array(count).fill(200)},c={layout,lastRenderedLayout:layout,staffLeft:()=>100,scoreStaffBottomY:()=>160,stringInstrument:()=>({tuning:Array(6)}),guitarTabVisible:true,buildLayout:()=>layout,measureIndexAndTickFromAbsolute:tick=>({measureIndex:Math.floor(tick/16)})};vm.createContext(c);vm.runInContext(fn('scoreFlow')+fn('flowPlaybackPoint'),c);return c;}
+function geometry(count){const layout={starts:Array.from({length:count},(_,i)=>100+i*200),widths:Array(count).fill(200)},c={layout,lastRenderedLayout:layout,staffLeft:()=>100,scoreStaffBottomY:()=>160,stringInstrument:()=>({tuning:Array(6)}),guitarTabVisible:true,buildLayout:()=>layout,measureIndexAndTickFromAbsolute:tick=>({measureIndex:Math.floor(tick/16)})};vm.createContext(c);vm.runInContext(fn('scoreAvailableWidth')+fn('scoreFlow')+fn('flowPlaybackPoint'),c);return c;}
 test('four measures per row, including incomplete final systems and guitar TAB clearance',()=>{for(const count of [1,4,5,8,9,17]){const c=geometry(count),flow=c.scoreFlow(c.layout);assert.equal(flow.rows.length,Math.ceil(count/4));assert.equal(flow.rowHeight,362);assert.equal(flow.height,flow.rowHeight*Math.ceil(count/4));assert.equal(flow.rows[0].origin,0);for(const row of flow.rows){assert.ok(row.last-row.first<4);assert.equal(row.origin,c.layout.starts[row.first]-100);assert.ok(row.width<=flow.width);}}});
 test('playback moves down to the correct row without changing musical time',()=>{const c=geometry(9);for(const index of [0,3,4,7,8]){const p=c.flowPlaybackPoint(c.layout.starts[index]+20,index*16);assert.equal(p.x,120+(index%4)*200);assert.equal(p.y,Math.floor(index/4)*362);}});
 test('pointer coordinates in a lower system are converted through its SVG viewport',()=>{const c=geometry(8);const point={x:0,y:0,matrixTransform:matrix=>matrix},row={getScreenCTM:()=>({inverse:()=>({x:950,y:120})})};c.svg={createSVGPoint:()=>point,getScreenCTM:()=>({inverse:()=>({x:150,y:482})})};vm.runInContext(fn('svgPointFromEvent'),c);const mapped=c.svgPointFromEvent({clientX:155,clientY:222,target:{closest:()=>row}});assert.equal(mapped.x,950);assert.equal(mapped.y,120);});
@@ -13,3 +13,17 @@ test('text and chord editors anchor to the lower row viewport on screen',()=>{co
 
 test('dense systems reflow within available width and playback follows variable row lengths',()=>{const c=geometry(9);c.svg={parentElement:{clientWidth:550}};c.state={zoom:1};const flow=c.scoreFlow(c.layout);assert.deepEqual(JSON.parse(JSON.stringify(flow.rows.map(r=>[r.first,r.last]))),[[0,1],[2,3],[4,5],[6,7],[8,8]]);assert.ok(flow.width<=550);const p=c.flowPlaybackPoint(c.layout.starts[5]+20,5*16);assert.equal(p.y,2*362);assert.equal(p.x,320);});
 test('annotations above the staff reserve top margin without breaking the outer playhead mapping',()=>{const c=geometry(4);c.state={textItems:[{kind:'text',y:-8,style:{size:24}}]};const flow=c.scoreFlow(c.layout);assert.equal(flow.extraTop,56);assert.equal(c.flowPlaybackPoint(120,0).y,56);});
+test('screen layout uses the writing area while PDF layout uses its own page width',()=>{
+ const c=geometry(8);c.svg={parentElement:{clientWidth:1068}};c.state={zoom:1.5};
+ assert.equal(c.scoreAvailableWidth(),712);
+ c.scorePrintWidth=1400;assert.equal(c.scoreAvailableWidth(),1400);
+ c.scorePrintWidth=null;assert.equal(c.scoreAvailableWidth(),712);
+});
+test('changing the writing or print width recomputes layout instead of reusing cached system widths',()=>{
+ let available=1068,calls=0;
+ const c={cachedScoreLayout:null,cachedWritingLayoutKey:null,layoutCacheKeyComputationCount:0,rhythmicColumnIndex:new Map(),document:{documentElement:{dataset:{}}},isNoteInputMode:()=>false,scoreAvailableWidth:()=>available,scoreSystems:()=>[{measures:[{}]}],computeLayout:()=>({systemWidth:available,id:++calls})};
+ vm.createContext(c);vm.runInContext(fn('buildLayout'),c);
+ const first=c.buildLayout();assert.equal(c.buildLayout(),first);assert.equal(calls,1);
+ available=1400;assert.equal(c.buildLayout().systemWidth,1400);assert.equal(calls,2);
+ available=1068;assert.equal(c.buildLayout().systemWidth,1068);assert.equal(calls,3);
+});

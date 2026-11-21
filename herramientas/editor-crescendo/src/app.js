@@ -5033,20 +5033,24 @@
   }
 
   let scorePrintWidth=null;
+  function scoreAvailableWidth(){
+    if(typeof scorePrintWidth!=="undefined"&&scorePrintWidth)return scorePrintWidth;
+    return typeof svg!=="undefined"&&svg?.parentElement?.clientWidth?Math.max(240,svg.parentElement.clientWidth/(Number(state.zoom)||1)):Infinity;
+  }
   function scoreFlow(layout = buildLayout()) {
     const header = layout.starts[0] || staffLeft();
     const freeTexts=typeof state!=='undefined'?(state.textItems||[]).filter(item=>item.kind==='text'&&Number.isFinite(item.y)):[];
     const extraTop=Math.max(0,...freeTexts.map(item=>24-(item.y-(Number(item.style?.size)||24))));
     const rowHeight = Math.ceil(scoreStaffBottomY() + (stringInstrument() && guitarTabVisible ? stringInstrument().tuning.length * 17 + 100 : 95)+extraTop);
-    const available=typeof scorePrintWidth!=='undefined'&&scorePrintWidth ? scorePrintWidth : typeof svg!=='undefined'&&svg?.parentElement?.clientWidth ? Math.max(240,svg.parentElement.clientWidth/(Number(state.zoom)||1)) : Infinity;
-    const rows = typeof window!=='undefined'&&window.CrescendoSystemLayout ? window.CrescendoSystemLayout.pack({starts:layout.starts,widths:layout.widths,header,available,breaks:state.systemBreaks??null}).map((row,i)=>({...row,y:i*rowHeight})) : [];
+    const available=Number.isFinite(layout.systemWidth)?layout.systemWidth:scoreAvailableWidth();
+    const rows = typeof window!=='undefined'&&window.CrescendoSystemLayout ? window.CrescendoSystemLayout.pack({starts:layout.starts,widths:layout.widths,header,available,breaks:state.systemBreaks??null,padding:0,constrainManual:true}).map((row,i)=>({...row,y:i*rowHeight})) : [];
     if(!rows.length)
     for (let first = 0; first < layout.starts.length;) {
       const origin = first ? layout.starts[first] - header : 0;
       let last=first;
-      while(last+1<layout.starts.length&&last-first<3&&layout.starts[last+1]+layout.widths[last+1]-origin+24<=available)last++;
+      while(last+1<layout.starts.length&&last-first<3&&layout.starts[last+1]+layout.widths[last+1]-origin<=available+1e-7)last++;
       const end = layout.starts[last] + layout.widths[last];
-      rows.push({first, last, origin, end, width:end-origin+24, y:rows.length*rowHeight});first=last+1;
+      rows.push({first, last, origin, end, width:end-origin, y:rows.length*rowHeight});first=last+1;
     }
     return {rows, rowHeight, extraTop, width:Math.max(1,...rows.map(row=>row.width)), height:Math.max(rowHeight,rows.length*rowHeight)};
   }
@@ -18339,32 +18343,15 @@
       return Math.max(width, manualWidth || 0, writingWidth);
     });
     const left = staffLeft() + firstMeasureSignatureInset();
-    const rightPadding = 80 + appearanceValue("scoreOffsetX");
-    const intrinsicTotalWidth = left + widths.reduce((sum, width) => sum + width, 0) + rightPadding;
-    const targetTotalWidth = scoreMinWidth();
-    const canStretchEmptyScore = !scoreHasSpacingEvents(measureCount);
-    if (!state.compactLayout && canStretchEmptyScore && !hasManualMeasureWidths() && widths.length && targetTotalWidth > intrinsicTotalWidth) {
-      const extraPerMeasure = (targetTotalWidth - intrinsicTotalWidth) / widths.length;
-      widths = widths.map((width) => width + extraPerMeasure);
-    }
-    // Fill each four-bar system without changing any musical-time coordinates.
-    for (let first = 0; first < widths.length; first += 4) {
-      const count = Math.min(4,widths.length-first);
-      const used = widths.slice(first,first+count).reduce((sum,value)=>sum+value,0);
-      const extra = Math.max(0,targetTotalWidth-left-24-used) / count;
-      for(let index=first;index<first+count;index++)widths[index]+=extra;
-    }
-    const starts = [];
-    let x = left;
-    widths.forEach((width) => {
-      starts.push(x);
-      x += width;
-    });
-    return { starts, widths, totalWidth: Math.max(x + rightPadding, targetTotalWidth) };
+    // Pack the actual systems first, then share their spare width between bars.
+    // The sheet already supplies equal outer margins; no extra right gutter is needed.
+    const fitted=window.CrescendoSystemLayout.justify({widths,header:left,available:scoreAvailableWidth(),breaks:state.systemBreaks??null,padding:0,constrainManual:true});
+    const end=fitted.starts.at(-1)+fitted.widths.at(-1);
+    return {starts:fitted.starts,widths:fitted.widths,totalWidth:end,systemWidth:fitted.available};
   }
 
   function buildLayout(options = {}) {
-    const writingKey = isNoteInputMode() ? `writing:${gridStepTicks()}` : "engraving";
+    const writingKey = (isNoteInputMode() ? `writing:${gridStepTicks()}` : "engraving")+`|width:${scoreAvailableWidth()}`;
     if (!options.fresh && cachedScoreLayout && cachedWritingLayoutKey === writingKey) return cachedScoreLayout;
     cachedWritingLayoutKey = writingKey;
     const systems = scoreSystems();
