@@ -415,7 +415,7 @@
     );
     const documentSubtitle = element("span", "ipad-document-subtitle", "Partitura editable");
     heading.appendChild(documentSubtitle);
-    headerLeft.append(toggleLeft, heading);
+    headerLeft.append(heading);
 
     const headerCenter = element("div", "ipad-header-center");
     const clearButton = createIconButton({ icon: "eraser", label: "Limpiar toda la escritura de ambos pentagramas" });
@@ -567,27 +567,28 @@
     });
 
     const documentPanel = panels.get("document");
-    documentPanel.appendChild(sectionHeader("ARCHIVO", "Biblioteca", "Organiza, importa y exporta tus ejercicios."));
-    const newDocumentButton = createIconButton({
-      icon: "file-plus-2",
-      label: "Crear proyecto",
-      text: "Crear proyecto",
-      className: "ipad-primary-action"
+    documentPanel.classList.add("editor-file-menu");
+    const legacyFiles=element('div','editor-file-sources');legacyFiles.hidden=true;documentPanel.append(legacyFiles);
+    moveLegacyPanel(".exercise-app-menu__panel--file",legacyFiles);
+    moveLegacyPanel("#versionHistoryHost",legacyFiles);
+    function fileCommand(label,action){const button=element('button','editor-file-command',label);button.type='button';button.onclick=action;documentPanel.append(button);return button;}
+    function sourceCommand(id,label){const button=document.getElementById(id);button.textContent=label;button.setAttribute('aria-label',label);button.className='editor-file-command';documentPanel.append(button);return button;}
+    function fileDialog(title,nodes){
+      const dialog=document.createElement('dialog');dialog.className='arrangement-dialog project-library-dialog';dialog.setAttribute('aria-label',title);const head=element('header'),h=element('h2','',title),close=element('button','','Cerrar');close.type='button';close.onclick=()=>dialog.close();head.append(h,close);const content=element('div','arrangement-body');content.append(...nodes);dialog.append(head,content);document.body.append(dialog);dialog.addEventListener('keydown',event=>event.stopPropagation());dialog.addEventListener('close',()=>{legacyFiles.append(...nodes);dialog.remove();});dialog.showModal();return dialog;
+    }
+    const newDocumentButton=fileCommand('Nuevo proyecto…',null);
+    fileCommand('Abrir proyecto…',()=>{
+      const select=document.getElementById('exerciseSelect'),label=select.closest('label'),open=document.getElementById('loadExerciseButton'),remove=document.getElementById('deleteExerciseButton');
+      open.textContent='Abrir seleccionado';open.setAttribute('aria-label','Abrir seleccionado');remove.textContent='Eliminar de biblioteca';
+      const body=element('div','project-library-controls');const file=element('button','','Abrir archivo de proyecto…');file.type='button';file.onclick=()=>{document.getElementById('importExerciseInput').click();dialog.close();};body.append(file,label,open,remove);const dialog=fileDialog('Abrir proyecto',[body]);dialog.addEventListener('close',()=>legacyFiles.append(label,open,remove));
     });
-    newDocumentButton.dataset.visibleLabel="Crear proyecto";
-    documentPanel.appendChild(newDocumentButton);
-    const openProject=createIconButton({icon:"folder-open",label:"Abrir proyecto",text:"Abrir proyecto",className:"ipad-primary-action"});openProject.dataset.visibleLabel="Abrir proyecto";openProject.onclick=()=>document.getElementById("importExerciseInput")?.click();documentPanel.appendChild(openProject);
-    [ ["png", "Guardar imagen"], ["pdf", "Guardar PDF"] ].forEach(([format, text]) => {
-      const button = createIconButton({icon:"save", label:text, text, className:"ipad-primary-action"});
-      button.dataset.visibleLabel=text;
-      button.addEventListener("click", () => document.dispatchEvent(new CustomEvent("editor-export-image", {detail:{format}})));
-      documentPanel.appendChild(button);
-    });
-    moveLegacyPanel(".exercise-app-menu__panel--file", documentPanel);
-    documentPanel.querySelectorAll("#loadExerciseButton,#saveExerciseButton,#exportExerciseButton,#exportMusicXmlButton").forEach(button=>{button.dataset.visibleLabel=button.textContent;button.setAttribute("aria-label",button.textContent);button.classList.add("ipad-primary-action");});
-    const versionHistorySection = createControlSection("Historial");
-    moveLegacyPanel("#versionHistoryHost", versionHistorySection);
-    documentPanel.appendChild(versionHistorySection);
+    sourceCommand('saveExerciseButton','Guardar');
+    sourceCommand('exportExerciseButton','Guardar como…');
+    const exportFileButton=fileCommand('Exportar…',()=>openExport());
+    fileCommand('Importar partitura…',()=>document.getElementById('importMusicXmlInput').click());
+    documentPanel.append(element('hr','editor-file-divider'));
+    fileCommand('Configurar proyecto…',()=>document.dispatchEvent(new CustomEvent('editor-project-settings')));
+    fileCommand('Historial de versiones…',()=>fileDialog('Historial de versiones',[document.getElementById('versionHistoryHost')]));
 
     const buildToolPanel = (panelId, eyebrow, title, description, groupTitle) => {
       const panel = panels.get(panelId);
@@ -765,7 +766,7 @@
       dialog.onclose=()=>dialog.remove();document.body.appendChild(dialog);dialog.showModal();name.focus();name.select();
     };
     saveButton.addEventListener('click',()=>openExport());
-    const midiExportButton=document.createElement('button');midiExportButton.type='button';midiExportButton.className='ipad-primary-action';midiExportButton.textContent='Exportar MIDI…';midiExportButton.onclick=()=>openExport('midi');documentPanel.append(midiExportButton);
+
     document.addEventListener('editor-export-finished',()=>saveButton.classList.remove('is-active'));
     const measureControls=element('div','ipad-measure-controls');
     const minusMeasure=createIconButton({icon:'minus',label:'Quitar el compás seleccionado'});
@@ -864,7 +865,7 @@
       const button = navButtons.get(state.activePanel);
       if (!button) return;
       const bounds = button.getBoundingClientRect();
-      const width = Math.min(360, window.innerWidth - 16);
+      const width = Math.min(state.activePanel === "document" ? 270 : 360, window.innerWidth - 16);
       leftPanel.style.left = `${Math.max(8, Math.min(bounds.left, window.innerWidth - width - 8))}px`;
       leftPanel.style.top = `${Math.ceil(rail.getBoundingClientRect().bottom)}px`;
     }
@@ -888,6 +889,7 @@
       const nextId = panels.has(panelId) ? panelId : "write";
       const clickedActive = state.activePanel === nextId;
       state.activePanel = nextId;
+      leftPanel.dataset.panel = nextId;
       if (options.toggle && clickedActive) {
         setLeftVisible(!state.leftVisible);
       } else if (!options.preserveVisibility) {

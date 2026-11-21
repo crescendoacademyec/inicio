@@ -177,7 +177,7 @@
   const EPSILON = 0.0001;
   const MIN_DURATION_TICKS = 0.125;
   const STAFF_GAP = 12;
-  const STAFF_CENTER_Y = 142;
+  const STAFF_CENTER_Y = 112;
   const STAFF_LEFT = 84;
   const SYSTEM_GAP_Y = 138;
   const MEASURE_MIN_WIDTH = 176;
@@ -1637,6 +1637,7 @@
     syncActiveSystemMeasures();
     return JSON.stringify({
       scoreTitle: String(exerciseTitleInput?.value || ""),
+      scoreDescription: typeof exerciseDescriptionInput!=="undefined" ? String(exerciseDescriptionInput?.value||"") : "",
       pageLayout: state.pageLayout || null,
       scoreCreators: state.scoreCreators || [],
       systemBreaks: state.systemBreaks ?? null,
@@ -2589,8 +2590,33 @@
     return true;
   }
 
-  async function createNewExercise() {
-    if (!(await confirmDiscardCanvasChanges("crear un ejercicio nuevo"))) return false;
+  function projectSettingsData() {
+    const systems=scoreSystems(),profile=systemInstrumentProfile(systems[0]),concert=transposedInstrumentKey(systems[0].keySignature||state.keySignature,profile,{transpose:0});
+    return {title:exerciseTitleInput.value,description:exerciseDescriptionInput.value,credits:Object.fromEntries(Object.keys(window.JMLScoreProjectSettings.roles).map(role=>[role,(state.scoreCreators||[]).find(c=>c.type===role)?.name||''])),key:`${concert.tonic||'C'} (${concert.mode==='minor'?'menor':'mayor'})`,parts:[...new Map(systems.map(system=>[system.partId||system.id,{name:system.name||systemInstrumentProfile(system).name}])).values()]};
+  }
+
+  function requestProjectSettings(isNew=false) {
+    return window.JMLScoreProjectSettings.open({isNew,current:projectSettingsData(),instruments:InstrumentSounds.instruments,parseKey:parseKeySignatureInput,apply:isNew?createNewExercise:applyProjectSettings});
+  }
+
+  function applyProjectSettings(config) {
+    const before=stateSnapshot(),description=exerciseDescriptionInput.value,active=activeSystemIndex();
+    saveHistory();stopMidiPlayback();
+    try {
+      exerciseTitleInput.value=config.title;exerciseDescriptionInput.value=config.description;
+      for(const [role,name]of Object.entries(config.credits))if((state.scoreCreators||[]).find(c=>c.type===role)?.name!==name)state.scoreCreators=window.CrescendoScoreHeading.replace(state.scoreCreators,role,name);
+      const current=projectSettingsData();
+      if(parseKeySignatureInput(current.key)?.label!==config.keySignature.label){
+        setActiveSystemIndex(0);const written=transposedInstrumentKey(config.keySignature,{transpose:0},systemInstrumentProfile(scoreSystems()[0]));setKeySignatureAtMeasure(written,0);
+      }
+      for(const part of config.instruments)addScoreInstrument(part.instrumentId,part.name,{history:false,render:false});
+      setActiveSystemIndex(active);invalidateLayoutCache();render();scheduleExerciseMetadataAutosave();return true;
+    } catch(error){state.history.pop();exerciseDescriptionInput.value=description;restore(before);throw error;}
+  }
+
+  async function createNewExercise(config) {
+    config=window.JMLScoreProjectSettings.validate(config,{instruments:InstrumentSounds.instruments,parseKey:parseKeySignatureInput,isNew:true});
+    if (!(await confirmDiscardCanvasChanges("crear un proyecto nuevo"))) return false;
     stopMidiPlayback();
     clearScore();
     state.history = [];
@@ -2598,12 +2624,24 @@
     currentExerciseScenes = [];
     activeSceneIndex = -1;
     activeExerciseReference = { source: "", id: "" };
-    state.scoreCreators=[];
-    if (exerciseTitleInput) exerciseTitleInput.value = "";
-    if (exerciseDescriptionInput) exerciseDescriptionInput.value = "";
+    state.scoreCreators=window.CrescendoScoreHeading.normalize(Object.entries(config.credits).map(([type,name])=>({type,name})));
+    exerciseTitleInput.value=config.title;exerciseDescriptionInput.value=config.description;
+    const [top,bottom]=config.meter.split('/');state.meter={top,bottom};state.keySignature=config.keySignature;
+    const reference=Array.from({length:config.measures},()=>({}));
+    const systems=[];
+    for(const part of config.instruments){
+      const profile=InstrumentSounds.instruments[part.instrumentId],partId=createSystemId();
+      for(let i=0;i<(part.instrumentId==='piano'?2:1);i++){
+        const system=createStaffSystem('staff',{instrumentId:part.instrumentId,name:part.name,partId,initialClefId:i?'clef-f':profile.clef,referenceMeasures:reference});
+        system.keySignature=transposedInstrumentKey(config.keySignature,{transpose:0},profile);systems.push(system);
+      }
+    }
+    state.systems=systems;state.measures=systems[0].measures;state.activeSystemIndex=0;state.keySignature=systems[0].keySignature;state.staffView='both';state.pageLayout=PageLayout.normalize({});
+    state.playbackBpm=DEFAULT_PLAYBACK_BPM;clearMeasureSelection();clearEntrySelection();setActiveSystemIndex(0);invalidateLayoutCache();
     if (exerciseSelect) exerciseSelect.value = "";
     renderSceneControls();
-    setDocumentDirty(true, "Nuevo ejercicio listo.");
+    render();scheduleExerciseMetadataAutosave();
+    setDocumentDirty(true, `Proyecto creado: ${config.title} · ${config.measures} compases.`);
     return true;
   }
 
@@ -2636,6 +2674,7 @@
     const data = JSON.parse(snapshot);
     state.pageLayout = PageLayout.normalize(data.pageLayout || {});
     if (typeof data.scoreTitle === "string" && exerciseTitleInput) exerciseTitleInput.value = data.scoreTitle;
+    if (typeof data.scoreDescription === "string" && typeof exerciseDescriptionInput!=="undefined" && exerciseDescriptionInput) exerciseDescriptionInput.value = data.scoreDescription;
     pointerInputPreview = null;
     state.staffView = data.staffView || (["guitar","requinto"].includes(state.playbackInstrument) ? "treble" : "both");
     state.scoreCreators=window.CrescendoScoreHeading.normalize(data.scoreCreators);
@@ -5317,10 +5356,16 @@
     if(typeof scorePrintWidth!=="undefined"&&scorePrintWidth)return scorePrintWidth;
     return typeof svg!=="undefined"&&svg?.parentElement?.clientWidth?Math.max(240,svg.parentElement.clientWidth/(Number(state.zoom)||1)):Infinity;
   }
+  function firstStaffNotationTop() {
+    const index=visibleSystemIndices()[0],system=scoreSystems()[index];
+    let top=staffTopYForSystem(index)-50;
+    for(const measure of system.measures)for(const entry of measure.entries)if(entry.type==='note')for(const step of entryStaffSteps(entry))top=Math.min(top,pitchYForSystem(step,index)-60+visualOffset(entry,'y'));
+    return top;
+  }
   function scoreFlow(layout = buildLayout()) {
     const header = layout.starts[0] || staffLeft();
     const freeTexts=typeof state!=='undefined'?(state.textItems||[]).filter(item=>item.kind==='text'&&Number.isFinite(item.y)):[];
-    const extraTop=Math.max(0,...freeTexts.map(item=>24-(item.y-(Number(item.style?.size)||24))));
+    const extraTop=Math.max(0,...freeTexts.map(item=>24-(item.y-(Number(item.style?.size)||24))),typeof firstStaffNotationTop==="function"?24-firstStaffNotationTop():0);
     const lastInstrument = typeof Guitar !== "undefined" ? Guitar.forInstrument(state.systems?.[visibleSystemIndices().at(-1)]?.instrumentId) : stringInstrument();
     const bottomSpace = typeof systemExtraHeight === "function" ? systemExtraHeight(state.systems[visibleSystemIndices().at(-1)]) + (state.pageLayout?.systemGap || 95) : (lastInstrument && guitarTabVisible ? lastInstrument.tuning.length * 17 + 100 : 95);
     const rowHeight = Math.ceil(scoreStaffBottomY() + bottomSpace + extraTop);
@@ -22628,6 +22673,11 @@
 
   function handleKeydown(event) {
     if (isTextEditingTarget(event.target)) return;
+    if (!event.metaKey&&!event.ctrlKey&&!event.altKey&&!event.shiftKey&&['F8','F9'].includes(event.key)) {
+      event.preventDefault();
+      if(!event.repeat){editorShell?.setLeftVisible(false);if(event.key==='F9')arrangementUi?.mixer();else arrangementUi?.roster({focusAdd:true});}
+      return;
+    }
     if (sceneNavigationMode === "exercise") {
       if (!event.metaKey && !event.ctrlKey && !event.altKey && event.key === "ArrowLeft") {
         event.preventDefault();
@@ -23844,7 +23894,7 @@
   copyIconAppearanceButton?.addEventListener("click", copyIconAppearance);
   exportIconAppearanceButton?.addEventListener("click", exportIconAppearance);
   exerciseSelect?.addEventListener("change", updateExerciseFormFromSelection);
-  loadExerciseButton?.addEventListener("click", loadSelectedExercise);
+  loadExerciseButton?.addEventListener("click", async () => {if(await loadSelectedExercise())loadExerciseButton.closest("dialog")?.close();});
   saveExerciseButton?.addEventListener("click", saveCurrentExerciseToLibrary);
   exportExerciseButton?.addEventListener("click", () => downloadExerciseDocument(currentExerciseDocument()));
   captureSceneButton?.addEventListener("click", captureSceneSnapshot);
@@ -23900,7 +23950,8 @@
     event.target.value = "";
   });
   deleteExerciseButton?.addEventListener("click", deleteSelectedLocalExercise);
-  document.addEventListener("jml-editor-new-document", createNewExercise);
+  document.addEventListener("jml-editor-new-document", () => requestProjectSettings(true));
+  document.addEventListener("editor-project-settings", () => requestProjectSettings(false));
   exportMusicXmlButton?.addEventListener("click", exportMusicXml);
   musicXmlButton?.addEventListener("click", exportMusicXml);
   paletteTriggers.forEach((trigger) => {

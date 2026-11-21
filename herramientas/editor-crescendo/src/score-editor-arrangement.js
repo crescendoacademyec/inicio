@@ -50,7 +50,7 @@
       d.addEventListener('keydown', e => e.stopPropagation()); d.addEventListener('pointerdown', e => e.stopPropagation());
       d.showModal(); return { d, body, status };
     }
-    function roster() {
+    function roster({focusAdd=false}={}) {
       const { body, status } = dialog('Instrumentos de la partitura');
       body.append(node('p', 'Añade instrumentos y elige el pentagrama donde quieres escribir. Cada uno conserva su propio sonido.'));
       const add = node('div', null, 'arrangement-add'), sound = field('Instrumento nuevo', instrumentSelect('violin'), add), name = field('Nombre en la partitura', input('Violín'), add);
@@ -73,7 +73,7 @@
           list.append(row);
         });
       }
-      draw();
+      draw();if(focusAdd)sound.focus();
     }
     function distribute() {
       const { d, body, status } = dialog('Enviar voces a instrumentos');
@@ -138,9 +138,10 @@
       }
       button('Desactivar todos los solos',()=>{options.mix(options.systems().map((_,i)=>i),{solo:false});draw();},transport);draw();
     }
-    button('Instrumentos de la partitura…', roster, host, 'ipad-primary-action');
+    const rosterButton=button('Instrumentos de la partitura…', roster, host, 'ipad-primary-action');
     button('Enviar voces a instrumentos…', distribute, host, 'ipad-primary-action');
-    button('Consola de canales…', mixer, host, 'ipad-primary-action');
+    const mixerButton=button('Consola de canales…', mixer, host, 'ipad-primary-action');
+    for(const [control,key,label]of [[rosterButton,'F8','Instrumentos de la partitura…'],[mixerButton,'F9','Consola de canales…']]){control.setAttribute('aria-label',label);control.setAttribute('aria-keyshortcuts',key);control.title=label+' · '+key;const hint=node('kbd',key,'arrangement-shortcut');hint.setAttribute('aria-hidden','true');control.append(hint);}
     return { roster, distribute, mixer };
   }
   const api = { midi, transpose, extract, conflicts, remapReferences, mount };

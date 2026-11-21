@@ -795,7 +795,7 @@ MusicXML exporta las partes instrumentales por separado dentro del mismo archivo
 
 ## 43. MIDI del conjunto o por instrumento
 
-Abra **Archivo > Exportar MIDI** o el botón Guardar/exportar y elija MIDI. En Contenido MIDI puede elegir:
+Abra **Archivo > Exportar** o el botón Guardar/exportar y elija MIDI. En Contenido MIDI puede elegir:
 
 - **Conjunto completo**: un archivo MIDI de tipo 1, con una pista por instrumento y una pista de tempo. Los dos pentagramas de un piano se reúnen en su pista.
 - **Solo un instrumento**: un MIDI con la parte elegida.
@@ -810,3 +810,15 @@ Para conjuntos de más de quince instrumentos con altura, el archivo completo as
 Mantenga **Shift** y haga clic en cada compás que quiera añadir a la selección. Los compases permanecen marcados, incluso si no son consecutivos o están en otro sistema de la hoja. Repetir Shift + clic sobre un compás ya seleccionado lo mantiene seleccionado, sin duplicarlo. También funciona desde el botón Seleccionar compases.
 
 Un clic sin Shift sustituye la selección por ese compás. Escape limpia la selección. La selección pertenece al pentagrama activo: al elegir otro pentagrama comienza una selección nueva. **Shift + ↑ / ↓** cambia de octava todas las notas de los compases marcados, conservando los compases intermedios que no haya seleccionado.
+
+## 45. Archivo y configuración de proyectos
+
+**Archivo** reúne comandos compactos: Nuevo proyecto, Abrir proyecto, Guardar, Guardar como, Exportar, Importar partitura, Configurar proyecto, Historial de versiones y Configurar página. Abrir proyecto permite elegir un proyecto de la biblioteca local o abrir su archivo JSON. Guardar conserva el proyecto en la biblioteca; Guardar como descarga el archivo editable. Exportar reúne PDF, PNG, MusicXML, MIDI y JSON en una sola ventana.
+
+**Nuevo proyecto** abre una ventana para escribir título, compositor, arreglista, transcriptor y descripción, seleccionar la tonalidad de concierto, elegir el compás y establecer de 1 a 1000 compases iniciales. Añada los instrumentos que necesite, incluidos instrumentos repetidos con nombres de parte distintos. El piano genera dos pentagramas. Los transpositores reciben la armadura escrita correspondiente a la tonalidad de concierto. Cancelar conserva el proyecto abierto.
+
+**Configurar proyecto** permite modificar los datos y la tonalidad, o añadir instrumentos después de comenzar. Para cambiar sonidos o quitar instrumentos existentes utilice Instrumentos > Instrumentos de la partitura.
+
+Audio/YouTube inicia cerrado después de recargar, incluso si el proyecto contiene una grabación. Pulse el botón gris para abrirlo: se resaltará en dorado mientras esté abierto. Otro clic lo oculta y pausa el audio.
+
+**F8** abre Instrumentos de la partitura con el selector de instrumento nuevo enfocado. **F9** abre directamente la Consola de canales. Estos atajos no actúan mientras escribe en campos de texto. En teclados que reservan esas teclas para funciones del sistema puede ser necesario mantener Fn.
