@@ -535,6 +535,7 @@
     selectedEntryIds: [],
     selectedNoteRefs: [],
     selectedMeasureIndex: null,
+    measureSelection: null,
     dragSelection: null,
     entryCursorActive: false,
     activeNoteEntryId: null,
@@ -969,7 +970,7 @@
     return withSystemContext(sourceIndex, () => {
       const selected = new Set([...(state.selectedEntryIds || []), ...(state.selectedNoteRefs || []).map(ref => ref.entryId)]);
       if (state.cursorEntryId) selected.add(state.cursorEntryId);
-      const measureIndices = [...(state.measureSelection?.indices || [])];
+      const measureIndices = selectedMeasureIndices();
       if (Number.isInteger(state.selectedMeasureIndex)) measureIndices.push(state.selectedMeasureIndex);
       const result = [];
       state.measures.forEach((measure, measureIndex) => measure.entries.forEach(entry => {
@@ -1648,6 +1649,7 @@
       selectedEntryIds: state.selectedEntryIds,
       selectedNoteRefs: state.selectedNoteRefs,
       selectedMeasureIndex: state.selectedMeasureIndex,
+      measureSelection: state.measureSelection,
       entryCursorActive: state.entryCursorActive,
       activeNoteEntryId: state.activeNoteEntryId,
       activeNoteStaffStep: state.activeNoteStaffStep,
@@ -2646,7 +2648,8 @@
     state.cursorEntryId = data.cursorEntryId || null;
     state.selectedEntryIds = Array.isArray(data.selectedEntryIds) ? data.selectedEntryIds : [];
     state.selectedNoteRefs = Array.isArray(data.selectedNoteRefs) ? data.selectedNoteRefs : [];
-    state.selectedMeasureIndex = Number.isFinite(data.selectedMeasureIndex) ? data.selectedMeasureIndex : null;
+    state.selectedMeasureIndex = Number.isInteger(data.selectedMeasureIndex) ? data.selectedMeasureIndex : null;
+    state.measureSelection = data.measureSelection && Array.isArray(data.measureSelection.indices) ? {systemId:data.measureSelection.systemId ?? null,indices:data.measureSelection.indices.filter(Number.isInteger)} : null;
     state.dragSelection = null;
     state.entryCursorActive = data.entryCursorActive === true;
     state.activeNoteEntryId = data.activeNoteEntryId || null;
@@ -2910,6 +2913,7 @@
     shiftAnchoredItemsForMeasureInsert(insertIndex);
     setActiveSystemIndex(activeSystemIndex());
     state.selectedMeasureIndex = insertIndex;
+    state.measureSelection = null;
     state.cursorMeasure = insertIndex;
     state.cursorTick = 0;
     clearEntrySelection();
@@ -2936,6 +2940,7 @@
     });
     setActiveSystemIndex(activeSystemIndex());
     state.selectedMeasureIndex = firstNewIndex;
+    state.measureSelection = null;
     state.cursorMeasure = firstNewIndex;
     state.cursorTick = 0;
     clearEntrySelection();
@@ -2983,6 +2988,7 @@
     shiftAnchoredItemsForMeasureRemove(removeIndex);
     setActiveSystemIndex(activeSystemIndex());
     state.selectedMeasureIndex = Math.max(0, Math.min(removeIndex, state.measures.length - 1));
+    state.measureSelection = null;
     state.cursorMeasure = state.selectedMeasureIndex;
     state.cursorTick = 0;
     clearEntrySelection();
@@ -3002,6 +3008,7 @@
     saveHistory();
     setMeasureHidden(index, !measureIsHidden(index));
     state.selectedMeasureIndex = index;
+    state.measureSelection = null;
     clearEntrySelection();
     clearTextSelection();
     clearMarkSelection();
@@ -4525,8 +4532,18 @@
     });
   }
 
+  function selectedMeasureIndices() {
+    const last = state.selectedMeasureIndex, selection = state.measureSelection;
+    if (!Number.isInteger(last)) return [];
+    const systemId = state.systems?.[state.activeSystemIndex]?.id ?? null;
+    if (selection && selection.systemId !== systemId) return [];
+    const indices = selection?.indices?.includes(last) ? selection.indices : [last];
+    return [...new Set(indices)].filter(index=>Number.isInteger(index)&&index>=0&&index<state.measures.length).sort((a,b)=>a-b);
+  }
+
   function clearMeasureSelection() {
     state.selectedMeasureIndex = null;
+    state.measureSelection = null;
   }
 
   function normalizeItemColor(value) {
@@ -11120,6 +11137,7 @@
     base.selectedEntryIds = [];
     base.selectedNoteRefs = [];
     base.selectedMeasureIndex = null;
+    base.measureSelection = null;
     base.activeSystemIndex = 0;
     base.meter = parsed.meter;
     base.keySignature = parsed.keySignature;
@@ -14184,45 +14202,65 @@
     }
   }
 
-  function renderMeasureSelection(root,layout){
-    if(!measureSelectMode||!Number.isFinite(state.selectedMeasureIndex))return;
-    const index=state.selectedMeasureIndex;if(!Number.isFinite(layout.starts[index]))return;
-    root.appendChild(el("rect",{class:"measure-selection",x:layout.starts[index],y:scoreStaffTopY()-25,width:layout.widths[index],height:scoreStaffBottomY()-scoreStaffTopY()+(systemShowsTab()?215:65),rx:3}));
+  function renderMeasureSelection(root,layout,row=null){
+    const systemIndex=activeSystemIndex();
+    for(const index of selectedMeasureIndices()){
+      if(!Number.isFinite(layout.starts[index])||row&&(index<row.first||index>row.last))continue;
+      const system=state.systems[systemIndex],instrument=Guitar.forInstrument(system.instrumentId);
+      const extra=systemShowsTab(system)?instrument.tuning.length*17+100:65;
+      root.appendChild(el("rect",{class:"measure-selection","data-selected-measure":index,"data-system-index":systemIndex,x:layout.starts[index],y:staffTopYForSystem(systemIndex)-25,width:layout.widths[index],height:staffBottomYForSystem(systemIndex)-staffTopYForSystem(systemIndex)+extra,rx:3}));
+    }
   }
   function copyWholeMeasure(){
-    const source=state.selectedMeasureIndex,systems=[];if(!Number.isFinite(source))return;
+    const sources=selectedMeasureIndices(),systems=[];if(!sources.length)return;
+    const source=sources[0];
     visibleSystemIndices().forEach(systemIndex=>withSystemContext(systemIndex,()=>{
-      const entries=(state.measures[source]?.entries||[]).map(entry=>{
-        const copy=JSON.parse(JSON.stringify(entry));if(entry.type==="note")entryStaffSteps(entry).forEach(step=>setEntryAccidental(copy,step,effectiveEntryAccidental(entry,step)||diatonicAccidentalForMeasure(entryDiatonicStepForStaffStep(entry,step),source)||"natural"));return copy;
-      });systems.push({systemIndex,entries});
+      const blocks=sources.map(index=>({source:index,entries:(state.measures[index]?.entries||[]).map(entry=>{
+        const copy=JSON.parse(JSON.stringify(entry));if(entry.type==="note")entryStaffSteps(entry).forEach(step=>setEntryAccidental(copy,step,effectiveEntryAccidental(entry,step)||diatonicAccidentalForMeasure(entryDiatonicStepForStaffStep(entry,step),index)||"natural"));return copy;
+      })}));systems.push({systemIndex,blocks});
     }));
-    const ids=new Set(systems.flatMap(system=>system.entries.map(entry=>entry.id)));
-    measureClipboard=JSON.parse(JSON.stringify({source,systems,marks:state.marks.filter(mark=>mark.measureIndex===source&&(!mark.entryId||ids.has(mark.entryId))&&(!mark.endEntryId||ids.has(mark.endEntryId))),texts:state.textItems.filter(item=>item.measureIndex===source)}));
-    setExerciseStatus(`Compás ${source+1} copiado. Selecciona otro compás y pega con Ctrl+V o Cmd+V.`);
+    const ids=new Set(systems.flatMap(system=>system.blocks.flatMap(block=>block.entries.map(entry=>entry.id))));
+    measureClipboard=JSON.parse(JSON.stringify({source,sources,systems,marks:state.marks.filter(mark=>sources.includes(mark.measureIndex)&&(!mark.entryId||ids.has(mark.entryId))&&(!mark.endEntryId||ids.has(mark.endEntryId))),texts:state.textItems.filter(item=>sources.includes(item.measureIndex))}));
+    setExerciseStatus(`${sources.length===1?'Compás copiado':'Compases copiados: '+sources.map(index=>index+1).join(', ')}. Selecciona el destino y pega con Ctrl+V o Cmd+V.`);
   }
   function pasteWholeMeasure(){
-    const destination=state.selectedMeasureIndex;if(!measureClipboard||!Number.isFinite(destination))return;
+    const destination=state.selectedMeasureIndex;if(!measureClipboard||!Number.isInteger(destination))return;
+    const sources=measureClipboard.sources||[measureClipboard.source],targets=sources.map(index=>destination+index-measureClipboard.source);
+    if(targets.some(index=>index>=state.measures.length)){setExerciseStatus("Añade compases al final para que quepa toda la selección antes de pegar.");return;}
+    const blocksFor=system=>system.blocks||[{source:measureClipboard.source,entries:system.entries}];
     const active=activeSystemIndex();let fits=true;
-    measureClipboard.systems.forEach(system=>withSystemContext(system.systemIndex,()=>{if(!window.CrescendoMeasureClipboard.fits(system.entries,measureTicksForIndex(destination),"tickStart","ticks"))fits=false;}));
-    setActiveSystemIndex(active);if(!fits){setExerciseStatus("El contenido no cabe en el compás seleccionado.");return;}
+    measureClipboard.systems.forEach(system=>withSystemContext(system.systemIndex,()=>{
+      for(const block of blocksFor(system))if(!window.CrescendoMeasureClipboard.fits(block.entries,measureTicksForIndex(destination+block.source-measureClipboard.source),"tickStart","ticks"))fits=false;
+    }));
+    setActiveSystemIndex(active);if(!fits){setExerciseStatus("El contenido no cabe en los compases seleccionados.");return;}
     stopMidiPlayback();saveHistory();const copy=window.CrescendoMeasureClipboard.clone(measureClipboard);
-    copy.systems.forEach(system=>withSystemContext(system.systemIndex,()=>{ensureMeasure(destination);state.measures[destination].entries=system.entries;}));setActiveSystemIndex(active);
+    copy.systems.forEach(system=>withSystemContext(system.systemIndex,()=>{
+      for(const block of blocksFor(system))state.measures[destination+block.source-copy.source].entries=block.entries;
+    }));setActiveSystemIndex(active);
     const move=item=>{for(const key of ["measureIndex","startMeasureIndex","endMeasureIndex"])if(Number.isFinite(item[key]))item[key]+=destination-copy.source;return item;};
-    state.marks=state.marks.filter(mark=>mark.measureIndex!==destination||["barline","meter","key"].includes(mark.type)).concat(copy.marks.map(move));
-    state.textItems=state.textItems.filter(item=>item.measureIndex!==destination).concat(copy.texts.map(move));
-    state.selectedEntryIds=[];state.selectedNoteRefs=[];invalidateLayoutCache();render();setExerciseStatus(`Compás pegado en ${destination+1}.`);
+    state.marks=state.marks.filter(mark=>!targets.includes(mark.measureIndex)||["barline","meter","key"].includes(mark.type)).concat(copy.marks.map(move));
+    state.textItems=state.textItems.filter(item=>!targets.includes(item.measureIndex)).concat(copy.texts.map(move));
+    state.measureSelection={systemId:state.systems[active].id,indices:targets};
+    state.selectedEntryIds=targets.flatMap(index=>state.measures[index].entries.map(entry=>entry.id));state.selectedNoteRefs=[];state.cursorEntryId=null;
+    invalidateLayoutCache();render();setExerciseStatus(`${targets.length===1?'Compás pegado en '+(destination+1):'Compases pegados: '+targets.map(index=>index+1).join(', ')}.`);
   }
   function setupMeasureMouse(){
-    const button=document.createElement("button");button.type="button";button.id="measureSelectToggle";button.className="ipad-icon-button measure-select-toggle";button.title="Seleccionar compases · ↑/↓ cambiar de sistema · copiar y pegar";button.setAttribute("aria-label","Seleccionar compases");button.setAttribute("aria-pressed","false");button.innerHTML='<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M5 3v16l4-5 4 7 3-2-4-6h7Z" fill="currentColor"/></svg>';
+    const button=document.createElement("button");button.type="button";button.id="measureSelectToggle";button.className="ipad-icon-button measure-select-toggle";button.title="Seleccionar compases · Shift + clic acumula · ↑/↓ cambiar de sistema";button.setAttribute("aria-label","Seleccionar compases");button.setAttribute("aria-pressed","false");button.innerHTML='<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M5 3v16l4-5 4 7 3-2-4-6h7Z" fill="currentColor"/></svg>';
     document.querySelector(".ipad-header-center")?.prepend(button);
     const sync=()=>{button.classList.toggle("is-active",measureSelectMode);button.setAttribute("aria-pressed",String(measureSelectMode));};
     button.onclick=()=>{measureSelectMode=!measureSelectMode;if(measureSelectMode){setMode("note");state.selectMode=true;state.cursorActive=false;}sync();render();};
-    svg.addEventListener("pointerdown",event=>{if(!measureSelectMode||event.button!==0||event.target.closest("input,.string-tab-inline"))return;const point=svgPointFromEvent(event);if(!point)return;event.preventDefault();event.stopImmediatePropagation();document.activeElement?.blur();selectMeasureFromPoint(point);render();},true);
+    svg.addEventListener("pointerdown",event=>{
+      if((!measureSelectMode&&!event.shiftKey)||event.button!==0||event.target.closest("input,.string-tab-inline,.guitar-tablature,.score-lyric,.score-instrument-label"))return;
+      const point=svgPointFromEvent(event);if(!point||!pointIsInStaffArea(point))return;
+      event.preventDefault();event.stopImmediatePropagation();document.activeElement?.blur();
+      if(!measureSelectMode){measureSelectMode=true;setMode("note");state.selectMode=true;state.cursorActive=false;sync();}
+      selectMeasureFromPoint(point,{additive:event.shiftKey});
+    },true);
     svg.addEventListener("click",event=>{if(measureSelectMode){event.preventDefault();event.stopImmediatePropagation();}},true);
     const handleClipboard=event=>{
       const key=event.type==="copy"?"c":event.type==="paste"?"v":event.key?.toLowerCase();
       if(!measureSelectMode||event.target.closest?.('input,textarea,select,dialog,[contenteditable="true"]'))return;
-      if(event.key==="Escape"){measureSelectMode=false;sync();render();return;}
+      if(event.key==="Escape"){measureSelectMode=false;clearMeasureSelection();clearEntrySelection();clearActiveNote();sync();render();return;}
       if(!['copy','paste'].includes(event.type)&&!(event.ctrlKey||event.metaKey)||!['c','v'].includes(key))return;event.preventDefault();event.stopImmediatePropagation();if(key==='c'){copyWholeMeasure();event.clipboardData?.setData('text/plain',JSON.stringify({type:'crescendo-score-measure',value:measureClipboard}));}else pasteWholeMeasure();
     };
     ["keydown","copy","paste"].forEach(type=>document.addEventListener(type,handleClipboard,true));
@@ -15522,10 +15560,12 @@
       contextMenuButton("Insertar compás después", () => insertMeasureAtIndex(contextMeasureIndexFromPoint(point) + 1)),
       contextMenuButton("Quitar compás", () => {
         state.selectedMeasureIndex = contextMeasureIndexFromPoint(point);
+        state.measureSelection = null;
         return removeSelectedMeasure();
       }, { shortcut: "Delete" }),
       contextMenuButton("Ocultar/mostrar compás", () => {
         state.selectedMeasureIndex = contextMeasureIndexFromPoint(point);
+        state.measureSelection = null;
         return toggleSelectedMeasureHidden();
       })
     ]));
@@ -15900,10 +15940,12 @@
       contextMenuButton("Insertar compás después", () => insertMeasureAtIndex(measureIndex + 1)),
       contextMenuButton("Quitar compás", () => {
         state.selectedMeasureIndex = measureIndex;
+        state.measureSelection = null;
         return removeSelectedMeasure();
       }, { shortcut: "Delete" }),
       contextMenuButton("Ocultar/mostrar compás", () => {
         state.selectedMeasureIndex = measureIndex;
+        state.measureSelection = null;
         return toggleSelectedMeasureHidden();
       })
     ]));
@@ -19207,17 +19249,21 @@
     return true;
   }
 
-  function selectMeasureFromPoint(point) {
+  function selectMeasureFromPoint(point, options = {}) {
     if (!point) return;
-    setActiveSystemIndex(systemIndexFromY(point.y));
+    const previousSystemIndex = activeSystemIndex(), indices = selectedMeasureIndices();
+    const nextSystemIndex = systemIndexFromY(point.y);
+    setActiveSystemIndex(nextSystemIndex);
     const previousMeasureIndex = state.cursorMeasure;
     deactivateTupletWriting();
     const layout = buildLayout();
     const measureIndex = measureIndexFromX(layout, point.x);
     ensureMeasure(measureIndex);
+    const selected = options.additive && previousSystemIndex === nextSystemIndex ? [...new Set([...indices,measureIndex])].sort((a,b)=>a-b) : [measureIndex];
     state.selectedMeasureIndex = measureIndex;
-    const entries = state.measures[measureIndex].entries;
-    state.selectedEntryIds = measureIsHidden(measureIndex) ? [] : entries.map((entry) => entry.id);
+    state.measureSelection = {systemId:state.systems[nextSystemIndex].id,indices:selected};
+    state.selectedEntryIds = selected.filter(index=>!measureIsHidden(index)).flatMap(index=>state.measures[index].entries.map(entry=>entry.id));
+    clearTextSelection();clearMarkSelection();
     state.selectedNoteRefs = [];
     state.cursorEntryId = state.selectedEntryIds[0] || null;
     clearActiveNote();
@@ -21888,7 +21934,7 @@
           });
         });
         setActiveSystemIndex(activeIndex);
-        renderTextItems(root, layout);renderMeasureSelection(root, layout);renderDragSelection(root);
+        renderTextItems(root, layout);renderMeasureSelection(root, layout,row);renderDragSelection(root);
         // Chord labels may extend left of the first barline. Keep them inside the
         // system viewport but outside the clipping used for neighbouring notes.
         root.querySelectorAll('[data-text-id]').forEach(node=>{const item=state.textItems.find(item=>item.id===node.dataset.textId);if(item&&((item.measureIndex||0)<row.first||(item.measureIndex||0)>row.last))node.remove();else viewport.appendChild(node);});
@@ -22245,7 +22291,7 @@
     const heads = selectedNoteLocations();
     let entries = state.selectedEntryIds.length || !heads.length ? selectedEntryLocations() : [];
     if (measureSelectMode && Number.isInteger(state.selectedMeasureIndex)) {
-      entries = (state.measures[state.selectedMeasureIndex]?.entries || []).map(entry => ({entry}));
+      entries = selectedMeasureIndices().flatMap(index=>(state.measures[index]?.entries || []).map(entry => ({entry})));
     }
     const selected = new Map();
     for (const {entry,staffStep} of heads) {

@@ -804,3 +804,9 @@ Abra **Archivo > Exportar MIDI** o el botón Guardar/exportar y elija MIDI. En C
 Los MIDI contienen las alturas que suenan, los sonidos General MIDI, las velocidades, los tempos y el recorrido interpretado de repeticiones, casillas, D.C. y D.S. Si está activada la interpretación jazz, sus desplazamientos rítmicos se incluyen. **Respetar mute y solos** permite limitar la exportación a los instrumentos que se están escuchando; desactivado conserva todos los instrumentos.
 
 Para conjuntos de más de quince instrumentos con altura, el archivo completo asigna puertos MIDI adicionales. El DAW debe respetar esos puertos para mantener aislados sus sonidos; la exportación por instrumento evita depender de esa asignación. MIDI conserva la interpretación, mientras MusicXML conserva la notación para editores de partituras.
+
+## 44. Seleccionar varios compases con el ratón
+
+Mantenga **Shift** y haga clic en cada compás que quiera añadir a la selección. Los compases permanecen marcados, incluso si no son consecutivos o están en otro sistema de la hoja. Repetir Shift + clic sobre un compás ya seleccionado lo mantiene seleccionado, sin duplicarlo. También funciona desde el botón Seleccionar compases.
+
+Un clic sin Shift sustituye la selección por ese compás. Escape limpia la selección. La selección pertenece al pentagrama activo: al elegir otro pentagrama comienza una selección nueva. **Shift + ↑ / ↓** cambia de octava todas las notas de los compases marcados, conservando los compases intermedios que no haya seleccionado.
