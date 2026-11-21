@@ -56,7 +56,8 @@
       "clef-g-8vb": { sign: "G", line: 2, octave: -1 },
       "clef-f-8va": { sign: "F", line: 4, octave: 1 },
       "clef-f-8vb": { sign: "F", line: 4, octave: -1 },
-      "clef-percussion": { sign: "percussion", line: 2 }
+      "clef-percussion": { sign: "percussion", line: 2 },
+      "clef-tab": { sign: "TAB", line: 5 }
     };
     const clef = clefs[id] || clefs["clef-g"];
     const attrs = number ? ` number="${number}"` : "";
@@ -207,6 +208,11 @@
       current.clefs.forEach((clef) => {
         rows.push(...clefXml(clef.clefId, clef.staff, level + 1));
       });
+    }
+    if(options.includeDivisions)for(const staff of model.staves||[])if(staff.clefId==='clef-tab'&&staff.tabTuning?.length){
+      rows.push(line(level+1,`<staff-details number="${staff.number}">`),line(level+2,`<staff-lines>${staff.tabTuning.length}</staff-lines>`));
+      [...staff.tabTuning].reverse().forEach((midi,index)=>{const pitch=['C','C','D','D','E','F','F','G','G','A','A','B'][midi%12],alter=[1,3,6,8,10].includes(midi%12)?1:0;rows.push(line(level+2,`<staff-tuning line="${index+1}"><tuning-step>${pitch}</tuning-step>${alter?`<tuning-alter>${alter}</tuning-alter>`:''}<tuning-octave>${Math.floor(midi/12)-1}</tuning-octave></staff-tuning>`));});
+      rows.push(line(level+1,'</staff-details>'));
     }
     if (options.includeDivisions && model.transpose) {
       const octaves = Math.trunc(model.transpose.chromatic / 12);
@@ -631,6 +637,31 @@
     ];
   }
 
+  function withTablature(model) {
+    const copy=JSON.parse(JSON.stringify(model));
+    const parts=copy.parts?.length?copy.parts:[copy];
+    for(const part of parts){
+      const sourceStaves=[...(part.staves||[])],tabStaves=[];
+      for(const source of sourceStaves){
+        if(!source.tabTuning?.length)continue;
+        const number=sourceStaves.length+tabStaves.length+1,tab={...source,number,clefId:'clef-tab',tabOf:source.number};tabStaves.push(tab);
+        for(const measure of part.measures||[]){
+          const original=measure.staves.find(staff=>staff.number===source.number);if(!original)continue;
+          const voices=original.voices.map(voice=>({...voice,events:voice.events.map(event=>{
+            const result={...event,lyrics:[]};if(event.type!=='note')return result;
+            let position=event.tabPosition;
+            if(position===undefined&&event.pitch){const natural={C:0,D:2,E:4,F:5,G:7,A:9,B:11},midi=(event.pitch.octave+1)*12+natural[event.pitch.step]+(Number(event.pitch.alter)||0)+(part.transpose?.chromatic||0);position=source.tabTuning.map((open,index)=>({string:index+1,fret:midi-open})).filter(p=>p.fret>=0&&p.fret<=22).sort((a,b)=>a.fret-b.fret)[0];}
+            if(!position||!Number.isInteger(position.string)||!Number.isInteger(position.fret)||position.string<1||position.string>source.tabTuning.length||position.fret<0||position.fret>22)throw Error(`No hay digitación disponible en ${part.partName||'el instrumento'}, compás ${measure.number}. Ajusta la digitación o elige solo pentagramas.`);
+            result.notations={...(event.notations||{}),technical:[...(event.notations?.technical||[]).filter(item=>!['string','fret'].includes(item.name)),{name:'string',text:String(position.string)},{name:'fret',text:String(position.fret)}]};return result;
+          })}));
+          measure.staves.push({...original,number,voices});measure.clefs=[...(measure.clefs||[]),{staff:number,clefId:'clef-tab'}];
+        }
+      }
+      part.staves=[...sourceStaves,...tabStaves];
+    }
+    return copy;
+  }
+
   function serialize(model) {
     const safeModel = model || {};
     const title = safeModel.title || "Cuaderno JML";
@@ -658,6 +689,8 @@
       line(1, "</part-list>")
     ];
     const layoutFields=[];
+    const tabMap=Object.fromEntries(parts.map((part,index)=>['P'+(index+1),(part.staves||[]).filter(staff=>staff.tabOf).map(staff=>({staff:staff.number,of:staff.tabOf}))]).filter(([,staves])=>staves.length));
+    if(Object.keys(tabMap).length)layoutFields.push(`<miscellaneous-field name="crescendo:tab-staves">${escapeXml(JSON.stringify(tabMap))}</miscellaneous-field>`);
     if(safeModel.pageLayout)layoutFields.push(`<miscellaneous-field name="crescendo:page-layout">${escapeXml(JSON.stringify(safeModel.pageLayout))}</miscellaneous-field>`);
     if(Array.isArray(safeModel.importedRoute)&&safeModel.importedRoute.length)layoutFields.push(`<miscellaneous-field name="crescendo:measure-route">${escapeXml(JSON.stringify(safeModel.importedRoute))}</miscellaneous-field>`);
     if(Array.isArray(safeModel.systemBreaks))layoutFields.push(`<miscellaneous-field name="crescendo:system-breaks">${escapeXml(JSON.stringify(safeModel.systemBreaks))}</miscellaneous-field>`);
@@ -676,6 +709,7 @@
 
   global.JMLScoreMusicXml = Object.freeze({
     DEFAULT_DIVISIONS,
+    withTablature,
     serialize
   });
 })(window);

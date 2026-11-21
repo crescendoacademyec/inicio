@@ -139,7 +139,7 @@
       button('Desactivar todos los solos',()=>{options.mix(options.systems().map((_,i)=>i),{solo:false});draw();},transport);draw();
     }
     const rosterButton=button('Instrumentos de la partitura…', roster, host, 'ipad-primary-action');
-    button('Enviar voces a instrumentos…', distribute, host, 'ipad-primary-action');
+    const distributeButton=button('Enviar voces a instrumentos…', distribute, host, 'ipad-primary-action');distributeButton.dataset.shortcutCommand='orchestrate';
     const mixerButton=button('Consola de canales…', mixer, host, 'ipad-primary-action');
     for(const [control,key,label]of [[rosterButton,'F8','Instrumentos de la partitura…'],[mixerButton,'F9','Consola de canales…']]){control.setAttribute('aria-label',label);control.setAttribute('aria-keyshortcuts',key);control.title=label+' · '+key;const hint=node('kbd',key,'arrangement-shortcut');hint.setAttribute('aria-hidden','true');control.append(hint);}
     return { roster, distribute, mixer };

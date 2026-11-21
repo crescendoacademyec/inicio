@@ -29,6 +29,7 @@
   let arrangementUi = null;
   const Guitar = window.JMLScoreGuitar;
   let guitarTabVisible = true;
+  let scoreExportTabs = null;
   let measureSelectMode=false,measureClipboard=null;
   if (!Timeline) throw new Error("No se cargó score-editor-timeline.js");
   if (!RhythmicColumns) throw new Error("No se cargó score-editor-rhythmic-columns.js");
@@ -720,7 +721,7 @@
 
   function systemShowsTab(system = contextSystem()) {
     const instrument = Guitar.forInstrument(system?.instrumentId);
-    return !!instrument && (system.tabVisible ?? (instrument.fretted && guitarTabVisible));
+    return !!instrument && (typeof scoreExportTabs!=="undefined"&&scoreExportTabs!==null ? scoreExportTabs : (system.tabVisible ?? (instrument.fretted && guitarTabVisible)));
   }
 
   function systemExtraHeight(system) {
@@ -10301,12 +10302,16 @@
       }];
     }
     ensureEntryPitchData(entry, measureStartAbsoluteTick(measureIndex) + Number(entry.tickStart || 0));
+    const board=Guitar.forInstrument(system.instrumentId,{maxFret:22});
+    const stringPitches=entryStaffSteps(entry).map(step=>midiForDiatonicStep(entryDiatonicStepForStaffStep(entry,step)+(entry.ottava?7:0),effectiveEntryAccidental(entry,step))+systemInstrumentProfile(system).transpose);
+    const tabPositions=board?board.fingering(stringPitches,entry.stringFingerings?.[system.instrumentId]||(system.instrumentId==='guitar'?entry.guitarFingering:[])||[]):[];
     return entryStaffSteps(entry).map((staffStep, index) => {
       const diatonicStep = entryDiatonicStepForStaffStep(entry, staffStep);
       const accidental = effectiveEntryAccidental(entry, staffStep) ||
         diatonicAccidentalForMeasure(diatonicStep, measureIndex);
       return {
         ...base,
+        tabPosition:tabPositions.find(position=>position.midi===stringPitches[index])||null,
         type: "note",
         chord: index > 0,
         staffStep,
@@ -10351,6 +10356,7 @@
       clefId: initialClefIdForSystem(systemIndex),
       instrumentId: system.instrumentId,
       partId: system.partId,
+      tabTuning: Guitar.forInstrument(system.instrumentId)?.tuning || null,
       percussion: systemIsPercussionLine(system)
     }));
     const measures = [];
@@ -10602,7 +10608,8 @@
   }
 
   async function exportMusicXml(options = {}) {
-    const model = buildMusicXmlExportModel();
+    const baseModel = buildMusicXmlExportModel();
+    const model = options.includeTabs ? MusicXml.withTablature(baseModel) : baseModel;
     if (!model.measures.length) {
       await showEditorMessage("No hay compases visibles para exportar.");
       return false;
@@ -10786,6 +10793,8 @@
     }
     if (!partEl) throw new Error("El archivo no contiene ninguna parte con notas.");
     const partId = partEl.getAttribute("id") || "P1";
+    let duplicateTabStaves=new Set();
+    try{const map=JSON.parse(doc.querySelector('miscellaneous-field[name="crescendo:tab-staves"]')?.textContent||'{}');duplicateTabStaves=new Set((map[partId]||[]).filter(item=>Number.isInteger(item.staff)&&Number.isInteger(item.of)&&item.staff>item.of&&partEl.querySelector(`clef[number="${item.staff}"] > sign`)?.textContent==='TAB').map(item=>item.staff));}catch{}
     const definition = [...doc.querySelectorAll("part-list > score-part")].find(node => node.getAttribute("id") === partId);
     const program = Number(definition?.querySelector("midi-program")?.textContent || 1);
     const midiVolume = Number(definition?.querySelector("midi-instrument > volume")?.textContent ?? 80);
@@ -10883,6 +10892,7 @@
             measureMeterBottom = meterBottom;
           }
           xmlChildren(child, "clef").forEach((clefEl) => {
+            if(duplicateTabStaves.has(Number(clefEl.getAttribute("number")||1)))return;
             const staffNumber = Math.max(1, Math.round(Number(clefEl.getAttribute("number")) || 1));
             const sign = xmlFirstChild(clefEl, "sign")?.textContent?.trim() || "G";
             const line = xmlFirstChild(clefEl, "line")?.textContent?.trim();
@@ -10931,6 +10941,7 @@
           }
         } else if (tag === "note") {
           const parsed = musicXmlImportNoteElement(child);
+          if(duplicateTabStaves.has(parsed.staff)){if(!parsed.isChordFlag&&!parsed.isGrace)cursor+=parsed.duration;return;}
           if(parsed.isChordFlag && !xmlFirstChild(child,"voice"))parsed.voice=lastVoiceByStaff.get(parsed.staff)||1;
           if(!parsed.isChordFlag&&!parsed.isGrace)lastVoiceByStaff.set(parsed.staff,parsed.voice);
           if (parsed.isGrace) {
@@ -14203,7 +14214,7 @@
     const info=midiNoteInfo(instrument.writtenMidi(midi),state.cursorMeasure);
     return stringPitchLabel(instrument,midi,info.diatonicStep);
   }
-  function savedStringFingering(entry) { return entry.stringFingerings?.[state.playbackInstrument] || (state.playbackInstrument === "guitar" ? entry.guitarFingering : []) || []; }
+  function savedStringFingering(entry) { const id=contextSystem()?.instrumentId||state.playbackInstrument;return entry.stringFingerings?.[id] || (id === "guitar" ? entry.guitarFingering : []) || []; }
   function storeStringFingering(entry, positions) {
     entry.stringFingerings = {...entry.stringFingerings, [state.playbackInstrument]:positions};
   }
@@ -14412,7 +14423,7 @@
           }});
           positions.forEach(p=>{
             const cy=y+(p.string-1)*17;
-            group.appendChild(el("rect",{x:x-9,y:cy-9,width:18,height:17,fill:"#fffdf8","pointer-events":"none"}));
+            group.appendChild(el("rect",{x:x-9,y:cy-9,width:18,height:17,fill:"#fff","pointer-events":"none"}));
             const label=textNode(x,cy+5,String(p.fret),{"text-anchor":"middle",style:"font:14px sans-serif;fill:#111;cursor:text"});
             label.classList.add("string-tab-number");label.setAttribute("tabindex","0");label.setAttribute("role","button");label.setAttribute("aria-label",`Editar cuerda ${p.string}, ${instrument.fretted?"traste":"banda"} ${p.fret}`);
             label.addEventListener("pointerdown",event=>open(event,p));label.addEventListener("keydown",event=>{if(["Enter"," "].includes(event.key))open(event,p);});group.appendChild(label);
@@ -22696,7 +22707,7 @@
       if (event.key.toUpperCase() === "P") { event.preventDefault();if (!event.repeat) setPreparedDots(1);return; }
     }
     if (handleDoricoPitchInput(event)) return;
-    if ((event.metaKey || event.ctrlKey) && !event.shiftKey && event.key.toLowerCase() === "a") {
+    if ((event.metaKey || event.ctrlKey) && event.shiftKey && event.key.toLowerCase() === "a") {
       event.preventDefault();
       selectAllItems();
       return;
@@ -23952,6 +23963,7 @@
   deleteExerciseButton?.addEventListener("click", deleteSelectedLocalExercise);
   document.addEventListener("jml-editor-new-document", () => requestProjectSettings(true));
   document.addEventListener("editor-project-settings", () => requestProjectSettings(false));
+  document.addEventListener("editor-select-all", selectAllItems);
   exportMusicXmlButton?.addEventListener("click", exportMusicXml);
   musicXmlButton?.addEventListener("click", exportMusicXml);
   paletteTriggers.forEach((trigger) => {
@@ -24021,21 +24033,26 @@
     finally{if(!['pdf','png'].includes(options.format))document.dispatchEvent(new CustomEvent('editor-export-finished'));}
   });
 
+  function scoreSvgForExport({includeTabs,width=null}={}) {
+    const previousTabs=scoreExportTabs,previousWidth=scorePrintWidth;
+    try {
+      if(includeTabs)MusicXml.withTablature(buildMusicXmlExportModel());
+      scoreExportTabs=typeof includeTabs==='boolean'?includeTabs:null;scorePrintWidth=width;invalidateLayoutCache();render();
+      return window.CrescendoScorePrint.clean(svg);
+    } finally {scoreExportTabs=previousTabs;scorePrintWidth=previousWidth;invalidateLayoutCache();render();}
+  }
+
   document.addEventListener("editor-export-image", async event => {
     const filename=event.detail?.filename || await window.CrescendoScoreFile.ask({suggested:exerciseTitleInput?.value||"Partitura",extension:event.detail?.format==="pdf"?"pdf":"png"});if(!filename){document.dispatchEvent(new CustomEvent("editor-export-finished"));return;}
     try {
       if(event.detail?.format==='pdf'){
         let printable;
         const page=PageLayout.printOptions(state.pageLayout);
-        try{scorePrintWidth=(page.pageWidth-2*page.margin)*2.67;render();printable=window.CrescendoScorePrint.clean(svg);}finally{scorePrintWidth=null;render();}
+        printable=scoreSvgForExport({includeTabs:event.detail?.includeTabs,width:(page.pageWidth-2*page.margin)*2.67});
         const result=await window.CrescendoScorePrint.pdf(printable,{title:exerciseTitleInput?.value||'Partitura',creators:state.scoreCreators,...page});await saveExportBlob(result,filename,event.detail);setExerciseStatus(`Exportado: ${filename}`);return;
       }
       await document.fonts.ready;
-      let copy = svg.cloneNode(true);const originals = [svg, ...svg.querySelectorAll("*")], clones = [copy, ...copy.querySelectorAll("*")];
-      originals.forEach((node, index) => {
-        const style = getComputedStyle(node);
-        ["fill","stroke","stroke-width","font-family","font-size","font-weight","font-style","opacity","visibility","display"].forEach(key => clones[index].style.setProperty(key, style.getPropertyValue(key)));
-      });
+      let copy = scoreSvgForExport({includeTabs:event.detail?.includeTabs});
       copy.querySelectorAll('.measure-selection,.string-tab-column,.string-tab-inline,#playbackLine,.input-cursor,.cursor,.cursor-line,.input-event-preview,.input-rhythm-ruler,.pointer-input-preview,[class*="hitbox"],[class*="hit-box"]').forEach(node => node.remove());
       const response = await fetch(new URL("../assets/fonts/Bravura.otf", document.baseURI));
       if (!response.ok) throw Error("No se pudo cargar Bravura.");
@@ -24067,7 +24084,7 @@
   document.documentElement.dataset.jmlEditorBoot = "palette-ready";
   renderMidiFigureStrip();
   renderMidiKeyboard();
-  editorShell = IpadShell.setup({midiParts:midiExportParts});
+  editorShell = IpadShell.setup({midiParts:midiExportParts,hasTabInstruments:()=>scoreSystems().some(system=>Guitar.forInstrument(system.instrumentId)),defaultTabs:()=>scoreSystems().some(system=>systemShowsTab(system))});
   arrangementUi = Arrangement.mount({
     systems: scoreSystems, active: activeSystemIndex, voice: activeVoice,
     activate: index => { setActiveSystemIndex(index); render(); },
@@ -24090,7 +24107,7 @@
     distribute: distributeInstrumentVoices
   });
   PageLayout.mount({ get: () => state.pageLayout, selectedMeasure: () => state.selectedMeasureIndex ?? state.cursorMeasure, apply: settings => { saveHistory(); state.pageLayout = settings; invalidateLayoutCache(); render(); } });
-  const lyricButton=document.createElement('button');lyricButton.type='button';lyricButton.className='ipad-primary-action';lyricButton.textContent='Letra bajo las notas…';lyricButton.onclick=()=>editNoteLyrics();document.getElementById('ipad-panel-text')?.append(lyricButton);
+  const lyricButton=document.createElement('button');lyricButton.dataset.shortcutCommand='lyrics';lyricButton.type='button';lyricButton.className='ipad-primary-action';lyricButton.textContent='Letra bajo las notas…';lyricButton.onclick=()=>editNoteLyrics();document.getElementById('ipad-panel-text')?.append(lyricButton);
   recordingDock=RecordingSync.mount({
     recording:()=>state.recording,currentTime:()=>activeRecordingController?.getCurrentTime()||0,duration:()=>activeRecordingController?.getDuration()||state.recording?.duration||0,playing:()=>!!activeRecordingController?.isPlaying(),measureCount:recordingMeasureCount,selectedMeasure:selectedMeasureIndex,measureTime:recordingTimeForMeasure,
     toggle:toggleRecordingPlayback,pause:()=>{activeRecordingController?.pause();stopRecordingPlaybackAnimation();},
@@ -24101,6 +24118,7 @@
     follow:value=>{if(state.recording){state.recording.followScore=value;canvasAutosaveDirty=true;scheduleCanvasAutosave();}},
     loop:(point,time)=>{if(!state.recording)return;if(point==='clear'){delete state.recording.loopA;delete state.recording.loopB;}else if(point==='a'){state.recording.loopA=time;delete state.recording.loopB;}else{if(!Number.isFinite(state.recording.loopA)||time<=state.recording.loopA)throw Error('Marca primero A y luego B en un instante posterior.');state.recording.loopB=time;}canvasAutosaveDirty=true;scheduleCanvasAutosave();}
   });
+  window.JMLScoreMenuShortcuts.install();
   setupMeasureMouse();
   initializeDefaultMidiInput();
   document.documentElement.dataset.jmlEditorBoot = "midi-ready";

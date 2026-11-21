@@ -17,7 +17,7 @@ sistemas y pentagramas;
 cifrados, textos, dinamicas y marcas;
 zoom, cursor y seleccion;
 titulo, descripcion y escenas del ejercicio.
-Esta memoria vive en el navegador. No sustituye el guardado formal de ejercicios, porque depende del mismo navegador y dispositivo. Para conservar un material de manera intencional, use Archivo > Guardar o Archivo > Exportar.
+Esta memoria vive en el navegador. No sustituye el guardado formal de ejercicios, porque depende del mismo navegador y dispositivo. Para conservar un material de manera intencional, use Archivo > Guardar en biblioteca o Archivo > Guardar o exportar.
 
 ## 3. Estructura general de la pantalla
 La pantalla tiene cuatro zonas principales:
@@ -411,7 +411,7 @@ X: alejar.
 Reorg. reorganiza la partitura: recalcula espaciado, normaliza ciertos ritmos y actualiza la distribucion visual.
 
 ## 26. Exportacion MusicXML
-El boton XML o Archivo > Exportar XML descarga un archivo MusicXML.
+El boton XML o Archivo > Guardar o exportar > MusicXML descarga un archivo MusicXML.
 
 Use MusicXML cuando quiera abrir el material en MuseScore, Dorico, Finale u otro programa de notacion.
 
@@ -557,7 +557,7 @@ Cmd/Ctrl + Y: rehacer.
 Cmd/Ctrl + C: copiar.
 Cmd/Ctrl + X: cortar.
 Cmd/Ctrl + V: pegar.
-Cmd/Ctrl + A: seleccionar todo.
+Cmd/Ctrl + Shift + A: seleccionar todo.
 Cmd/Ctrl + D: deseleccionar.
 R: repetir seleccion.
 F: invertir plicas o marca seleccionada.
@@ -619,7 +619,7 @@ Shift + V: crear o activar voz nueva.
 ## 34. Consejos de uso
 Guarde escenas antes de hacer transformaciones grandes. Las escenas son una forma rapida de volver a un estado anterior dentro del mismo ejercicio.
 
-Use Archivo > Exportar para conservar una copia fuera del navegador.
+Use Archivo > Guardar o exportar para conservar una copia fuera del navegador.
 
 Use Reorg. despues de insertar muchos compases, tuplets o marcas.
 
@@ -752,7 +752,7 @@ El selector de la barra superior cambia el instrumento del pentagrama activo. Lo
 
 ### Cifrados y exportación visual
 
-Los cifrados se muestran con Times New Roman y comparten una altura por pentagrama, calculada a partir de la nota más alta de todo el sistema y de los espacios necesarios para evitar colisiones. En Archivo están disponibles Exportar imagen PNG y Exportar PDF. Ambas opciones conservan los símbolos Bravura y omiten el cursor y las guías de escritura.
+Los cifrados se muestran con Times New Roman y comparten una altura por pentagrama, calculada a partir de la nota más alta de todo el sistema y de los espacios necesarios para evitar colisiones. En Archivo > Guardar o exportar están disponibles Imagen PNG y PDF. Ambas opciones conservan los símbolos Bravura y omiten el cursor y las guías de escritura.
 
 ## 39. Arreglos para varios instrumentos
 
@@ -795,7 +795,7 @@ MusicXML exporta las partes instrumentales por separado dentro del mismo archivo
 
 ## 43. MIDI del conjunto o por instrumento
 
-Abra **Archivo > Exportar** o el botón Guardar/exportar y elija MIDI. En Contenido MIDI puede elegir:
+Abra **Archivo > Guardar o exportar** o el botón Guardar/exportar y elija MIDI. En Contenido MIDI puede elegir:
 
 - **Conjunto completo**: un archivo MIDI de tipo 1, con una pista por instrumento y una pista de tempo. Los dos pentagramas de un piano se reúnen en su pista.
 - **Solo un instrumento**: un MIDI con la parte elegida.
@@ -813,7 +813,7 @@ Un clic sin Shift sustituye la selección por ese compás. Escape limpia la sele
 
 ## 45. Archivo y configuración de proyectos
 
-**Archivo** reúne comandos compactos: Nuevo proyecto, Abrir proyecto, Guardar, Guardar como, Exportar, Importar partitura, Configurar proyecto, Historial de versiones y Configurar página. Abrir proyecto permite elegir un proyecto de la biblioteca local o abrir su archivo JSON. Guardar conserva el proyecto en la biblioteca; Guardar como descarga el archivo editable. Exportar reúne PDF, PNG, MusicXML, MIDI y JSON en una sola ventana.
+**Archivo** reúne comandos compactos: Nuevo proyecto, Abrir proyecto, Guardar en biblioteca, Guardar como, Guardar o exportar, Importar partitura, Configurar proyecto, Historial de versiones y Configurar página. Abrir proyecto permite elegir un proyecto de la biblioteca local o abrir su archivo JSON. Guardar en biblioteca conserva el proyecto en la biblioteca; Guardar como descarga el archivo editable. Guardar o exportar reúne PDF, PNG, MusicXML, MIDI y JSON en una sola ventana.
 
 **Nuevo proyecto** abre una ventana para escribir título, compositor, arreglista, transcriptor y descripción, seleccionar la tonalidad de concierto, elegir el compás y establecer de 1 a 1000 compases iniciales. Añada los instrumentos que necesite, incluidos instrumentos repetidos con nombres de parte distintos. El piano genera dos pentagramas. Los transpositores reciben la armadura escrita correspondiente a la tonalidad de concierto. Cancelar conserva el proyecto abierto.
 
@@ -822,3 +822,33 @@ Un clic sin Shift sustituye la selección por ese compás. Escape limpia la sele
 Audio/YouTube inicia cerrado después de recargar, incluso si el proyecto contiene una grabación. Pulse el botón gris para abrirlo: se resaltará en dorado mientras esté abierto. Otro clic lo oculta y pausa el audio.
 
 **F8** abre Instrumentos de la partitura con el selector de instrumento nuevo enfocado. **F9** abre directamente la Consola de canales. Estos atajos no actúan mientras escribe en campos de texto. En teclados que reservan esas teclas para funciones del sistema puede ser necesario mantener Fn.
+
+## 46. Atajos visibles en los menús
+
+Cada comando con atajo lo muestra a su derecha. En macOS se usa ⌘; en Windows y Linux, Ctrl.
+
+| Comando | Mac | Windows / Linux |
+| --- | --- | --- |
+| Nuevo proyecto | ⌘N | Ctrl+N |
+| Abrir proyecto | ⌘A | Ctrl+A |
+| Guardar o exportar | ⌘S | Ctrl+S |
+| Guardar en biblioteca | ⌘⌥S | Ctrl+Alt+S |
+| Guardar como archivo editable | ⌘⇧S | Ctrl+Shift+S |
+| Importar partitura | ⌘⇧I | Ctrl+Shift+I |
+| Configurar proyecto | ⌘, | Ctrl+, |
+| Configurar página | ⌘⇧P | Ctrl+Shift+P |
+| Historial | ⌘⇧H | Ctrl+Shift+H |
+| Seleccionar todo | ⌘⇧A | Ctrl+Shift+A |
+| Añadir instrumentos | F8 | F8 |
+| Consola de canales | F9 | F9 |
+| Manual | F1 | F1 |
+
+Abrir proyecto usa ⌘A/Ctrl+A en el lienzo. Dentro de los campos, esa combinación conserva la selección de texto. Las ventanas de diálogo mantienen sus propios controles. Escribir, Notación, Texto, Escenas, Reproducir y Ayuda también muestran los atajos disponibles junto a cada acción; los atajos ya existentes de escritura conservan su comportamiento.
+
+## 47. Exportar con tablaturas o solo pentagramas
+
+En **Archivo > Guardar o exportar** elija PDF, Imagen PNG o MusicXML. Si el proyecto incluye un instrumento compatible con tablatura, aparece **Contenido de la partitura**: puede escoger **Solo pentagramas** o **Pentagramas y tablaturas**. El formato MIDI conserva la interpretación y no utiliza esa opción visual. El proyecto JSON conserva la edición completa.
+
+La exportación ajusta los espacios según la opción elegida, sin alterar la vista de trabajo ni su botón TAB. MusicXML con tablatura conserva afinación, cuerdas y trastes; al reabrir en este editor sus TAB generadas no duplican la melodía. Si una digitación no puede representarse dentro de los 22 trastes, se informa del compás para corregirla o elegir solo pentagramas.
+
+Los menús superiores se presentan como listas de texto, sin iconos ni encabezados repetidos. Un clic fuera o Escape cierra el menú. Ayuda > Atajos del teclado reúne las combinaciones disponibles.

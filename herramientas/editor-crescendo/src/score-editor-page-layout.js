@@ -5,7 +5,7 @@
  function printOptions(value){const settings=normalize(value),[a,b]=papers[settings.paper];return {pageWidth:settings.orientation==='landscape'?b:a,pageHeight:settings.orientation==='landscape'?a:b,margin:settings.margin*72/25.4};}
  function mount({get,apply,selectedMeasure}){
   const host=document.getElementById('ipad-panel-document');if(!host)return;
-  const button=document.createElement('button');button.type='button';button.className='ipad-primary-action';button.textContent='Configurar página…';host.append(button);
+  const button=document.createElement('button');button.type='button';button.dataset.shortcutCommand='page';button.className='ipad-primary-action';button.textContent='Configurar página…';host.append(button);
   button.onclick=()=>{
    const settings=normalize(get()),dialog=document.createElement('dialog');dialog.className='arrangement-dialog';dialog.setAttribute('aria-label','Configurar página');
    const header=document.createElement('header'),title=document.createElement('h2');title.textContent='Página y distribución';header.append(title);

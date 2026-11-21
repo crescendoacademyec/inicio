@@ -303,6 +303,7 @@
     button.title = source.title || source.getAttribute("aria-label") || config.label;
     button.setAttribute("aria-label", button.title);
     button.append(icon(config.icon), element("span", "", config.label));
+    button.dataset.proxyFor=config.selector;
     const sync = () => {
       const active = source.classList.contains("is-active") || source.getAttribute("aria-pressed") === "true";
       button.classList.toggle("is-active", active);
@@ -571,24 +572,24 @@
     const legacyFiles=element('div','editor-file-sources');legacyFiles.hidden=true;documentPanel.append(legacyFiles);
     moveLegacyPanel(".exercise-app-menu__panel--file",legacyFiles);
     moveLegacyPanel("#versionHistoryHost",legacyFiles);
-    function fileCommand(label,action){const button=element('button','editor-file-command',label);button.type='button';button.onclick=action;documentPanel.append(button);return button;}
+    function fileCommand(label,action,command){const button=element('button','editor-file-command',label);button.type='button';if(command)button.dataset.shortcutCommand=command;button.onclick=action;documentPanel.append(button);return button;}
     function sourceCommand(id,label){const button=document.getElementById(id);button.textContent=label;button.setAttribute('aria-label',label);button.className='editor-file-command';documentPanel.append(button);return button;}
     function fileDialog(title,nodes){
       const dialog=document.createElement('dialog');dialog.className='arrangement-dialog project-library-dialog';dialog.setAttribute('aria-label',title);const head=element('header'),h=element('h2','',title),close=element('button','','Cerrar');close.type='button';close.onclick=()=>dialog.close();head.append(h,close);const content=element('div','arrangement-body');content.append(...nodes);dialog.append(head,content);document.body.append(dialog);dialog.addEventListener('keydown',event=>event.stopPropagation());dialog.addEventListener('close',()=>{legacyFiles.append(...nodes);dialog.remove();});dialog.showModal();return dialog;
     }
-    const newDocumentButton=fileCommand('Nuevo proyecto…',null);
+    const newDocumentButton=fileCommand('Nuevo proyecto…',null,'new');
     fileCommand('Abrir proyecto…',()=>{
       const select=document.getElementById('exerciseSelect'),label=select.closest('label'),open=document.getElementById('loadExerciseButton'),remove=document.getElementById('deleteExerciseButton');
       open.textContent='Abrir seleccionado';open.setAttribute('aria-label','Abrir seleccionado');remove.textContent='Eliminar de biblioteca';
       const body=element('div','project-library-controls');const file=element('button','','Abrir archivo de proyecto…');file.type='button';file.onclick=()=>{document.getElementById('importExerciseInput').click();dialog.close();};body.append(file,label,open,remove);const dialog=fileDialog('Abrir proyecto',[body]);dialog.addEventListener('close',()=>legacyFiles.append(label,open,remove));
-    });
-    sourceCommand('saveExerciseButton','Guardar');
+    },'open');
+    sourceCommand('saveExerciseButton','Guardar en biblioteca');
     sourceCommand('exportExerciseButton','Guardar como…');
-    const exportFileButton=fileCommand('Exportar…',()=>openExport());
-    fileCommand('Importar partitura…',()=>document.getElementById('importMusicXmlInput').click());
+    const exportFileButton=fileCommand('Guardar o exportar…',()=>openExport(),'export');
+    fileCommand('Importar partitura…',()=>document.getElementById('importMusicXmlInput').click(),'import');
     documentPanel.append(element('hr','editor-file-divider'));
-    fileCommand('Configurar proyecto…',()=>document.dispatchEvent(new CustomEvent('editor-project-settings')));
-    fileCommand('Historial de versiones…',()=>fileDialog('Historial de versiones',[document.getElementById('versionHistoryHost')]));
+    fileCommand('Configurar proyecto…',()=>document.dispatchEvent(new CustomEvent('editor-project-settings')),'project');
+    fileCommand('Historial de versiones…',()=>fileDialog('Historial de versiones',[document.getElementById('versionHistoryHost')]),'history');
 
     const buildToolPanel = (panelId, eyebrow, title, description, groupTitle) => {
       const panel = panels.get(panelId);
@@ -632,6 +633,7 @@
       gridSection.appendChild(label);
     }
     writePanel.appendChild(gridSection);
+    const selectAll=element('button','ipad-primary-action','Seleccionar todo');selectAll.type='button';selectAll.dataset.shortcutCommand='select-all';selectAll.onclick=()=>document.dispatchEvent(new CustomEvent('editor-select-all'));writePanel.append(selectAll);
 
     buildToolPanel("notation", "NOTACIÓN", "Símbolos", "Compases, claves, articulaciones y estructura.", "Paletas");
     const textPanel = buildToolPanel("text", "TEXTO", "Texto y cifrado", "Añade indicaciones, cifrados y formato editorial.", "Herramientas");
@@ -685,7 +687,7 @@
         <div><dt>Cmd/Ctrl + Z</dt><dd>Deshacer</dd></div>
       </dl>
     `;
-    helpPanel.appendChild(shortcutSection);
+    legacyFiles.append(shortcutSection);const shortcutHelp=element('button','ipad-primary-action','Atajos del teclado…');shortcutHelp.type='button';shortcutHelp.dataset.shortcutCommand='shortcut-help';shortcutHelp.onclick=()=>{const list=element('div','project-shortcut-reference');for(const control of document.querySelectorAll('.ipad-panel-page button[aria-keyshortcuts]')){const row=element('div'),label=element('span','',control.getAttribute('aria-label')||control.textContent.trim()),hint=element('kbd','',control.querySelector('kbd')?.textContent||control.getAttribute('aria-keyshortcuts'));row.append(label,hint);list.append(row);}fileDialog('Atajos del teclado',[list]);};helpPanel.append(shortcutHelp);
 
     const durationDrawer = document.getElementById("durationDrawer");
     if (durationDrawer) {
@@ -746,10 +748,10 @@
     proxyClick(metronomeProxy, "#metronomeButton");
     const openExport = (initialFormat = 'pdf') => {
       const dialog = document.createElement("dialog");dialog.className="editor-export-dialog";dialog.setAttribute("aria-label","Guardar o exportar partitura");
-      dialog.innerHTML='<form><h2>Guardar o exportar</h2><label>Formato<select name="format"><option value="pdf">PDF</option><option value="png">Imagen PNG</option><option value="musicxml">MusicXML</option><option value="midi">MIDI</option><option value="json">Proyecto editable (JSON)</option></select></label><fieldset data-midi-options hidden><label>Contenido MIDI<select name="midiScope"><option value="all">Conjunto completo · una pista por instrumento</option><option value="separate">Un MIDI por instrumento · archivo ZIP</option></select></label><label class="export-mix-check"><input type="checkbox" name="respectMix">Respetar mute y solos de la consola</label></fieldset><label>Nombre<input name="filename" required autocomplete="off"></label><div class="export-folder"><button type="button" data-folder>Elegir carpeta</button><span data-folder-name>Descargas del navegador</span></div><p data-folder-help></p><div class="export-actions"><button type="button" data-cancel>Cancelar</button><button type="submit">Exportar</button></div></form>';
+      dialog.innerHTML='<form><h2>Guardar o exportar</h2><label>Formato<select name="format"><option value="pdf">PDF</option><option value="png">Imagen PNG</option><option value="musicxml">MusicXML</option><option value="midi">MIDI</option><option value="json">Proyecto editable (JSON)</option></select></label><fieldset data-midi-options hidden><label>Contenido MIDI<select name="midiScope"><option value="all">Conjunto completo · una pista por instrumento</option><option value="separate">Un MIDI por instrumento · archivo ZIP</option></select></label><label class="export-mix-check"><input type="checkbox" name="respectMix">Respetar mute y solos de la consola</label></fieldset><label data-notation-options>Contenido de la partitura<select name="notation"><option value="staves">Solo pentagramas</option><option value="tabs">Pentagramas y tablaturas</option></select></label><label>Nombre<input name="filename" required autocomplete="off"></label><div class="export-folder"><button type="button" data-folder>Elegir carpeta</button><span data-folder-name>Descargas del navegador</span></div><p data-folder-help></p><div class="export-actions"><button type="button" data-cancel>Cancelar</button><button type="submit">Exportar</button></div></form>';
       const name=dialog.querySelector('[name=filename]'),format=dialog.querySelector('[name=format]'),scope=dialog.querySelector('[name=midiScope]');name.value=heading.querySelector('h1').textContent;format.value=initialFormat;
       for(const part of options.midiParts?.()||[]){const option=document.createElement('option');option.value='part:'+part.id;option.textContent='Solo '+part.name;scope.append(option);}
-      const updateMidi=()=>{dialog.querySelector('[data-midi-options]').hidden=format.value!=='midi';};format.onchange=updateMidi;updateMidi();
+      dialog.querySelector('[name=notation]').value=options.defaultTabs?.()?'tabs':'staves';const updateMidi=()=>{dialog.querySelector('[data-midi-options]').hidden=format.value!=='midi';dialog.querySelector('[data-notation-options]').hidden=!['pdf','png','musicxml'].includes(format.value)||!options.hasTabInstruments?.();};format.onchange=updateMidi;updateMidi();
       let directory=null;
       const folder=dialog.querySelector('[data-folder]');
       folder.disabled=!global.showDirectoryPicker;
@@ -760,7 +762,7 @@
         event.preventDefault();const selected=format.value,extension=selected==='midi'?(scope.value==='separate'?'zip':'mid'):selected,filename=global.CrescendoScoreFile.filename(name.value,extension);let fileHandle=null;
         try{
           saveButton.classList.add('is-active');
-          document.dispatchEvent(new CustomEvent('editor-export',{detail:{format:selected,filename,directory,fileHandle,midiScope:scope.value,respectMix:dialog.querySelector('[name=respectMix]').checked}}));dialog.close();
+          document.dispatchEvent(new CustomEvent('editor-export',{detail:{format:selected,filename,directory,fileHandle,midiScope:scope.value,respectMix:dialog.querySelector('[name=respectMix]').checked,includeTabs:dialog.querySelector('[name=notation]').value==='tabs'}}));dialog.close();
         }catch(error){if(error.name!=='AbortError')dialog.querySelector('[data-folder-help]').textContent=error.message;}
       };
       dialog.onclose=()=>dialog.remove();document.body.appendChild(dialog);dialog.showModal();name.focus();name.select();
@@ -865,7 +867,7 @@
       const button = navButtons.get(state.activePanel);
       if (!button) return;
       const bounds = button.getBoundingClientRect();
-      const width = Math.min(state.activePanel === "document" ? 270 : 360, window.innerWidth - 16);
+      const width = Math.min(330, window.innerWidth - 16);
       leftPanel.style.left = `${Math.max(8, Math.min(bounds.left, window.innerWidth - width - 8))}px`;
       leftPanel.style.top = `${Math.ceil(rail.getBoundingClientRect().bottom)}px`;
     }
@@ -918,7 +920,7 @@
       button.addEventListener("keydown", (event) => {
         if (event.key === "ArrowDown") {
           event.preventDefault();activatePanel(panelId);
-          panels.get(panelId).querySelector('button:not([disabled]), input:not([disabled]), select:not([disabled])')?.focus();return;
+          [...panels.get(panelId).querySelectorAll('button:not([disabled]), input:not([disabled]), select:not([disabled])')].find(node=>node.getClientRects().length)?.focus();return;
         }
         if (!["ArrowRight", "ArrowLeft", "Home", "End"].includes(event.key)) return;
         event.preventDefault();
