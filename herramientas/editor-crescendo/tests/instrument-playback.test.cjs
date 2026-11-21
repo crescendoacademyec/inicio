@@ -18,7 +18,7 @@ test('Crescendo transforms written pitches for TAB and playback exactly once',()
  const helper=source.slice(source.indexOf('  function stringMidisForEntry('),source.indexOf('  function savedStringFingering('));
  const playback=source.slice(source.indexOf('  function playbackNoteEvents()'),source.indexOf('  // Instrumento por SoundFont'));
  for(const [instrument,expected] of [['guitar',64],['requinto',69],['violin',76]]){
-  const c={entryStaffSteps:()=>[1],stringInstrument:()=>Guitar.forInstrument(instrument),midiNotesForEntry:()=>[76],playbackTempoEvents:()=>[],scoreSystems:()=>[{measures:[]}],systemIsPercussionLine:()=>false,withSystemContext:(_i,f)=>f(),state:{measures:[]},MidiPlayback:{noteEventsForEntries:()=>[{midi:76,startMs:0}]},entryVoice(){},entryBaseTicks(){},nearestEntryStaffStep(){},entryStaffStep(){},EPSILON:.0001};
+  const c={systemInstrumentProfile:()=>({transpose:Guitar.forInstrument(instrument)?.transpose||0}),entryStaffSteps:()=>[1],stringInstrument:()=>Guitar.forInstrument(instrument),midiNotesForEntry:()=>[76],playbackTempoEvents:()=>[],scoreSystems:()=>[{measures:[]}],systemIsPercussionLine:()=>false,withSystemContext:(_i,f)=>f(),state:{measures:[]},MidiPlayback:{noteEventsForEntries:()=>[{midi:76,startMs:0}]},entryVoice(){},entryBaseTicks(){},nearestEntryStaffStep(){},entryStaffStep(){},EPSILON:.0001};
   vm.createContext(c);vm.runInContext(helper+playback,c);assert.deepEqual([...c.stringMidisForEntry({},0)],[expected]);assert.equal(c.playbackNoteEvents()[0].midi,expected);
  }
 });

@@ -1,11 +1,11 @@
 /* Pure system packing and ordered manual boundary edits. */
 (function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.CrescendoSystemLayout=api;})(typeof globalThis==='object'?globalThis:this,function(){
  function normalize(breaks,count){return [...new Set((breaks||[]).filter(i=>Number.isInteger(i)&&i>0&&i<count))].sort((a,b)=>a-b);}
- function pack({starts,widths,header=0,available=Infinity,max=4,breaks=null,padding=24,constrainManual=false}){
+ function pack({starts,widths,header=0,available=Infinity,max=4,breaks=null,padding=24,constrainManual=false,forced=[]}){
   const rows=[],manual=Array.isArray(breaks),boundaries=normalize(breaks,widths.length);
   for(let first=0;first<widths.length;){
    const origin=first?starts[first]-header:0;
-   const limit=manual?(boundaries.find(i=>i>first)??widths.length)-1:Math.min(widths.length-1,first+max-1);
+   const limit=Math.min(manual?(boundaries.find(i=>i>first)??widths.length)-1:Math.min(widths.length-1,first+max-1),(normalize(forced,widths.length).find(i=>i>first)??widths.length)-1);
    let last=first;
    if(manual&&!constrainManual)last=limit;
    else while(last<limit&&starts[last+1]+widths[last+1]-origin+padding<=available+1e-7)last++;
@@ -13,11 +13,11 @@
   }
   return rows;
  }
- function justify({widths,header=0,available=Infinity,max=4,breaks=null,padding=24,constrainManual=false}){
+ function justify({widths,header=0,available=Infinity,max=4,breaks=null,padding=24,constrainManual=false,forced=[]}){
   const startsFor=values=>{let x=header;return values.map(width=>{const start=x;x+=width;return start;});};
   const starts=startsFor(widths);
   if(!Number.isFinite(available)||available<=0)return {starts,widths:widths.slice(),available};
-  const rows=pack({starts,widths,header,available,max,breaks,padding,constrainManual}),target=Math.max(available,...rows.map(row=>row.width));
+  const rows=pack({starts,widths,header,available,max,breaks,padding,constrainManual,forced}),target=Math.max(available,...rows.map(row=>row.width));
   const fitted=widths.slice();
   for(const row of rows){
    const extra=Math.max(0,target-row.width)/(row.last-row.first+1);

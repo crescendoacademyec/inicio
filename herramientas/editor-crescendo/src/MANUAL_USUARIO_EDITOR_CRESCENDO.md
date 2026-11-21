@@ -748,8 +748,59 @@ Al dibujar una figura que no cabe, o al aumentar la duración de una nota escrit
 
 ### Elegir instrumento
 
-El selector de la barra superior permite escuchar la partitura y las notas de entrada con Piano, Guitarra, Bajo, Violín o Ukelele. Usa los mismos instrumentos SoundFont del metrónomo. La elección se recuerda en este navegador y el instrumento seleccionado se precarga al abrir la página; los sonidos ya cargados se reutilizan. Cambiar de instrumento durante la reproducción la detiene para evitar mezclar timbres. En pantallas pequeñas, el selector permanece en la parte derecha del encabezado.
+El selector de la barra superior cambia el instrumento del pentagrama activo. Los otros pentagramas conservan su instrumento. Al cambiarlo se conserva la altura sonora de la escritura y se ajustan su clave y transposición; la reproducción se detiene para cargar el nuevo sonido. También hay instrumentos de cuerda frotada, metales y maderas. Los sonidos se cargan por SoundFont y requieren conexión la primera vez.
 
 ### Cifrados y exportación visual
 
 Los cifrados se muestran con Times New Roman y comparten una altura por pentagrama, calculada a partir de la nota más alta de todo el sistema y de los espacios necesarios para evitar colisiones. En Archivo están disponibles Exportar imagen PNG y Exportar PDF. Ambas opciones conservan los símbolos Bravura y omiten el cursor y las guías de escritura.
+
+## 39. Arreglos para varios instrumentos
+
+Abra **Instrumentos > Instrumentos de la partitura**. Elija un instrumento, escriba su nombre (por ejemplo, Violín I) y pulse **Añadir instrumento**. Puede repetir instrumentos y añadir más después de empezar a escribir. El piano nuevo tiene dos pentagramas; los demás instrumentos, uno. Si la partitura aún está vacía, **Comenzar solo con este instrumento** sustituye los pentagramas vacíos por el instrumento elegido.
+
+Cada fila permite activar el pentagrama, cambiar su nombre o sonido, silenciarlo, moverlo hacia arriba o abajo y quitarlo. Las notas no se borran al ocultar un pentagrama. Quitar uno con notas pide confirmación y se puede deshacer. El nombre sobre cada pentagrama también permite activarlo. La tablatura se activa por pentagrama con TAB; los instrumentos de cuerda frotada comienzan con notación convencional.
+
+Los instrumentos transpositores se escriben en su altura escrita y suenan en su altura real: entre ellos, trompeta y clarinete en Si bemol, saxofones, trompa en Fa y contrabajo. Las claves de viola, violonchelo y contrabajo se eligen automáticamente. El editor conserva el registro al copiar una voz; el arreglista decide después si conviene desplazarla de octava para la tesitura del instrumento.
+
+## 40. Enviar las voces del piano a instrumentos
+
+Escriba melodías y voicings en el piano. Seleccione notas o un compás si quiere trabajar solo un fragmento. Abra **Instrumentos > Enviar voces a instrumentos** (también está en Voicings).
+
+Elija el tramo y cómo separar la música:
+
+- **De agudo a grave**: la nota 1 es la más aguda de cada acorde.
+- **De grave a agudo**: la nota 1 es la más grave.
+- **Voz escrita completa**: copia L1, L2, L3 o L4 con su ritmo independiente.
+- **Cabezas seleccionadas**: copia las notas concretas seleccionadas dentro de los acordes.
+
+Añada uno o varios destinos. Cada destino puede ser un instrumento nuevo o un pentagrama existente. Los botones Cuarteto de cuerdas y Sección de metales preparan cuatro destinos que puede modificar. Si en un acorde falta la nota de ese número, el destino recibe silencio; no se duplica otra nota. Para líneas que se cruzan conviene utilizar voces escritas independientes o seleccionar las cabezas deseadas.
+
+La operación copia alturas y duraciones y conserva el original. Puede silenciar todo el piano de origen después de copiar. Un destino con notas coincidentes requiere activar **Reemplazar notas existentes**; los compases fuera del tramo enviado se conservan. El reparto completo se puede deshacer de una vez.
+
+## 41. Consola de canales
+
+Abra **Instrumentos > Consola de canales**. Hay un canal por instrumento; los dos pentagramas de un piano comparten canal. **M** silencia ese instrumento. **S** activa solo: se escuchan únicamente los instrumentos marcados con S. Puede activar varios a la vez. Un instrumento con M permanece silenciado aunque tenga S.
+
+El volumen cambia durante la reproducción. Los botones Reproducir/pausa y Detener permiten escuchar desde la consola. **Desactivar todos los solos** recupera el conjunto manteniendo los mute. Los ajustes se conservan en el proyecto y admiten deshacer/rehacer.
+
+## 42. Página, títulos y letra
+
+Un doble clic en el título, compositor, arreglista o transcriptor de la hoja permite editar ese texto; también puede enfocarlo y pulsar Enter. Archivo conserva los campos para añadir nuevos créditos.
+
+En **Archivo > Configurar página** puede elegir A4, Carta o A3, orientación, márgenes iguales de impresión, máximo de compases automáticos y separación entre pentagramas y sistemas. Seleccione un compás para añadir o quitar un salto de página antes de él desde esa ventana. Los saltos manuales y los símbolos que cruzan sistemas se conservan en la exportación.
+
+Para añadir letra, seleccione una nota y abra **Texto > Letra bajo las notas**. Separe palabras con espacios y sílabas con guiones, por ejemplo `Can-ta con-mi-go`. Cada sílaba se asigna a la siguiente nota de esa voz, omitiendo silencios. Un doble clic en una sílaba permite corregirla. La letra queda vinculada a las notas y se conserva en MusicXML.
+
+MusicXML exporta las partes instrumentales por separado dentro del mismo archivo, con sus nombres, claves, sonidos y transposiciones. Al reabrir un conjunto se importan todas sus partes; no solo la primera. Para conservar también todos los ajustes propios del editor use el archivo de proyecto.
+
+## 43. MIDI del conjunto o por instrumento
+
+Abra **Archivo > Exportar MIDI** o el botón Guardar/exportar y elija MIDI. En Contenido MIDI puede elegir:
+
+- **Conjunto completo**: un archivo MIDI de tipo 1, con una pista por instrumento y una pista de tempo. Los dos pentagramas de un piano se reúnen en su pista.
+- **Solo un instrumento**: un MIDI con la parte elegida.
+- **Un MIDI por instrumento**: un ZIP con archivos independientes y sus nombres. Todos conservan el mismo inicio y mapa de tempo; impórtelos desde el mismo punto en el DAW.
+
+Los MIDI contienen las alturas que suenan, los sonidos General MIDI, las velocidades, los tempos y el recorrido interpretado de repeticiones, casillas, D.C. y D.S. Si está activada la interpretación jazz, sus desplazamientos rítmicos se incluyen. **Respetar mute y solos** permite limitar la exportación a los instrumentos que se están escuchando; desactivado conserva todos los instrumentos.
+
+Para conjuntos de más de quince instrumentos con altura, el archivo completo asigna puertos MIDI adicionales. El DAW debe respetar esos puertos para mantener aislados sus sonidos; la exportación por instrumento evita depender de esa asignación. MIDI conserva la interpretación, mientras MusicXML conserva la notación para editores de partituras.

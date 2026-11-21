@@ -198,6 +198,7 @@
     { id: "write", label: "Escribir", icon: "pencil-line" },
     { id: "notation", label: "Notación", icon: "music-2" },
     { id: "text", label: "Texto", icon: "type" },
+    { id: "instruments", label: "Instrumentos", icon: "music-2" },
     { id: "scenes", label: "Escenas", icon: "list-ordered" },
     { id: "playback", label: "Reproducir", icon: "play" },
     { id: "help", label: "Ayuda", icon: "circle-help" }
@@ -359,7 +360,7 @@
     return row;
   }
 
-  function setup() {
+  function setup(options = {}) {
     if (document.querySelector(".cuaderno-ipad-shell")) return null;
     const workbench = document.querySelector(".editor-workbench");
     const legacyMain = document.querySelector("main.app-shell");
@@ -437,8 +438,8 @@
     function createSoundSelector(mobile = false) {
       const label = element("label", `ipad-sound-selector${mobile ? " ipad-sound-selector--mobile" : ""}`);
       const select = document.createElement("select");
-      select.setAttribute("aria-label", "Instrumento de reproducción");
-      select.title = "Instrumento de reproducción";
+      select.setAttribute("aria-label", "Instrumento del pentagrama activo");
+      select.title = "Instrumento del pentagrama activo";
       for (const [value, sound] of Object.entries(global.JMLScoreInstruments.instruments)) {
         const option = document.createElement("option");option.value = value;option.textContent = sound.name;select.appendChild(option);
       }
@@ -447,6 +448,7 @@
         const selected = global.JMLScoreInstruments.normalize(event.detail?.instrument);
         select.value = selected;
       });
+      document.addEventListener("editor-active-instrument", event => { select.value = event.detail.instrument; });
       select.addEventListener("change", () => {
         document.querySelectorAll('.ipad-sound-selector select').forEach(other => { other.value = select.value; });
         document.dispatchEvent(new CustomEvent("editor-instrument-select", { detail: { instrument: select.value } }));
@@ -467,13 +469,15 @@
     function syncInstrumentToggle(instrument = visibleInstrument) {
       visibleInstrument = global.JMLScoreInstruments.normalize(instrument);
       const name = global.JMLScoreInstruments.instruments[visibleInstrument].name.toLocaleLowerCase("es");
-      const target = visibleInstrument === "piano" ? "el piano" : `el diapasón de ${name}`;
-      keyboardToggle.replaceChildren(icon(visibleInstrument));
+      const hasBoard = !!global.JMLScoreGuitar?.forInstrument(visibleInstrument);
+      const target = hasBoard ? `el diapasón de ${name}` : "el piano";
+      keyboardToggle.replaceChildren(icon(hasBoard ? visibleInstrument : "piano"));
       keyboardToggle.dataset.instrument = visibleInstrument;
       keyboardToggle.title = `${state.keyboardVisible ? "Ocultar" : "Mostrar"} ${target}`;
       keyboardToggle.setAttribute("aria-label", `Mostrar u ocultar ${target}`);
     }
     document.addEventListener("editor-instrument-select", event => syncInstrumentToggle(event.detail?.instrument));
+    document.addEventListener("editor-active-instrument", event => syncInstrumentToggle(event.detail?.instrument));
     syncInstrumentToggle();
     const toggleRight = createIconButton({ icon: "panel-right", label: "Mostrar u ocultar inspector" });
     const fullscreenProxy = createIconButton({ icon: "maximize", label: "Pantalla completa" });
@@ -739,26 +743,29 @@
     proxyClick(redoProxy, "#redoButton");
     proxyClick(playProxy, "#playbackButton");
     proxyClick(metronomeProxy, "#metronomeButton");
-    saveButton.addEventListener("click", () => {
+    const openExport = (initialFormat = 'pdf') => {
       const dialog = document.createElement("dialog");dialog.className="editor-export-dialog";dialog.setAttribute("aria-label","Guardar o exportar partitura");
-      dialog.innerHTML='<form><h2>Guardar o exportar</h2><label>Formato<select name="format"><option value="pdf">PDF</option><option value="png">Imagen PNG</option><option value="musicxml">MusicXML</option><option value="json">Proyecto editable (JSON)</option></select></label><label>Nombre<input name="filename" required autocomplete="off"></label><div class="export-folder"><button type="button" data-folder>Elegir carpeta</button><span data-folder-name>Descargas del navegador</span></div><p data-folder-help></p><div class="export-actions"><button type="button" data-cancel>Cancelar</button><button type="submit">Exportar</button></div></form>';
-      const name=dialog.querySelector('input'),format=dialog.querySelector('select');name.value=heading.querySelector('h1').textContent;
+      dialog.innerHTML='<form><h2>Guardar o exportar</h2><label>Formato<select name="format"><option value="pdf">PDF</option><option value="png">Imagen PNG</option><option value="musicxml">MusicXML</option><option value="midi">MIDI</option><option value="json">Proyecto editable (JSON)</option></select></label><fieldset data-midi-options hidden><label>Contenido MIDI<select name="midiScope"><option value="all">Conjunto completo · una pista por instrumento</option><option value="separate">Un MIDI por instrumento · archivo ZIP</option></select></label><label class="export-mix-check"><input type="checkbox" name="respectMix">Respetar mute y solos de la consola</label></fieldset><label>Nombre<input name="filename" required autocomplete="off"></label><div class="export-folder"><button type="button" data-folder>Elegir carpeta</button><span data-folder-name>Descargas del navegador</span></div><p data-folder-help></p><div class="export-actions"><button type="button" data-cancel>Cancelar</button><button type="submit">Exportar</button></div></form>';
+      const name=dialog.querySelector('[name=filename]'),format=dialog.querySelector('[name=format]'),scope=dialog.querySelector('[name=midiScope]');name.value=heading.querySelector('h1').textContent;format.value=initialFormat;
+      for(const part of options.midiParts?.()||[]){const option=document.createElement('option');option.value='part:'+part.id;option.textContent='Solo '+part.name;scope.append(option);}
+      const updateMidi=()=>{dialog.querySelector('[data-midi-options]').hidden=format.value!=='midi';};format.onchange=updateMidi;updateMidi();
       let directory=null;
       const folder=dialog.querySelector('[data-folder]');
       folder.disabled=!global.showDirectoryPicker;
-      dialog.querySelector('[data-folder-help]').textContent=global.showDirectoryPicker?'Puedes elegir una carpeta para guardar el archivo.':global.showSaveFilePicker?'Al exportar podrás elegir la carpeta en el diálogo del navegador.':'La carpeta se gestiona desde las opciones de descarga del navegador. Activa «Preguntar dónde guardar» para elegirla en cada exportación.';
+      dialog.querySelector('[data-folder-help]').textContent=global.showDirectoryPicker?'Se usará la carpeta de descargas del navegador, salvo que elijas otra carpeta.':'La carpeta se gestiona desde las opciones de descarga del navegador. Activa «Preguntar dónde guardar» para elegirla en cada exportación.';
       folder.onclick=async()=>{try{directory=await global.showDirectoryPicker({mode:'readwrite'});dialog.querySelector('[data-folder-name]').textContent=directory.name;}catch(error){if(error.name!=='AbortError')dialog.querySelector('[data-folder-help]').textContent=error.message;}};
       dialog.querySelector('[data-cancel]').onclick=()=>dialog.close();
       dialog.querySelector('form').onsubmit=async event=>{
-        event.preventDefault();const selected=format.value,filename=global.CrescendoScoreFile.filename(name.value,selected);let fileHandle=null;
+        event.preventDefault();const selected=format.value,extension=selected==='midi'?(scope.value==='separate'?'zip':'mid'):selected,filename=global.CrescendoScoreFile.filename(name.value,extension);let fileHandle=null;
         try{
-          if(!directory&&global.showSaveFilePicker)fileHandle=await global.showSaveFilePicker({suggestedName:filename});
           saveButton.classList.add('is-active');
-          document.dispatchEvent(new CustomEvent('editor-export',{detail:{format:selected,filename,directory,fileHandle}}));dialog.close();
+          document.dispatchEvent(new CustomEvent('editor-export',{detail:{format:selected,filename,directory,fileHandle,midiScope:scope.value,respectMix:dialog.querySelector('[name=respectMix]').checked}}));dialog.close();
         }catch(error){if(error.name!=='AbortError')dialog.querySelector('[data-folder-help]').textContent=error.message;}
       };
       dialog.onclose=()=>dialog.remove();document.body.appendChild(dialog);dialog.showModal();name.focus();name.select();
-    });
+    };
+    saveButton.addEventListener('click',()=>openExport());
+    const midiExportButton=document.createElement('button');midiExportButton.type='button';midiExportButton.className='ipad-primary-action';midiExportButton.textContent='Exportar MIDI…';midiExportButton.onclick=()=>openExport('midi');documentPanel.append(midiExportButton);
     document.addEventListener('editor-export-finished',()=>saveButton.classList.remove('is-active'));
     const measureControls=element('div','ipad-measure-controls');
     const minusMeasure=createIconButton({icon:'minus',label:'Quitar el compás seleccionado'});

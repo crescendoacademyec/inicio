@@ -22,6 +22,11 @@
   const ApplicationMenu = window.JMLScoreApplicationMenu;
   const IpadShell = window.JMLScoreIpadShell;
   const InstrumentSounds = window.JMLScoreInstruments;
+  const Arrangement = window.JMLScoreArrangement;
+  const PageLayout = window.JMLScorePageLayout;
+  const Lyrics = window.JMLScoreLyrics;
+  const MidiExport = window.JMLScoreMidiExport;
+  let arrangementUi = null;
   const Guitar = window.JMLScoreGuitar;
   let guitarTabVisible = true;
   let measureSelectMode=false,measureClipboard=null;
@@ -453,12 +458,13 @@
   }
 
   function keySignatureForMeasureIndex(measureIndex) {
-    const measures = (Array.isArray(state?.systems) && state.systems[0]?.measures) || state.measures || [];
+    const system = state.systems?.[contextSystemIndex()];
+    const measures = system?.measures || state.measures || [];
     const safeIndex = Math.max(0, Number(measureIndex) || 0);
-    for (let index = Math.min(safeIndex, measures.length - 1); index >= 1; index -= 1) {
+    for (let index = Math.min(safeIndex, measures.length - 1); index >= 0; index -= 1) {
       if (measures[index]?.keySignature) return measures[index].keySignature;
     }
-    return state.keySignature || null;
+    return system?.keySignature || state.keySignature || null;
   }
 
   function measureTicksForIndex(measureIndex) {
@@ -644,6 +650,8 @@
   }
 
   let renderSystemIndex = 0;
+  let renderScoreRowIndex = 0;
+  let cachedSystemGapY = null;
   let pointerInputPreview = null;
   let suppressSystemSync = false;
   let lastRenderedLayout = null;
@@ -661,6 +669,7 @@
   const rhythmicColumnIndex = RhythmicColumns.createIndex();
 
   function invalidateLayoutCache() {
+    cachedSystemGapY = null;
     cachedScoreLayout = null;
     rhythmicColumnIndex.clear();
   }
@@ -708,8 +717,32 @@
     return scoreSystems().length;
   }
 
+  function systemShowsTab(system = contextSystem()) {
+    const instrument = Guitar.forInstrument(system?.instrumentId);
+    return !!instrument && (system.tabVisible ?? (instrument.fretted && guitarTabVisible));
+  }
+
+  function systemExtraHeight(system) {
+    const instrument = Guitar.forInstrument(system?.instrumentId);
+    const tab = systemShowsTab(system) ? instrument.tuning.length * 17 + 64 : 0;
+    const verses = Math.max(0, ...system.measures.flatMap(measure => measure.entries.flatMap(entry => (entry.lyrics || []).map(lyric => Number(lyric.number) || 1))));
+    return tab + (verses ? verses * 23 + 24 : 0);
+  }
+
+  function systemVerticalMetrics() {
+    if (cachedSystemGapY !== null) return cachedSystemGapY;
+    const systems = scoreSystems(), offsets = new Map();
+    let offset = 0, maxGap = 0;
+    for (const index of visibleSystemIndices()) {
+      offsets.set(index, offset);
+      const gap = (state.pageLayout?.staffGap || SYSTEM_GAP_Y) + systemExtraHeight(systems[index]);
+      offset += gap; maxGap = Math.max(maxGap, gap);
+    }
+    return cachedSystemGapY = { offsets, maxGap };
+  }
+
   function systemGapY() {
-    return SYSTEM_GAP_Y + (stringInstrument() && guitarTabVisible ? stringInstrument().tuning.length * 17 + 64 : 0);
+    return systemVerticalMetrics().maxGap;
   }
 
   function visibleSystemIndices() {
@@ -720,7 +753,7 @@
   }
 
   function systemOffsetY(index = renderSystemIndex) {
-    return Math.max(0, visibleSystemIndices().indexOf(Number(index) || 0)) * systemGapY();
+    return systemVerticalMetrics().offsets.get(Number(index) || 0) || 0;
   }
 
 
@@ -738,11 +771,16 @@
       const measure = createMeasure(reference?.meter || null);
       if (reference?.keySignature) measure.keySignature = { ...reference.keySignature };
       if (reference?.hidden) measure.hidden = true;
+      if (reference?.actualTicks) measure.actualTicks = reference.actualTicks;
+      if (reference?.implicit) measure.implicit = true;
       return measure;
     });
     return {
       id: createSystemId(),
       kind,
+      instrumentId: InstrumentSounds.normalize(options.instrumentId || "piano"),
+      name: options.name || InstrumentSounds.instruments[InstrumentSounds.normalize(options.instrumentId)].name,
+      partId: options.partId || createSystemId(),
       initialClefId: options.initialClefId || (kind === "percussion-line" ? "clef-percussion" : DEFAULT_CLEF_ID),
       measures
     };
@@ -757,6 +795,8 @@
     if (!Array.isArray(state.systems)) return;
     state.systems.forEach((system, index) => {
       if (!system.kind) system.kind = "staff";
+      if (!system.instrumentId) system.instrumentId = InstrumentSounds.normalize(state.playbackInstrument);
+      if (!system.partId) system.partId = `legacy-${system.instrumentId}`;
       if (!clefProfile(system.initialClefId)) {
         system.initialClefId = defaultInitialClefForSystem(system, index);
       }
@@ -795,6 +835,11 @@
     const safeIndex = clampSystemIndex(index);
     state.activeSystemIndex = safeIndex;
     state.measures = state.systems[safeIndex].measures;
+    const instrument = InstrumentSounds.normalize(state.systems[safeIndex].instrumentId);
+    if (instrument !== state.playbackInstrument) {
+      state.playbackInstrument = instrument;
+      document.dispatchEvent(new CustomEvent("editor-active-instrument", { detail: { instrument } }));
+    }
     if (activeSystemIsPercussionLine()) state.cursorStaffStep = 0;
     syncActiveMeterToCursor();
   }
@@ -834,7 +879,7 @@
   }
 
   function addStaffSystem() {
-    addSystem("staff");
+    if (arrangementUi) arrangementUi.roster(); else addSystem("staff");
   }
 
   function addPercussionLineSystem() {
@@ -865,7 +910,9 @@
           ? { ...item, systemIndex: Number(item.systemIndex) - 1 }
           : item
       ));
-    setActiveSystemIndex(Math.min(removeIndex, state.systems.length - 1));
+    state.activeSystemIndex = Math.min(removeIndex, state.systems.length - 1);
+    state.measures = state.systems[state.activeSystemIndex].measures;
+    setActiveSystemIndex(state.activeSystemIndex);
     clearEntrySelection();
     clearTextSelection();
     clearMarkSelection();
@@ -877,6 +924,204 @@
 
   function contextSystem() {
     return scoreSystems()[contextSystemIndex()] || null;
+  }
+
+  function systemInstrumentProfile(system = contextSystem()) {
+    const sound = InstrumentSounds.instruments[InstrumentSounds.normalize(system?.instrumentId || state.playbackInstrument)];
+    return { ...sound, transpose: system?.transpose ?? sound.transpose, diatonic: system?.transposeDiatonic ?? sound.diatonic };
+  }
+
+  function addScoreInstrument(instrumentId, name, options = {}) {
+    if (options.history !== false) saveHistory();
+    stopMidiPlayback();
+    const sound = InstrumentSounds.instruments[InstrumentSounds.normalize(instrumentId)], partId = createSystemId();
+    let partName = String(name || sound.name).trim().slice(0, 100) || sound.name;
+    const used = new Set(scoreSystems().map(system => system.name || systemInstrumentProfile(system).name));
+    if (used.has(partName)) { let suffix=2;while(used.has(`${partName} ${suffix}`))suffix++;partName+=` ${suffix}`; }
+    const count = instrumentId === "piano" ? 2 : 1;
+    const indices = [];
+    for (let i = 0; i < count; i++) {
+      const system = createStaffSystem("staff", { instrumentId, name:partName, partId, initialClefId: i ? "clef-f" : sound.clef });
+      system.keySignature = transposedInstrumentKey(state.keySignature, systemInstrumentProfile(scoreSystems()[0]), sound);
+      system.measures.forEach((measure, index) => {
+        const original = scoreSystems()[0]?.measures[index]?.keySignature;
+        if (original) measure.keySignature = transposedInstrumentKey(original, systemInstrumentProfile(scoreSystems()[0]), sound);
+      });
+      indices.push(state.systems.length); state.systems.push(system);
+    }
+    state.staffView = "both";
+    setActiveSystemIndex(indices[0]); clearEntrySelection(); clearActiveNote();
+    invalidateLayoutCache();
+    if (options.render !== false) render();
+    return indices[0];
+  }
+
+  function transposedInstrumentKey(signature, from, to) {
+    const fifths = signature?.accidental === "flat" ? -(Number(signature.count) || 0) : Number(signature?.count) || 0;
+    const shift = (from.transpose || 0) - (to.transpose || 0);
+    let target = fifths + shift * 7;
+    while (target > 7) target -= 12;
+    while (target < -7) target += 12;
+    return musicXmlImportKeySignature(target, signature?.mode || "major");
+  }
+
+  function arrangementSourceItems(sourceIndex, scope = "all") {
+    return withSystemContext(sourceIndex, () => {
+      const selected = new Set([...(state.selectedEntryIds || []), ...(state.selectedNoteRefs || []).map(ref => ref.entryId)]);
+      if (state.cursorEntryId) selected.add(state.cursorEntryId);
+      const measureIndices = [...(state.measureSelection?.indices || [])];
+      if (Number.isInteger(state.selectedMeasureIndex)) measureIndices.push(state.selectedMeasureIndex);
+      const result = [];
+      state.measures.forEach((measure, measureIndex) => measure.entries.forEach(entry => {
+        if (scope === "selection" && !selected.has(entry.id) && !measureIndices.includes(measureIndex)) return;
+        const notes = entry.type === "note" ? chordNotesHighToLow(entry, measureIndex).map(note => ({ ...note, alter: accidentalSemitone(effectiveEntryAccidental(entry, note.staffStep)) })) : [];
+        result.push({ entry: JSON.parse(JSON.stringify(entry)), notes, voice: entryVoice(entry), measureIndex, absoluteTick: measureStartAbsoluteTick(measureIndex) + entry.tickStart });
+      }));
+      return result;
+    });
+  }
+
+  function applyArrangementEntry(item, targetIndex, sourceProfile) {
+    return withSystemContext(targetIndex, () => {
+      const notes = item.notes.map(note => {
+        const next = Arrangement.transpose({ ...note, diatonicStep: note.diatonicStep + (item.entry.ottava ? 7 : 0) }, sourceProfile, systemInstrumentProfile());
+        const accidental = accidentalBySemitone(next.alter) || "natural", keyAccidental = keySignatureAccidentalForDiatonicStep(next.diatonicStep,keySignatureForMeasureIndex(item.measureIndex)) || "natural";
+        return { ...next, accidental: accidental === keyAccidental ? null : accidental };
+      });
+      let copy;
+      if (notes.length) {
+        copy = entryForDistributedGroup(item.entry, notes, targetIndex, item.absoluteTick);
+        copy.tieToNext = item.tieToNext;
+        if (copy.tieToNext) { copy.tieStaffStep = copy.staffStep; copy.tieDiatonicStep = copy.diatonicStep; }
+        else delete copy.tieStaffStep;
+      } else {
+        copy = cloneEntryForPaste(item.entry); copy.type = "rest";
+        for (const key of ["chordSteps", "chordDiatonicSteps", "accidental", "accidentalsByStep", "accidentalsByDiatonicStep", "tieToNext", "tieStaffStep"]) delete copy[key];
+      }
+      delete copy.ottava; delete copy.stringFingerings; delete copy.guitarFingering;
+      delete copy.manualStemDirection; delete copy.manualStemLength;
+      setEntryVoice(copy, 1);
+      if (!overwriteEntryAtAbsoluteTick(copy, item.absoluteTick)) throw Error("No se pudo colocar una nota en el destino.");
+      return copy;
+    });
+  }
+
+  async function distributeInstrumentVoices(config) {
+    const items = arrangementSourceItems(config.sourceIndex, config.scope), systems = scoreSystems();
+    if (!items.length) throw Error("Selecciona notas o compases en el pentagrama de origen.");
+    const sourceProfile = systemInstrumentProfile(systems[config.sourceIndex]);
+    const existing = new Set();
+    const plans = config.rows.map(row => {
+      if (!Number.isInteger(row.rank) || row.rank < 1 || row.rank > 128) throw Error("El número de nota debe estar entre 1 y 128.");
+      if (row.target != null) {
+        if (row.target === config.sourceIndex || !systems[row.target] || systemIsPercussionLine(systems[row.target])) throw Error("Elige otro pentagrama con altura como destino.");
+        if (existing.has(row.target)) throw Error("Cada voz debe tener un destino diferente.");
+        existing.add(row.target);
+      }
+      const extracted = Arrangement.extract(items, { ...config, rank: row.rank, selected: state.selectedNoteRefs });
+      if (!extracted.some(item => item.notes.length)) throw Error(`No hay notas para el destino “${row.name || "instrumento"}” con esa selección y número de voz.`);
+      if (row.target != null && !config.replace && Arrangement.conflicts(extracted, arrangementSourceItems(row.target)).length) throw Error("El destino ya contiene notas en ese tramo. Activa «Reemplazar notas existentes» o elige un instrumento nuevo.");
+      return { ...row, items: extracted };
+    });
+    saveHistory(); stopMidiPlayback();
+    const rollback = state.history.at(-1);
+    try {
+      for (const plan of plans) {
+        const targetIndex = plan.target ?? addScoreInstrument(plan.instrumentId, plan.name, { history: false, render: false });
+        const copied = new Map();
+        for (const item of plan.items) copied.set(item.entry.id, applyArrangementEntry(item, targetIndex, sourceProfile));
+        // Preserve expressions attached to the copied phrase; do not copy piano
+        // clefs, chord symbols or a slur whose other endpoint was not selected.
+        const expressions = (state.marks || []).filter(mark => Number(mark.systemIndex || 0) === config.sourceIndex && copied.has(mark.entryId) && !["clef", "key-signature", "tempo"].includes(mark.type));
+        for (const mark of expressions) {
+          if (mark.endEntryId && !copied.has(mark.endEntryId)) continue;
+          const entry = copied.get(mark.entryId), end = copied.get(mark.endEntryId);
+          state.marks.push({ ...JSON.parse(JSON.stringify(mark)), id: createMarkId(), systemIndex: targetIndex, voice: 1, entryId: entry.id, staffStep: entry.staffStep, ...(end ? { endEntryId: end.id, endStaffStep: end.staffStep } : {}) });
+        }
+      }
+      if (config.mute) {
+        const part = systems[config.sourceIndex].partId;
+        systems.forEach(system => { if (system.partId === part) system.muted = true; });
+      }
+      state.staffView = "both"; setActiveSystemIndex(config.sourceIndex);
+      clearEntrySelection(); clearActiveNote(); invalidateLayoutCache(); render();
+      setExerciseStatus(`Voces copiadas a ${plans.length} instrumentos. El original se conserva.`);
+      return true;
+    } catch (error) { state.history.pop(); restore(rollback); throw error; }
+  }
+
+  function changeScoreInstrument(index, changes) {
+    saveHistory();
+    if (changes.instrumentId) stopMidiPlayback();
+    const system = scoreSystems()[index]; if (!system) return;
+    if (changes.instrumentId && changes.instrumentId !== system.instrumentId) {
+      const items = arrangementSourceItems(index), from = systemInstrumentProfile(system), to = InstrumentSounds.instruments[changes.instrumentId];
+      if (!system.name || system.name === from.name) changes.name = to.name;
+      system.instrumentId = changes.instrumentId; system.initialClefId = to.clef;
+      delete system.transpose; delete system.transposeDiatonic;
+      system.partId = createSystemId();
+      system.keySignature = transposedInstrumentKey(system.keySignature || state.keySignature, from, to);
+      system.measures.forEach(measure => { if (measure.keySignature) measure.keySignature = transposedInstrumentKey(measure.keySignature, from, to); });
+      state.marks = state.marks.filter(mark => !(Number(mark.systemIndex) === index && mark.type === "clef"));
+      withSystemContext(index, () => {
+        items.forEach(item => {
+          const entry = system.measures[item.measureIndex].entries.find(entry => entry.id === item.entry.id);
+          if (!entry || !item.notes.length) return;
+          const infos = item.notes.map(note => {
+            const pitch = Arrangement.transpose(note, from, to);
+            return { ...pitch, midi: Arrangement.midi(pitch.diatonicStep, pitch.alter), accidentalSemitone: pitch.alter };
+          });
+          setEntryPitchInfos(entry, infos, item.measureIndex);
+          if (entry.tieToNext) { entry.tieStaffStep = entry.staffStep; entry.tieDiatonicStep = entry.diatonicStep; }
+        });
+      });
+    }
+    Object.assign(system, changes);
+    for (const sibling of scoreSystems().filter(s=>s.partId===system.partId)) for(const key of ['muted','solo','volume','name']) if(Object.hasOwn(changes,key))sibling[key]=changes[key];
+    state.midiPlayback.output?.setMix?.(scoreSystems());
+    setActiveSystemIndex(index); invalidateLayoutCache(); render();
+  }
+
+  function moveScoreInstrument(index, delta) {
+    const systems = scoreSystems(), target = index + delta;
+    if (!systems[target]) return;
+    saveHistory(); stopMidiPlayback(); const before = systems.slice(), activeId = systems[activeSystemIndex()].id;
+    const [system] = systems.splice(index, 1); systems.splice(target, 0, system);
+    Arrangement.remapReferences(state, before, systems);
+    state.activeSystemIndex = systems.findIndex(s => s.id === activeId); state.measures = systems[state.activeSystemIndex].measures;
+    invalidateLayoutCache(); render();
+  }
+
+  async function editNoteLyrics(entryId = state.activeNoteEntryId || state.selectedNoteRefs?.[0]?.entryId || state.selectedEntryIds?.[0] || state.cursorEntryId, verse = 1) {
+    const all = [];
+    state.measures.forEach((measure,measureIndex)=>measure.entries.filter(entry=>entry.type==="note"&&entryVoice(entry)===activeVoice()).forEach(entry=>all.push({entry,measureIndex})));
+    all.sort((a,b)=>a.measureIndex-b.measureIndex||a.entry.tickStart-b.entry.tickStart);
+    const start = all.findIndex(item=>item.entry.id===entryId);
+    if(start<0){await showEditorMessage("Selecciona la nota donde comienza la letra.");return;}
+    const value = await requestEditorPopup({title:`Letra · estrofa ${verse}`,initialValue:Lyrics.normalize(all[start].entry.lyrics).find(lyric=>lyric.number===verse)?.text||"",help:"Usa espacios para separar palabras y guiones para separar sílabas: Can-ta con-mi-go. Cada sílaba se asigna a la siguiente nota de esta voz. Vacío elimina la letra de la nota seleccionada.",okLabel:"Aplicar letra"});
+    if(value===null)return;
+    const syllables=Lyrics.syllables(value,verse);
+    if(syllables.length>all.length-start){await showEditorMessage("No hay suficientes notas para toda la letra. Añade las notas restantes antes de aplicarla.");return;}
+    saveHistory();
+    if(!syllables.length)all[start].entry.lyrics=Lyrics.replace(all[start].entry.lyrics,verse,null);
+    syllables.forEach((lyric,index)=>{const entry=all[start+index].entry;entry.lyrics=Lyrics.replace(entry.lyrics,verse,lyric);});
+    render();
+  }
+
+  function renderNoteLyrics(root,layout,row) {
+    withSystemContext(renderSystemIndex,()=>{
+      positionedEntries(layout).filter(item=>item.measureIndex>=row.first&&item.measureIndex<=row.last).forEach(item=>{
+        for(const lyric of Lyrics.normalize(item.entry.lyrics)){
+          const text=lyric.text+(['begin','middle'].includes(lyric.syllabic)?' –':'');
+          const node=textNode(item.x,staffBottomY()+50+(systemShowsTab() ? stringInstrument().tuning.length*17+64 : 0)+(lyric.number-1)*23,text,{class:"score-lyric",style:"font:16px Georgia,serif;fill:#171512","text-anchor":"middle","data-lyric-entry":item.entry.id,role:"button",tabindex:"0","aria-label":`Editar letra: ${lyric.text}`});
+          const systemIndex=renderSystemIndex;
+          node.addEventListener('pointerdown',event=>event.stopPropagation());
+          node.addEventListener('dblclick',event=>{event.stopPropagation();setActiveSystemIndex(systemIndex);editNoteLyrics(item.entry.id,lyric.number);});
+          node.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();event.stopPropagation();setActiveSystemIndex(systemIndex);editNoteLyrics(item.entry.id,lyric.number);}});
+          root.appendChild(node);
+        }
+      });
+    });
   }
 
   function contextSystemIsPercussionLine() {
@@ -900,7 +1145,7 @@
   }
 
   function overlayHost() {
-    return document.fullscreenElement || document.body;
+    return [...document.querySelectorAll('dialog:modal')].at(-1) || document.fullscreenElement || document.body;
   }
 
   function isTouchOptimizedInput(event = null) {
@@ -1247,11 +1492,11 @@
     return STAFF_GAP * (top.length > 3 ? 3 : 4);
   }
 
-  function keySignatureAccidentalCount(signature = state.keySignature) {
+  function keySignatureAccidentalCount(signature = keySignatureForMeasureIndex(0)) {
     return KeySignatures.accidentalCount(signature);
   }
 
-  function keySignatureGlyphName(signature = state.keySignature) {
+  function keySignatureGlyphName(signature = keySignatureForMeasureIndex(0)) {
     return KeySignatures.glyphName(signature);
   }
 
@@ -1263,7 +1508,7 @@
     return 58 + appearanceValue("keySignatureOffsetX");
   }
 
-  function estimatedKeySignatureWidth(signature = state.keySignature) {
+  function estimatedKeySignatureWidth(signature = keySignatureForMeasureIndex(0)) {
     const count = keySignatureAccidentalCount(signature);
     if (!count || !["sharp", "flat"].includes(signature?.accidental)) return 0;
     const scale = appearanceValue("glyphScale") * appearanceValue("keySignatureScale");
@@ -1369,14 +1614,29 @@
   }
 
   function syncScoreDocumentHeading(){
-    window.CrescendoScoreHeading.update(scoreShell,{title:exerciseTitleInput?.value,creators:state.scoreCreators});
+    window.CrescendoScoreHeading.update(scoreShell,{title:exerciseTitleInput?.value,creators:state.scoreCreators,onEdit:editScoreHeading});
     const role=document.getElementById('scoreCreditRole'),name=document.getElementById('scoreCreditName');
     if(role&&name&&document.activeElement!==name)name.value=(state.scoreCreators||[]).find(c=>c.type===role.value)?.name||'';
+  }
+
+  async function editScoreHeading(field) {
+    const value = await requestEditorPopup({ title: field.type === "title" ? "Título de la partitura" : (window.CrescendoScoreHeading.roles[field.type] || "Crédito"), initialValue: field.name, okLabel: "Guardar" });
+    if (value === null || value === field.name) return;
+    saveHistory();
+    if (field.type === "title") exerciseTitleInput.value = String(value).trim();
+    else {
+      const creators = window.CrescendoScoreHeading.normalize(state.scoreCreators);
+      creators[field.index] = { type: field.type, name: value };
+      state.scoreCreators = window.CrescendoScoreHeading.normalize(creators);
+    }
+    scheduleExerciseMetadataAutosave(); emitEditorState(); syncScoreDocumentHeading();
   }
 
   function stateSnapshot() {
     syncActiveSystemMeasures();
     return JSON.stringify({
+      scoreTitle: String(exerciseTitleInput?.value || ""),
+      pageLayout: state.pageLayout || null,
       scoreCreators: state.scoreCreators || [],
       systemBreaks: state.systemBreaks ?? null,
       importedRoute: state.importedRoute || null,
@@ -2372,6 +2632,8 @@
     canvasAutosaveDirty = true;
     invalidateLayoutCache();
     const data = JSON.parse(snapshot);
+    state.pageLayout = PageLayout.normalize(data.pageLayout || {});
+    if (typeof data.scoreTitle === "string" && exerciseTitleInput) exerciseTitleInput.value = data.scoreTitle;
     pointerInputPreview = null;
     state.staffView = data.staffView || (["guitar","requinto"].includes(state.playbackInstrument) ? "treble" : "both");
     state.scoreCreators=window.CrescendoScoreHeading.normalize(data.scoreCreators);
@@ -3975,9 +4237,10 @@
       const used = measureUsed(measure, voice);
       if (used < measureTicksForIndex(measureIndex) - EPSILON) return { measureIndex, tick: used };
     }
-    const measureIndex = state.measures.length;
-    ensureMeasure(measureIndex);
-    return { measureIndex, tick: 0 };
+    // Entering note input is a view change. The next actual note creates the
+    // next measure; simply reopening the tools must not append an empty bar.
+    const measureIndex = Math.max(0,state.measures.length-1);
+    return { measureIndex, tick: measureTicksForIndex(measureIndex) };
   }
 
   function enterFigureWritingMode() {
@@ -5041,9 +5304,11 @@
     const header = layout.starts[0] || staffLeft();
     const freeTexts=typeof state!=='undefined'?(state.textItems||[]).filter(item=>item.kind==='text'&&Number.isFinite(item.y)):[];
     const extraTop=Math.max(0,...freeTexts.map(item=>24-(item.y-(Number(item.style?.size)||24))));
-    const rowHeight = Math.ceil(scoreStaffBottomY() + (stringInstrument() && guitarTabVisible ? stringInstrument().tuning.length * 17 + 100 : 95)+extraTop);
+    const lastInstrument = typeof Guitar !== "undefined" ? Guitar.forInstrument(state.systems?.[visibleSystemIndices().at(-1)]?.instrumentId) : stringInstrument();
+    const bottomSpace = typeof systemExtraHeight === "function" ? systemExtraHeight(state.systems[visibleSystemIndices().at(-1)]) + (state.pageLayout?.systemGap || 95) : (lastInstrument && guitarTabVisible ? lastInstrument.tuning.length * 17 + 100 : 95);
+    const rowHeight = Math.ceil(scoreStaffBottomY() + bottomSpace + extraTop);
     const available=Number.isFinite(layout.systemWidth)?layout.systemWidth:scoreAvailableWidth();
-    const rows = typeof window!=='undefined'&&window.CrescendoSystemLayout ? window.CrescendoSystemLayout.pack({starts:layout.starts,widths:layout.widths,header,available,breaks:state.systemBreaks??null,padding:0,constrainManual:true}).map((row,i)=>({...row,y:i*rowHeight})) : [];
+    const rows = typeof window!=='undefined'&&window.CrescendoSystemLayout ? window.CrescendoSystemLayout.pack({starts:layout.starts,widths:layout.widths,header,available,breaks:state.systemBreaks??null,max:state.pageLayout?.bars||4,forced:state.pageLayout?.pageBreaks||[],padding:0,constrainManual:true}).map((row,i)=>({...row,y:i*rowHeight})) : [];
     if(!rows.length)
     for (let first = 0; first < layout.starts.length;) {
       const origin = first ? layout.starts[first] - header : 0;
@@ -9950,7 +10215,8 @@
         actual: entry.tuplet.actual,
         normal: entry.tuplet.normal,
         unitDurationId: entry.tuplet.unitDurationId
-      } : null
+      } : null,
+      lyrics: Lyrics.normalize(entry.lyrics)
     };
     if (entry.type === "rest") {
       return [{
@@ -10021,6 +10287,8 @@
       number: systemIndex + 1,
       kind: system.kind || "staff",
       clefId: initialClefIdForSystem(systemIndex),
+      instrumentId: system.instrumentId,
+      partId: system.partId,
       percussion: systemIsPercussionLine(system)
     }));
     const measures = [];
@@ -10031,6 +10299,7 @@
         number: measures.length + (systems[0]?.measures?.[0]?.implicit ? 0 : 1),
         implicit: systems[0]?.measures?.[measureIndex]?.implicit === true,
         newSystem:state.systemBreaks?.includes(measureIndex)||false,
+        newPage:state.pageLayout?.pageBreaks?.includes(measureIndex)||false,
         sourceMeasureIndex: measureIndex,
         ticks,
         meter: meterForMeasureIndex(measureIndex),
@@ -10050,6 +10319,7 @@
           return {
             number: systemIndex + 1,
             kind: system.kind || "staff",
+            keySignature: keySignatureForMeasureIndex(measureIndex),
             voices: voiceNumbers.map((voice) => ({
               number: voice,
               events: musicXmlVoiceEvents(
@@ -10065,7 +10335,9 @@
       });
       measures.push(measure);
     }
-    return {
+    const model = {
+      pageLayout: PageLayout.normalize(state.pageLayout),
+      page: PageLayout.printOptions(state.pageLayout),
       systemBreaks:Array.isArray(state.systemBreaks)?state.systemBreaks.flatMap(index=>{const at=measures.findIndex(m=>m.sourceMeasureIndex===index);return at>0?[at]:[];}):null,
       importedRoute: state.importedRoute ? (()=>{const indices=new Map(measures.map((m,i)=>[m.sourceMeasureIndex,i]));return window.CrescendoPerformancePlan.resize(state.importedRoute,measureCount).route.filter(i=>indices.has(i)).map(i=>indices.get(i));})() : null,
       creators: state.scoreCreators || [],
@@ -10082,6 +10354,24 @@
       staves,
       measures
     };
+    const groups = new Map();
+    systems.forEach((system, index) => { const key = system.partId || system.id; if (!groups.has(key)) groups.set(key, []); groups.get(key).push(index); });
+    model.parts = [...groups.values()].map((indices, partIndex) => {
+      const system = systems[indices[0]], sound = systemInstrumentProfile(system), staffNumber = old => indices.indexOf(old - 1) + 1;
+      return { divisions: model.divisions, partName: system.name || sound.name,
+        midi: { instrumentName: sound.name, channel: partIndex % 15 + 1 + (partIndex % 15 >= 9 ? 1 : 0), program: sound.program, volume: system.muted ? 0 : Number(system.volume??80) },
+        transpose: { chromatic: sound.transpose, diatonic: sound.diatonic },
+        staves: indices.map((index, i) => ({ ...staves[index], number: i + 1 })),
+        measures: measures.map(measure => ({ ...measure,
+          keySignature: measure.staves[indices[0]].keySignature,
+          clefs: measure.clefs.filter(clef => indices.includes(clef.staff - 1)).map(clef => ({ ...clef, staff: staffNumber(clef.staff) })),
+          attributeChanges: measure.attributeChanges.filter(change => !change.staff || indices.includes(change.staff - 1)).map(change => ({ ...change, ...(change.staff ? { staff: staffNumber(change.staff) } : {}) })),
+          directions: measure.directions.filter(direction => !direction.staff || indices.includes(direction.staff - 1)).map(direction => ({ ...direction, ...(direction.staff ? { staff: staffNumber(direction.staff) } : {}) })),
+          staves: indices.map((index, i) => ({ ...measure.staves[index], number: i + 1 }))
+        }))
+      };
+    });
+    return model;
   }
 
   function validateMusicXmlText(xml) {
@@ -10397,16 +10687,35 @@
         pitch = { diatonicStep: musicXmlImportDiatonicStep(step, octave), alter };
       }
     }
-    return { isRest, isChordFlag, isGrace, duration, voice, staff, durationId, dots, tuplet, tieStart, pitch };
+    const lyrics=Lyrics.normalize(xmlChildren(noteEl,"lyric").map(node=>({number:Number(node.getAttribute("number"))||1,text:xmlChildren(node,"text").map(text=>text.textContent).join(''),syllabic:xmlFirstChild(node,"syllabic")?.textContent,extend:!!xmlFirstChild(node,"extend")})));
+    return { isRest, isChordFlag, isGrace, duration, voice, staff, durationId, dots, tuplet, tieStart, pitch, lyrics };
   }
 
-  function parseMusicXmlScoreDocument(xmlText) {
+  function parseMusicXmlScoreDocument(xmlText, options = {}) {
     const parser = new DOMParser();
     const doc = parser.parseFromString(xmlText, "application/xml");
     if (doc.querySelector("parsererror")) {
       throw new Error("El archivo no es un MusicXML válido.");
     }
     const root = doc.documentElement;
+    const parts = root?.tagName === "score-partwise" ? xmlChildren(root, "part") : [];
+    if (parts.length > 1 && !options.singlePart) {
+      const parsedParts = parts.map(part => {
+        const copy = doc.cloneNode(true), id = part.getAttribute("id");
+        xmlChildren(copy.documentElement, "part").filter(node => node.getAttribute("id") !== id).forEach(node => node.remove());
+        return parseMusicXmlScoreDocument(new XMLSerializer().serializeToString(copy), { singlePart: true });
+      });
+      const merged = { ...parsedParts[0], systemsData: [], scoreMarksOut: [], textItemsOut: [], warning: "" };
+      for (const part of parsedParts) {
+        if (part.measureCount !== merged.measureCount) throw Error("Las partes tienen distinta cantidad de compases. Completa los compases vacíos antes de importar el conjunto.");
+        if (JSON.stringify(part.meter) !== JSON.stringify(merged.meter)) throw Error("Las partes tienen compases iniciales diferentes; no se importará parcialmente.");
+        const offset = merged.systemsData.length;
+        merged.systemsData.push(...part.systemsData);
+        merged.scoreMarksOut.push(...part.scoreMarksOut.filter(mark => offset === 0 || !["tempo", "navigation"].includes(mark.kind)).map(mark => ({ ...mark, ...(mark.staff ? { staff: mark.staff + offset } : {}) })));
+        merged.textItemsOut.push(...part.textItemsOut.map(item => ({ ...item, staff: (item.staff || 1) + offset })));
+      }
+      return merged;
+    }
     let partEl = null;
     if (root?.tagName === "score-partwise") {
       partEl = xmlFirstChild(root, "part");
@@ -10414,6 +10723,16 @@
       throw new Error("Este importador solo admite MusicXML por partes (score-partwise).");
     }
     if (!partEl) throw new Error("El archivo no contiene ninguna parte con notas.");
+    const partId = partEl.getAttribute("id") || "P1";
+    const definition = [...doc.querySelectorAll("part-list > score-part")].find(node => node.getAttribute("id") === partId);
+    const program = Number(definition?.querySelector("midi-program")?.textContent || 1);
+    const midiVolume = Number(definition?.querySelector("midi-instrument > volume")?.textContent ?? 80);
+    const instrumentId = InstrumentSounds.fromProgram(program), sound = InstrumentSounds.instruments[instrumentId];
+    const partName = definition?.querySelector("part-name")?.textContent?.trim() || sound.name;
+    const transposeNode = partEl.querySelector("attributes > transpose");
+    const octaveTranspose = Number(transposeNode?.querySelector("octave-change")?.textContent || 0);
+    const transpose = transposeNode ? Number(transposeNode.querySelector("chromatic")?.textContent || 0) + octaveTranspose * 12 : sound.transpose;
+    const transposeDiatonic = transposeNode ? Number(transposeNode.querySelector("diatonic")?.textContent || 0) + octaveTranspose * 7 : sound.diatonic;
 
     const title = (
       xmlFirstChild(xmlFirstChild(doc.documentElement, "work"), "work-title")?.textContent?.trim() ||
@@ -10517,10 +10836,10 @@
           });
         } else if (tag === "harmony") {
           const text = musicXmlImportChordText(child);
-          if(text)measureDirections.push({kind:"chord",tick:(cursor+ xmlNumberContent(xmlFirstChild(child,"offset"),0))/divisions*4,text});
+          if(text)measureDirections.push({kind:"chord",tick:(cursor+ xmlNumberContent(xmlFirstChild(child,"offset"),0))/divisions*4,text,staff:xmlNumberContent(xmlFirstChild(child,"staff"),1)});
         } else if (tag === "direction") {
           const internalTick = (cursor / Math.max(1, divisions)) * 4;
-          measureDirections.push(...musicXmlImportDirections(child, internalTick, divisions));
+          measureDirections.push(...musicXmlImportDirections(child, internalTick, divisions).map(direction=>({...direction,staff:xmlNumberContent(xmlFirstChild(child,"staff"),1)})));
         } else if (tag === "backup") {
           cursor = Math.max(0, cursor - xmlNumberContent(xmlFirstChild(child, "duration"), 0));
         } else if (tag === "forward") {
@@ -10569,6 +10888,7 @@
               dots: parsed.dots,
               tuplet: parsed.tuplet,
               tieStart: parsed.tieStart,
+              lyrics: parsed.lyrics,
               isRest: parsed.isRest,
               staff: parsed.staff,
               voice: parsed.voice,
@@ -10652,6 +10972,7 @@
           entry.dotted = entry.dots > 0;
           entry.tickStart = (group.tickStart / Math.max(1, divisions)) * 4;
           entry.voice = internalVoice;
+          if(group.lyrics?.length)entry.lyrics=group.lyrics;
           if (!group.isRest && group.notes.length) {
             const staffSteps = group.notes.map((pitch) => staffStepForDiatonicStep(pitch.diatonicStep, clefIdHere));
             const diatonicSteps = group.notes.map((pitch) => pitch.diatonicStep);
@@ -10733,11 +11054,11 @@
         } else if (direction.kind === "tempo") {
           scoreMarksOut.push({ kind: "tempo", measureIndex, tick: direction.tick, bpm: direction.bpm, unitDurationId: direction.unitDurationId, dots: direction.dots });
         } else if (direction.kind === "dynamic") {
-          textItemsOut.push({ kind: "dynamic", measureIndex, tick: direction.tick, text: direction.text });
+          textItemsOut.push({ kind: "dynamic", measureIndex, tick: direction.tick, text: direction.text, staff:direction.staff||1 });
         } else if (direction.kind === "chord") {
-          textItemsOut.push({ kind: "chord", measureIndex, tick: direction.tick, text: direction.text });
+          textItemsOut.push({ kind: "chord", measureIndex, tick: direction.tick, text: direction.text, staff:direction.staff||1 });
         } else if (direction.kind === "words") {
-          textItemsOut.push({ kind: "text", measureIndex, tick: direction.tick, text: direction.text });
+          textItemsOut.push({ kind: "text", measureIndex, tick: direction.tick, text: direction.text, staff:direction.staff||1 });
         }
       });
     });
@@ -10745,7 +11066,7 @@
     return {
       title,
       creators: window.CrescendoScoreHeading.fromXml(doc),
-      systemsData,
+      systemsData: systemsData.map(system => ({ ...system, instrumentId, partId, name: partName, transpose, transposeDiatonic, keySignature: firstKeyRecorded, volume:midiVolume===0?80:midiVolume, muted:midiVolume===0 })),
       meter: firstMeterRecorded || { ...DEFAULT_METER },
       keySignature: firstKeyRecorded,
       scoreMarksOut,
@@ -10755,7 +11076,8 @@
       systemBreaks: (()=>{const field=doc.querySelector('miscellaneous-field[name="crescendo:system-breaks"]');if(field){const value=JSON.parse(field.textContent);if(!Array.isArray(value))throw Error('Distribución de sistemas no válida.');return window.CrescendoSystemLayout.normalize(value,measureEls.length);}const breaks=measureEls.flatMap((m,i)=>{const p=xmlFirstChild(m,'print');return i>0&&(p?.getAttribute('new-system')==='yes'||p?.getAttribute('new-page')==='yes')?[i]:[];});return breaks.length?breaks:null;})(),
       importedRoute: (()=>{const field=doc.querySelector('miscellaneous-field[name="crescendo:measure-route"]');if(!field)return null;const route=JSON.parse(field.textContent);window.CrescendoPerformancePlan.route(measureEls.length,[],{count:measureEls.length,route});return {count:measureEls.length,route};})(),
       measureCount: measureEls.length,
-      warning: xmlChildren(root,"part").length>1 ? "Se importó únicamente la primera parte del archivo." : ""
+      pageLayout: (()=>{const field=doc.querySelector('miscellaneous-field[name="crescendo:page-layout"]');return field?PageLayout.normalize(JSON.parse(field.textContent)):PageLayout.normalize({pageBreaks:measureEls.flatMap((measure,i)=>xmlFirstChild(measure,'print')?.getAttribute('new-page')==='yes'?[i]:[])});})(),
+      warning: ""
     };
   }
 
@@ -10791,6 +11113,7 @@
 
     const base = JSON.parse(stateSnapshot());
     base.scoreCreators=parsed.creators;
+    base.pageLayout=parsed.pageLayout;
     base.importedRoute=parsed.importedRoute;base.systemBreaks=parsed.systemBreaks;
     base.cursorMeasure = 0;
     base.cursorTick = 0;
@@ -10804,6 +11127,14 @@
     base.importedTempoBase=initialTempo?initialTempo.bpm*(durationById(initialTempo.unitDurationId)?.ticks||4)/4*(2-2**(-(initialTempo.dots||0))):null;
     if(base.importedTempoBase)base.playbackBpm=base.importedTempoBase;
     base.systems = parsed.systemsData.map((system) => ({
+      instrumentId: system.instrumentId,
+      partId: system.partId,
+      name: system.name,
+      transpose: system.transpose,
+      transposeDiatonic: system.transposeDiatonic,
+      keySignature: system.keySignature,
+      volume: system.volume,
+      muted: system.muted,
       id: createSystemId(),
       kind: "staff",
       initialClefId: system.initialClefId || DEFAULT_CLEF_ID,
@@ -10870,7 +11201,7 @@
         kind: item.kind,
         measureIndex: item.measureIndex,
         tick: item.tick,
-        systemIndex: 0,
+        systemIndex: Math.max(0,(item.staff||1)-1),
         style: { ...state.textStyle }
       };
       if (item.kind === "text") {
@@ -11883,7 +12214,7 @@
       group.forEach((m,i)=>{const d=m.diatonicStep,degree=((d%7)+7)%7,alter={natural:0,sharp:1,flat:-1,'double-sharp':2,'double-flat':-2}[m.accidental||'natural']||0;events.push({midi:60+Math.floor(d/7)*12+[0,2,4,5,7,9,11][degree]+alter,startMs:start+i*length,endMs:start+(i+.9)*length,startTick:tick,endTick:tick,entryTicks:0,voice:m.voice||1,systemIndex:markSystemIndex(m),grace:true,velocity:78});});
       if(start===at&&principal){const delay=Math.min(group.length*length,(principal.endMs-principal.startMs)*.5);principal.startMs+=delay;}
     }
-    return events.map(event=>({...event,midi:stringInstrument()?.soundingMidi(event.midi)??event.midi})).sort((a, b) => a.startMs - b.startMs || a.midi - b.midi);
+    return events.map(event=>{const system=scoreSystems()[event.systemIndex||0],profile=systemInstrumentProfile(system);return {...event,midi:event.midi+profile.transpose};}).sort((a, b) => a.startMs - b.startMs || a.midi - b.midi);
   }
 
   // Instrumento por SoundFont: utiliza la misma interfaz que una salida MIDI.
@@ -11933,6 +12264,10 @@
       manufacturer: "Cuaderno de estudio",
       state: "connected",
       audioContext,
+      setVolume(value) {
+        const gain = instrument.__channelGain?.gain;
+        if (gain) { gain.cancelScheduledValues(audioContext.currentTime); gain.setTargetAtTime(Math.max(0, Math.min(1, value)), audioContext.currentTime, .012); }
+      },
       recalibrate() {
         // Si el AudioContext estuvo suspendido, su "currentTime" se
         // congela mientras tanto pero el reloj real (performance.now)
@@ -11975,25 +12310,23 @@
       if (!AudioContextClass || !window.Soundfont) return null;
       return editorInstrumentAudioContext ||= new AudioContextClass();
     },
-    loadInstrument: (context, bank) => window.Soundfont.instrument(context, bank),
+    loadInstrument: async (context, bank) => {
+      const gain = context.createGain(); gain.connect(context.destination);
+      try { const instrument = await window.Soundfont.instrument(context, bank, { destination: gain }); instrument.__channelGain = gain; return instrument; }
+      catch (error) { gain.disconnect(); throw error; }
+    },
     createOutput: createAcousticPianoOutput
   });
 
   async function acousticPianoOutput(options = {}) {
-    try { return await loadEditorInstrument(state.playbackInstrument, options); }
+    try { return await loadEditorInstrument(InstrumentSounds.normalize(contextSystem()?.instrumentId || state.playbackInstrument), options); }
     catch { return null; }
   }
 
   document.addEventListener("editor-instrument-select", event => {
     const instrument = InstrumentSounds.normalize(event.detail?.instrument);
     if (instrument === state.playbackInstrument) return;
-    if (state.midiPlayback.active || state.midiPlayback.starting) stopMidiPlayback();
-    state.midiPlayback.output?.clear?.();
-    state.playbackInstrument = instrument;
-    if (instrument === "guitar" || instrument === "requinto") {
-      state.staffView = "treble";
-      setActiveSystemIndex(0);
-    }
+    changeScoreInstrument(activeSystemIndex(), { instrumentId: instrument });
     invalidateLayoutCache();
     canvasAutosaveDirty = true;
     render();
@@ -12010,7 +12343,12 @@
 
   async function midiPlaybackOutput(options = {}) {
     const quiet = options.quiet === true;
-    const selectedSound = await acousticPianoOutput();
+    let selectedSound;
+    try { selectedSound = await InstrumentSounds.ensemble(scoreSystems(), loadEditorInstrument); }
+    catch (error) {
+      if (!quiet) await showEditorMessage("No se pudieron cargar los sonidos del conjunto: " + error.message + " Revisa la conexión y vuelve a reproducir.");
+      return null;
+    }
     if (selectedSound) {
       state.midiPlayback.output = selectedSound;
       state.midiPlayback.outputName = selectedSound.name;
@@ -12067,9 +12405,9 @@
   async function auditionMidiNotes(notes, options = {}) {
     if (options.allowLiveAudition !== true) return false;
     const midiNotes = [...new Set((notes || []).map(Number).filter(Number.isFinite))]
-      .map((note) => Math.max(0, Math.min(127, Math.round(options.sounding?note:(stringInstrument()?.soundingMidi(note)??note)))));
+      .map((note) => Math.max(0, Math.min(127, Math.round(options.sounding ? note : note + systemInstrumentProfile().transpose))));
     if (!midiNotes.length) return false;
-    const output = await midiPlaybackOutput({ quiet: true });
+    const output = await acousticPianoOutput();
     if (!output || state.midiPlayback.active) return false;
     const durationMs = Math.max(80, Math.min(1200, Number(options.durationMs) || 360));
     const now = performance.now();
@@ -12244,13 +12582,13 @@
     }
   }
 
-  function schedulePlaybackMidiMessage(output, message, timestamp, runId = state.midiPlayback.runId) {
+  function schedulePlaybackMidiMessage(output, message, timestamp, runId = state.midiPlayback.runId, systemIndex) {
     if (!state.midiPlayback.active || state.midiPlayback.runId !== runId || !output) return false;
     const now = performance.now();
     const target = Math.max(now, Number(timestamp) || now);
     if (typeof output.clear === "function") {
       try {
-        output.send(message, target);
+        output.send(message, target, systemIndex);
         return true;
       } catch {
         return false;
@@ -12259,7 +12597,7 @@
     const timer = setTimeout(() => {
       if (!state.midiPlayback.active || state.midiPlayback.runId !== runId) return;
       try {
-        output.send(message);
+        output.send(message, undefined, systemIndex);
       } catch {
         stopMidiPlayback({ expectedRunId: runId });
       }
@@ -12421,11 +12759,46 @@
     const count=state.measures.length,starts=Array.from({length:count+1},(_,i)=>measureStartAbsoluteTick(i)),marks=[];
     for(const m of state.marks||[]){
       if(m.type==='barline'){const type={'repeat-start':'repeatStart','repeat-end':'repeatEnd'}[m.barlineType];if(type)marks.push({type,bar:m.boundaryIndex-(type==='repeatEnd'?1:0),times:m.times,afterJump:m.afterJump});if(m.barlineType==='repeat-both'){marks.push({type:'repeatEnd',bar:m.boundaryIndex-1,times:m.times,afterJump:m.afterJump},{type:'repeatStart',bar:m.boundaryIndex});}}
-      else if(m.type==='ending')marks.push({type:'volta',bar:m.startMeasureIndex,endBar:m.endMeasureIndex,number:m.label});
+      else if(m.type==='ending')marks.push({type:'volta',bar:m.startMeasureIndex,endBar:Math.max(m.startMeasureIndex,m.endMeasureIndex-1),number:m.label});
       else if(m.type==='navigation')marks.push({type:m.navigation,bar:m.measureIndex,target:m.target});
     }
     const route=window.CrescendoPerformancePlan.route(count,marks,state.importedRoute);
     return window.CrescendoPerformancePlan.compile({route,starts,events,msForTick:t=>playbackMsForTick(t,tempoEvents),tickForMs:ms=>MidiPlayback.tickForMs(ms,tempoEvents,EPSILON)});
+  }
+
+  function midiExportParts() {
+    const systems=scoreSystems(),groups=new Map();
+    systems.forEach((system,index)=>{if(systemIsPercussionLine(system))return;const id=system.partId||system.id;if(!groups.has(id))groups.set(id,[]);groups.get(id).push(index);});
+    return [...groups].map(([id,systemIndices])=>{const system=systems[systemIndices[0]],sound=systemInstrumentProfile(system);return {id,name:system.name||sound.name,program:sound.program,volume:Number(system.volume??80),audible:systemIndices.some(index=>InstrumentSounds.audible(systems[index],systems)),systemIndices};});
+  }
+
+  function midiExportPerformance() {
+    const sourceTempos=playbackTempoEvents(),sourceEvents=applyJazzModeToPlaybackEvents(playbackNoteEvents(),sourceTempos),plan=buildPlaybackPerformancePlan(sourceEvents,sourceTempos),tempos=[],meters=[];
+    for(const visit of plan.visits){
+      const start=measureStartAbsoluteTick(visit.bar),end=measureStartAbsoluteTick(visit.bar+1),current=[...sourceTempos].reverse().find(tempo=>tempo.absoluteTick<=start+EPSILON)||sourceTempos[0];
+      tempos.push({ms:visit.start,bpm:current.bpm*current.unitTicks/4});
+      sourceTempos.filter(tempo=>tempo.absoluteTick>start+EPSILON&&tempo.absoluteTick<end-EPSILON).forEach(tempo=>tempos.push({ms:visit.start+playbackMsForTick(tempo.absoluteTick,sourceTempos)-visit.sourceStart,bpm:tempo.bpm*tempo.unitTicks/4}));
+      meters.push({ms:visit.start,...meterForMeasureIndex(visit.bar)});
+    }
+    return {title:currentDocumentTitle(),events:plan.events,tempos,meters,durationMs:plan.durationMs};
+  }
+
+  async function exportScoreMidi(options={}) {
+    const performance=midiExportPerformance(),scope=options.midiScope||'all';
+    let parts=midiExportParts();
+    if(scope.startsWith('part:'))parts=parts.filter(part=>part.id===scope.slice(5));
+    if(options.respectMix)parts=parts.filter(part=>part.audible);
+    if(!parts.length)throw Error('No hay instrumentos seleccionados para exportar. Revisa los mute y solos.');
+    if(!performance.events.some(event=>parts.some(part=>part.systemIndices.includes(event.systemIndex||0))))throw Error('Los instrumentos seleccionados no contienen notas.');
+    const separate=scope==='separate',extension=separate?'zip':'mid',filename=options.filename||await window.CrescendoScoreFile.ask({suggested:currentDocumentTitle(),extension});if(!filename)return;
+    let bytes;
+    if(separate){
+      const files=parts.map((part,index)=>({name:window.CrescendoScoreFile.filename(`${String(index+1).padStart(2,'0')}-${part.name}`,'mid'),data:MidiExport.serialize({...performance,parts:[part]})}));
+      files.push({name:'LEEME.txt',data:new TextEncoder().encode('Crescendo · MIDI por instrumento\nCada archivo conserva el mismo inicio, tempo y recorrido de la partitura. Impórtalos desde el mismo punto en tu DAW.\n')});
+      bytes=MidiExport.zip(files);
+    }else bytes=MidiExport.serialize({...performance,parts});
+    await saveExportBlob(new Blob([bytes],{type:separate?'application/zip':'audio/midi'}),filename,options);
+    setExerciseStatus(separate?`Exportados ${parts.length} MIDI por instrumento en ${filename}.`:`MIDI exportado: ${parts.length} instrumentos en pistas separadas.`);
   }
 
   function playbackStartAbsoluteTick(options = {}) {
@@ -12566,18 +12939,20 @@
     adjustedEvents.forEach((event) => {
       scheduledMessages.push({
         timestamp: startAt + event.startMs,
+        systemIndex: event.systemIndex,
         priority: 2,
         message: [0x90, event.midi, Math.max(1, Math.min(127, Math.round(Number(event.velocity) || 88)))]
       });
       scheduledMessages.push({
         timestamp: startAt + event.endMs,
+        systemIndex: event.systemIndex,
         priority: 1,
         message: [0x80, event.midi, 0]
       });
     });
     const scheduled = scheduledMessages
       .sort((a, b) => a.timestamp - b.timestamp || a.priority - b.priority || a.message[1] - b.message[1])
-      .every((event) => schedulePlaybackMidiMessage(output, event.message, event.timestamp, playbackRunId));
+      .every((event) => schedulePlaybackMidiMessage(output, event.message, event.timestamp, playbackRunId, event.systemIndex));
     if (!scheduled) {
       stopMidiPlayback({ expectedRunId: playbackRunId });
       await showEditorMessage("La salida MIDI se desconectó antes de iniciar la reproducción.");
@@ -13729,6 +14104,7 @@
     if(instrument){
       const active=activeSystemIndex();
       events.forEach(event=>withSystemContext(event.systemIndex||0,()=>{
+        if ((event.systemIndex||0) !== active) return;
         const entry=state.measures[event.measureIndex]?.entries.find(entry=>entry.id===event.entryId);
         if(!entry)return;
         const labels=stringNoteLabels(entry,event.measureIndex);
@@ -13742,7 +14118,7 @@
     });
   }
 
-  function stringInstrument() { return Guitar.forInstrument(state.playbackInstrument,{maxFret:22}); }
+  function stringInstrument() { return Guitar.forInstrument(contextSystem()?.instrumentId || state.playbackInstrument,{maxFret:22}); }
   function stringMidisForEntry(entry,measureIndex,steps=entryStaffSteps(entry)){const ins=stringInstrument();return midiNotesForEntry(entry,measureIndex,steps).map(n=>ins?ins.soundingMidi(n):n);}
   function stringNoteLabels(entry,measureIndex){
     const labels=new Map(),instrument=stringInstrument();
@@ -13811,7 +14187,7 @@
   function renderMeasureSelection(root,layout){
     if(!measureSelectMode||!Number.isFinite(state.selectedMeasureIndex))return;
     const index=state.selectedMeasureIndex;if(!Number.isFinite(layout.starts[index]))return;
-    root.appendChild(el("rect",{class:"measure-selection",x:layout.starts[index],y:scoreStaffTopY()-25,width:layout.widths[index],height:scoreStaffBottomY()-scoreStaffTopY()+(stringInstrument()&&guitarTabVisible?215:65),rx:3}));
+    root.appendChild(el("rect",{class:"measure-selection",x:layout.starts[index],y:scoreStaffTopY()-25,width:layout.widths[index],height:scoreStaffBottomY()-scoreStaffTopY()+(systemShowsTab()?215:65),rx:3}));
   }
   function copyWholeMeasure(){
     const source=state.selectedMeasureIndex,systems=[];if(!Number.isFinite(source))return;
@@ -13861,8 +14237,8 @@
     for(const [id,selector,mobile] of [["editorTabToggle",".ipad-header-center",false],["editorTabToggleMobile",".ipad-header-actions",true]]){
       const parent=document.querySelector(selector);if(!parent)continue;
       let input=document.getElementById(id);
-      if(!input){const label=document.createElement("label");label.className="editor-tab-toggle"+(mobile?" editor-tab-toggle--mobile":"");label.innerHTML=`<input type="checkbox" id="${id}" aria-label="Mostrar tablatura"> TAB`;parent.appendChild(label);input=label.querySelector("input");input.onchange=()=>{guitarTabVisible=input.checked;render();};}
-      input.checked=guitarTabVisible;input.closest("label").hidden=!enabled;
+      if(!input){const label=document.createElement("label");label.className="editor-tab-toggle"+(mobile?" editor-tab-toggle--mobile":"");label.innerHTML=`<input type="checkbox" id="${id}" aria-label="Mostrar tablatura"> TAB`;parent.appendChild(label);input=label.querySelector("input");input.onchange=()=>{saveHistory();contextSystem().tabVisible=input.checked;render();};}
+      input.checked=systemShowsTab();input.closest("label").hidden=!enabled;
     }
 
     document.querySelector(".editor-workbench")?.classList.toggle("has-string-instrument",enabled);
@@ -13919,7 +14295,7 @@
 
   function renderGuitarTab(root, layout) {
     const instrument=stringInstrument();
-    if(!instrument || !guitarTabVisible) return;
+    if(!instrument || !systemShowsTab()) return;
     const tabSystemIndex=contextSystemIndex();
     const y=staffBottomY()+76;
     const group=el("g",{class:"guitar-tablature"});
@@ -14441,9 +14817,13 @@
   }
 
   function respellEntriesForKeySignature(previousSignature, nextSignature, startMeasureIndex = 0) {
+    const sourceInstrument = typeof systemInstrumentProfile === "function" ? systemInstrumentProfile(scoreSystems()[activeSystemIndex()]) : null;
+    const shift = "CDEFGAB".indexOf((nextSignature?.tonic || "C")[0]) - "CDEFGAB".indexOf((previousSignature?.tonic || "C")[0]);
     scoreSystems().forEach((system, systemIndex) => {
       if (systemIsPercussionLine(system)) return;
       withSystemContext(systemIndex, () => {
+        const previousKey = sourceInstrument ? keySignatureForMeasureIndex(startMeasureIndex) : previousSignature;
+        const nextKey = sourceInstrument ? transposedInstrumentKey(nextSignature, sourceInstrument, systemInstrumentProfile(system)) : nextSignature;
         refreshAutomaticAccidentals();
         const nextChange = state.measures.findIndex((measure, index) => index > startMeasureIndex && measure.keySignature);
         state.measures.forEach((measure, measureIndex) => {
@@ -14451,11 +14831,9 @@
           measure.entries.forEach((entry) => {
             if (entry.type === "rest") return;
             const pitches = entryStaffSteps(entry).map((staffStep) => {
-              const letters = "CDEFGAB";
-              const shift = letters.indexOf((nextSignature?.tonic || "C")[0]) - letters.indexOf((previousSignature?.tonic || "C")[0]);
               const diatonicStep = entryDiatonicStepForStaffStep(entry, staffStep);
-              const deviation = KeySignatures.accidentalSemitone(effectiveAccidentalWithSignature(entry, staffStep, previousSignature)) - KeySignatures.accidentalSemitone(keySignatureAccidentalForDiatonicStep(diatonicStep, previousSignature));
-              return { staffStep, nextStep: staffStep + shift, accidental: KeySignatures.accidentalBySemitone(KeySignatures.accidentalSemitone(keySignatureAccidentalForDiatonicStep(diatonicStep + shift, nextSignature)) + deviation), deviation };
+              const deviation = KeySignatures.accidentalSemitone(effectiveAccidentalWithSignature(entry, staffStep, previousKey)) - KeySignatures.accidentalSemitone(keySignatureAccidentalForDiatonicStep(diatonicStep, previousKey));
+              return { staffStep, nextStep: staffStep + shift, accidental: KeySignatures.accidentalBySemitone(KeySignatures.accidentalSemitone(keySignatureAccidentalForDiatonicStep(diatonicStep + shift, nextKey)) + deviation), deviation };
             });
             const shiftedMaps = {};
             for (const field of ["noteheadsByStep", "noteColors"]) {
@@ -14483,16 +14861,19 @@
     const safeMeasureIndex = Math.max(0, Number(measureIndex) || 0);
     ensureAllSystemsMeasure(safeMeasureIndex);
     const previousSignature = keySignatureForMeasureIndex(safeMeasureIndex);
+    const sourceProfile = systemInstrumentProfile(scoreSystems()[activeSystemIndex()]);
+    const nextKeys = scoreSystems().map(system => transposedInstrumentKey(signature, sourceProfile, systemInstrumentProfile(system)));
     respellEntriesForKeySignature(previousSignature, signature, safeMeasureIndex);
     if (safeMeasureIndex === 0) {
-      state.keySignature = signature;
-      scoreSystems().forEach((system) => {
+      state.keySignature = nextKeys[0];
+      scoreSystems().forEach((system, index) => {
+        system.keySignature = nextKeys[index];
         if (system.measures?.[0]) delete system.measures[0].keySignature;
       });
     } else {
-      scoreSystems().forEach((system) => {
+      scoreSystems().forEach((system, index) => {
         if (!system.measures?.[safeMeasureIndex]) return;
-        system.measures[safeMeasureIndex].keySignature = { ...signature };
+        system.measures[safeMeasureIndex].keySignature = { ...nextKeys[index] };
       });
     }
   }
@@ -16488,7 +16869,7 @@
     return icon;
   }
 
-  function renderKeySignature(root, signature = state.keySignature, xOverride = null, options = {}) {
+  function renderKeySignature(root, signature = keySignatureForMeasureIndex(0), xOverride = null, options = {}) {
     const count = keySignatureAccidentalCount(signature);
     if (!count || !["sharp", "flat"].includes(signature?.accidental)) return;
     const glyphName = keySignatureGlyphName(signature);
@@ -17497,6 +17878,7 @@
   }
 
   async function applyChordTool(toolId) {
+    if (toolId === "orchestrate") { closePaletteDrawer(); arrangementUi?.distribute(); return; }
     if (toolId === "distribute") return requestDistributeChords();
     if (activeSystemIsPercussionLine()) {
       await showEditorMessage("Las herramientas de voicing aplican solo a acordes en pentagramas con altura.");
@@ -17802,7 +18184,7 @@
       if (!accidental) return Math.max(extent, headExtent);
       const accidentalExtent = -accidentalRect(entry, 0, staffStep, accidentalXOffsetFor(entry, staffStep)).left - appearanceValue("accidentalExtentCorrection");
       return Math.max(extent, headExtent, accidentalExtent);
-    }, NOTE_HEAD_RX);
+    }, Math.max(NOTE_HEAD_RX,...(entry.lyrics||[]).map(lyric=>String(lyric.text||'').length*4.5+8)));
   }
 
   function entryRightExtent(entry) {
@@ -17812,7 +18194,8 @@
       Math.max(extent, noteHeadRect(entry, 0, staffStep).right)
     ), NOTE_HEAD_RX);
     const dots = dotCountForEntry(entry);
-    return dots ? Math.max(headExtent, dotXOffset() + DOT_VISUAL_WIDTH / 2 + (dots - 1) * (DOT_VISUAL_WIDTH + 4)) : headExtent;
+    const lyricExtent=Math.max(0,...(entry.lyrics||[]).map(lyric=>String(lyric.text||'').length*4.5+12));
+    return Math.max(lyricExtent,dots ? Math.max(headExtent, dotXOffset() + DOT_VISUAL_WIDTH / 2 + (dots - 1) * (DOT_VISUAL_WIDTH + 4)) : headExtent);
   }
 
   function visualDistance(previous, entry) {
@@ -18342,16 +18725,16 @@
         ? writingMeasureWidth(systems, measureIndex) : 0;
       return Math.max(width, manualWidth || 0, writingWidth);
     });
-    const left = staffLeft() + firstMeasureSignatureInset();
+    const left = staffLeft() + Math.max(...systems.map((_,index)=>withSystemContext(index,firstMeasureSignatureInset)));
     // Pack the actual systems first, then share their spare width between bars.
     // The sheet already supplies equal outer margins; no extra right gutter is needed.
-    const fitted=window.CrescendoSystemLayout.justify({widths,header:left,available:scoreAvailableWidth(),breaks:state.systemBreaks??null,padding:0,constrainManual:true});
+    const fitted=window.CrescendoSystemLayout.justify({widths,header:left,available:scoreAvailableWidth(),breaks:state.systemBreaks??null,max:state.pageLayout?.bars||4,forced:state.pageLayout?.pageBreaks||[],padding:0,constrainManual:true});
     const end=fitted.starts.at(-1)+fitted.widths.at(-1);
     return {starts:fitted.starts,widths:fitted.widths,totalWidth:end,systemWidth:fitted.available};
   }
 
   function buildLayout(options = {}) {
-    const writingKey = (isNoteInputMode() ? `writing:${gridStepTicks()}` : "engraving")+`|width:${scoreAvailableWidth()}`;
+    const writingKey = (isNoteInputMode() ? `writing:${gridStepTicks()}` : "engraving")+`|width:${scoreAvailableWidth()}|page:${JSON.stringify(state.pageLayout||{})}`;
     if (!options.fresh && cachedScoreLayout && cachedWritingLayoutKey === writingKey) return cachedScoreLayout;
     cachedWritingLayoutKey = writingKey;
     const systems = scoreSystems();
@@ -20023,6 +20406,7 @@
   }
 
   function handleScoreClick(event) {
+    if(event.target.closest?.('.score-lyric,.score-instrument-label'))return;
     if (Date.now() < touchState.suppressClickUntil) {
       event.preventDefault();
       event.stopPropagation();
@@ -20034,6 +20418,7 @@
   }
 
   function handleScoreDoubleClick(event) {
+    if(event.target.closest?.('.score-lyric,.score-instrument-label'))return;
     if (state.textMode || state.chordMode || state.dynamicMode || state.editMode) return;
     const point = svgPointFromEvent(event);
     if (!point || !pointIsInStaffArea(point)) return;
@@ -20127,10 +20512,13 @@
       const sourceHeadX = item.x + noteHeadOffset(item.entry, sourceStep);
       const targetHeadX = next.x + noteHeadOffset(next.entry, targetStep);
       const tieSide = stemDirection(item.entry) > 0 ? 1 : -1;
-      const sourceY = pitchY(sourceStep) + tieSide * (NOTE_HEAD_RY + 2) + appearanceValue("tieOffsetY") + appearanceValue("tieStartOffsetY");
-      const targetY = pitchY(targetStep) + tieSide * (NOTE_HEAD_RY + 2) + appearanceValue("tieOffsetY") + appearanceValue("tieEndOffsetY");
-      const x1 = sourceHeadX + appearanceValue("tieOffsetX") + appearanceValue("tieEndpointInset") + appearanceValue("tieStartOffsetX");
-      const x2 = targetHeadX + appearanceValue("tieOffsetX") - appearanceValue("tieEndpointInset") + appearanceValue("tieEndOffsetX");
+      let sourceY = pitchY(sourceStep) + tieSide * (NOTE_HEAD_RY + 2) + appearanceValue("tieOffsetY") + appearanceValue("tieStartOffsetY");
+      let targetY = pitchY(targetStep) + tieSide * (NOTE_HEAD_RY + 2) + appearanceValue("tieOffsetY") + appearanceValue("tieEndOffsetY");
+      let x1 = sourceHeadX + appearanceValue("tieOffsetX") + appearanceValue("tieEndpointInset") + appearanceValue("tieStartOffsetX");
+      let x2 = targetHeadX + appearanceValue("tieOffsetX") - appearanceValue("tieEndpointInset") + appearanceValue("tieEndOffsetX");
+      const segment = window.JMLScoreSystemSpans.segments({x1,x2,y1:sourceY,y2:targetY,startMeasure:item.measureIndex,endMeasure:next.measureIndex},scoreFlow(layout).rows,layout.starts).find(segment=>segment.rowIndex===renderScoreRowIndex);
+      if (!segment) return;
+      ({x1,x2,y1:sourceY,y2:targetY}=segment);
       if (x2 <= x1 + 10) return;
       const span = Math.hypot(x2 - x1, targetY - sourceY);
       const arcDepth = Math.max(5, Math.min(11, span * 0.1)) * appearanceValue("tieArcScale");
@@ -20322,7 +20710,7 @@
       x2 = start.x + 56;
       y2 = start.y;
     }
-    const x1 = start.x - 2 + offsetX;
+    let x1 = start.x - 2 + offsetX;
     x2 += offsetX;
     y2 += offsetY;
     const isFlipped = mark.flipped === true;
@@ -20331,12 +20719,15 @@
     const verticalOffset = NOTE_HEAD_RY + (isFlipped ? 34 : 10);
     const beamGuide = isFlipped ? phraseSlurBeamGuide(mark, layout) : null;
     const beamClearance = beamThickness() * 0.5 + 9;
-    const y1 = beamGuide
+    let y1 = beamGuide
       ? beamGuide.yAtX(x1) - beamGuide.direction * beamClearance + offsetY
       : start.y + offsetY + slurSide * verticalOffset;
-    const endY = beamGuide
+    let endY = beamGuide
       ? beamGuide.yAtX(x2) - beamGuide.direction * beamClearance + offsetY
       : y2 + slurSide * verticalOffset;
+    const segment = window.JMLScoreSystemSpans.segments({x1,x2,y1,y2:endY,startMeasure:start.item.measureIndex,endMeasure:end?.item.measureIndex??start.item.measureIndex},scoreFlow(layout).rows,layout.starts).find(segment=>segment.rowIndex===renderScoreRowIndex);
+    if (!segment) return;
+    ({x1,x2,y1,y2:endY}=segment);
     const span = Math.max(24, x2 - x1);
     const arcDepth = Math.max(18, Math.min(46, span * 0.14));
     const controlX1 = x1 + span * 0.25;
@@ -20381,7 +20772,7 @@
       r: 5.5
     });
     handle.addEventListener("pointerdown", (event) => startPhraseSlurEndDrag(event, mark));
-    group.appendChild(handle);
+    if (!segment.openEnd) group.appendChild(handle);
     root.appendChild(group);
   }
 
@@ -20672,12 +21063,15 @@
   function renderEndingMark(root, mark, layout) {
     const startMeasureIndex = Math.max(0, Number(mark.startMeasureIndex ?? mark.measureIndex) || 0);
     const endMeasureIndex = Math.max(startMeasureIndex + 1, Number(mark.endMeasureIndex) || startMeasureIndex + 1);
-    ensureMeasure(endMeasureIndex);
+    ensureMeasure(endMeasureIndex - 1);
     const baseX1 = boundaryX(layout, startMeasureIndex);
     const baseX2 = boundaryX(layout, endMeasureIndex);
     if (!Number.isFinite(baseX1) || !Number.isFinite(baseX2)) return;
-    const x1 = baseX1 + visualOffset(mark, "x");
-    const x2 = baseX2 + visualOffset(mark, "x");
+    let x1 = baseX1 + visualOffset(mark, "x");
+    let x2 = baseX2 + visualOffset(mark, "x");
+    const segment = window.JMLScoreSystemSpans.segments({x1,x2,startMeasure:startMeasureIndex,endMeasure:endMeasureIndex-1},scoreFlow(layout).rows,layout.starts).find(segment=>segment.rowIndex===renderScoreRowIndex);
+    if (!segment) return;
+    ({x1,x2}=segment);
     if (x2 <= x1 + 12) return;
     const selected = state.selectedMarkIds.includes(mark.id);
     const y = staffTopY() - 34 + visualOffset(mark, "y");
@@ -20695,7 +21089,8 @@
       x2,
       y,
       drop,
-      closedEnd: mark.closedEnd === true
+      closedEnd: mark.closedEnd === true && !segment.openEnd,
+      openStart: segment.openStart
     });
     const hit = el("rect", {
       class: "ending-hit",
@@ -20722,7 +21117,7 @@
     });
     group.insertBefore(hit, group.firstChild);
     if (label) {
-      const labelNode = textNode(x1 + 12, y + 17, label, {
+      const labelNode = textNode(x1 + 12, y + 17, segment.openStart ? `(${label})` : label, {
         class: "ending-label",
         style: `font-size:${18 * appearanceValue("measureNumberScale")}px;${textFontStyle("scoreTextFont")}`
       });
@@ -20746,7 +21141,7 @@
       r: 5.5
     });
     handle.addEventListener("pointerdown", (event) => startEndingEndDrag(event, mark, layout));
-    group.appendChild(handle);
+    if (!segment.openEnd) group.appendChild(handle);
     root.appendChild(group);
   }
 
@@ -21158,10 +21553,11 @@
     document.addEventListener("pointerup", onUp, { once: true });
   }
 
-  function renderEntries(root, layout) {
+  function renderEntries(root, layout, row = null) {
     const allFlagged = [];
     const systemIndex = renderSystemIndex;
     state.measures.forEach((measure, measureIndex) => {
+      if (row && (measureIndex < row.first || measureIndex > row.last)) return;
       if (measureIsHidden(measureIndex)) return;
       const start = layout.starts[measureIndex];
       const width = layout.widths[measureIndex];
@@ -21453,7 +21849,8 @@
       if (systemsCanvas) {systemsCanvas.style.minHeight = `${visibleShellHeight}px`;systemsCanvas.style.gridTemplateRows = `${visibleShellHeight}px`;}
       svg.innerHTML = "";
       flow.rows.forEach((row, rowIndex) => {
-        const viewport = el("svg", {x:0,y:row.y,width:flow.width,height:flow.rowHeight,viewBox:`${row.origin} ${-(flow.extraTop||0)} ${flow.width} ${flow.rowHeight}`,overflow:"hidden","data-score-row":rowIndex});
+        renderScoreRowIndex = rowIndex;
+        const viewport = el("svg", {x:0,y:row.y,width:flow.width,height:flow.rowHeight,viewBox:`${row.origin} ${-(flow.extraTop||0)} ${flow.width} ${flow.rowHeight}`,overflow:"hidden","data-score-row":rowIndex,"data-page-break":String(!!state.pageLayout?.pageBreaks?.includes(row.first))});
         svg.appendChild(viewport);
         const root = el("g");viewport.appendChild(root);
         root.addEventListener("pointerdown", beginDragSelection);
@@ -21465,9 +21862,14 @@
         scoreSystems().forEach((system, systemIndex) => {
           if (!visibleSystemIndices().includes(systemIndex)) return;
           withSystemContext(systemIndex, () => {
-            renderStaff(root, layout);renderEntries(root, layout);renderNotationMarks(root, layout);renderGuitarTab(root, layout);
+            renderStaff(root, layout);renderEntries(root, layout,row);renderNotationMarks(root, layout);renderGuitarTab(root, layout);
             if (systemIndex === activeIndex && state.cursorMeasure >= row.first && state.cursorMeasure <= row.last) renderCursor(root, layout);
             renderInputPreview(root, layout, systemIndex);
+            renderNoteLyrics(root,layout,row);
+            const label = textNode(row.origin + 8, staffTopY() - 30, String(system.name || systemInstrumentProfile(system).name).slice(0, 42), { class:"score-instrument-label", style:"font:600 12px system-ui,sans-serif;fill:#36312a", "data-system-index":systemIndex, role:"button", tabindex:"0", "aria-label":`Escribir en ${system.name || systemInstrumentProfile(system).name}` });
+            label.addEventListener("pointerdown",event=>{event.preventDefault();event.stopPropagation();setActiveSystemIndex(systemIndex);clearEntrySelection();clearActiveNote();render();});
+            label.addEventListener("keydown",event=>{if(event.key==="Enter"){event.preventDefault();setActiveSystemIndex(systemIndex);render();}});
+            viewport.appendChild(label);
             if(rowIndex){
               const heading=el("g",{transform:`translate(${row.origin} 0)`});viewport.appendChild(heading);
               BasicRender.appendStaffLines(heading,{lineSteps:Array.from({length:5},(_,i)=>STAFF_LINE_TOP_STEP-i*2),visibleRuns:[{start:0,end:layout.starts[0]}],pitchY,strokeWidth:staffLineWidth()});
@@ -21475,7 +21877,7 @@
               renderKeySignature(heading,keySignatureForMeasureIndex(row.first));
               renderTimeSignature(heading,meterForMeasureIndex(row.first));
               const instrument=stringInstrument();
-              if(instrument&&guitarTabVisible){
+              if(instrument&&systemShowsTab()){
                 const tabY=staffBottomY()+76,bottom=tabY+(instrument.tuning.length-1)*17;
                 for(let line=0;line<instrument.tuning.length;line++)heading.appendChild(el("line",{class:"staff-line tab-staff-line",x1:0,x2:layout.starts[0],y1:tabY+line*17,y2:tabY+line*17,"stroke-width":staffLineWidth()}));
                 ["T","A","B"].forEach((letter,i)=>heading.appendChild(textNode(20,tabY+(instrument.tuning.length-1)*17/2-16+i*18,letter,{"text-anchor":"middle",style:"font:20px serif;fill:#222"})));
@@ -23472,6 +23874,7 @@
     try{
       saveCanvasAutosaveNow();
       if(options.format==='musicxml')await exportMusicXml(options);
+      else if(options.format==='midi')await exportScoreMidi(options);
       else if(options.format==='json')await saveExportBlob(new Blob([JSON.stringify(currentExerciseDocument(),null,2)],{type:'application/json'}),options.filename,options);
       else {document.dispatchEvent(new CustomEvent('editor-export-image',{detail:options}));return;}
       setExerciseStatus(`Exportado: ${options.filename}`);
@@ -23484,8 +23887,9 @@
     try {
       if(event.detail?.format==='pdf'){
         let printable;
-        try{scorePrintWidth=1400;render();printable=window.CrescendoScorePrint.clean(svg);}finally{scorePrintWidth=null;render();}
-        const result=await window.CrescendoScorePrint.pdf(printable,{title:exerciseTitleInput?.value||'Partitura',creators:state.scoreCreators});await saveExportBlob(result,filename,event.detail);setExerciseStatus(`Exportado: ${filename}`);return;
+        const page=PageLayout.printOptions(state.pageLayout);
+        try{scorePrintWidth=(page.pageWidth-2*page.margin)*2.67;render();printable=window.CrescendoScorePrint.clean(svg);}finally{scorePrintWidth=null;render();}
+        const result=await window.CrescendoScorePrint.pdf(printable,{title:exerciseTitleInput?.value||'Partitura',creators:state.scoreCreators,...page});await saveExportBlob(result,filename,event.detail);setExerciseStatus(`Exportado: ${filename}`);return;
       }
       await document.fonts.ready;
       let copy = svg.cloneNode(true);const originals = [svg, ...svg.querySelectorAll("*")], clones = [copy, ...copy.querySelectorAll("*")];
@@ -23524,7 +23928,30 @@
   document.documentElement.dataset.jmlEditorBoot = "palette-ready";
   renderMidiFigureStrip();
   renderMidiKeyboard();
-  editorShell = IpadShell.setup();
+  editorShell = IpadShell.setup({midiParts:midiExportParts});
+  arrangementUi = Arrangement.mount({
+    systems: scoreSystems, active: activeSystemIndex, voice: activeVoice,
+    activate: index => { setActiveSystemIndex(index); render(); },
+    hasSelection: () => !!(state.selectedEntryIds.length || state.selectedNoteRefs.length || state.cursorEntryId || Number.isInteger(state.selectedMeasureIndex)),
+    add: addScoreInstrument, change: changeScoreInstrument, move: moveScoreInstrument,
+    empty: () => !scoreSystems().some(system=>system.measures.some(measure=>measure.entries.some(entry=>entry.type==='note'))),
+    start: (instrument,name) => {
+      if(scoreSystems().some(system=>system.measures.some(measure=>measure.entries.some(entry=>entry.type==='note'))))return;
+      saveHistory();const before=scoreSystems().slice(),index=addScoreInstrument(instrument,name,{history:false,render:false}),part=state.systems[index].partId;
+      const selected=state.systems.filter(system=>system.partId===part);Arrangement.remapReferences(state,before,selected);state.systems=selected;state.activeSystemIndex=0;state.measures=selected[0].measures;setActiveSystemIndex(0);invalidateLayoutCache();render();
+    },
+    play: () => playbackButton.click(), stop: () => stopMidiPlayback(),
+    mix: (indices, changes) => { saveHistory(); indices.forEach(index => Object.assign(scoreSystems()[index], changes)); state.midiPlayback.output?.setMix?.(scoreSystems()); scheduleCanvasAutosave(); },
+    previewMix: (indices, changes) => state.midiPlayback.output?.setMix?.(scoreSystems().map((system,index) => indices.includes(index) ? { ...system, ...changes } : system)),
+    remove: async index => {
+      const system = scoreSystems()[index];
+      if (system.measures.some(measure => measure.entries.some(entry => entry.type === "note")) && !(await confirmEditorAction({title:"Quitar instrumento",message:`Se quitará “${system.name || systemInstrumentProfile(system).name}” y su escritura. Puedes deshacerlo.`,okLabel:"Quitar"}))) return false;
+      setActiveSystemIndex(index); return removeActiveSystem();
+    },
+    distribute: distributeInstrumentVoices
+  });
+  PageLayout.mount({ get: () => state.pageLayout, selectedMeasure: () => state.selectedMeasureIndex ?? state.cursorMeasure, apply: settings => { saveHistory(); state.pageLayout = settings; invalidateLayoutCache(); render(); } });
+  const lyricButton=document.createElement('button');lyricButton.type='button';lyricButton.className='ipad-primary-action';lyricButton.textContent='Letra bajo las notas…';lyricButton.onclick=()=>editNoteLyrics();document.getElementById('ipad-panel-text')?.append(lyricButton);
   recordingDock=RecordingSync.mount({
     recording:()=>state.recording,currentTime:()=>activeRecordingController?.getCurrentTime()||0,duration:()=>activeRecordingController?.getDuration()||state.recording?.duration||0,playing:()=>!!activeRecordingController?.isPlaying(),measureCount:recordingMeasureCount,selectedMeasure:selectedMeasureIndex,measureTime:recordingTimeForMeasure,
     toggle:toggleRecordingPlayback,pause:()=>{activeRecordingController?.pause();stopRecordingPlaybackAnimation();},

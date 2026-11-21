@@ -287,6 +287,7 @@
         { id: "rotate-up", label: "Rotar arriba", symbol: "↑", chordTool: "rotate-up" },
         { id: "rotate-down", label: "Rotar abajo", symbol: "↓", chordTool: "rotate-down" },
         { id: "distribute-chord", label: "Repartir", symbol: "Repartir", chordTool: "distribute" },
+        { id: "orchestrate-voices", label: "Enviar voces a instrumentos", symbol: "Orquestar", chordTool: "orchestrate" },
         { id: "line-1", label: "Línea 1", symbol: "L1", voiceMode: 1 },
         { id: "line-2", label: "Línea 2", symbol: "L2", voiceMode: 2 },
         { id: "line-3", label: "Línea 3", symbol: "L3", voiceMode: 3 },

@@ -208,6 +208,14 @@
         rows.push(...clefXml(clef.clefId, clef.staff, level + 1));
       });
     }
+    if (options.includeDivisions && model.transpose) {
+      const octaves = Math.trunc(model.transpose.chromatic / 12);
+      rows.push(line(level + 1, "<transpose>"));
+      rows.push(line(level + 2, `<diatonic>${model.transpose.diatonic - octaves * 7}</diatonic>`));
+      rows.push(line(level + 2, `<chromatic>${model.transpose.chromatic - octaves * 12}</chromatic>`));
+      if (octaves) rows.push(line(level + 2, `<octave-change>${octaves}</octave-change>`));
+      rows.push(line(level + 1, "</transpose>"));
+    }
     rows.push(line(level, "</attributes>"));
     return rows;
   }
@@ -526,6 +534,13 @@
     rows.push(line(level + 1, `<staff>${staffNumber}</staff>`));
 
     rows.push(...eventNotationRows(event, tieStop, tieStart, level + 1));
+    if (!event.chord) for (const lyric of event.lyrics || []) {
+      rows.push(line(level+1,`<lyric number="${Math.max(1,Math.round(Number(lyric.number)||1))}">`));
+      rows.push(line(level+2,`<syllabic>${escapeXml(lyric.syllabic||'single')}</syllabic>`));
+      rows.push(line(level+2,`<text>${escapeXml(lyric.text)}</text>`));
+      if (lyric.extend) rows.push(line(level+2,'<extend/>'));
+      rows.push(line(level+1,'</lyric>'));
+    }
 
     rows.push(line(level, "</note>"));
     return rows;
@@ -560,7 +575,8 @@
     const safeAttributeState = attributeState || createAttributeExportState();
     const attributeOptions = measureAttributeOptions(measure, model, safeAttributeState);
     const rows = [line(level, `<measure number="${measure.number}"${measure.implicit ? ' implicit="yes"' : ""}>`)];
-    if(measure.newSystem)rows.push(line(level+1,'<print new-system="yes"/>'));
+    if(measure.newPage)rows.push(line(level+1,'<print new-page="yes"/>'));
+    else if(measure.newSystem)rows.push(line(level+1,'<print new-system="yes"/>'));
     rows.push(...measureAttributesXml(measure, model, attributeOptions, level + 1));
     updateAttributeExportState(safeAttributeState, attributeOptions.current);
     rows.push(...(measure.barlines || []).filter((barline) => barline.location === "left").flatMap((barline) => barlineRows(barline, level + 1)));
@@ -602,7 +618,7 @@
     const instrumentName = midi.instrumentName || "Piano";
     const channel = Math.max(1, Math.min(16, Math.round(Number(midi.channel) || 1)));
     const program = Math.max(1, Math.min(128, Math.round(Number(midi.program) || 1)));
-    const volume = Math.max(0, Math.min(100, Math.round(Number(midi.volume) || 80)));
+    const volume = Math.max(0, Math.min(100, Math.round(Number.isFinite(Number(midi.volume)) ? Number(midi.volume) : 80)));
     return [
       line(level, `<score-instrument id="${escapeXml(instrumentId)}">`),
       line(level + 1, `<instrument-name>${escapeXml(instrumentName)}</instrument-name>`),
@@ -620,6 +636,7 @@
     const title = safeModel.title || "Cuaderno JML";
     const partName = safeModel.partName || "Cuaderno";
     const measures = Array.isArray(safeModel.measures) ? safeModel.measures : [];
+    const parts = Array.isArray(safeModel.parts) && safeModel.parts.length ? safeModel.parts : [{ ...safeModel, id: "P1", partName, measures }];
     const rows = [
       XML_HEADER,
       DOCTYPE,
@@ -634,22 +651,25 @@
       line(2, "</encoding>"),
       line(1, "</identification>"),
       line(1, "<part-list>"),
-      line(2, '<score-part id="P1">'),
-      line(3, `<part-name>${escapeXml(partName)}</part-name>`),
-      ...midiInstrumentRows(safeModel, 3),
-      line(2, "</score-part>"),
-      line(1, "</part-list>"),
-      line(1, '<part id="P1">')
+      ...parts.flatMap((part, index) => [line(2, `<score-part id="P${index + 1}">`),
+        line(3, `<part-name>${escapeXml(part.partName || partName)}</part-name>`),
+        ...midiInstrumentRows({ ...part, midi: { ...part.midi, instrumentId: `P${index + 1}-I1` } }, 3),
+        line(2, "</score-part>")]),
+      line(1, "</part-list>")
     ];
     const layoutFields=[];
+    if(safeModel.pageLayout)layoutFields.push(`<miscellaneous-field name="crescendo:page-layout">${escapeXml(JSON.stringify(safeModel.pageLayout))}</miscellaneous-field>`);
     if(Array.isArray(safeModel.importedRoute)&&safeModel.importedRoute.length)layoutFields.push(`<miscellaneous-field name="crescendo:measure-route">${escapeXml(JSON.stringify(safeModel.importedRoute))}</miscellaneous-field>`);
     if(Array.isArray(safeModel.systemBreaks))layoutFields.push(`<miscellaneous-field name="crescendo:system-breaks">${escapeXml(JSON.stringify(safeModel.systemBreaks))}</miscellaneous-field>`);
     if(layoutFields.length){const at=rows.findIndex(r=>r.includes('</identification>'));rows.splice(at,0,line(2,`<miscellaneous>${layoutFields.join('')}</miscellaneous>`));}
+    if(safeModel.page){const page=safeModel.page,toTenths=value=>value*25.4/72*40/7,at=rows.findIndex(row=>row.includes('<part-list>'));rows.splice(at,0,line(1,`<defaults><scaling><millimeters>7</millimeters><tenths>40</tenths></scaling><page-layout><page-height>${toTenths(page.pageHeight)}</page-height><page-width>${toTenths(page.pageWidth)}</page-width><page-margins type="both"><left-margin>${toTenths(page.margin)}</left-margin><right-margin>${toTenths(page.margin)}</right-margin><top-margin>${toTenths(page.margin)}</top-margin><bottom-margin>${toTenths(page.margin)}</bottom-margin></page-margins></page-layout></defaults>`));}
 
-    const tieState = new Set();
-    const attributeState = createAttributeExportState();
-    measures.forEach((measure, index) => rows.push(...measureXml(measure, safeModel, tieState, attributeState, index, 2)));
-    rows.push(line(1, "</part>"));
+    parts.forEach((part, index) => {
+      rows.push(line(1, `<part id="P${index + 1}">`));
+      const tieState = new Set(), attributeState = createAttributeExportState();
+      (part.measures || []).forEach((measure, i) => rows.push(...measureXml(measure, part, tieState, attributeState, i, 2)));
+      rows.push(line(1, "</part>"));
+    });
     rows.push("</score-partwise>");
     return `${rows.join("\n")}\n`;
   }

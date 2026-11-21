@@ -31,10 +31,11 @@
       x2 = 0,
       y = 0,
       drop = 22,
-      closedEnd = false
+      closedEnd = false,
+      openStart = false
     } = options;
     const parts = [
-      `M ${x1} ${y + drop}`,
+      `M ${x1} ${y + (openStart ? 0 : drop)}`,
       `L ${x1} ${y}`,
       `L ${x2} ${y}`
     ];

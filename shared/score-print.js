@@ -5,7 +5,7 @@
   if(!rows.length)throw Error('No hay sistemas para exportar.');
   const width=pageWidth-2*margin,height=pageHeight-2*margin-header-footer,scale=Math.min(width/Math.max(...rows.map(r=>r.width)),height/Math.max(...rows.map(r=>r.height)));
   if(!(scale>0)||scale<.2)throw Error('El sistema es demasiado ancho o alto. Distribuye los compases en más sistemas antes de exportar.');
-  const pages=[];let page=[],used=0;for(let i=0;i<rows.length;i++){const h=rows[i].height*scale;if(page.length&&used+h>height+.001){pages.push(page);page=[];used=0;}page.push({index:i,x:margin,y:margin+header+used,width:rows[i].width*scale,height:h});used+=h;}if(page.length)pages.push(page);return {pages,scale,pageWidth,pageHeight,margin};
+  const pages=[];let page=[],used=0;for(let i=0;i<rows.length;i++){const h=rows[i].height*scale;if(page.length&&(rows[i].breakBefore||used+h>height+.001)){pages.push(page);page=[];used=0;}page.push({index:i,x:(pageWidth-rows[i].width*scale)/2,y:margin+header+used,width:rows[i].width*scale,height:h});used+=h;}if(page.length)pages.push(page);return {pages,scale,pageWidth,pageHeight,margin};
  }
  function script(url){return new Promise((resolve,reject)=>{const s=document.createElement('script');s.src=url;s.onload=resolve;s.onerror=()=>reject(Error('No se pudo cargar el exportador local de PDF.'));document.head.append(s);});}
  async function load(){if(!libraries)libraries=(async()=>{await script(new URL('../vendor/score-export/jspdf.umd.min.js',base));await script(new URL('../vendor/score-export/svg2pdf.umd.min.js',base));await script(new URL('../vendor/score-export/opentype.min.js',base));})();await libraries;
@@ -33,7 +33,7 @@
   copy.querySelectorAll('*').forEach(n=>{if(n.style.stroke&&n.style.stroke!=='none'&&!/255, 255, 255|white/.test(n.style.stroke))n.style.stroke='#111';if(n.style.fill&&n.style.fill!=='none'&&n.style.fill!=='transparent'&&!/^rgba\([^)]*,\s*0(?:\.0+)?\)$/.test(n.style.fill)&&!/255, 255, 255|white/.test(n.style.fill))n.style.fill='#111';});return copy;
  }
  function split(svg,{rowHeight,starts=null}={}){const native=[...svg.querySelectorAll('svg[data-score-row]')],box=svg.viewBox.baseVal;
-  if(native.length)return native.map(n=>{const row=n.cloneNode(true);row.setAttribute('x','0');row.setAttribute('y','0');row.setAttribute('xmlns',NS);return {svg:row,width:Number(n.getAttribute('width')),height:Number(n.getAttribute('height'))};});
+  if(native.length)return native.map(n=>{const row=n.cloneNode(true);row.setAttribute('x','0');row.setAttribute('y','0');row.setAttribute('xmlns',NS);return {svg:row,width:Number(n.getAttribute('width')),height:Number(n.getAttribute('height')),breakBefore:n.dataset.pageBreak==='true'};});
   const height=rowHeight||Number(svg.dataset.rowHeight)||box.height,count=starts?.length||Math.round(box.height/height);return Array.from({length:count},(_,i)=>{const row=svg.cloneNode(true);row.setAttribute('viewBox',`0 ${i*height} ${box.width} ${height}`);row.setAttribute('width',box.width);row.setAttribute('height',height);row.style.overflow='hidden';return {svg:row,width:box.width,height};});
  }
  function trim(rows){
@@ -43,17 +43,18 @@
      const b=n.getBBox(),matrix=inverse.multiply(n.getScreenCTM()),points=[[b.x,b.y],[b.x+b.width,b.y],[b.x,b.y+b.height],[b.x+b.width,b.y+b.height]].map(([x,y])=>new DOMPoint(x,y).matrixTransform(matrix));
      const left=Math.min(...points.map(p=>p.x)),right=Math.max(...points.map(p=>p.x)),a=Math.min(...points.map(p=>p.y)),z=Math.max(...points.map(p=>p.y));if(right<vb.x||left>vb.x+vb.width||z<vb.y||a>vb.y+vb.height)continue;top=Math.min(top,Math.max(vb.y,a));bottom=Math.max(bottom,Math.min(vb.y+vb.height,z));
     }
-    if(Number.isFinite(top)&&bottom>=top){const y=Math.max(vb.y,top-14),height=Math.min(vb.y+vb.height,bottom+14)-y;row.svg.setAttribute('viewBox',`${vb.x} ${y} ${vb.width} ${height}`);row.svg.setAttribute('height',height);row.height=height;}row.svg.remove();
+    if(Number.isFinite(top)&&bottom>=top){const y=Math.max(vb.y,top-14),height=Math.min(vb.y+vb.height,bottom+14)-y;row.svg.setAttribute('viewBox',`${vb.x} ${y} ${vb.width} ${height}`);row.svg.setAttribute('height',height);row.height=height;}const origin=row.svg.viewBox.baseVal, x=origin.x, y=origin.y, width=origin.width, height=origin.height;
+    const group=document.createElementNS(NS,'g');group.setAttribute('transform',`translate(${-x} ${-y})`);while(row.svg.firstChild)group.append(row.svg.firstChild);row.svg.append(group);row.svg.setAttribute('viewBox',`0 0 ${width} ${height}`);row.svg.remove();
   }}finally{host.remove();}return rows;
  }
- async function pdf(source,{title='Partitura',creators=[],rowHeight,starts}={}){await load();const copy=clean(source);await outline(copy);const rows=trim(split(copy,{rowHeight,starts})),doc=new jspdf.jsPDF({unit:'pt',format:'a4',compress:true});
+ async function pdf(source,{title='Partitura',creators=[],rowHeight,starts,pageWidth=595.28,pageHeight=841.89,margin=36}={}){await load();const copy=clean(source);await outline(copy);const rows=trim(split(copy,{rowHeight,starts})),doc=new jspdf.jsPDF({unit:'pt',format:[pageWidth,pageHeight],orientation:pageWidth>pageHeight?'landscape':'portrait',compress:true});
   doc.setProperties({title,author:creators.map(c=>c.name).join('; '),creator:'Crescendo Academy'});
-  doc.setFont('times','bold');doc.setFontSize(16);const titleLines=doc.splitTextToSize(String(title||'Partitura sin título'),523.28);
-  doc.setFont('times','normal');doc.setFontSize(10);const creditLines=globalThis.CrescendoScoreHeading.lines(creators).flatMap(line=>doc.splitTextToSize(line,523.28)),header=42+(titleLines.length-1)*18+(creditLines.length?8+creditLines.length*12:0),layout=paginate(rows,{header});
-  for(let i=0;i<layout.pages.length;i++){if(i)doc.addPage();doc.setFont('times','bold');doc.setFontSize(16);titleLines.forEach((line,n)=>doc.text(line,layout.pageWidth/2,43+n*18,{align:'center'}));
-   doc.setFont('times','normal');doc.setFontSize(10);creditLines.forEach((line,n)=>doc.text(line,layout.pageWidth-36,43+(titleLines.length-1)*18+20+n*12,{align:'right'}));
-   doc.setFontSize(9);doc.text(`${i+1} / ${layout.pages.length}`,layout.pageWidth-36,layout.pageHeight-24,{align:'right'});
-   for(const slot of layout.pages[i])await doc.svg(rows[slot.index].svg,{x:slot.x,y:slot.y,width:slot.width,height:slot.height});
+  doc.setFont('times','bold');doc.setFontSize(16);const titleLines=doc.splitTextToSize(String(title||'Partitura sin título'),pageWidth-2*margin);
+  doc.setFont('times','normal');doc.setFontSize(10);const creditLines=globalThis.CrescendoScoreHeading.lines(creators).flatMap(line=>doc.splitTextToSize(line,pageWidth-2*margin)),header=42+(titleLines.length-1)*18+(creditLines.length?8+creditLines.length*12:0),layout=paginate(rows,{header,pageWidth,pageHeight,margin});
+  for(let i=0;i<layout.pages.length;i++){if(i)doc.addPage();doc.setFont('times','bold');doc.setFontSize(16);titleLines.forEach((line,n)=>doc.text(line,layout.pageWidth/2,margin+7+n*18,{align:'center'}));
+   doc.setFont('times','normal');doc.setFontSize(10);creditLines.forEach((line,n)=>doc.text(line,layout.pageWidth-margin,margin+7+(titleLines.length-1)*18+20+n*12,{align:'right'}));
+   doc.setFontSize(9);doc.text(`${i+1} / ${layout.pages.length}`,layout.pageWidth-margin,layout.pageHeight-Math.min(24,margin),{align:'right'});
+   for(const slot of layout.pages[i]){doc.saveGraphicsState();await doc.svg(rows[slot.index].svg,{x:slot.x,y:slot.y,width:slot.width,height:slot.height});doc.restoreGraphicsState();}
   }
   return new Blob([doc.output('arraybuffer')],{type:'application/pdf'});
  }

@@ -4,6 +4,15 @@ test('automatic and manual systems retain musical order without empty systems',(
 test('manual breaks reindex during insertion/removal and explicit single systems remain manual',()=>{assert.deepEqual(L.edit([3,5],2,'insert',9),[4,6]);assert.deepEqual(L.edit([4,6],2,'remove',8),[3,5]);assert.deepEqual(L.pack({...data,breaks:[]}).map(r=>[r.first,r.last]),[[0,7]]);});
 test('A4 pagination keeps whole systems within margins and numbers every system once',()=>{const rows=Array.from({length:20},()=>({width:1000,height:250})),p=P.paginate(rows);assert.equal(p.pages.length,4);assert.deepEqual(p.pages.flatMap(page=>page.map(r=>r.index)),Array.from({length:20},(_,i)=>i));for(const page of p.pages)for(const row of page){assert.ok(row.y>=78);assert.ok(row.y+row.height<=841.89-36-25+.001);assert.ok(row.x+row.width<=595.28-36+.001);}});
 test('oversized systems report a clear layout error instead of producing unreadable pages',()=>{assert.throws(()=>P.paginate([{width:9000,height:200}]),/Distribuye/);assert.throws(()=>P.paginate([]),/No hay sistemas/);});
+test('manual page breaks preserve automatic bar limits and equal system widths',()=>{
+ const options={widths:Array(10).fill(100),header:100,available:1500,max:6,forced:[2,8],padding:0},fitted=L.justify(options),rows=L.pack({...options,...fitted});
+ assert.deepEqual(rows.map(row=>[row.first,row.last]),[[0,1],[2,7],[8,9]]);rows.forEach(row=>assert.ok(Math.abs(row.width-1500)<1e-7));
+});
+test('landscape and manual page breaks retain complete systems within the chosen physical margins',()=>{
+ const rows=Array.from({length:6},(_,i)=>({width:1200,height:180,breakBefore:i===2||i===4})),layout=P.paginate(rows,{pageWidth:841.89,pageHeight:595.28,margin:48});
+ assert.deepEqual(layout.pages.map(page=>page.map(row=>row.index)),[[0,1],[2,3],[4,5]]);
+ for(const page of layout.pages)for(const row of page){assert.equal(row.x,48);assert.ok(row.x+row.width<=841.89-48+.001);assert.ok(row.y+row.height<=595.28-48-25+.001);}
+});
 test('justification fills the actual systems, including short final and dense systems',()=>{
  for(const widths of [Array(8).fill(200),[380,390,500,410,200,300,450]]){
   const original=widths.slice(),fitted=L.justify({widths,header:100,available:900,padding:0});
@@ -38,3 +47,5 @@ test('imported manual systems that exceed the sheet width reflow within equal ma
  rows.forEach(row=>assert.ok(Math.abs(row.width-1068)<1e-7));
  assert.deepEqual(rows.flatMap(row=>Array.from({length:row.last-row.first+1},(_,i)=>row.first+i)),[0,1,2,3,4,5,6,7]);
 });
+
+test('tall orchestral systems remain horizontally centered when height determines the scale',()=>{const p=P.paginate([{width:1000,height:1500},{width:1000,height:1500}]);for(const page of p.pages)for(const row of page)assert.ok(Math.abs(row.x-(p.pageWidth-row.width)/2)<1e-7);});
