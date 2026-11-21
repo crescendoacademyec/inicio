@@ -142,7 +142,7 @@ Atajos principales:
 
 Flecha arriba/abajo durante la escritura: mover la altura del cursor.
 Alt/Option + flecha arriba/abajo: subir o bajar diatonicamente una nota seleccionada.
-Cmd/Ctrl + Alt/Option + flecha arriba/abajo: mover una octava.
+Shift + flecha arriba/abajo: subir o bajar una octava las notas o compases seleccionados del pentagrama activo. Conserva ritmo, alteraciones y las otras partes; admite deshacer. Si selecciona solo cabezas de un acorde, mueve solo esas cabezas. También se conserva Cmd/Ctrl + Alt/Option + flecha arriba/abajo.
 ¡: sostenido.
 ': bemol.
 0: becuadro.
@@ -544,7 +544,7 @@ Cmd + A-G en macOS o Ctrl + Alt + A-G en Windows: elegirla por debajo.
 Flechas izquierda/derecha: mover cursor o seleccion.
 Flechas arriba/abajo: mover altura.
 Alt/Option + flecha arriba/abajo: mover una nota diatonicamente.
-Cmd/Ctrl + Alt/Option + flecha arriba/abajo: mover una octava.
+Shift + flecha arriba/abajo: subir o bajar una octava las notas o compases seleccionados del pentagrama activo. Conserva ritmo, alteraciones y las otras partes; admite deshacer. Si selecciona solo cabezas de un acorde, mueve solo esas cabezas. También se conserva Cmd/Ctrl + Alt/Option + flecha arriba/abajo.
 Alt/Option + flecha izquierda/derecha: desplazar la seleccion por el grid activo.
 Shift + Alt/Option + flecha izquierda/derecha: recortar o alargar las duraciones seleccionadas por el grid activo.
 Return: entrar o salir de escritura.

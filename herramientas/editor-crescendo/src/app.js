@@ -22240,10 +22240,52 @@
   }
 
   function moveSelectedPitchByOctave(direction) {
-    const octaveSteps = direction * 7;
-    if (moveSelectedNotesPitch(octaveSteps)) return;
-    if (moveActiveNotePitch(octaveSteps)) return;
-    moveCursorPitch(octaveSteps);
+    if (activeSystemIsPercussionLine()) return false;
+    const delta = direction > 0 ? 7 : -7;
+    const heads = selectedNoteLocations();
+    let entries = state.selectedEntryIds.length || !heads.length ? selectedEntryLocations() : [];
+    if (measureSelectMode && Number.isInteger(state.selectedMeasureIndex)) {
+      entries = (state.measures[state.selectedMeasureIndex]?.entries || []).map(entry => ({entry}));
+    }
+    const selected = new Map();
+    for (const {entry,staffStep} of heads) {
+      if (!selected.has(entry.id)) selected.set(entry.id,new Set());
+      selected.get(entry.id).add(staffStep);
+    }
+    for (const {entry} of entries) if (entry.type === "note") selected.set(entry.id,new Set(entryStaffSteps(entry)));
+    if (!selected.size) {
+      if (measureSelectMode) return false;
+      moveCursorPitch(delta);return true;
+    }
+    const plans = [...selected].map(([id,steps]) => {
+      const location = entryLocationById(id), entry = location.entry;
+      const notes = entryStaffSteps(entry).map(step => ({from:step,to:steps.has(step)?step+delta:step,accidental:getEntryAccidental(entry,step)}));
+      const styles = Object.fromEntries(["noteheadsByStep","noteColors"].map(key => [key,entry[key] ? Object.fromEntries(notes.filter(n=>entry[key][n.from]!==undefined).map(n=>[n.to,entry[key][n.from]])) : null]));
+      return {entry,notes,styles,tie:entry.tieStaffStep,tieDiatonic:entry.tieDiatonicStep,tieMoves:steps.has(entry.tieStaffStep),steps};
+    });
+    if (plans.some(plan => new Set(plan.notes.map(note=>note.to)).size !== plan.notes.length)) {
+      setExerciseStatus("La octava coincide con otra cabeza del mismo acorde. Selecciona ambas notas para trasladarlas juntas.");return true;
+    }
+    saveHistory();stopMidiPlayback();
+    const refs = [];
+    for (const plan of plans) {
+      const {entry,notes,steps} = plan;
+      for (const note of notes) clearEntryAccidental(entry,note.from);
+      setEntryStaffSteps(entry,notes.map(note=>note.to));
+      for (const note of notes) {
+        if (note.accidental) setEntryAccidental(entry,note.to,note.accidental);
+        if (steps.has(note.from)) refs.push({entryId:entry.id,staffStep:note.to});
+      }
+      for (const [key,value] of Object.entries(plan.styles)) if (value) entry[key]=value;
+      if (Number.isFinite(plan.tie)) entry.tieStaffStep=plan.tie+(plan.tieMoves?delta:0);
+      if (Number.isFinite(plan.tieDiatonic)) entry.tieDiatonicStep=plan.tieDiatonic+(plan.tieMoves?delta:0);
+    }
+    state.selectedNoteRefs=refs;
+    if (refs.length) {
+      state.cursorEntryId=refs[0].entryId;state.cursorStaffStep=refs[0].staffStep;
+      setActiveNote(entryLocationById(refs[0].entryId).entry,refs[0].staffStep);
+    }
+    pruneBrokenWritingTies();render();return true;
   }
 
   function accidentalGlyphName(accidental) {
@@ -22698,7 +22740,7 @@
     if (event.key === "ArrowUp") {
       event.preventDefault();
       if (event.altKey) moveSelectedPitchByOctave(1);
-      else if (event.shiftKey) moveSelectedPitchWithShift(1);
+      else if (event.shiftKey) moveSelectedPitchByOctave(1);
       else if (moveSelectedNoteChromatically(1)) return;
       else if (isNoteInputMode()) moveCursorPitch(1);
       else navigateSelectedNoteHead(1);
@@ -22708,7 +22750,7 @@
     if (event.key === "ArrowDown") {
       event.preventDefault();
       if (event.altKey) moveSelectedPitchByOctave(-1);
-      else if (event.shiftKey) moveSelectedPitchWithShift(-1);
+      else if (event.shiftKey) moveSelectedPitchByOctave(-1);
       else if (moveSelectedNoteChromatically(-1)) return;
       else if (isNoteInputMode()) moveCursorPitch(-1);
       else navigateSelectedNoteHead(-1);
