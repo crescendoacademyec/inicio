@@ -1838,3 +1838,8 @@ html{--ipad-inspector-width:146px!important}.ipad-inspector-panel .ipad-side-con
 #editorGuitarPanel .guitar-string-name{justify-content:center;padding-left:0;font-size:11px}
 #editorGuitarPanel .guitar-fretboard button:is(:hover,:focus-visible)::before{content:attr(data-hover-label);display:grid!important;place-items:center;position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:26px;height:26px;border-radius:50%;background:#fffaf0;color:#161514;box-shadow:0 2px 8px #0007;font:900 12px/1 system-ui,sans-serif;pointer-events:none;z-index:2}
 #editorGuitarPanel .guitar-fretboard button:is(.is-active,.is-playing):is(:hover,:focus-visible)::before{background:#d4a84f}
+
+/* Paper margins stay inside the sheet. Borders also reduce clientWidth, so
+   the existing staff layout and pointer mapping use the inset writing area. */
+body.editor-page .editor-workbench.is-ipad-workbench .score-shell{border-inline:24px solid #f8f4ec!important}
+@media(max-width:600px){body.editor-page .editor-workbench.is-ipad-workbench .score-shell{border-inline-width:14px!important}}
