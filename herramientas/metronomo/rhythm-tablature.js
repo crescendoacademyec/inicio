@@ -36,7 +36,7 @@
   const add=(name,attrs,text)=>{const node=document.createElementNS(ns,name);Object.entries(attrs).forEach(([k,v])=>node.setAttribute(k,v));if(text!==undefined)node.textContent=text;layer.appendChild(node);return node;};
   const resolved=Structure.resolve(events,marks),heads=[...score.querySelectorAll('.rhythm-head-target')];
   rows.forEach((top,row)=>{
-   const y=Number(top)+144,rowBoxes=boxes.filter(box=>box.dataset.top===top),staff=Number(rowBoxes[0].dataset.staff);
+   const y=Number(top)+116,rowBoxes=boxes.filter(box=>box.dataset.top===top),staff=Number(rowBoxes[0].dataset.staff);
    add('rect',{class:'string-tab-surface',x:0,y:y-26,width,height:instrument.tuning.length*17+34,fill:'transparent'});
    add('text',{x:24,y:y-16,'font-size':10,fill:'#555'},instrument.name);
    const left=24,right=Math.max(...rowBoxes.map(box=>Number(box.getAttribute('x'))+Number(box.getAttribute('width')))),bottom=y+(instrument.tuning.length-1)*17;
