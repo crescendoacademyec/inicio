@@ -112,6 +112,7 @@
     }
     function mixer() {
       const { d, body } = dialog('Consola de canales');
+      d.classList.add('arrangement-mixer-dialog');
       d.addEventListener('close',()=>options.previewMix?.([],{}));
       body.append(node('p', 'M silencia el instrumento. S deja escuchar solo los instrumentos marcados; puedes activar varios solos a la vez.'));
       const transport = node('div', null, 'arrangement-actions');
@@ -120,17 +121,30 @@
       function draw() {
         list.replaceChildren(); const systems = options.systems(), parts = new Map();
         systems.forEach((system,index)=>{const key=system.partId||system.id;if(!parts.has(key))parts.set(key,[]);parts.get(key).push(index);});
+        let channelNumber=0;
         for(const indices of parts.values()){
           const index=indices[0],system=systems[index],row=node('section',null,'arrangement-channel');
+          const name=system.name||I.instruments[I.normalize(system.instrumentId)].name;
+          row.setAttribute('aria-label','Canal '+(++channelNumber)+' · '+name);
           row.classList.toggle('is-muted',!I.audible(system,systems));
-          row.append(node('h3',system.name||I.instruments[I.normalize(system.instrumentId)].name));
+          row.append(node('span',String(channelNumber).padStart(2,'0'),'arrangement-channel-number'));
+          const heading=node('h3',name);heading.title=name;row.append(heading);
           row.append(node('p',I.instruments[I.normalize(system.instrumentId)].name));
+          const pan=node('input');pan.type='range';pan.min=-100;pan.max=100;pan.step=1;pan.value=Math.round(I.normalizePan(system.pan)*100);
+          const panField=node('div',null,'arrangement-pan');field('Paneo',pan,panField);pan.setAttribute('aria-label','Paneo · '+name);pan.title='Izquierda / centro / derecha';
+          const panOutput=node('output'),panText=()=>Number(pan.value)===0?'Centro':Math.abs(Number(pan.value))+'% '+(Number(pan.value)<0?'izq.':'der.');
+          const updatePan=()=>{panOutput.textContent=panText();pan.setAttribute('aria-valuetext',panText());};updatePan();
+          panField.append(panOutput);row.append(panField);
+          pan.oninput=()=>{updatePan();options.previewMix?.(indices,{pan:Number(pan.value)/100});};
+          pan.onchange=()=>options.mix(indices,{pan:Number(pan.value)/100});
+          const center=button('Centrar',()=>{pan.value=0;updatePan();options.mix(indices,{pan:0});},panField,'arrangement-pan-center');center.title='Centrar paneo';center.setAttribute('aria-label','Centrar paneo · '+name);
           const toggles=node('div',null,'arrangement-actions');row.append(toggles);
           for(const [key,label,title]of [['muted','M','Silenciar instrumento'],['solo','S','Solo del instrumento']]){
             const b=button(label,()=>{options.mix(indices,{[key]:!system[key]});draw();},toggles,system[key]?'is-active':'');b.title=title;b.setAttribute('aria-label',title+' · '+(system.name||'instrumento'));b.setAttribute('aria-pressed',String(!!system[key]));
           }
           const volume=node('input');volume.type='range';volume.min=0;volume.max=100;volume.step=1;volume.value=system.volume??80;
-          const output=node('output',volume.value+'%');field('Volumen',volume,row);row.append(output);
+          volume.className='arrangement-volume';volume.setAttribute('orient','vertical');volume.setAttribute('aria-orientation','vertical');
+          const output=node('output',volume.value+'%'),fader=node('div',null,'arrangement-fader');field('Volumen',volume,fader);volume.setAttribute('aria-label','Volumen · '+name);fader.append(output);row.append(fader);
           volume.oninput=()=>{output.textContent=volume.value+'%';options.previewMix?.(indices,{volume:Number(volume.value)});};
           volume.onchange=()=>options.mix(indices,{volume:Number(volume.value)});
           list.append(row);

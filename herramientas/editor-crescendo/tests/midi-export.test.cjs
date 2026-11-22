@@ -38,3 +38,8 @@ test('editor volta boundaries are exclusive in notation and inclusive only in th
  const c={state:{measures:[{},{},{}],marks:[{type:'barline',barlineType:'repeat-start',boundaryIndex:0},{type:'barline',barlineType:'repeat-end',boundaryIndex:2},{type:'ending',startMeasureIndex:1,endMeasureIndex:2,label:'1.'},{type:'ending',startMeasureIndex:2,endMeasureIndex:3,label:'2.'}]},measureStartAbsoluteTick:i=>i*16,window:{CrescendoPerformancePlan:Plan},playbackMsForTick:t=>t*125,MidiPlayback:{tickForMs:ms=>ms/125},EPSILON:.0001};
  vm.createContext(c);vm.runInContext(source.slice(start,end),c);const plan=c.buildPlaybackPerformancePlan([],[]);assert.deepEqual([...plan.visits].map(v=>v.bar),[0,1,0,2]);
 });
+
+test('MIDI exports pan CC10 on the correct channel with exact left, center and right positions',()=>{
+ const file=decode(M.serialize({parts:[-1,0,1,.5,-.5,undefined,'bad',5].map((pan,i)=>({...part(i),pan})),events:[]}));
+ assert.deepEqual(file.tracks.slice(1).map((track,i)=>{const event=track.find(e=>e.status===(0xb0|i)&&e.data[0]===10);assert.equal(event.tick,0);return event.data[1];}),[0,64,127,96,32,64,64,127]);
+});

@@ -26,7 +26,8 @@
   parts.forEach((part,index)=>{
    const channel=(index%15)+(index%15>=9?1:0),port=Math.floor(index/15),selected=events.filter(event=>part.systemIndices.includes(event.systemIndex||0));
    if(port>127)throw Error('El conjunto excede los puertos disponibles en MIDI.');
-   const data=[{tick:0,order:-9,data:meta(3,encode(part.name))},{tick:0,order:-8,data:meta(0x21,[port])},{tick:0,order:-7,data:meta(0x20,[channel])},{tick:0,order:-6,data:[0xc0|channel,Math.max(0,Math.min(127,(part.program||1)-1))]},{tick:0,order:-5,data:[0xb0|channel,7,Math.round(Math.max(0,Math.min(100,part.volume??80))*1.27)]}];
+   const pan=Number.isFinite(Number(part.pan))?Math.max(-1,Math.min(1,Number(part.pan))):0;
+   const data=[{tick:0,order:-9,data:meta(3,encode(part.name))},{tick:0,order:-8,data:meta(0x21,[port])},{tick:0,order:-7,data:meta(0x20,[channel])},{tick:0,order:-6,data:[0xc0|channel,Math.max(0,Math.min(127,(part.program||1)-1))]},{tick:0,order:-5,data:[0xb0|channel,7,Math.round(Math.max(0,Math.min(100,part.volume??80))*1.27)]},{tick:0,order:-4,data:[0xb0|channel,10,Math.round(64+pan*(pan<0?64:63))]}];
    for(const event of selected){
     if(!Number.isInteger(event.midi)||event.midi<0||event.midi>127||!Number.isFinite(event.startMs)||!Number.isFinite(event.endMs)||event.startMs<0||event.endMs<=event.startMs)throw Error(`Nota MIDI no válida en ${part.name}.`);
     const start=time.tick(event.startMs),end=Math.max(start+1,time.tick(event.endMs));

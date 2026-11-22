@@ -1079,7 +1079,7 @@
       });
     }
     Object.assign(system, changes);
-    for (const sibling of scoreSystems().filter(s=>s.partId===system.partId)) for(const key of ['muted','solo','volume','name']) if(Object.hasOwn(changes,key))sibling[key]=changes[key];
+    for (const sibling of scoreSystems().filter(s=>s.partId===system.partId)) for(const key of ['muted','solo','volume','pan','name']) if(Object.hasOwn(changes,key))sibling[key]=changes[key];
     state.midiPlayback.output?.setMix?.(scoreSystems());
     setActiveSystemIndex(index); invalidateLayoutCache(); render();
   }
@@ -12342,6 +12342,10 @@
         const gain = instrument.__channelGain?.gain;
         if (gain) { gain.cancelScheduledValues(audioContext.currentTime); gain.setTargetAtTime(Math.max(0, Math.min(1, value)), audioContext.currentTime, .012); }
       },
+      setPan(value) {
+        const pan = instrument.__channelPan?.pan;
+        if (pan) { pan.cancelScheduledValues(audioContext.currentTime); pan.setTargetAtTime(InstrumentSounds.normalizePan(value), audioContext.currentTime, .012); }
+      },
       recalibrate() {
         // Si el AudioContext estuvo suspendido, su "currentTime" se
         // congela mientras tanto pero el reloj real (performance.now)
@@ -12385,9 +12389,9 @@
       return editorInstrumentAudioContext ||= new AudioContextClass();
     },
     loadInstrument: async (context, bank) => {
-      const gain = context.createGain(); gain.connect(context.destination);
-      try { const instrument = await window.Soundfont.instrument(context, bank, { destination: gain }); instrument.__channelGain = gain; return instrument; }
-      catch (error) { gain.disconnect(); throw error; }
+      const channel = InstrumentSounds.createChannel(context);
+      try { const instrument = await window.Soundfont.instrument(context, bank, { destination: channel.gain }); instrument.__channelGain = channel.gain; instrument.__channelPan = channel.pan; return instrument; }
+      catch (error) { channel.disconnect(); throw error; }
     },
     createOutput: createAcousticPianoOutput
   });
@@ -12843,7 +12847,7 @@
   function midiExportParts() {
     const systems=scoreSystems(),groups=new Map();
     systems.forEach((system,index)=>{if(systemIsPercussionLine(system))return;const id=system.partId||system.id;if(!groups.has(id))groups.set(id,[]);groups.get(id).push(index);});
-    return [...groups].map(([id,systemIndices])=>{const system=systems[systemIndices[0]],sound=systemInstrumentProfile(system);return {id,name:system.name||sound.name,program:sound.program,volume:Number(system.volume??80),audible:systemIndices.some(index=>InstrumentSounds.audible(systems[index],systems)),systemIndices};});
+    return [...groups].map(([id,systemIndices])=>{const system=systems[systemIndices[0]],sound=systemInstrumentProfile(system);return {id,name:system.name||sound.name,program:sound.program,volume:Number(system.volume??80),pan:InstrumentSounds.normalizePan(system.pan),audible:systemIndices.some(index=>InstrumentSounds.audible(systems[index],systems)),systemIndices};});
   }
 
   function midiExportPerformance() {

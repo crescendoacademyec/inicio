@@ -30,3 +30,20 @@ test('stopping silences samples whose note-offs were already scheduled in the fu
  context.currentTime=2;output.clear();
  assert.ok(stops.includes(2));assert.deepEqual(muted,[[0,2]]);
 });
+
+test('each channel routes its gain through an independent stereo panner and disconnects both nodes',()=>{
+ const connections=[],disconnected=[],context={destination:{name:'speakers'},createGain:()=>({name:'gain',connect:node=>connections.push(['gain',node]),disconnect:()=>disconnected.push('gain')}),createStereoPanner:()=>({name:'pan',connect:node=>connections.push(['pan',node]),disconnect:()=>disconnected.push('pan')})};
+ const a=I.createChannel(context),b=I.createChannel(context);
+ assert.notEqual(a.pan,b.pan);assert.notEqual(a.gain,b.gain);assert.equal(connections[0][1],a.pan);assert.equal(connections[1][1],context.destination);a.disconnect();assert.deepEqual(disconnected,['gain','pan']);
+});
+test('ensemble pan stays independent per staff and survives mute, solo and live updates',async()=>{
+ const values=new Map(),systems=[{id:'left',instrumentId:'violin',pan:-1},{id:'right',instrumentId:'violin',pan:.75},{id:'old',instrumentId:'piano'}];
+ const output=await I.ensemble(systems,async(id,{track})=>({setPan:value=>values.set(track,value),setVolume(){}}));
+ assert.deepEqual([...values.values()],[-1,.75,0]);systems[0].muted=true;systems[1].solo=true;systems[0].pan=-.3;output.setMix(systems);assert.deepEqual([...values.values()],[-.3,.75,0]);
+ systems[0].pan=-5;systems[1].pan=5;systems[2].pan='invalid';output.setMix(systems);assert.deepEqual([...values.values()],[-1,1,0]);
+});
+test('SoundFont adapter ramps pan on the audio clock without interrupting scheduled notes',()=>{
+ const source=fs.readFileSync(path.join(__dirname,'../src/app.js'),'utf8'),start=source.indexOf('  function createAcousticPianoOutput('),end=source.indexOf('  let editorInstrumentAudioContext',start),calls=[];
+ const c={InstrumentSounds:I,performance:{now:()=>100},context:{currentTime:3},instrument:{__channelPan:{pan:{cancelScheduledValues:t=>calls.push(['cancel',t]),setTargetAtTime:(v,t,r)=>calls.push(['pan',v,t,r])}}}};vm.createContext(c);vm.runInContext(source.slice(start,end),c);
+ const output=c.createAcousticPianoOutput(c.instrument,c.context,{name:'Violín'});output.setPan(-.6);output.setPan(4);assert.deepEqual(calls,[['cancel',3],['pan',-.6,3,.012],['cancel',3],['pan',1,3,.012]]);
+});

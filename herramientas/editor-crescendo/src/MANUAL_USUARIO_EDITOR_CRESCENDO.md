@@ -781,7 +781,7 @@ La operación copia alturas y duraciones y conserva el original. Puede silenciar
 
 Abra **Instrumentos > Consola de canales**. Hay un canal por instrumento; los dos pentagramas de un piano comparten canal. **M** silencia ese instrumento. **S** activa solo: se escuchan únicamente los instrumentos marcados con S. Puede activar varios a la vez. Un instrumento con M permanece silenciado aunque tenga S.
 
-El volumen cambia durante la reproducción. Los botones Reproducir/pausa y Detener permiten escuchar desde la consola. **Desactivar todos los solos** recupera el conjunto manteniendo los mute. Los ajustes se conservan en el proyecto y admiten deshacer/rehacer.
+Cada canal tiene un fader vertical de volumen (0–100%) y un control de paneo: izquierda, centro o derecha. **Centrar** restablece el paneo. Ambos controles cambian el sonido durante la reproducción. El paneo también se conserva al exportar MIDI. Los botones Reproducir/pausa y Detener permiten escuchar desde la consola. **Desactivar todos los solos** recupera el conjunto manteniendo los mute. Los ajustes se conservan en el proyecto y admiten deshacer/rehacer.
 
 ## 42. Página, títulos y letra
 

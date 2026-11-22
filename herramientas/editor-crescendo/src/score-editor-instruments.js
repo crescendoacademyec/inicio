@@ -42,6 +42,12 @@
  function soundingMidi(midi,id,transpose){return Number(midi)+(Number.isFinite(transpose)?transpose:instruments[normalize(id)].transpose);}
  function fromProgram(program){return Object.keys(instruments).find(id=>instruments[id].program===Number(program))||'piano';}
  function audible(system,systems){return !system.muted&&(!systems.some(s=>s.solo)||!!system.solo);}
+ function normalizePan(value){const n=Number(value);return Number.isFinite(n)?Math.max(-1,Math.min(1,n)):0;}
+ function createChannel(context){
+  const gain=context.createGain(),pan=context.createStereoPanner();
+  gain.connect(pan);pan.connect(context.destination);
+  return {gain,pan,disconnect(){gain.disconnect();pan.disconnect();}};
+ }
  async function ensemble(systems,load){
   const outputs=await Promise.all(systems.map(async(system,index)=>{
    if(system.kind==='percussion-line')return null;
@@ -52,7 +58,7 @@
    send(message,time,systemIndex){if(Number.isInteger(systemIndex))outputs[systemIndex]?.send(message,time);},
    clear(){for(const output of outputs)output?.clear?.();},
    recalibrate(){for(const output of outputs)output?.recalibrate?.();}
-  };result.setMix=current=>outputs.forEach((output,index)=>{const system=current[index];if(system)output?.setVolume?.(audible(system,current)?Math.max(0,Math.min(100,Number(system.volume??80)))/100:0);});result.setMix(systems);return result;
+  };result.setMix=current=>outputs.forEach((output,index)=>{const system=current[index];if(system){output?.setVolume?.(audible(system,current)?Math.max(0,Math.min(100,Number(system.volume??80)))/100:0);output?.setPan?.(normalizePan(system.pan));}});result.setMix(systems);return result;
  }
- const api={instruments,normalize,readPreference,remember,createLoader,soundingMidi,fromProgram,ensemble,audible};if(typeof module!=='undefined')module.exports=api;else root.JMLScoreInstruments=api;
+ const api={instruments,normalize,readPreference,remember,createLoader,soundingMidi,fromProgram,ensemble,audible,normalizePan,createChannel};if(typeof module!=='undefined')module.exports=api;else root.JMLScoreInstruments=api;
 })(typeof window==='undefined'?globalThis:window);
