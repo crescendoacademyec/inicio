@@ -129,7 +129,6 @@
           row.classList.toggle('is-muted',!I.audible(system,systems));
           row.append(node('span',String(channelNumber).padStart(2,'0'),'arrangement-channel-number'));
           const heading=node('h3',name);heading.title=name;row.append(heading);
-          row.append(node('p',I.instruments[I.normalize(system.instrumentId)].name));
           const pan=node('input');pan.type='range';pan.min=-100;pan.max=100;pan.step=1;pan.value=Math.round(I.normalizePan(system.pan)*100);
           const panField=node('div',null,'arrangement-pan');field('Paneo',pan,panField);pan.setAttribute('aria-label','Paneo · '+name);pan.title='Izquierda / centro / derecha';
           const panOutput=node('output'),panText=()=>Number(pan.value)===0?'Centro':Math.abs(Number(pan.value))+'% '+(Number(pan.value)<0?'izq.':'der.');
@@ -145,7 +144,8 @@
           const volume=node('input');volume.type='range';volume.min=0;volume.max=100;volume.step=1;volume.value=system.volume??80;
           volume.className='arrangement-volume';volume.setAttribute('orient','vertical');volume.setAttribute('aria-orientation','vertical');
           const output=node('output',volume.value+'%'),fader=node('div',null,'arrangement-fader');field('Volumen',volume,fader);volume.setAttribute('aria-label','Volumen · '+name);fader.append(output);row.append(fader);
-          volume.oninput=()=>{output.textContent=volume.value+'%';options.previewMix?.(indices,{volume:Number(volume.value)});};
+          const updateVolume=()=>{output.textContent=volume.value+'%';volume.style.setProperty('--volume-fill',volume.value+'%');volume.setAttribute('aria-valuetext',volume.value+'%');};updateVolume();
+          volume.oninput=()=>{updateVolume();options.previewMix?.(indices,{volume:Number(volume.value)});};
           volume.onchange=()=>options.mix(indices,{volume:Number(volume.value)});
           list.append(row);
         }
