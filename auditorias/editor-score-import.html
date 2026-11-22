@@ -8,6 +8,9 @@
 <script src="../shared/score-file-reader.js"></script>
 <script src="../shared/score-file-name.js"></script>
 <script src="../herramientas/editor-crescendo/src/score-editor-musicxml-export.js"></script>
+<script src="../herramientas/editor-crescendo/src/score-editor-instruments.js"></script>
+<script src="../herramientas/editor-crescendo/src/score-editor-page-layout.js"></script>
+<script src="../herramientas/editor-crescendo/src/score-editor-lyrics.js"></script>
 <script src="../shared/score-import-details.js"></script>
 <script src="../herramientas/metronomo/rhythm-structure.js"></script>
 <script src="../herramientas/metronomo/rhythm-marks.js"></script>
@@ -19,11 +22,11 @@
 (async()=>{
  const results=[],assert=(ok,message)=>{if(!ok)throw Error(message);},same=(a,b,message)=>assert(JSON.stringify(a)===JSON.stringify(b),message+': '+JSON.stringify(a));
  const source=await (await fetch('../herramientas/editor-crescendo/src/app.js')).text();
- function fn(name){const start=source.indexOf('  function '+name+'(');assert(start>=0,'Missing function '+name);let i=source.indexOf('{',start)+1,depth=1;for(;depth;i++){if(source[i]==='{')depth++;if(source[i]==='}')depth--;}return source.slice(start,i);}
+ function fn(name){const start=source.indexOf('  function '+name+'(');assert(start>=0,'Missing function '+name);let p=source.indexOf('(',start),n=1;for(p++;n;p++){if(source[p]==='(')n++;if(source[p]===')')n--;}let i=source.indexOf('{',p)+1,depth=1;for(;depth;i++){if(source[i]==='{')depth++;if(source[i]==='}')depth--;}return source.slice(start,i);}
  // Isolate the production importer from the editor UI. Helpers below only supply
  // native document objects and editor-entry construction, not import decisions.
  let id=0;const durations={breve:32,whole:16,half:8,quarter:4,eighth:2,sixteenth:1,'thirty-second':.5,'sixty-fourth':.25,'one-twenty-eighth':.125};
- const context={window,DOMParser,MUSICXML_STEP_NAMES:["C","D","E","F","G","A","B"],DEFAULT_METER:{top:4,bottom:4},DEFAULT_CLEF_ID:'clef-g',EPSILON:.0001,
+ const context={window,DOMParser,InstrumentSounds:JMLScoreInstruments,PageLayout:JMLScorePageLayout,Lyrics:JMLScoreLyrics,MUSICXML_STEP_NAMES:["C","D","E","F","G","A","B"],DEFAULT_METER:{top:4,bottom:4},DEFAULT_CLEF_ID:'clef-g',EPSILON:.0001,
   KeySignatures:{parse:tonic=>({tonic})},durationById:id=>({id,ticks:durations[id]||4}),normalizeMeter:m=>m,
   staffStepForDiatonicStep:d=>-d,accidentalBySemitone:a=>({'-2':'double-flat','-1':'flat',0:'natural',1:'sharp',2:'double-sharp'}[a]),
   musicXmlDurationInfo:(ticks,durationId,dots)=>({durationId,dots}),makeEntry:(type,d)=>({id:'n'+(++id),type,ticks:d.ticks,voice:1}),

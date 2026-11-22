@@ -853,3 +853,9 @@ En **Archivo > Guardar o exportar** elija PDF, Imagen PNG o MusicXML. Si el proy
 La exportación ajusta los espacios según la opción elegida, sin alterar la vista de trabajo ni su botón TAB. MusicXML con tablatura conserva afinación, cuerdas y trastes; al reabrir en este editor sus TAB generadas no duplican la melodía. Si una digitación no puede representarse dentro de los 22 trastes, se informa del compás para corregirla o elegir solo pentagramas.
 
 Los menús superiores se presentan como listas de texto, sin iconos ni encabezados repetidos. Un clic fuera o Escape cierra el menú. Ayuda > Atajos del teclado reúne las combinaciones disponibles.
+
+## 48. Biblioteca Melodías y editor del metrónomo
+
+**Archivo > Melodías** abre el catálogo común de AAC. Busque por título o compositor y pulse un tema para editarlo. Se utiliza la partitura digital de la biblioteca; los archivos originales permanecen intactos. También puede importar MEI, MusicXML o MXL desde Archivo.
+
+El metrónomo utiliza este mismo motor para sus partituras, con un solo instrumento y borradores separados de Editor Crescendo. Puede conservar los dos pentagramas del piano y las voces independientes, editar y exportar con las mismas herramientas. Si importa MusicXML con varios instrumentos, seleccione la parte que quiere estudiar. La orquestación y la consola multicanal están disponibles en Editor Crescendo.

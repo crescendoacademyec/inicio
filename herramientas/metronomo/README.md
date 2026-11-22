@@ -1,6 +1,20 @@
 # Metrónomo Crescendo — lector avanzado
 
-Versión del metrónomo con header Crescendo, favicon y lector ampliado.
+El botón **Editor · Partituras / melodías** abre el mismo motor de notación de Editor Crescendo, configurado para un solo instrumento. Sus borradores y su biblioteca de proyectos se guardan por separado. El generador anterior se conserva en **Generador de ritmo**.
+
+## Editor de partituras
+
+- Archivo > Melodías abre el catálogo común de AAC con búsqueda por título y compositor. No se copian las partituras en cada aplicación.
+- Importación local de MEI, MusicXML, XML y MXL mediante el lector compartido. Si MusicXML contiene varias partes, el usuario elige una; se conservan sus pentagramas y sus voces.
+- Creación y edición con cuatro voces por pentagrama, acordes, anacrusas, cambios de clave, tonalidad, compás y tempo, figuras, silencios, grupos irregulares, ligaduras, articulaciones, cifrado, dinámicas, títulos, créditos, letra, tablaturas y distribución de compases.
+- Reproducción con el mismo recorrido de Crescendo: repeticiones, casillas, D.C., D.S., Fine, Coda y expansiones MEI. Cursor por nota, swing, selección para iniciar, pausa y metrónomo integrado.
+- Guardado de proyecto y exportación MusicXML, MIDI, PDF e imagen PNG. Exportación de pentagramas con o sin TAB.
+- Las funciones de orquestación y consola multicanal se reservan a Editor Crescendo. El cambio de sonido afecta a todo el instrumento, incluyendo ambos pentagramas del piano.
+- Al regresar al metrónomo se detienen la melodía, el clic y el audio de referencia. El editor conserva el trabajo para volver a abrirlo.
+
+### Verificación de biblioteca
+
+La regresión nativa está en `auditorias/editor-score-import.html`. Comprueba notas, compases, metadatos, voces y recorridos con las 42 entradas actuales y los 19 originales MEI. **Ask Me Why** contiene duraciones incompatibles con su compás 11; se informa del error antes de sustituir la partitura abierta. No se recortan ni se inventan notas para ocultar ese problema de la fuente.
 
 ## Lector
 - Imagen
@@ -17,7 +31,7 @@ Versión del metrónomo con header Crescendo, favicon y lector ampliado.
 - Zoom
 
 ## Publicación
-Se conserva `<base href="/metronomo/">` según la ruta aprobada.
+Las rutas relativas funcionan tanto en localhost como bajo `/inicio/` en GitHub Pages.
 La referencia a `fondo_metronomo.jpg` fue eliminada porque ese recurso no existe.
 
 ### Escritura y cifrado de acordes

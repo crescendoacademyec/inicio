@@ -682,7 +682,8 @@
   <link rel="stylesheet" href="../../shared/crescendo-identity.css?v=20261004">
 
 <style>.rhythm-score-wrap>.rhythm-score-overlay{pointer-events:none}.integrated-tab{font-family:system-ui,sans-serif}.measure-selection{fill:#d5aa4526;stroke:#b88820;stroke-width:1;pointer-events:none}</style>
-<style>#rhythmMouse svg{width:22px;height:22px}.rhythm-tab-toggle{gap:6px;align-items:center;white-space:nowrap}.rhythm-tab-toggle input[type="checkbox"]{width:15px!important;height:15px!important;min-width:15px!important;min-height:0!important;margin:0;appearance:auto}</style><style>#rhythmScore.has-tab{max-height:var(--rhythm-system-height);height:auto}#rhythmScore.has-tab.has-multiple-systems{height:var(--rhythm-system-height)}</style></head>
+<style>#rhythmMouse svg{width:22px;height:22px}.rhythm-tab-toggle{gap:6px;align-items:center;white-space:nowrap}.rhythm-tab-toggle input[type="checkbox"]{width:15px!important;height:15px!important;min-width:15px!important;min-height:0!important;margin:0;appearance:auto}</style><style>#rhythmScore.has-tab{max-height:var(--rhythm-system-height);height:auto}#rhythmScore.has-tab.has-multiple-systems{height:var(--rhythm-system-height)}</style><link rel="stylesheet" href="score-editor-workspace.css?v=20261121-3">
+</head>
 <body>
 
 <header class="topbar">
@@ -731,7 +732,7 @@
                 </button>
                 <div class="basic-dropdown" id="presetDropdown"></div>
             </div>
-            <button type="button" class="basic-box preset-box" id="exerciseToggleBtn" aria-expanded="false"><span class="basic-box-label">Práctica</span><span class="basic-box-value">Ejercicios / editor</span></button>
+            <button type="button" class="basic-box preset-box" id="exerciseToggleBtn" aria-expanded="false"><span class="basic-box-label">Editor</span><span class="basic-box-value">Partituras / melodías</span></button>
             <div class="basic-controls" id="basicControls">
               <div class="basic-select-wrap">
                 <button type="button" class="basic-box" id="basicCompasBtn">
@@ -784,7 +785,7 @@
         <div class="rhythm-workspace" id="rhythmWorkspace"></div>
 
         <section class="rhythm-lab" id="rhythmLab" aria-labelledby="rhythmLabTitle" hidden>
-            <div class="rhythm-lab-head"><div><h2 id="rhythmLabTitle">Laboratorio de ritmo y feel</h2><p>Genera un compás completo, palméalos primero y después practícalo con distintas ubicaciones del clic.</p></div></div>
+            <div class="rhythm-lab-head"><div><h2 id="rhythmLabTitle">Laboratorio de ritmo y feel</h2><p>Genera un compás completo, palméalos primero y después practícalo con distintas ubicaciones del clic.</p></div><button type="button" id="rhythmLabClose">Ocultar ejercicios</button></div>
             <div class="rhythm-lab-controls">
                 <label>Compases<span class="rhythm-stepper"><button type="button" id="rhythmBarsMinus" aria-label="Quitar un compás">−</button><input id="rhythmBars" type="number" min="1" max="256" value="4" inputmode="numeric"><button type="button" id="rhythmBarsPlus" aria-label="Añadir un compás">+</button></span></label>
                 <label>Clave<select id="rhythmClef"><option value="treble">Sol</option><option value="bass">Fa</option><option value="grand">Sol y fa</option></select></label>
@@ -1008,6 +1009,10 @@
     </div>
 </div>
 
+<section id="scoreEditorWorkspace" class="metronome-score-editor" aria-label="Editor del metrónomo" hidden>
+<header><button type="button" id="scoreEditorBack">← Volver al metrónomo</button><strong>Editor del metrónomo</strong><button type="button" id="scoreEditorRhythmGenerator">Generador de ritmo</button></header>
+<iframe id="scoreEditorFrame" title="Editor de partituras del metrónomo" allow="autoplay"></iframe>
+</section>
 <footer class="site-footer">
     <span>Crescendo Academy · <span id="footerYear"></span>. Todos los derechos reservados.</span>
 </footer>
@@ -1015,6 +1020,7 @@
 <script src="../../shared/rhythm-engine.js?v=20260918-locking-in"></script>
 <script src="../../shared/music-practice.js?v=20261014-engraving-2"></script>
 <script src="../editor-crescendo/src/bravura-palette-paths.js?v=20261014-preview-1"></script>
+<script src="score-editor-workspace.js?v=20261121-3"></script>
 <script src="rhythm-structure.js?v=20261120-stage3-1"></script>
 <script src="rhythm-marks.js?v=20261120-stage3-1"></script>
 <script src="../../shared/overflow-writing.js?v=20261022-1"></script>
@@ -1718,18 +1724,12 @@
     UI.rhythmClef.addEventListener('change',()=>{selectedRhythmNote=null;activeRhythmStaff=UI.rhythmClef.value==='bass'?2:1;renderRhythmScore()});
     [UI.rhythmFigure,UI.rhythmExercise,UI.rhythmPlacement].forEach(el=>el.addEventListener('change',renderRhythmScore));
     UI.beatsSel.addEventListener('change',()=>setRhythmSignature('meter',currentRhythmMeter(),0));
-    UI.exerciseToggleBtn.addEventListener('click',()=>{const opening=UI.rhythmLab.hidden;UI.rhythmLab.hidden=!opening;UI.exerciseToggleBtn.classList.toggle('open',opening);UI.exerciseToggleBtn.setAttribute('aria-expanded',String(opening));if(!opening)rhythmAudio?.stop();if(opening){renderRhythmScore();UI.rhythmLab.scrollIntoView({behavior:'smooth',block:'nearest'})}});
+    const advancedScoreEditor=window.CrescendoMetronomeScoreEditor.create({stop:()=>{rhythmAudio?.stop();if(isPlaying)toggleMetronome();},tempo:()=>tempo,openRhythm:()=>{UI.rhythmLab.hidden=false;renderRhythmScore();UI.rhythmLab.scrollIntoView({behavior:'smooth',block:'nearest'});}});
     try{const saved=JSON.parse(localStorage.getItem('crescendo-rhythm-draft')||'null');if(saved&&Array.isArray(saved.events)&&Array.isArray(saved.marks)&&saved.bars>=1&&saved.bars<=rhythmStructure.MAX_BARS){rhythmCreators=window.CrescendoScoreHeading.normalize(saved.creators);rhythmTitle=saved.title||'Ejercicio de ritmo';rhythmEditorEvents=saved.events;rhythmMarks=saved.marks;if(saved.baseMeter&&!rhythmMarks.some(m=>m.type==='meter'&&m.bar===0))rhythmMarks.push({type:'meter',bar:0,meter:saved.baseMeter});UI.rhythmBars.value=String(saved.bars);if(['treble','bass','grand'].includes(saved.clef))UI.rhythmClef.value=saved.clef;}}catch(_){}
     rhythmDraftReady=true;renderRhythmScore();
-    const importButton=document.createElement('button');importButton.type='button';importButton.textContent='Importar partitura';importButton.className='rhythm-import-button';
-    const importInput=document.createElement('input');importInput.type='file';importInput.accept='.mei,.musicxml,.xml,.mxl';importInput.hidden=true;
-    saveButton.parentElement.append(importButton,importInput);importButton.addEventListener('click',()=>importInput.click());
-    importInput.addEventListener('change',async()=>{const file=importInput.files[0];if(!file)return;try{
-      const text=(await window.CrescendoScoreFile.readXml(file)).content,result=window.CrescendoRhythmImport.parse(text),before=rhythmSnapshot();
-      const initialTempo=result.marks.find(m=>m.type==='tempo'&&m.bar===0&&!m.offset);if(initialTempo){const unit={whole:4,half:2,quarter:1,eighth:.5,sixteenth:.25}[initialTempo.unitDurationId]||1;tempo=Math.max(20,Math.min(400,initialTempo.bpm*unit*(2-2**(-(initialTempo.dots||0)))));updateBpmUI();}
-      rhythmCreators=result.creators;rhythmTitle=result.title||file.name.replace(/\.[^.]+$/,'');rhythmEditorEvents=result.events;rhythmMarks=result.marks;UI.rhythmBars.value=String(result.bars);UI.rhythmClef.value=result.clef;selectedRhythmNote=null;rhythmHistory.commit(before,rhythmSnapshot());syncRhythmPalette();renderRhythmScore('Partitura importada: '+file.name+(result.warning?' · '+result.warning:''));
-    }catch(error){UI.rhythmStatus.textContent='No se pudo importar: '+error.message;}finally{importInput.value='';}});
-
+    const importButton=document.createElement('button');importButton.type='button';importButton.textContent='Abrir editor de partituras';importButton.className='rhythm-import-button';
+    saveButton.parentElement.append(importButton);importButton.addEventListener('click',()=>advancedScoreEditor.open());
+    document.getElementById('rhythmLabClose').addEventListener('click',()=>{rhythmAudio?.stop();UI.rhythmLab.hidden=true;UI.exerciseToggleBtn.focus();});
 
     // --- Pantalla completa (para proyectar en clase) ---
     UI.fullscreenBtn.addEventListener('click', () => { UI.fsView.classList.add('open'); });

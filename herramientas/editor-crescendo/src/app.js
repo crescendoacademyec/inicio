@@ -303,11 +303,11 @@
   let contextMenuEl = null;
 
   function storageGet(key) {
-    return Storage.getItem(key);
+    return Storage.getItem(window.JMLScoreWorkspace?.storageKey(key) || key);
   }
 
   function storageSet(key, value) {
-    return Storage.setItem(key, value);
+    return Storage.setItem(window.JMLScoreWorkspace?.storageKey(key) || key, value);
   }
 
   const ACCIDENTAL_SYMBOLS = {
@@ -567,8 +567,8 @@
     midiChordMode: false,
     midiAutoChordMode: false,
     midiCaptureStatus: "",
-    playbackInstrument: InstrumentSounds.readPreference(),
-    staffView: ["guitar","requinto"].includes(InstrumentSounds.readPreference()) ? "treble" : "both",
+    playbackInstrument: window.JMLScoreWorkspace?.singleInstrument ? "piano" : InstrumentSounds.readPreference(),
+    staffView: !window.JMLScoreWorkspace?.singleInstrument && ["guitar","requinto"].includes(InstrumentSounds.readPreference()) ? "treble" : "both",
     midiPlayback: {
       active: false,
       starting: false,
@@ -863,12 +863,14 @@
   }
 
   function addSystem(kind = "staff") {
+    if(window.JMLScoreWorkspace?.singleInstrument && kind!=="staff")return;
     closePaletteDrawer();
     syncActiveSystemMeasures();
     saveHistory();
     const insertIndex = activeSystemIndex() + 1;
     state.systems.splice(insertIndex, 0, createStaffSystem(kind, {
-      initialClefId: kind === "percussion-line" ? "clef-percussion" : DEFAULT_CLEF_ID
+      initialClefId: kind === "percussion-line" ? "clef-percussion" : DEFAULT_CLEF_ID,
+      ...(window.JMLScoreWorkspace?.singleInstrument ? {instrumentId:state.systems[0].instrumentId,partId:state.systems[0].partId,name:state.systems[0].name}: {})
     }));
     setActiveSystemIndex(insertIndex);
     clearEntrySelection();
@@ -1052,8 +1054,14 @@
     } catch (error) { state.history.pop(); restore(rollback); throw error; }
   }
 
-  function changeScoreInstrument(index, changes) {
-    saveHistory();
+  function changeScoreInstrument(index, changes, options = {}) {
+    if(window.JMLScoreWorkspace?.singleInstrument && changes.instrumentId && options.group!==false){
+      saveHistory();const count=scoreSystems().length,partId=createSystemId();
+      for(let i=0;i<count;i++)changeScoreInstrument(i,{...changes},{history:false,group:false,render:false});
+      state.systems.forEach((system,i)=>{system.partId=partId;if(changes.instrumentId==='piano')system.initialClefId=i?'clef-f':'clef-g';});
+      setActiveSystemIndex(index);invalidateLayoutCache();render();return;
+    }
+    if(options.history!==false)saveHistory();
     if (changes.instrumentId) stopMidiPlayback();
     const system = scoreSystems()[index]; if (!system) return;
     if (changes.instrumentId && changes.instrumentId !== system.instrumentId) {
@@ -1081,7 +1089,7 @@
     Object.assign(system, changes);
     for (const sibling of scoreSystems().filter(s=>s.partId===system.partId)) for(const key of ['muted','solo','volume','pan','name']) if(Object.hasOwn(changes,key))sibling[key]=changes[key];
     state.midiPlayback.output?.setMix?.(scoreSystems());
-    setActiveSystemIndex(index); invalidateLayoutCache(); render();
+    setActiveSystemIndex(index); invalidateLayoutCache(); if(options.render!==false)render();
   }
 
   function moveScoreInstrument(index, delta) {
@@ -2479,7 +2487,7 @@
       } catch {
         // Keep the original error; the validated snapshot should normally restore cleanly.
       }
-      setExerciseStatus("El ejercicio no pudo cargarse y el documento abierto se conservó.");
+      setExerciseStatus("El ejercicio no pudo cargarse y el documento abierto se conservó. "+(error.message||""));
       return false;
     }
   }
@@ -2487,6 +2495,7 @@
   async function loadSelectedExercise() {
     const selected = selectedExerciseDocument();
     if (!selected) return false;
+    if(window.JMLScoreWorkspace?.singleInstrument){try{window.JMLScoreWorkspace.assertSingle(selected.payload);}catch(error){await showEditorMessage(error.message);return false;}}
     if (!(await confirmDiscardCanvasChanges("cargar otro ejercicio"))) return false;
     return restoreExerciseDocument(selected, { source: selected.source, dirty: false });
   }
@@ -2534,6 +2543,7 @@
           : (parsed?.payload || parsed?.state || parsed);
         const validation = Exercises.validatePayload(rawPayload);
         if (!validation.valid) throw new Error(validation.error);
+        if(window.JMLScoreWorkspace?.singleInstrument)window.JMLScoreWorkspace.assertSingle(rawPayload);
         const exercise = normalizeExerciseDocument(parsed);
         if (!exercise) throw new Error("Formato no reconocido");
         if (!(await confirmDiscardCanvasChanges("importar el ejercicio"))) return;
@@ -2560,6 +2570,7 @@
         setExerciseStatus(`Importado: ${imported.title}`);
       } catch (error) {
         setExerciseStatus(error?.message || "No pude importar ese JSON.");
+        if(window.JMLScoreWorkspace?.singleInstrument)await showEditorMessage(error?.message||"No se pudo abrir el proyecto.");
       }
     });
     reader.readAsText(file);
@@ -2597,7 +2608,7 @@
   }
 
   function requestProjectSettings(isNew=false) {
-    return window.JMLScoreProjectSettings.open({isNew,current:projectSettingsData(),instruments:InstrumentSounds.instruments,parseKey:parseKeySignatureInput,apply:isNew?createNewExercise:applyProjectSettings});
+    return window.JMLScoreProjectSettings.open({isNew,maxParts:window.JMLScoreWorkspace?.singleInstrument?1:Infinity,current:projectSettingsData(),instruments:InstrumentSounds.instruments,parseKey:parseKeySignatureInput,apply:isNew?createNewExercise:applyProjectSettings});
   }
 
   function applyProjectSettings(config) {
@@ -2616,7 +2627,7 @@
   }
 
   async function createNewExercise(config) {
-    config=window.JMLScoreProjectSettings.validate(config,{instruments:InstrumentSounds.instruments,parseKey:parseKeySignatureInput,isNew:true});
+    config=window.JMLScoreProjectSettings.validate(config,{instruments:InstrumentSounds.instruments,parseKey:parseKeySignatureInput,isNew:true,maxParts:window.JMLScoreWorkspace?.singleInstrument?1:Infinity});
     if (!(await confirmDiscardCanvasChanges("crear un proyecto nuevo"))) return false;
     stopMidiPlayback();
     clearScore();
@@ -2668,11 +2679,12 @@
   }
 
   function restore(snapshot) {
+    const data = JSON.parse(snapshot);
+    if(window.JMLScoreWorkspace?.singleInstrument)window.JMLScoreWorkspace.assertSingle(data);
     markJazzSwingCacheDirty();
     scoreModelDirty = true;
     canvasAutosaveDirty = true;
     invalidateLayoutCache();
-    const data = JSON.parse(snapshot);
     state.pageLayout = PageLayout.normalize(data.pageLayout || {});
     if (typeof data.scoreTitle === "string" && exerciseTitleInput) exerciseTitleInput.value = data.scoreTitle;
     if (typeof data.scoreDescription === "string" && typeof exerciseDescriptionInput!=="undefined" && exerciseDescriptionInput) exerciseDescriptionInput.value = data.scoreDescription;
@@ -11160,6 +11172,8 @@
     let text;
     try {
       text = (await window.CrescendoScoreFile.readXml(file)).content;
+      if(window.JMLScoreWorkspace)text=await window.JMLScoreWorkspace.prepareImport(text);
+      if(text===null)return false;
     } catch (error) {
       await showEditorMessage("No se pudo abrir la partitura: " + (error?.message || "archivo no válido"));
       return false;
@@ -15612,7 +15626,7 @@
     menu.appendChild(contextMenuGroup("Voz", voiceContextItems()));
     menu.appendChild(contextMenuGroup("Sistemas", [
       contextMenuButton("Agregar pentagrama", addStaffSystem),
-      contextMenuButton("Agregar línea de percusión", addPercussionLineSystem),
+      ...(window.JMLScoreWorkspace?.singleInstrument?[]:[contextMenuButton("Agregar línea de percusión", addPercussionLineSystem)]),
       contextMenuButton("Quitar sistema activo", removeActiveSystem)
     ]));
     menu.appendChild(contextMenuGroup("Estructura", [
@@ -16664,7 +16678,7 @@
       renderScenePalette();
       return;
     }
-    const items = palettes[paletteId] || palettes.figures;
+    const items = (palettes[paletteId] || palettes.figures).filter(item=>!window.JMLScoreWorkspace?.singleInstrument || !["orchestrate-voices","add-percussion-line"].includes(item.id));
     durationTools.innerHTML = "";
     items.forEach((item) => {
       if (item.selectionClassPicker) {
@@ -24017,6 +24031,7 @@
   async function saveExportBlob(blob,filename,options={}) {
     const handle=options.fileHandle || (options.directory ? await options.directory.getFileHandle(filename,{create:true}) : null);
     if(handle){const writer=await handle.createWritable();try{await writer.write(blob);await writer.close();}catch(error){await writer.abort?.();throw error;}return;}
+    if(window.JMLScoreWorkspace){window.JMLScoreWorkspace.download(blob,filename);return;}
     const url=URL.createObjectURL(blob),link=document.createElement("a");link.href=url;link.download=filename;link.click();setTimeout(()=>URL.revokeObjectURL(url),30000);
   }
 
@@ -24088,8 +24103,8 @@
   document.documentElement.dataset.jmlEditorBoot = "palette-ready";
   renderMidiFigureStrip();
   renderMidiKeyboard();
-  editorShell = IpadShell.setup({midiParts:midiExportParts,hasTabInstruments:()=>scoreSystems().some(system=>Guitar.forInstrument(system.instrumentId)),defaultTabs:()=>scoreSystems().some(system=>systemShowsTab(system))});
-  arrangementUi = Arrangement.mount({
+  editorShell = IpadShell.setup({singleInstrument:window.JMLScoreWorkspace?.singleInstrument,openMelodies:()=>window.JMLScoreWorkspace.openLibrary({importFile:importMusicXmlFile}),midiParts:midiExportParts,hasTabInstruments:()=>scoreSystems().some(system=>Guitar.forInstrument(system.instrumentId)),defaultTabs:()=>scoreSystems().some(system=>systemShowsTab(system))});
+  arrangementUi = window.JMLScoreWorkspace?.singleInstrument ? null : Arrangement.mount({
     systems: scoreSystems, active: activeSystemIndex, voice: activeVoice,
     activate: index => { setActiveSystemIndex(index); render(); },
     hasSelection: () => !!(state.selectedEntryIds.length || state.selectedNoteRefs.length || state.cursorEntryId || Number.isInteger(state.selectedMeasureIndex)),
@@ -24133,6 +24148,9 @@
   }
   document.documentElement.dataset.jmlEditorBoot = "admin-ready";
   if (!restoreCanvasAutosaveIfPresent()) render();
+  window.JMLScoreWorkspace?.mount({stop:()=>{stopMidiPlayback();stopEditorMetronome();activeRecordingController?.pause();stopRecordingPlaybackAnimation();}});
+  const workspaceBpm=Number(new URLSearchParams(window.location.search).get('bpm'));
+  if(window.JMLScoreWorkspace?.singleInstrument && !storageGet(CANVAS_AUTOSAVE_STORAGE_KEY) && workspaceBpm>=20 && workspaceBpm<=400)setPlaybackBpm(workspaceBpm);
   emitEditorState();
   document.documentElement.dataset.jmlEditorBoot = "render-ready";
   loadBundledExercises();

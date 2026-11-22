@@ -586,6 +586,7 @@
     sourceCommand('saveExerciseButton','Guardar en biblioteca');
     sourceCommand('exportExerciseButton','Guardar como…');
     const exportFileButton=fileCommand('Guardar o exportar…',()=>openExport(),'export');
+    if(options.openMelodies)fileCommand('Melodías…',options.openMelodies);
     fileCommand('Importar partitura…',()=>document.getElementById('importMusicXmlInput').click(),'import');
     documentPanel.append(element('hr','editor-file-divider'));
     fileCommand('Configurar proyecto…',()=>document.dispatchEvent(new CustomEvent('editor-project-settings')),'project');
@@ -751,7 +752,7 @@
       dialog.innerHTML='<form><h2>Guardar o exportar</h2><label>Formato<select name="format"><option value="pdf">PDF</option><option value="png">Imagen PNG</option><option value="musicxml">MusicXML</option><option value="midi">MIDI</option><option value="json">Proyecto editable (JSON)</option></select></label><fieldset data-midi-options hidden><label>Contenido MIDI<select name="midiScope"><option value="all">Conjunto completo · una pista por instrumento</option><option value="separate">Un MIDI por instrumento · archivo ZIP</option></select></label><label class="export-mix-check"><input type="checkbox" name="respectMix">Respetar mute y solos de la consola</label></fieldset><label data-notation-options>Contenido de la partitura<select name="notation"><option value="staves">Solo pentagramas</option><option value="tabs">Pentagramas y tablaturas</option></select></label><label>Nombre<input name="filename" required autocomplete="off"></label><div class="export-folder"><button type="button" data-folder>Elegir carpeta</button><span data-folder-name>Descargas del navegador</span></div><p data-folder-help></p><div class="export-actions"><button type="button" data-cancel>Cancelar</button><button type="submit">Exportar</button></div></form>';
       const name=dialog.querySelector('[name=filename]'),format=dialog.querySelector('[name=format]'),scope=dialog.querySelector('[name=midiScope]');name.value=heading.querySelector('h1').textContent;format.value=initialFormat;
       for(const part of options.midiParts?.()||[]){const option=document.createElement('option');option.value='part:'+part.id;option.textContent='Solo '+part.name;scope.append(option);}
-      dialog.querySelector('[name=notation]').value=options.defaultTabs?.()?'tabs':'staves';const updateMidi=()=>{dialog.querySelector('[data-midi-options]').hidden=format.value!=='midi';dialog.querySelector('[data-notation-options]').hidden=!['pdf','png','musicxml'].includes(format.value)||!options.hasTabInstruments?.();};format.onchange=updateMidi;updateMidi();
+      dialog.querySelector('[name=notation]').value=options.defaultTabs?.()?'tabs':'staves';const updateMidi=()=>{dialog.querySelector('[data-midi-options]').hidden=format.value!=='midi'||!!options.singleInstrument;dialog.querySelector('[data-notation-options]').hidden=!['pdf','png','musicxml'].includes(format.value)||!options.hasTabInstruments?.();};format.onchange=updateMidi;updateMidi();
       let directory=null;
       const folder=dialog.querySelector('[data-folder]');
       folder.disabled=!global.showDirectoryPicker;

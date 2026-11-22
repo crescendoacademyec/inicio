@@ -27,8 +27,8 @@
   vibraphone:{name:'Vibráfono',bank:'vibraphone',program:12,family:'Teclados'}
  }).map(([id,sound])=>[id,Object.freeze({clef:'clef-g',transpose:0,diatonic:0,...sound})])));
  const normalize=id=>Object.hasOwn(instruments,id)?id:'piano';
- function readPreference(){try{return normalize(root.localStorage?.getItem('crescendo-editor-instrument'));}catch{return 'piano';}}
- function remember(id){try{root.localStorage?.setItem('crescendo-editor-instrument',normalize(id));}catch{}}
+ function readPreference(){try{return normalize(root.localStorage?.getItem(root.JMLScoreWorkspace?.storageKey('crescendo-editor-instrument')||'crescendo-editor-instrument'));}catch{return 'piano';}}
+ function remember(id){try{root.localStorage?.setItem(root.JMLScoreWorkspace?.storageKey('crescendo-editor-instrument')||'crescendo-editor-instrument',normalize(id));}catch{}}
  function createLoader({getContext,loadInstrument,createOutput}){
   const cache=new Map();
   return async function load(id,{preload=false,track=''}={}){
