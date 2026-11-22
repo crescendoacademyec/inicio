@@ -839,6 +839,7 @@ Cada comando con atajo lo muestra a su derecha. En macOS se usa ⌘; en Windows 
 | Configurar página | ⌘⇧P | Ctrl+Shift+P |
 | Historial | ⌘⇧H | Ctrl+Shift+H |
 | Seleccionar todo | ⌘⇧A | Ctrl+Shift+A |
+| Reorganizar partitura | ⌘⌥⇧R | Ctrl+Alt+Shift+R |
 | Añadir instrumentos | F8 | F8 |
 | Consola de canales | F9 | F9 |
 | Manual | F1 | F1 |

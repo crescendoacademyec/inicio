@@ -17,3 +17,9 @@ test('existing note-entry shortcuts are only annotated, and shifted digit chords
  let called=0,handler;const control={textContent:'Compás',getAttribute:()=>null,setAttribute(){},append(){},click(){called++;}},doc={querySelector:s=>s==='#meter'?control:null,createElement:()=>({setAttribute(){}}),addEventListener:(_,fn)=>handler=fn};S.install({document:doc,definitions:[{selector:'#meter',key:'m',shift:true,existing:true}]});handler(event('M',{shiftKey:true}));assert.equal(called,0);
  assert.equal(S.matches(event(')',{code:'Digit0',metaKey:true,shiftKey:true}),{key:'0',code:'Digit0',primary:true,shift:true}),true);
 });
+test('Reorganize leaves the browser reload shortcut untouched and uses its own distinct chord',()=>{
+ const spec=S.rules.find(r=>r.selector.includes('#reflowButton'));
+ let clicks=0,handler;const control={textContent:'Reorganizar',getAttribute:()=>null,setAttribute(){},append(){},click(){clicks++;}},doc={querySelector:s=>s===spec.selector?control:null,createElement:()=>({setAttribute(){}}),addEventListener:(_,fn)=>handler=fn};S.install({document:doc,definitions:[spec]});
+ for(const primary of ['metaKey','ctrlKey']){const browserReload=event('R',{[primary]:true,shiftKey:true});handler(browserReload);assert.equal(browserReload.prevented,undefined);const reorganize=event('R',{[primary]:true,shiftKey:true,altKey:true});handler(reorganize);assert.equal(reorganize.prevented,true);}
+ assert.equal(clicks,2);assert.equal(S.format(spec,true),'⌘⌥⇧R');assert.equal(S.matches(event('r',{metaKey:true,altKey:true}),spec),false);
+});
