@@ -8000,6 +8000,10 @@ function handleSvgClick(event) {
       return;
     }
 
+    if (kind === "slot" && target.dataset.field === "chord" && event.detail > 1) {
+      event.stopPropagation();
+      return;
+    }
     if (shouldOpenReharmonizationMenu(target)) {
       showReharmonizationMenu(target, event.clientX, event.clientY);
       event.stopPropagation();
@@ -8013,6 +8017,14 @@ function handleSvgClick(event) {
 function handleSvgDoubleClick(event) {
   event.preventDefault();
   event.stopPropagation();
+  const target = event.target.closest("[data-kind]");
+  if (target?.dataset.kind !== "slot" || target.dataset.field !== "chord") return;
+  rhythmEditingActive = false;
+  selectedConnector = null;
+  selected.page = Number(target.dataset.page);
+  selected.measure = Number(target.dataset.measure);
+  selectedSlot = Number(target.dataset.slot);
+  showInlineEditor(target, event.clientX, event.clientY);
 }
 
 function showInlineEditor(target, clientX = null, clientY = null) {
@@ -8077,6 +8089,7 @@ function showInlineEditor(target, clientX = null, clientY = null) {
 
   editor.dataset.suppressedHiddenAnalysisValue = suppressHiddenAnswer ? "true" : "";
   editor.dataset.dirty = "";
+  editor.dataset.initialValue = String(current ?? "");
   editor.value = editorValue;
   editor.style.left = `${Math.max(8, Math.min(window.innerWidth - width - 8, left))}px`;
   editor.style.top = `${Math.max(48, Math.min(window.innerHeight - 40, top))}px`;
@@ -8116,29 +8129,34 @@ function canShowCurrentHiddenAnalysisValue(slot, field) {
   return isAnalysisVisible() || isHiddenAnalysisFieldEdited(slot, field);
 }
 
+function inlineValueHasChanges(value) {
+  const raw = String(value ?? "");
+  if (!raw.trim()) return false;
+  const editor = els.inlineEditor;
+  // A student's typed answer must become visible even if it matches a hidden
+  // answer. Merely focusing that hidden answer must leave the analysis intact.
+  if (editor.dataset.suppressedHiddenAnalysisValue === "true" && editor.dataset.dirty === "true") return true;
+  return raw !== String(editor.dataset.initialValue ?? "");
+}
+
 function hideInlineEditor(cancel) {
   if (els.inlineEditor.classList.contains("hidden")) return;
   const context = inlineContext;
-  const suppressedHiddenAnalysisValue = els.inlineEditor.dataset.suppressedHiddenAnalysisValue === "true";
-  const editorWasChanged = els.inlineEditor.dataset.dirty === "true";
   const rawValue = els.inlineEditor.value;
+  const changed = !cancel && context && inlineValueHasChanges(rawValue);
   els.inlineEditor.classList.add("hidden");
   els.inlineEditor.classList.remove("noteTextEditor");
   els.inlineEditor.dataset.suppressedHiddenAnalysisValue = "";
   els.inlineEditor.dataset.dirty = "";
+  els.inlineEditor.dataset.initialValue = "";
   hideDegreeSuggestionMenu();
 
-  if (!cancel && context) {
-    if (suppressedHiddenAnalysisValue && !editorWasChanged && !String(rawValue || "").trim()) {
-      inlineContext = null;
-      return;
-    }
+  if (changed) {
     setValueFromContext(context, rawValue);
     setDirty(true);
     evaluationIssues.clear();
     renderAll(false);
   }
-
   inlineContext = null;
 }
 
@@ -9488,7 +9506,6 @@ function hideDegreeSuggestionMenu() {
 }
 
 function shouldOpenReharmonizationMenu(target) {
-  if (assistanceMode !== "assisted") return false;
   if (!window.Reharmonization) return false;
   if (target?.dataset?.kind !== "slot" || target.dataset.field !== "chord") return false;
   const measure = song.pages?.[Number(target.dataset.page)]?.measures?.[Number(target.dataset.measure)];
@@ -10063,14 +10080,12 @@ function moveInlineEditor(direction) {
   const currentRank = inlineNavigationRank(context);
   if (currentRank === null) return;
 
-  const suppressedHiddenAnalysisValue = els.inlineEditor.dataset.suppressedHiddenAnalysisValue === "true";
-  const editorWasChanged = els.inlineEditor.dataset.dirty === "true";
   const rawValue = els.inlineEditor.value;
-  if (!(suppressedHiddenAnalysisValue && !editorWasChanged && !String(rawValue || "").trim())) {
+  if (inlineValueHasChanges(rawValue)) {
     setValueFromContext(context, rawValue);
+    setDirty(true);
+    evaluationIssues.clear();
   }
-  setDirty(true);
-  evaluationIssues.clear();
   inlineContext = null;
   els.inlineEditor.classList.add("hidden");
   els.inlineEditor.classList.remove("noteTextEditor");
@@ -10125,9 +10140,8 @@ function shouldCommitInlineEndingToken(key) {
 function commitInlineEndingToken(key) {
   if (!isChordInlineContext(inlineContext)) return;
   const context = { ...inlineContext };
-  commitInlineChordOrStructure(context, inlineEditorValueWithKey(key));
-  setDirty(true);
-  evaluationIssues.clear();
+  const commitResult = commitInlineChordOrStructure(context, inlineEditorValueWithKey(key));
+  if (commitResult.changed) { setDirty(true); evaluationIssues.clear(); }
   inlineContext = null;
   els.inlineEditor.classList.add("hidden");
   els.inlineEditor.classList.remove("noteTextEditor");
@@ -10185,8 +10199,7 @@ function moveChordInlineEditor(direction) {
   if (currentRank === null) return;
 
   const commitResult = commitInlineChordOrStructure(context, els.inlineEditor.value);
-  setDirty(true);
-  evaluationIssues.clear();
+  if (commitResult.changed) { setDirty(true); evaluationIssues.clear(); }
   inlineContext = null;
   els.inlineEditor.classList.add("hidden");
   els.inlineEditor.classList.remove("noteTextEditor");
@@ -10216,9 +10229,8 @@ function moveChordInlineEditorToNextMeasure() {
   if (els.inlineEditor.classList.contains("hidden") || !isChordInlineContext(inlineContext)) return;
 
   const context = { ...inlineContext };
-  commitInlineChordOrStructure(context, els.inlineEditor.value);
-  setDirty(true);
-  evaluationIssues.clear();
+  const commitResult = commitInlineChordOrStructure(context, els.inlineEditor.value);
+  if (commitResult.changed) { setDirty(true); evaluationIssues.clear(); }
   inlineContext = null;
   els.inlineEditor.classList.add("hidden");
   els.inlineEditor.classList.remove("noteTextEditor");
@@ -10257,10 +10269,11 @@ function showChordInlineTargetForContext(context) {
 }
 
 function commitInlineChordOrStructure(context, value) {
+  if (!inlineValueHasChanges(value)) return { changed: false };
   const token = normalizeInlineStructureToken(value);
   if (!token) {
     setValueFromContext(context, value);
-    return {};
+    return { changed: true };
   }
 
   const measure = song.pages?.[context.page]?.measures?.[context.measure];
@@ -10268,19 +10281,19 @@ function commitInlineChordOrStructure(context, value) {
 
   if (/^[12]\.$/.test(token)) {
     measure.ending = token;
-    return { stayOnMeasure: true };
+    return { stayOnMeasure: true, changed: true };
   }
 
   if (token === "|:") {
     measure.leftBar = "|:";
-    return { stayOnMeasure: true };
+    return { stayOnMeasure: true, changed: true };
   }
 
   measure.rightBar = token;
   if (token === ":||" || token === "||" || token === "|||") {
     maybeAutoDetectFormFromBar(token, { force: true });
   }
-  return { nextMeasure: true };
+  return { nextMeasure: true, changed: true };
 }
 
 function getValueFromTarget(target) {

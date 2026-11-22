@@ -28,10 +28,18 @@ function chromaticPitch(note,direction){
  const name=(direction>0?['C','C#','D','D#','E','F','F#','G','G#','A','A#','B']:['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'])[((midi%12)+12)%12];
  return name+(Math.floor(midi/12)-1);
 }
-function transposeHead(events,marks,index,head,direction){
+function transposeHead(events,marks,index,head,direction,{octave=false,diatonic=false}={}){
  const entry=events[index];if(!entry||entry.kind==='rest')return false;
  const sounding=resolve(events,marks)[index],notes=[...(sounding.notes||[sounding.note])];if(!notes[head])return false;
- const next=chromaticPitch(notes[head],direction),pitch=parsePitch(next),diatonic=pitch.octave*7+'CDEFGAB'.indexOf(pitch.letter),staffIndex=((entry.staff||1)===2?28:40)-diatonic;
+ const current=parsePitch(notes[head]),delta=direction>0?1:-1;
+ let next=chromaticPitch(notes[head],direction);
+ if(octave)next=current.letter+symbols[current.explicit||'natural']+(current.octave+delta);
+ else if(diatonic){
+  const raw=parsePitch((entry.notes||[entry.note])[head]),step=current.octave*7+'CDEFGAB'.indexOf(current.letter)+delta,letter='CDEFGAB'[((step%7)+7)%7];
+  const explicit=entry.accidentalsByNote?.[raw.plain]??((entry.notes?.length||1)===1?entry.accidental:null)??raw.explicit;
+  next=letter+symbols[explicit||signatureAccidental(letter,keyAt(marks,entry.bar||0))]+Math.floor(step/7);
+ }
+ const pitch=parsePitch(next),pitchStep=pitch.octave*7+'CDEFGAB'.indexOf(pitch.letter),staffIndex=((entry.staff||1)===2?28:40)-pitchStep;
  if(staffIndex< -8||staffIndex>20||notes.some((n,i)=>i!==head&&parsePitch(n).plain===pitch.plain))return false;
  // Pin each chord head to its sounding pitch before moving one of them.
  notes[head]=next;entry.note=notes[0];if(entry.notes)entry.notes=notes;

@@ -56,6 +56,15 @@ function append(state,events,note,capacity,bars,staff=1,position=null,marks=[]){
  if(linking){const target=events.at(-1);decorate(state,events,{bar:target.bar,beat:target.offset||0},staff,capacity,marks);}
  return '';
 }
+// Keep the actual written head active, including a new head added to a chord.
+function writtenSelection(events,{note,staff=1,position=null,grace=false,rest=false}={}){
+ if(rest)return null;
+ const matches=e=>(e.staff||1)===staff&&e.kind!=='rest'&&!!e.grace===!!grace;
+ const index=position?events.findLastIndex(e=>matches(e)&&(e.bar||0)===position.bar&&Math.abs((e.offset||0)-position.beat)<1e-7):events.findLastIndex(matches);
+ if(index<0)return null;
+ const plain=Structure.parsePitch(note).plain,head=(events[index].notes||[events[index].note]).findIndex(n=>Structure.parsePitch(n).plain===plain);
+ return head<0?null:{index,head};
+}
 function eraseHead(events,index,head=0){
  const entry=events[index];if(!entry)return false;
  if(entry.notes?.length>1){
@@ -300,5 +309,5 @@ function generate({capacity=4,bars=4,kind='steady',base=1,clef='treble',random=M
 }
 
 function history(){const past=[],future=[];return {get canUndo(){return past.length>0;},get canRedo(){return future.length>0;},commit(before,after){if(before===after)return;past.push(before);if(past.length>100)past.shift();future.length=0;},undo(current){if(!past.length)return null;future.push(current);return past.pop();},redo(current){if(!future.length)return null;past.push(current);return future.pop();}};}
-const api={clampStaffIndex,diatonic,noteAtIndex,stemDown,noteGraphic,history,decorate,beamGroups,generate,gridStep,render,notation,TICKS,durations,ticks,factor,create,select,append,eraseHead,replaceDuration,overflowPlan,writeOverflow};if(typeof module!=='undefined')module.exports=api;else root.CrescendoRhythmWriting=api;
+const api={clampStaffIndex,diatonic,noteAtIndex,stemDown,noteGraphic,history,decorate,beamGroups,generate,gridStep,render,notation,TICKS,durations,ticks,factor,create,select,append,writtenSelection,eraseHead,replaceDuration,overflowPlan,writeOverflow};if(typeof module!=='undefined')module.exports=api;else root.CrescendoRhythmWriting=api;
 })(typeof window==='undefined'?globalThis:window);

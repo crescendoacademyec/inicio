@@ -682,7 +682,7 @@
   <link rel="stylesheet" href="../../shared/crescendo-identity.css?v=20261004">
 
 <style>.rhythm-score-wrap>.rhythm-score-overlay{pointer-events:none}.integrated-tab{font-family:system-ui,sans-serif}.measure-selection{fill:#d5aa4526;stroke:#b88820;stroke-width:1;pointer-events:none}</style>
-<style>#rhythmMouse svg{width:22px;height:22px}.rhythm-tab-toggle{gap:6px;align-items:center;white-space:nowrap}.rhythm-tab-toggle input[type="checkbox"]{width:15px!important;height:15px!important;min-width:15px!important;min-height:0!important;margin:0;appearance:auto}</style><style>#rhythmScore.has-tab{max-height:var(--rhythm-system-height);height:auto}#rhythmScore.has-tab.has-multiple-systems{height:var(--rhythm-system-height)}</style><link rel="stylesheet" href="score-editor-workspace.css?v=20261121-3">
+<style>#rhythmMouse svg{width:22px;height:22px}.rhythm-tab-toggle{gap:6px;align-items:center;white-space:nowrap}.rhythm-tab-toggle input[type="checkbox"]{width:15px!important;height:15px!important;min-width:15px!important;min-height:0!important;margin:0;appearance:auto}</style><style>#rhythmScore.has-tab{max-height:var(--rhythm-system-height);height:auto}#rhythmScore.has-tab.has-multiple-systems{height:var(--rhythm-system-height)}</style><link rel="stylesheet" href="score-editor-workspace.css?v=20261122-generator-writing-1">
 </head>
 <body>
 
@@ -732,7 +732,7 @@
                 </button>
                 <div class="basic-dropdown" id="presetDropdown"></div>
             </div>
-            <button type="button" class="basic-box preset-box" id="exerciseToggleBtn" aria-expanded="false"><span class="basic-box-label">Editor</span><span class="basic-box-value">Partituras / melodías</span></button>
+            <button type="button" class="basic-box preset-box" id="exerciseToggleBtn" aria-expanded="false"><span class="basic-box-label">Práctica</span><span class="basic-box-value">Generador / escritura</span></button>
             <div class="basic-controls" id="basicControls">
               <div class="basic-select-wrap">
                 <button type="button" class="basic-box" id="basicCompasBtn">
@@ -785,7 +785,7 @@
         <div class="rhythm-workspace" id="rhythmWorkspace"></div>
 
         <section class="rhythm-lab" id="rhythmLab" aria-labelledby="rhythmLabTitle" hidden>
-            <div class="rhythm-lab-head"><div><h2 id="rhythmLabTitle">Laboratorio de ritmo y feel</h2><p>Genera un compás completo, palméalos primero y después practícalo con distintas ubicaciones del clic.</p></div><button type="button" id="rhythmLabClose">Ocultar ejercicios</button></div>
+            <div class="rhythm-lab-head"><div><h2 id="rhythmLabTitle">Generador y editor de ritmo</h2><p>Genera ejercicios o escribe tus notas. Usa ↑ / ↓ para cambiar semitonos y Shift + ↑ / ↓ para cambiar de octava.</p></div><button type="button" id="rhythmLabClose">Ocultar ejercicios</button></div>
             <div class="rhythm-lab-controls">
                 <label>Compases<span class="rhythm-stepper"><button type="button" id="rhythmBarsMinus" aria-label="Quitar un compás">−</button><input id="rhythmBars" type="number" min="1" max="256" value="4" inputmode="numeric"><button type="button" id="rhythmBarsPlus" aria-label="Añadir un compás">+</button></span></label>
                 <label>Clave<select id="rhythmClef"><option value="treble">Sol</option><option value="bass">Fa</option><option value="grand">Sol y fa</option></select></label>
@@ -1020,11 +1020,11 @@
 <script src="../../shared/rhythm-engine.js?v=20260918-locking-in"></script>
 <script src="../../shared/music-practice.js?v=20261014-engraving-2"></script>
 <script src="../editor-crescendo/src/bravura-palette-paths.js?v=20261014-preview-1"></script>
-<script src="score-editor-workspace.js?v=20261121-3"></script>
-<script src="rhythm-structure.js?v=20261120-stage3-1"></script>
+<script src="score-editor-workspace.js?v=20261122-generator-writing-1"></script>
+<script src="rhythm-structure.js?v=20261122-generator-writing-1"></script>
 <script src="rhythm-marks.js?v=20261120-stage3-1"></script>
 <script src="../../shared/overflow-writing.js?v=20261022-1"></script>
-<script src="rhythm-writing.js?v=20261120-stage3-1"></script>
+<script src="rhythm-writing.js?v=20261122-generator-writing-1"></script>
 <script src="../../shared/score-playback-route.js?v=20261120-editor-2"></script>
 <link rel="stylesheet" href="../../shared/score-document-heading.css?v=20261120-1">
 <script src="../../shared/score-document-heading.js?v=20261120-1"></script>
@@ -1331,7 +1331,7 @@
 
     UI.bpmDisp.title="Tempo en negras por minuto (♩ = BPM), también en 6/8 y 7/8";
 
-    // --- Laboratorio de ritmo y feel: generador y editor sobre un único pentagrama ---
+    // --- Generador y editor de ritmo: generador y editor sobre un único pentagrama ---
     let rhythmCreators=[],rhythmTitle='Ejercicio de ritmo',rhythmMarks=[],rhythmEditorEvents=[],activeRhythmStaff=1;let rhythmAudio=null;let rhythmPointerTarget=null;
     const rhythmStructure=window.CrescendoRhythmStructure,rhythmWriting=window.CrescendoRhythmWriting,activeRhythmTool=rhythmWriting.create(),rhythmHistory=rhythmWriting.history();
     let selectedRhythmNote=null;let rhythmDraftReady=false;
@@ -1509,7 +1509,7 @@
         rhythmPreview.replaceChildren();syncRhythmPalette();renderRhythmScore(error||'Figura repartida entre compases con ligaduras.');
       }finally{rhythmOverflowPending=false;}
     }
-    function addRhythmEditorEvent(note){const before=rhythmSnapshot();const message=rhythmWriting.append(activeRhythmTool,rhythmEditorEvents,note,rhythmTimeline().capacities,Math.max(1,Math.min(rhythmStructure.MAX_BARS,Number(UI.rhythmBars.value)||1)),activeRhythmStaff,rhythmPointerTarget,rhythmMarks);if(message&&rhythmWriting.overflowPlan(activeRhythmTool,rhythmEditorEvents,rhythmTimeline().capacities,Number(UI.rhythmBars.value)||4,activeRhythmStaff,rhythmPointerTarget)){offerRhythmOverflow(note);return;}if(!message){rhythmHistory.commit(before,rhythmSnapshot());}syncRhythmPalette();rhythmPreview.replaceChildren();renderRhythmScore(message||(['slur','tie'].includes(activeRhythmTool.tool)&&activeRhythmTool.decorationStart?'Dibuja o selecciona la segunda nota de la ligadura.':''));}
+    function addRhythmEditorEvent(note){const before=rhythmSnapshot();const message=rhythmWriting.append(activeRhythmTool,rhythmEditorEvents,note,rhythmTimeline().capacities,Math.max(1,Math.min(rhythmStructure.MAX_BARS,Number(UI.rhythmBars.value)||1)),activeRhythmStaff,rhythmPointerTarget,rhythmMarks);if(message&&rhythmWriting.overflowPlan(activeRhythmTool,rhythmEditorEvents,rhythmTimeline().capacities,Number(UI.rhythmBars.value)||4,activeRhythmStaff,rhythmPointerTarget)){offerRhythmOverflow(note);return;}if(!message){selectedRhythmNote=rhythmWriting.writtenSelection(rhythmEditorEvents,{note,staff:activeRhythmStaff,position:rhythmPointerTarget,grace:!!activeRhythmTool.grace,rest:!!activeRhythmTool.rest});rhythmHistory.commit(before,rhythmSnapshot());document.activeElement?.blur();}syncRhythmPalette();rhythmPreview.replaceChildren();renderRhythmScore(message||(['slur','tie'].includes(activeRhythmTool.tool)&&activeRhythmTool.decorationStart?'Dibuja o selecciona la segunda nota de la ligadura.':''));}
     function syncRhythmPalette(){renderRhythmMarks();UI.rhythmScoreOverlay.classList.toggle('is-erasing',activeRhythmTool.tool==='erase');UI.rhythmPalette.querySelectorAll('button').forEach(b=>{if(b.id==='rhythmMouse')return;const a=b.dataset.action,v=b.dataset.value;const active=a==='tool'?activeRhythmTool.tool===v:a==='grace'?!!activeRhythmTool.grace:a==='chord'?!!activeRhythmTool.chord:a==='ottava'?!!activeRhythmTool.ottava:a==='duration'?v===activeRhythmTool.duration:a==='rest'?activeRhythmTool.rest:a==='dots'?Number(v)===activeRhythmTool.dots:Number(v)===activeRhythmTool.actual;b.classList.toggle('is-active',active);b.setAttribute('aria-pressed',String(active));});}
     function buildRhythmPalette(){
       const glyph=id=>{const g=window.CrescendoBravuraPalette[id],wide=['whole','breve'].includes(id),k=Math.min((wide?12:29)/g.height,25/g.width);return `<svg viewBox="0 0 40 36" aria-hidden="true"><path d="${g.d}" fill="currentColor" transform="translate(${20-(g.x+g.width/2)*k} ${18-(g.y+g.height/2)*k}) scale(${k})"/></svg>`;};
@@ -1622,7 +1622,8 @@
       selectedRhythmNote={index,head:Number(hit.dataset.head)};rhythmPreview.replaceChildren();renderRhythmScore('Nota seleccionada. ↑ / ↓: mover por semitonos. Suprimir: borrar esta nota.');document.activeElement?.blur();return true;
     }
     document.addEventListener('keydown',event=>{
-      if(event.defaultPrevented||event.ctrlKey||event.metaKey||event.altKey||event.shiftKey||event.target.closest?.('input,textarea,select,dialog,[role="dialog"],[contenteditable="true"]'))return;
+      if(event.defaultPrevented||event.ctrlKey||event.metaKey||((event.altKey||event.shiftKey)&&!['ArrowUp','ArrowDown'].includes(event.key))||event.target.closest?.('input,textarea,select,dialog,[role="dialog"],[contenteditable="true"]'))return;
+      if(!UI.rhythmLab.hidden&&(event.code==='Space'||event.key===' ')&&!event.altKey&&!event.shiftKey){event.preventDefault();if(!event.repeat)rhythmListen.click();return;}
       if(!UI.rhythmLab.hidden&&['ArrowLeft','ArrowRight'].includes(event.key)){event.preventDefault();moveRhythmSelection(event.key==='ArrowRight'?1:-1);return;}
       if(event.key==='Escape'&&['slur','tie','erase'].includes(activeRhythmTool.tool)){event.preventDefault();rhythmWriting.select(activeRhythmTool,'tool',activeRhythmTool.tool);syncRhythmPalette();rhythmPreview.replaceChildren();renderRhythmScore();return;}
       if(event.key==='Escape'&&selectedRhythmNote){selectedRhythmNote=null;renderRhythmScore();return;}
@@ -1636,7 +1637,7 @@
       }
       if(!selectedRhythmNote||!['ArrowUp','ArrowDown'].includes(event.key)||UI.rhythmLab.hidden)return;
       event.preventDefault();const before=rhythmSnapshot();
-      if(rhythmStructure.transposeHead(rhythmEditorEvents,rhythmMarks,selectedRhythmNote.index,selectedRhythmNote.head,event.key==='ArrowUp'?1:-1)){rhythmHistory.commit(before,rhythmSnapshot());renderRhythmScore('↑ / ↓: mover la nota seleccionada por semitonos.');}
+      if(rhythmStructure.transposeHead(rhythmEditorEvents,rhythmMarks,selectedRhythmNote.index,selectedRhythmNote.head,event.key==='ArrowUp'?1:-1,{octave:!!event.shiftKey&&!event.altKey,diatonic:!!event.altKey})){rhythmHistory.commit(before,rhythmSnapshot());rhythmPreview.replaceChildren();renderRhythmScore(event.altKey?'Nota movida por grado.':event.shiftKey?'Nota movida una octava.':'↑ / ↓: semitonos · Shift + ↑ / ↓: octavas.');}
     });
     UI.rhythmScore.parentElement.addEventListener('click',event=>{if(activeRhythmTool.tool==='erase'){eraseRhythmAtPoint(event);return;}if(rhythmBarHit(event)){openRhythmBarMenu(event);return;}if(placeRhythmMark(event))return;if(selectRhythmHead(event))return;selectedRhythmNote=null;const index=clickedStaffPosition(event);locateRhythmTime(event);const note=rhythmWriting.noteAtIndex(index,activeRhythmStaff);if(['slur','tie','staccato','accent','glissando'].includes(activeRhythmTool.tool)){const existing=rhythmEditorEvents.some(e=>(e.staff||1)===activeRhythmStaff&&e.bar===rhythmPointerTarget.bar&&Math.abs((e.offset||0)-rhythmPointerTarget.beat)<.0001&&!e.grace&&e.kind!=='rest');if(existing||activeRhythmTool.tool==='glissando'){const before=rhythmSnapshot(),message=rhythmWriting.decorate(activeRhythmTool,rhythmEditorEvents,rhythmPointerTarget,activeRhythmStaff,rhythmTimeline().capacities,rhythmMarks);if(before!==rhythmSnapshot())rhythmHistory.commit(before,rhythmSnapshot());syncRhythmPalette();renderRhythmScore(message);return;}}addRhythmEditorEvent(note)});
     UI.rhythmScore.parentElement.addEventListener('wheel',event=>{if(event.shiftKey||Math.abs(event.deltaX)>Math.abs(event.deltaY)){if(UI.rhythmScore.scrollWidth<=UI.rhythmScore.clientWidth)return;event.preventDefault();UI.rhythmScore.scrollLeft+=event.deltaX||event.deltaY;}else{if(UI.rhythmScore.scrollHeight<=UI.rhythmScore.clientHeight)return;event.preventDefault();UI.rhythmScore.scrollTop+=event.deltaY;}},{passive:false});
@@ -1729,7 +1730,7 @@
     rhythmDraftReady=true;renderRhythmScore();
     const importButton=document.createElement('button');importButton.type='button';importButton.textContent='Abrir editor de partituras';importButton.className='rhythm-import-button';
     saveButton.parentElement.append(importButton);importButton.addEventListener('click',()=>advancedScoreEditor.open());
-    document.getElementById('rhythmLabClose').addEventListener('click',()=>{rhythmAudio?.stop();UI.rhythmLab.hidden=true;UI.exerciseToggleBtn.focus();});
+    document.getElementById('rhythmLabClose').addEventListener('click',()=>{rhythmAudio?.stop();UI.rhythmLab.hidden=true;UI.exerciseToggleBtn.setAttribute('aria-expanded','false');UI.exerciseToggleBtn.classList.remove('open');UI.exerciseToggleBtn.focus();});
 
     // --- Pantalla completa (para proyectar en clase) ---
     UI.fullscreenBtn.addEventListener('click', () => { UI.fsView.classList.add('open'); });
