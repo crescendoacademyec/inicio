@@ -22326,9 +22326,13 @@
   }
 
   function moveSelectedNoteChromatically(direction) {
-    if (isNoteInputMode() || activeSystemIsPercussionLine()) return false;
+    if (activeSystemIsPercussionLine()) return false;
+    const inputMode = isNoteInputMode();
+    if (inputMode && (state.mode === "rest" || state.pendingInputPitch || state.pendingMidiNotes?.length)) return false;
+    // A freshly written note remains active after the caret advances, even
+    // though there is no explicit selection at the next writing position.
     const target = findActiveNoteTarget();
-    if (!target || !selectedEntryLocation()) return false;
+    if (!target || (!inputMode && !selectedEntryLocation())) return false;
     const { entry, staffStep } = target;
     const midi = midiForDiatonicStep(entryDiatonicStepForStaffStep(entry, staffStep), effectiveEntryAccidental(entry, staffStep)) + (direction > 0 ? 1 : -1);
     const spelling = (direction > 0

@@ -136,7 +136,7 @@ El punto . activa o desactiva el puntillo. Alt/Option + . recorre cero, uno y do
 Para escribir silencios, use los botones de silencio en la paleta o la tira MIDI inferior. Durante la entrada de notas, la coma , activa o desactiva el modo silencio; una letra de nota o Y escribe entonces el silencio explicito de la duracion activa.
 
 ## 8. Alturas y alteraciones
-Las letras del teclado escriben notas segun la altura musical correspondiente. Las flechas arriba/abajo mueven el cursor o la nota seleccionada por pasos diatonicos.
+Las letras del teclado escriben notas segun la altura musical correspondiente. Las flechas arriba/abajo cambian por semitonos la nota seleccionada o recién escrita: sostenidos al subir y bemoles al bajar. Sin una nota activa, mueven la guía de escritura por líneas y espacios.
 
 Atajos principales:
 
@@ -730,7 +730,7 @@ Clic derecho sobre una barra → **Signatura de medida** o **Armadura** permite 
 
 ### Ajustar la altura con el teclado
 
-Pulsa la cabeza de una nota existente para seleccionarla y usa ↑ o ↓ para moverla un semitono. Al subir se escriben sostenidos (Do → Do♯ → Re); al bajar, bemoles (Re → Re♭ → Do). Se respetan las armaduras, la duración y la posición rítmica. En un acorde se mueve la cabeza seleccionada. Los cambios admiten deshacer y rehacer.
+Después de dibujar una nota, o al seleccionar la cabeza de una nota existente, usa ↑ o ↓ para moverla un semitono sin salir del modo de escritura. Al subir se escriben sostenidos (Do → Do♯ → Re); al bajar, bemoles (Re → Re♭ → Do). Se respetan las armaduras, la duración y la posición rítmica. En un acorde se mueve la cabeza seleccionada. Los cambios admiten deshacer y rehacer.
 
 ### Reemplazar figuras y dibujar ligaduras
 
