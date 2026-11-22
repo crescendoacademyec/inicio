@@ -133,7 +133,7 @@
           const pan=node('input');pan.type='range';pan.min=-100;pan.max=100;pan.step=1;pan.value=Math.round(I.normalizePan(system.pan)*100);
           const panField=node('div',null,'arrangement-pan');field('Paneo',pan,panField);pan.setAttribute('aria-label','Paneo · '+name);pan.title='Izquierda / centro / derecha';
           const panOutput=node('output'),panText=()=>Number(pan.value)===0?'Centro':Math.abs(Number(pan.value))+'% '+(Number(pan.value)<0?'izq.':'der.');
-          const updatePan=()=>{panOutput.textContent=panText();pan.setAttribute('aria-valuetext',panText());};updatePan();
+          const updatePan=()=>{panOutput.textContent=panText();pan.setAttribute('aria-valuetext',panText());const end=50+Number(pan.value)/2;pan.style.setProperty('--pan-start',Math.min(50,end)+'%');pan.style.setProperty('--pan-end',Math.max(50,end)+'%');};updatePan();
           panField.append(panOutput);row.append(panField);
           pan.oninput=()=>{updatePan();options.previewMix?.(indices,{pan:Number(pan.value)/100});};
           pan.onchange=()=>options.mix(indices,{pan:Number(pan.value)/100});
