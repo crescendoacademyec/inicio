@@ -21,7 +21,7 @@ Esta versión parte de la Fase 5 y aplica una revisión musical, responsive y es
 - `js/metronome.js`: metrónomo y pulso.
 - `js/score.js`: PDF, imágenes, web, MusicXML, reproducción, tutor y digitación de frase.
 - `js/ukulele-chords.js` y `js/ukulele-bank-ui.js`: banco específico de ukelele.
-- `js/guitar-chords.js` y `js/guitar-bank-ui.js`: bancos separados de guitarra estándar y requinto estándar. Incluye 561 posturas verificadas en tres registros; el requinto conserva las formas y presenta los nombres una cuarta justa arriba.
+- `js/guitar-chords.js` y `js/guitar-bank-ui.js`: bancos separados de guitarra estándar y requinto estándar. Incluye 576 posturas revisadas y transportadas desde formas base, con cuerdas silenciadas explícitas, digitación de hasta cuatro dedos y cejillas sin bloquear cuerdas al aire. Las novenas pueden omitir la quinta, indicado en la ficha; el requinto conserva las formas y presenta los nombres una cuarta justa arriba.
 - `tests/validate.js`: comprobación básica de IDs y dependencias.
 - `tests/guitar-bank.test.js`: verificación de notas, posiciones e igualdad interválica entre guitarra y requinto.
 
@@ -80,3 +80,5 @@ La fila principal muestra instrumento, fundamental, contenido y modelo. El selec
 En Estudio guiado, cambiar nivel o unidad prepara el ejercicio sin iniciar el audio. Escuchar/Pausar comparte botón. Ajustar ejercicio, Crear un ejercicio libre, archivos, tabla de notas y partitura completa se despliegan a petición. El visor de referencia y su asistente también están plegados inicialmente. Las funciones y los proyectos guardados se conservan.
 
 `js/workspace-layout.js` reorganiza los elementos existentes sin sustituir los selectores ni sus manejadores musicales. Reacciona a los cambios de contexto del recorrido, el banco y los proyectos para mantener visible el contenido activo.
+
+Al mostrar una postura del banco, las cuerdas al aire permanecen en el sonido y el pentagrama; solo se ocultan sus marcas en el diapasón. El diagrama mantiene ○ al aire y × para cuerdas que no deben sonar. Los números interiores identifican dedos y las líneas horizontales indican cejillas.

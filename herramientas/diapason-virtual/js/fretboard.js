@@ -282,6 +282,7 @@
     }
     const blankMode = () => rootSel.value === "" || (chordTypeSel.value === "" && scaleSel.value === "" && arpeggioSel.value === "");
     const manualSelections = new Set();
+    let bankSelectionActive=false;
     const ephemeralTimers = new Map();
     let ephemeralMode = false;
     let hoverCell = null;
@@ -362,7 +363,7 @@
 
     // Listeners de instrumento
     instrumentSel.addEventListener('change', function() {
-      manualSelections.clear();
+      manualSelections.clear();bankSelectionActive=false;
       hoverCell = null;
       const instrumentKey = this.value;
       updateSoundTypeOptions(instrumentKey);
@@ -663,17 +664,17 @@
     minus.onclick = () => { if (visibleFrets > 4) { visibleFrets--; refresh(); saveSettings(); } };
     plus.onclick = () => { if (visibleFrets < maxVisibleFrets()) { visibleFrets++; refresh(); saveSettings(); } };
     posSel.onchange = () => { offset=0;syncStudyViewport();draw(); };
-    rootSel.onchange = () => { populateChordOptions(chordTypeSel.value); manualSelections.clear(); hoverCell = null; if(keySignatureSel?.value==='auto')drawBaseStaff(); refresh(); };
-    chordTypeSel.onchange = () => { if (chordTypeSel.value !== "") {scaleSel.value = "";arpeggioSel.value="";} manualSelections.clear(); hoverCell = null; refresh(); };
-    scaleSel.onchange = () => { if (scaleSel.value !== "") {chordTypeSel.value = "";arpeggioSel.value="";posSel.value="model1";} manualSelections.clear(); hoverCell = null; if(keySignatureSel?.value==='auto')drawBaseStaff(); refresh(); saveSettings(); };
-    arpeggioSel.onchange=()=>{if(arpeggioSel.value){chordTypeSel.value="";scaleSel.value="";posSel.value="model1";}manualSelections.clear();hoverCell=null;refresh();saveSettings();};
+    rootSel.onchange = () => { populateChordOptions(chordTypeSel.value); manualSelections.clear();bankSelectionActive=false; hoverCell = null; if(keySignatureSel?.value==='auto')drawBaseStaff(); refresh(); };
+    chordTypeSel.onchange = () => { if (chordTypeSel.value !== "") {scaleSel.value = "";arpeggioSel.value="";} manualSelections.clear();bankSelectionActive=false; hoverCell = null; refresh(); };
+    scaleSel.onchange = () => { if (scaleSel.value !== "") {chordTypeSel.value = "";arpeggioSel.value="";posSel.value="model1";} manualSelections.clear();bankSelectionActive=false; hoverCell = null; if(keySignatureSel?.value==='auto')drawBaseStaff(); refresh(); saveSettings(); };
+    arpeggioSel.onchange=()=>{if(arpeggioSel.value){chordTypeSel.value="";scaleSel.value="";posSel.value="model1";}manualSelections.clear();bankSelectionActive=false;hoverCell=null;refresh();saveSettings();};
     instrumentSel.addEventListener('change',saveSettings);
     soundTypeSel.addEventListener('change',saveSettings);
     rootSel.addEventListener('change',saveSettings);
     chordTypeSel.addEventListener('change',saveSettings);
     posSel.addEventListener('change',saveSettings);
     volumeSlider.addEventListener('input',saveSettings);
-    [tuningSel,capoSel,orientationSel,labelModeSel,patternSel,voicingRangeSel].forEach(el=>el.addEventListener('change',()=>{manualSelections.clear();hoverCell=null;refresh();saveSettings()}));
+    [tuningSel,capoSel,orientationSel,labelModeSel,patternSel,voicingRangeSel].forEach(el=>el.addEventListener('change',()=>{manualSelections.clear();bankSelectionActive=false;hoverCell=null;refresh();saveSettings()}));
     keySignatureSel?.addEventListener('change',()=>{drawBaseStaff();draw();saveSettings();});
 
     function cellFromEvent(evt) {
@@ -746,6 +747,7 @@
         }
         return;
       }
+      bankSelectionActive=false;
       const key = selectedKey(cell.s, cell.displayFret);
       const wasSelected = manualSelections.has(key);
       if (wasSelected) {
@@ -771,14 +773,14 @@
     }
     cvs.addEventListener('pointerdown',evt=>{const cell=cellFromEvent(evt);if(cell)activateBoardCell(cell);});
 
-    clearSelectionBtn.onclick = () => { clearEphemeralTimers(); manualSelections.clear(); hoverCell = null; draw(); };
+    clearSelectionBtn.onclick = () => { clearEphemeralTimers(); manualSelections.clear();bankSelectionActive=false; hoverCell = null; draw(); };
     clearAllBtn.onclick = () => {
       rootSel.value = "";
       scaleSel.value = "";
       arpeggioSel.value = "";
       populateChordOptions("");
       clearEphemeralTimers();
-      manualSelections.clear();
+      manualSelections.clear();bankSelectionActive=false;
       hoverCell = null;
       refresh();
     };
@@ -966,6 +968,7 @@
             const key = selectedKey(s, displayFret);
             const isSelected = manualSelections.has(key);
             const isHover = hoverCell && hoverCell.s === s && hoverCell.displayFret === displayFret;
+            if (bankSelectionActive && displayFret===0) continue;
             if (!isSelected && !isHover) continue;
             const pc = (pitches[s] + physicalFret(displayFret)) % 12;
             const midi = pitches[s] + physicalFret(displayFret);

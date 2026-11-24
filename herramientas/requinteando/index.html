@@ -914,8 +914,6 @@
 <link rel="stylesheet" href="../../shared/string-sound-menu.css?v=20261019-black-1">
 <link rel="stylesheet" href="requinteando.css?v=20261005-musicxml-tab">
   <link rel="stylesheet" href="../../shared/crescendo-identity.css?v=20261005-instrument-ui">
-  <link rel="stylesheet" href="../../shared/fretboard-access.css?v=20261118-2">
-  <script src="../../shared/fretboard-access.js?v=20261118-2"></script>
 </head>
 <body class="requinteando-app">
   <header class="topbar">
@@ -1551,6 +1549,7 @@ return JSON.parse(localStorage.getItem(SETTINGS_KEY)||'{}');
     const toneVisibility = {root:true, structural:true, tension:true, unavailable:true};
     const blankMode = () => rootSel.value === "" || (chordTypeSel.value === "" && scaleSel.value === "");
     const manualSelections = new Set();
+    let bankSelectionActive=false;
     let hoverCell = null;
     let audioCtx = null;
     let masterBus = null;
@@ -1629,7 +1628,7 @@ return JSON.parse(localStorage.getItem(SETTINGS_KEY)||'{}');
 
     // Listeners de instrumento
     instrumentSel.addEventListener('change', function() {
-      manualSelections.clear();
+      manualSelections.clear();bankSelectionActive=false;
       hoverCell = null;
       const instrumentKey = this.value;
       updateSoundTypeOptions(instrumentKey);
@@ -1882,16 +1881,16 @@ return JSON.parse(localStorage.getItem(SETTINGS_KEY)||'{}');
     minus.onclick = () => { if (visibleFrets > 4) { visibleFrets--; refresh(); saveSettings(); } };
     plus.onclick = () => { if (visibleFrets < maxVisibleFrets()) { visibleFrets++; refresh(); saveSettings(); } };
     posSel.onchange = () => { offset = (rootSel.value && chordTypeSel.value) ? 0 : parseInt(posSel.value) - 1; draw(); };
-    rootSel.onchange = () => { populateChordOptions(chordTypeSel.value); manualSelections.clear(); hoverCell = null; if(keySignatureSel?.value==='auto')drawBaseStaff(); refresh(); };
-    chordTypeSel.onchange = () => { if (chordTypeSel.value !== "") scaleSel.value = ""; manualSelections.clear(); hoverCell = null; refresh(); };
-    scaleSel.onchange = () => { if (scaleSel.value !== "") chordTypeSel.value = ""; manualSelections.clear(); hoverCell = null; if(keySignatureSel?.value==='auto')drawBaseStaff(); refresh(); saveSettings(); };
+    rootSel.onchange = () => { populateChordOptions(chordTypeSel.value); manualSelections.clear();bankSelectionActive=false; hoverCell = null; if(keySignatureSel?.value==='auto')drawBaseStaff(); refresh(); };
+    chordTypeSel.onchange = () => { if (chordTypeSel.value !== "") scaleSel.value = ""; manualSelections.clear();bankSelectionActive=false; hoverCell = null; refresh(); };
+    scaleSel.onchange = () => { if (scaleSel.value !== "") chordTypeSel.value = ""; manualSelections.clear();bankSelectionActive=false; hoverCell = null; if(keySignatureSel?.value==='auto')drawBaseStaff(); refresh(); saveSettings(); };
     instrumentSel.addEventListener('change',saveSettings);
     soundTypeSel.addEventListener('change',saveSettings);
     rootSel.addEventListener('change',saveSettings);
     chordTypeSel.addEventListener('change',saveSettings);
     posSel.addEventListener('change',saveSettings);
     volumeSlider.addEventListener('input',saveSettings);
-    [tuningSel,capoSel,orientationSel,labelModeSel,patternSel,voicingRangeSel].forEach(el=>el.addEventListener('change',()=>{manualSelections.clear();hoverCell=null;refresh();saveSettings()}));
+    [tuningSel,capoSel,orientationSel,labelModeSel,patternSel,voicingRangeSel].forEach(el=>el.addEventListener('change',()=>{manualSelections.clear();bankSelectionActive=false;hoverCell=null;refresh();saveSettings()}));
     keySignatureSel?.addEventListener('change',()=>{drawBaseStaff();draw();saveSettings();});
 
     function cellFromEvent(evt) {
@@ -1964,6 +1963,7 @@ return JSON.parse(localStorage.getItem(SETTINGS_KEY)||'{}');
         }
         return;
       }
+      bankSelectionActive=false;
       const key = selectedKey(cell.s, cell.displayFret);
       const wasSelected = manualSelections.has(key);
       if (wasSelected) {
@@ -1978,12 +1978,12 @@ return JSON.parse(localStorage.getItem(SETTINGS_KEY)||'{}');
     }
     cvs.addEventListener('pointerdown',evt=>{const cell=cellFromEvent(evt);if(cell)activateBoardCell(cell);});
 
-    clearSelectionBtn.onclick = () => { manualSelections.clear(); hoverCell = null; draw(); };
+    clearSelectionBtn.onclick = () => { manualSelections.clear();bankSelectionActive=false; hoverCell = null; draw(); };
     clearAllBtn.onclick = () => {
       rootSel.value = "";
       scaleSel.value = "";
       populateChordOptions("");
-      manualSelections.clear();
+      manualSelections.clear();bankSelectionActive=false;
       hoverCell = null;
       refresh();
     };
@@ -2278,6 +2278,7 @@ return JSON.parse(localStorage.getItem(SETTINGS_KEY)||'{}');
             const key = selectedKey(s, displayFret);
             const isSelected = manualSelections.has(key);
             const isHover = hoverCell && hoverCell.s === s && hoverCell.displayFret === displayFret;
+            if (bankSelectionActive && displayFret===0) continue;
             if (!isSelected && !isHover) continue;
             const pc = (pitches[s] + physicalFret(displayFret)) % 12;
             const midi = pitches[s] + physicalFret(displayFret);
@@ -3768,9 +3769,9 @@ return JSON.parse(localStorage.getItem(SETTINGS_KEY)||'{}');
 
 </script>
 <script src="js/ukulele-chords.js"></script>
-<script src="js/ukulele-bank-ui.js?v=20261022-enharmonics-1"></script>
-<script src="js/guitar-chords.js"></script>
-<script src="js/guitar-bank-ui.js?v=20261022-enharmonics-1"></script>
+<script src="js/ukulele-bank-ui.js?v=20261123-playable-1"></script>
+<script src="js/guitar-chords.js?v=20261123-playable-1"></script>
+<script src="js/guitar-bank-ui.js?v=20261123-playable-1"></script>
 <script>
   const requintoBankMenu = document.getElementById('requintoBankMenu');
   requintoBankMenu?.addEventListener('click', () => {

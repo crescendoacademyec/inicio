@@ -266,6 +266,7 @@
     const toneVisibility = {root:true, structural:true, tension:true, unavailable:true};
     const blankMode = () => rootSel.value === "" || (chordTypeSel.value === "" && scaleSel.value === "");
     const manualSelections = new Set();
+    let bankSelectionActive=false;
     let hoverCell = null;
     let audioCtx = null;
     let masterBus = null;
@@ -344,7 +345,7 @@
 
     // Listeners de instrumento
     instrumentSel.addEventListener('change', function() {
-      manualSelections.clear();
+      manualSelections.clear();bankSelectionActive=false;
       hoverCell = null;
       const instrumentKey = this.value;
       updateSoundTypeOptions(instrumentKey);
@@ -597,16 +598,16 @@
     minus.onclick = () => { if (visibleFrets > 4) { visibleFrets--; refresh(); saveSettings(); } };
     plus.onclick = () => { if (visibleFrets < maxVisibleFrets()) { visibleFrets++; refresh(); saveSettings(); } };
     posSel.onchange = () => { offset = (rootSel.value && chordTypeSel.value) ? 0 : parseInt(posSel.value) - 1; draw(); };
-    rootSel.onchange = () => { populateChordOptions(chordTypeSel.value); manualSelections.clear(); hoverCell = null; refresh(); };
-    chordTypeSel.onchange = () => { if (chordTypeSel.value !== "") scaleSel.value = ""; manualSelections.clear(); hoverCell = null; refresh(); };
-    scaleSel.onchange = () => { if (scaleSel.value !== "") chordTypeSel.value = ""; manualSelections.clear(); hoverCell = null; refresh(); saveSettings(); };
+    rootSel.onchange = () => { populateChordOptions(chordTypeSel.value); manualSelections.clear();bankSelectionActive=false; hoverCell = null; refresh(); };
+    chordTypeSel.onchange = () => { if (chordTypeSel.value !== "") scaleSel.value = ""; manualSelections.clear();bankSelectionActive=false; hoverCell = null; refresh(); };
+    scaleSel.onchange = () => { if (scaleSel.value !== "") chordTypeSel.value = ""; manualSelections.clear();bankSelectionActive=false; hoverCell = null; refresh(); saveSettings(); };
     instrumentSel.addEventListener('change',saveSettings);
     soundTypeSel.addEventListener('change',saveSettings);
     rootSel.addEventListener('change',saveSettings);
     chordTypeSel.addEventListener('change',saveSettings);
     posSel.addEventListener('change',saveSettings);
     volumeSlider.addEventListener('input',saveSettings);
-    [tuningSel,capoSel,orientationSel,labelModeSel,patternSel,voicingRangeSel].forEach(el=>el.addEventListener('change',()=>{manualSelections.clear();hoverCell=null;refresh();saveSettings()}));
+    [tuningSel,capoSel,orientationSel,labelModeSel,patternSel,voicingRangeSel].forEach(el=>el.addEventListener('change',()=>{manualSelections.clear();bankSelectionActive=false;hoverCell=null;refresh();saveSettings()}));
 
     function cellFromEvent(evt) {
       if (!blankMode()) return null;
@@ -678,6 +679,7 @@
         }
         return;
       }
+      bankSelectionActive=false;
       const key = selectedKey(cell.s, cell.displayFret);
       const wasSelected = manualSelections.has(key);
       if (wasSelected) {
@@ -692,12 +694,12 @@
     }
     cvs.addEventListener('pointerdown',evt=>{const cell=cellFromEvent(evt);if(cell)activateBoardCell(cell);});
 
-    clearSelectionBtn.onclick = () => { manualSelections.clear(); hoverCell = null; draw(); };
+    clearSelectionBtn.onclick = () => { manualSelections.clear();bankSelectionActive=false; hoverCell = null; draw(); };
     clearAllBtn.onclick = () => {
       rootSel.value = "";
       scaleSel.value = "";
       populateChordOptions("");
-      manualSelections.clear();
+      manualSelections.clear();bankSelectionActive=false;
       hoverCell = null;
       refresh();
     };
@@ -987,6 +989,7 @@
             const key = selectedKey(s, displayFret);
             const isSelected = manualSelections.has(key);
             const isHover = hoverCell && hoverCell.s === s && hoverCell.displayFret === displayFret;
+            if (bankSelectionActive && displayFret===0) continue;
             if (!isSelected && !isHover) continue;
             const pc = (pitches[s] + physicalFret(displayFret)) % 12;
             const midi = pitches[s] + physicalFret(displayFret);

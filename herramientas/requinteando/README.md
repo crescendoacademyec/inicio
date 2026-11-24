@@ -21,7 +21,7 @@ Esta versión parte de la Fase 5 y aplica una revisión musical, responsive y es
 - `js/metronome.js`: metrónomo y pulso.
 - `js/score.js`: PDF, imágenes, web, MusicXML, reproducción, tutor y digitación de frase.
 - `js/ukulele-chords.js` y `js/ukulele-bank-ui.js`: banco específico de ukelele.
-- `js/guitar-chords.js` y `js/guitar-bank-ui.js`: bancos separados de guitarra estándar y requinto estándar. Incluye 561 posturas verificadas en tres registros; el requinto conserva las formas y presenta los nombres una cuarta justa arriba.
+- `js/guitar-chords.js` y `js/guitar-bank-ui.js`: bancos separados de guitarra estándar y requinto estándar. Incluye 576 posturas revisadas y transportadas desde formas base, con cuerdas silenciadas explícitas, digitación de hasta cuatro dedos y cejillas sin bloquear cuerdas al aire. Las novenas pueden omitir la quinta, indicado en la ficha; el requinto conserva las formas y presenta los nombres una cuarta justa arriba.
 - `tests/validate.js`: comprobación básica de IDs y dependencias.
 - `tests/guitar-bank.test.js`: verificación de notas, posiciones e igualdad interválica entre guitarra y requinto.
 
@@ -33,3 +33,5 @@ Sube `index.html`, `css/`, `js/` y cualquier recurso adicional que ya use tu rep
 Al cargar un archivo `.musicxml` o `.xml`, Requinteando lee las marcas técnicas de cada nota: cuerda (`technical/string`), traste (`technical/fret`) y dedo (`technical/fingering`). Con **Digitación → Tablatura del autor**, el diapasón resalta esas posiciones exactas durante la reproducción.
 
 La posición se valida contra el instrumento, afinación y capo elegidos. Si una nota no trae tablatura, o si los datos no coinciden con la configuración, la app muestra una digitación automática solo para esa nota e indica el motivo. Los archivos `.mxl` siguen reproduciéndose y se visualizan, pero usan la digitación automática porque el contenedor comprimido no expone aún sus anotaciones técnicas al lector.
+
+Al mostrar una postura del banco, las cuerdas al aire permanecen en el sonido y el pentagrama; solo se ocultan sus marcas en el diapasón. El diagrama mantiene ○ al aire y × para cuerdas que no deben sonar. Los números interiores identifican dedos y las líneas horizontales indican cejillas.

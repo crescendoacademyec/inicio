@@ -26,7 +26,7 @@
     rootSel.value='';chordTypeSel.value='';scaleSel.value='';
     manualSelections.clear();hoverCell=null;
     e.frets.forEach((f,i)=>{if(f!==null&&(!activeIndexes||activeIndexes.includes(i)))manualSelections.add(selectedKey(3-i,f));});
-    visibleFrets=Math.max(visibleFrets,Math.max(...e.frets.filter(f=>f!==null)),4);
+    bankSelectionActive=true;visibleFrets=Math.max(visibleFrets,Math.max(...e.frets.filter(f=>f!==null)),4);
     posSel.value='1';refresh();
     const midis=bank.midis(e,tuningSel.value==='low_g',capoSemitones());
     const pcs=new Set(midis.map(m=>(m-capoSemitones()-bank.roots[e.root]+120)%12));

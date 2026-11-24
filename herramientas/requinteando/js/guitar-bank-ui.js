@@ -19,7 +19,7 @@
       const rootPc=(bank.roots[e.root]+config.rootOffset)%12,root=rootNames[rootPc];
       return {...e,displayRoot:root,displayName:root+e.quality};
     };
-    host.innerHTML='<summary>'+config.title+'</summary><p>'+config.note+' Orden en los diagramas: grave → aguda. ○ al aire. Los círculos indican dedo: 1 índice · 2 medio · 3 anular · 4 meñique; la cifra lateral marca el traste inicial.</p><div class="guitar-filters"><label>Fundamental<select data-guitar-root></select></label><label>Familia<select data-guitar-quality></select></label><label>Registro<select data-guitar-position><option value="all">Todos</option><option value="1">Primer registro</option><option value="2">Registro medio</option><option value="3">Registro alto</option></select></label><button type="button" data-guitar-stop>Detener sonido</button></div><p data-guitar-count></p><div class="guitar-status" role="status" aria-live="polite" data-guitar-status>Selecciona una postura para verla en el diapasón y el pentagrama.</div><div class="guitar-grid"></div>';
+    host.innerHTML='<summary>'+config.title+'</summary><p>'+config.note+' Orden en los diagramas: grave → aguda. ○ al aire · × no tocar. Los círculos indican dedo: 1 índice · 2 medio · 3 anular · 4 meñique; la cifra lateral marca el traste inicial.</p><div class="guitar-filters"><label>Fundamental<select data-guitar-root></select></label><label>Familia<select data-guitar-quality></select></label><label>Registro<select data-guitar-position><option value="all">Todos</option><option value="1">Primer registro</option><option value="2">Registro medio</option><option value="3">Registro alto</option></select></label><button type="button" data-guitar-stop>Detener sonido</button></div><p data-guitar-count></p><div class="guitar-status" role="status" aria-live="polite" data-guitar-status>Selecciona una postura para verla en el diapasón y el pentagrama.</div><div class="guitar-grid"></div>';
     const root=host.querySelector('[data-guitar-root]'),quality=host.querySelector('[data-guitar-quality]'),position=host.querySelector('[data-guitar-position]'),grid=host.querySelector('.guitar-grid'),status=host.querySelector('[data-guitar-status]');
     root.add(new Option('Todas','all'));rootNames.forEach(r=>root.add(new Option(rootLabel[r],r)));root.value=rootNames[config.rootOffset];
     quality.add(new Option('Todas','all'));bank.qualityOrder.forEach(q=>quality.add(new Option(bank.qualities[q][0],q)));
@@ -27,19 +27,21 @@
     function diagram(e){
       const positive=e.frets.filter(f=>f>0),start=positive.length&&Math.min(...positive)>1?Math.min(...positive):1;
       const rows=Math.max(4,Math.max(0,...positive)-start+1),gap=104/rows;
-      let s='<svg viewBox="0 0 156 172" role="img" aria-label="'+e.displayName+', trastes '+e.frets.join(', ')+'">';
+      let s='<svg viewBox="0 0 156 172" role="img" aria-label="'+e.displayName+', trastes '+e.frets.map(f=>f===null?'silenciada':f).join(', ')+'">';
       for(let i=0;i<6;i++){const x=20+i*23;s+='<text x="'+x+'" y="14" text-anchor="middle" font-size="10" fill="#222">'+config.tuningLabels[i]+'</text><path d="M'+x+' 37V141" stroke="#444"/>';}
       for(let j=0;j<=rows;j++)s+='<path d="M20 '+(37+j*gap)+'H135" stroke="#444" stroke-width="'+(j===0&&start===1?3:1)+'"/>';
       s+='<text x="4" y="'+(37+gap/2+4)+'" font-size="10" fill="#222">'+start+'</text>';
-      e.frets.forEach((f,i)=>{const x=20+i*23;if(f===0)s+='<text x="'+x+'" y="31" text-anchor="middle" font-size="13" fill="#222">○</text>';else{const y=37+(f-start+.5)*gap,finger=Math.min(4,Math.max(1,f-start+1));s+='<circle cx="'+x+'" cy="'+y+'" r="8" fill="#9c6919"/><text x="'+x+'" y="'+(y+3)+'" text-anchor="middle" font-size="9" fill="white">'+finger+'</text>';}});
+      for(const b of e.barres||[]){const y=37+(b.fret-start+.5)*gap;s+='<path class="chord-barre" d="M'+(20+b.from*23)+' '+y+'H'+(20+b.to*23)+'" stroke="#9c6919" stroke-width="4"/>'; }
+      e.frets.forEach((f,i)=>{const x=20+i*23;if(f===null||f===0)s+='<text x="'+x+'" y="31" text-anchor="middle" font-size="13" fill="#222">'+(f===null?'×':'○')+'</text>';else{const y=37+(f-start+.5)*gap,finger=e.fingers[i];s+='<circle cx="'+x+'" cy="'+y+'" r="8" fill="#9c6919"/><text x="'+x+'" y="'+(y+3)+'" text-anchor="middle" font-size="9" fill="white">'+finger+'</text>';}});
+
       return s+'</svg>';
     }
     function applySelection(e,activeIndexes){
       selected=e;rootSel.value='';chordTypeSel.value='';scaleSel.value='';manualSelections.clear();hoverCell=null;
-      e.frets.forEach((f,i)=>{if(!activeIndexes||activeIndexes.includes(i))manualSelections.add(selectedKey(5-i,f));});
-      visibleFrets=Math.max(visibleFrets,Math.max(...e.frets),4);posSel.value='1';refresh();
+      e.frets.forEach((f,i)=>{if(f!==null&&(!activeIndexes||activeIndexes.includes(i)))manualSelections.add(selectedKey(5-i,f));});
+      bankSelectionActive=true;visibleFrets=Math.max(visibleFrets,Math.max(...e.frets.filter(f=>f!==null)),4);posSel.value='1';refresh();
       const midis=bank.midis(e,config.instrument,capoSemitones());
-      status.textContent=e.displayName+' · '+config.instrumentLabel+' · Posición '+e.position+' · Notas reales: '+midis.map(m=>displayNames[m%12]+(Math.floor(m/12)-1)).join(' · ')+(capoSemitones()?' · Capo '+capoSemitones()+': el sonido está transpuesto.':'');
+      status.textContent=e.displayName+' · '+config.instrumentLabel+' · Posición '+e.position+' · Notas reales: '+midis.map(m=>displayNames[m%12]+(Math.floor(m/12)-1)).join(' · ')+(e.omitted?.length?' · Quinta omitida.':'')+(capoSemitones()?' · Capo '+capoSemitones()+': el sonido está transpuesto.':'');
       grid.querySelectorAll('.guitar-card').forEach(card=>{const on=card.dataset.id===e.id;card.classList.toggle('is-selected',on);card.querySelector('.guitar-select').setAttribute('aria-pressed',String(on));});
     }
     function choose(e){
@@ -50,7 +52,8 @@
       if(!arpeggio){if(!choose(e))return;const ctx=ensureCtx();ctx?.resume?.();bank.midis(e,config.instrument,capoSemitones()).forEach(m=>voices.push(playNote(m,1.8)));return;}
       if(!isSupported()){status.textContent='Cambia el instrumento o la afinación antes de escuchar este arpegio.';return;}
       stop();applySelection(e,[]);const ctx=ensureCtx();ctx?.resume?.();const step=380;
-      bank.midis(e,config.instrument,capoSemitones()).forEach((m,i)=>timers.push(setTimeout(()=>{if(isSupported()){applySelection(e,[i]);voices.push(playNote(m,1.65));}},i*step)));
+      const midis=bank.midis(e,config.instrument,capoSemitones());let noteIndex=0;const notes=e.frets.flatMap((f,index)=>f===null?[]:[{index,midi:midis[noteIndex++]}]);
+      notes.forEach((note,i)=>timers.push(setTimeout(()=>{if(isSupported()){applySelection(e,[note.index]);voices.push(playNote(note.midi,1.65));}},i*step)));
       timers.push(setTimeout(()=>{if(isSupported())applySelection(e);},bank.midis(e,config.instrument,capoSemitones()).length*step));
     }
     function render(){
