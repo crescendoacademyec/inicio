@@ -30,7 +30,7 @@
  function convertElement(root){
   if(tag(root)!=='mei')throw Error('El documento no es MEI.');
   const scores=descendants(root,'score');if(scores.length!==1)throw Error('Selecciona un MEI con una sola partitura. Exporta los movimientos o partes por separado.');
-  const score=scores[0],warnings=[],unsupported=['neume','mensur','ligature','tabGrp','nc','multiRest','mRpt','mRpt2','beatRpt','halfmRpt','tupletSpan','app','choice','subst'];
+  const score=scores[0],warnings=[],unsupported=['neume','mensur','ligature','tabGrp','nc','mRpt','mRpt2','beatRpt','halfmRpt','tupletSpan','app','choice','subst'];
   for(const name of unsupported)if(descendants(score,name).length)throw Error(`El elemento MEI «${name}» aún no es compatible con este reproductor. Exporta esa partitura como MusicXML.`);
   if(descendants(score,'note').length>100000)throw Error('La partitura contiene demasiadas notas.');
   const definitions=descendants(score,'staffDef'),staffNumbers=[...new Set(definitions.map(n=>attr(n,'n')||'1'))];if(!staffNumbers.length)throw Error('El MEI no define sus pentagramas.');
@@ -43,7 +43,10 @@
     for(const def of descendants(node,'staffDef')){const n=attr(def,'n')||'1';state.set(n,config(def,state.get(n)||global));}return;
    }
    if(tag(node)==='measure'){
-    records.push({node,configs:new Map([...state].map(([n,c])=>[n,{...c}])),endings:[]});
+    const rests=descendants(node,'multiRest'),counts=[...new Set(rests.map(n=>+(attr(n,'num')||0)))],count=rests.length?counts[0]:1;
+    if(rests.length&&(counts.length!==1||!Number.isInteger(count)||count<1||count>1000||descendants(node,'note').length))throw Error('Silencio de varios compases MEI no válido.');
+    const copy=(n,index)=>({localName:tag(n)==='multiRest'?'mRest':tag(n),textContent:n.textContent,getAttribute(k){if(n===node&&k==='left'&&index>0)return null;if(n===node&&k==='right'&&index<count-1)return null;if(n===node&&k==='n'&&Number.isFinite(+attr(n,'n')))return String(+attr(n,'n')+index);return attr(n,k);},children:children(n).filter(c=>!(n===node&&index>0&&['harm','tempo','dir','reh','dynam'].includes(tag(c)))).map(c=>copy(c,index))});
+    for(let index=0;index<count;index++)records.push({node:rests.length?copy(node,index):node,sourceNode:node,configs:new Map([...state].map(([n,c])=>[n,{...c}])),endings:[]});
     for(const staff of children(node).filter(n=>tag(n)==='staff')){
      const number=attr(staff,'n')||'1';
      for(const change of descendants(staff,'clef'))state.set(number,config({getAttribute:()=>null,children:[change]},state.get(number)));
@@ -170,13 +173,13 @@
   const head=child(root,'meiHead'),titles=descendants(head||root,'title'),composer=descendants(head||root,'composer')[0]||descendants(head||root,'persName').find(n=>attr(n,'role')==='composer'),rights=descendants(head||root,'distributor').map(text).join(' · '),title=text(titles[0])||'Partitura MEI';
   const expansions=descendants(score,'expansion');let playbackRoute=null;
   if(expansions.length){
-   const ids=new Map(),indices=new Map(records.map((r,i)=>[r.node,i])),visiting=new Set();
+   const ids=new Map(),indices=new Map(),visiting=new Set();records.forEach((r,i)=>{const key=r.sourceNode||r.node;indices.set(key,[...(indices.get(key)||[]),i]);});
    const indexIds=n=>{if(id(n))ids.set(id(n),n);children(n).forEach(indexIds);};indexIds(score);
    const expand=node=>{
     if(visiting.has(node))throw Error('La expansión MEI contiene referencias circulares.');visiting.add(node);
     let result=[];const expansion=tag(node)==='expansion'?node:child(node,'expansion');
     if(expansion){for(const target of (attr(expansion,'plist')||'').trim().split(/\s+/).filter(Boolean)){const section=ids.get(ref(target));if(!section)throw Error('La expansión MEI contiene una sección inexistente.');result.push(...expand(section));}}
-    else if(tag(node)==='measure')result=[indices.get(node)];
+    else if(tag(node)==='measure')result=indices.get(node)||[];
     else for(const ch of children(node))if(['section','ending','measure'].includes(tag(ch)))result.push(...expand(ch));
     visiting.delete(node);if(result.length>20000)throw Error('La expansión MEI supera el límite de compases.');return result;
    };

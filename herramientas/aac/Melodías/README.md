@@ -1,6 +1,6 @@
 # Melodías
 
-Biblioteca oficial de AAC: **42 temas**, con 19 fuentes MEI y 23 MusicXML. Reúne los 37 archivos distintos aportados desde Realbook y los cinco temas iniciales: C-Jam Blues, Blue Bossa, Autumn Leaves, All of Me y Footprints.
+Biblioteca oficial de AAC: **3316 entradas**, con 2479 fuentes MEI y 837 MusicXML. Reúne las fuentes distintas del lote completo de Realbook y conserva los cinco temas iniciales: C-Jam Blues, Blue Bossa, Autumn Leaves, All of Me y Footprints.
 
 ## Añadir archivos
 
@@ -17,7 +17,7 @@ El actualizador detecta el contenido real, informa de extensiones incorrectas, c
 
 ## Organización
 
-- Archivos en esta carpeta: las 42 fuentes originales, con su extensión correcta.
+- Archivos en esta carpeta: las fuentes originales, con su extensión correcta.
 - `partituras/`: MusicXML que utiliza AAC; para las fuentes MEI se conserva su recorrido de interpretación en los metadatos.
 - `referencias/`: fotos completas de 638 obras distintas de los dos Real Books aportados, incluidas las cinco imágenes guía iniciales. El [índice de referencias](referencias/INDICE.md) reúne las 802 páginas; su catálogo conserva las ediciones repetidas sin duplicar las fotos.
 - `correcciones/`: versiones revisadas, vinculadas a la huella de la fuente para conservar las correcciones al regenerar el catálogo.
@@ -25,12 +25,18 @@ El actualizador detecta el contenido real, informa de extensiones incorrectas, c
 
 Los originales permanecen intactos. Las correcciones posteriores deben quedar documentadas en el catálogo y conservar una referencia de la edición de origen.
 
-Las fotos y las partituras digitales tienen catálogos separados. Tener una foto disponible no añade automáticamente una melodía reproducible: la biblioteca digital mantiene sus 42 temas hasta revisar los próximos archivos que se incorporen. Una foto de otro libro o edición debe contrastarse antes de asociarla como fuente de un XML/MEI.
+Las fotos y las partituras digitales tienen catálogos separados. Tener una foto disponible no añade automáticamente una melodía reproducible: la biblioteca digital se actualiza mediante su catálogo. Una foto de otro libro o edición debe contrastarse antes de asociarla como fuente de un XML/MEI.
 
 ## Revisión e interpretación
 
-Los cinco temas iniciales fueron corregidos contra las fuentes aportadas; el catálogo detalla el alcance de cada ejemplo (tema principal, anacrusas y posibles introducciones/codas excluidas). Los otros 37 tienen comprobación técnica de lectura, conservación de notas y recorrido. Esa comprobación no equivale a una revisión editorial de cada nota contra otra edición.
+Los cinco temas iniciales fueron corregidos contra las fuentes aportadas; el catálogo detalla el alcance de cada ejemplo (tema principal, anacrusas y posibles introducciones/codas excluidas). El resto tiene comprobación técnica de lectura, conservación de notas y recorrido. Esa comprobación no equivale a una revisión editorial de cada nota contra otra edición.
 
 AAC reproduce repeticiones, casillas, D.C./D.S., coda y Fine codificados en MusicXML. En MEI sigue `expansion/@plist`. Sonido, cursor, piano, guitarra y MIDI comparten el recorrido. Una indicación escrita únicamente como texto ambiguo requiere revisión manual; el programa no inventa secciones de solos.
 
 La armonía original se conserva; los cambios de acordes y el análisis automático pertenecen al estudio editable del usuario. Los borradores del navegador no modifican estos originales.
+
+## Lote Realbook de noviembre de 2026
+
+El informe `auditoria-20261125/INFORME.txt` documenta las 17 entradas pendientes del sitio, sus enlaces, las copias idénticas y las reparaciones. Descargas permanece intacta. Las ediciones alternativas y los cinco pilotos se conservan por separado. La lectura y reproducción se comprueban automáticamente; no se afirma una revisión editorial de cada nota.
+
+Practice añade tonos guía en clave de fa sin reescribir la melodía original. Busca otra octava para evitar teclas compartidas; omite un tono si no hay posición segura. El pentagrama de práctica participa en sonido y exportaciones mientras el botón está activo.

@@ -1,0 +1,74 @@
+REVISIÓN REALBOOK · 25/11/2026
+
+3328 entradas en el índice del sitio.
+3320 archivos descargados; 3311 fuentes distintas por SHA-256.
+9 copias idénticas omitidas en la importación; Descargas queda intacta.
+La comparación adicional de entradas con el mismo título se conserva en coincidencias-musicales.json.
+2461 fuentes MEI tenían extensión .xml: se copiaron con .mei.
+Biblioteca AAC: 3316 entradas (3311 fuentes descargadas + 5 pilotos previos).
+Las versiones distintas se conservan y sus enlaces de procedencia se registran en el catálogo.
+Los dos grupos con títulos ambiguos se distinguen también por compositor.
+Se conservan también las 37 fuentes anteriores: coincidían byte por byte con el nuevo lote.
+
+COMPROBACIÓN TÉCNICA
+Todos los XML son analizables; la conversión conserva las notas.
+3274 fuentes nuevas pasaron lectura, recorrido y generación MIDI; las 42 anteriores mantienen sus pruebas.
+Los avisos de reproducción se conservan en reproduccion.json: 52 nuevas fuentes con avisos.
+El motor OSMD de AAC cargó y dibujó las 3316 entradas: 0 errores (dibujo.json).
+La comprobación técnica no equivale a corregir editorialmente cada nota frente a una grabación.
+
+REPARACIONES
+21 fuentes: soporte de multiRest añadido al lector; sus silencios se expanden sin perder compases ni alterar el recorrido.
+You Can Depend On Me: se restauró la referencia v185qv24 en la única casilla sin identificador. El original intacto queda en originales-descargados/.
+
+ENTRADAS SIN ARCHIVO CORRESPONDIENTE
+52nd Street Theme
+https://realbook.site/scores/52nd-street-theme/
+9:20 Special (alternate version)
+https://realbook.site/scores/nine-twenty-special/
+Angela (alternate version)
+https://realbook.site/scores/angela-alt/
+Babik
+https://realbook.site/scores/babik/
+Blowin’ in the Wind
+https://realbook.site/scores/blowin-in-the-wind/
+Comes Love
+https://realbook.site/scores/comes-love/
+Have You Met Miss Jones
+https://realbook.site/scores/have-you-met-miss-jones/
+I’m Gonna Sit Right Down
+https://realbook.site/scores/im-gonna-sit-right-down/
+One Has My Name, The Other Has My Heart
+https://realbook.site/scores/one-has-my-name-the-other-has-my-heart/
+Sans Vous (No You)
+https://realbook.site/scores/sans-vous/
+Sealed with a Kiss
+https://realbook.site/scores/sealed-with-a-kiss/
+Sleepy Time Gal
+https://realbook.site/scores/sleepy-time-gal/
+Stanley Stomper
+https://realbook.site/scores/stanley-stomper/
+Tenor Madness (piano)
+https://realbook.site/scores/tenor-madness-sonny-rollins-tenor-madness/
+That Dixie Jazz
+https://realbook.site/scores/that-dixie-jazz/
+The Chant
+https://realbook.site/scores/the-chant/
+When the Saints
+https://realbook.site/scores/when-the-saints/
+
+COPIAS IDÉNTICAS (solo una se incorpora por grupo)
+Atlanta-Blues-Make-Me-One-Pallet-On-Your-Floor.xml = Atlanta-Blues-Make-Me-One-Pallet-On-Your-Floor_2.xml
+Bei-Mir-Bist-Du-Shoen.xml = Bei-Mir-Bist-Du-Shoen_2.xml = Bei-Mir-Bist-Du-Shoen_3.xml
+I-Gotta-Right-to-Sing-the-Blues.xml = I-Gotta-Right-to-Sing-the-Blues_2.xml
+Im-Gonna-Sit-Right-Down-and-Write-Myself-a-Letter.xml = Im-Gonna-Sit-Right-Down-and-Write-Myself-a-Letter_2.xml = Im-Gonna-Sit-Right-Down-and-Write-Myself-a-Letter_3.xml
+Soft-Lights-And-Sweet-Music.xml = Soft-Lights-And-Sweet-Music_2.xml
+Tenor-Madness.xml = Tenor-Madness_2.xml
+Too-Young-To-Go-Steady.xml = Too-Young-To-Go-Steady_2.xml
+
+PRACTICE
+Los archivos descargados no contienen una parte llamada Guide tones.
+Sleigh Ride: fuente de un pentagrama, 158 notas; Practice del sitio añade el pentagrama dinámicamente.
+AAC añade una parte en clave de fa. Se cambia de octava antes de omitir un tono guía; no se reescribe la melodía.
+Se evitan teclas compartidas y distancias de semitono o novena menor respecto a todas las notas simultáneas.
+La valoración de otras tensiones depende del contexto; el algoritmo no garantiza una preferencia estética universal.

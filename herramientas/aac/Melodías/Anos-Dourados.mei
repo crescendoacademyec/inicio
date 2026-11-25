@@ -1,0 +1,574 @@
+<?xml version="1.0" encoding="UTF-8"?><?xml-model href="https://music-encoding.org/schema/dev/mei-all.rng" type="application/xml" schematypens="http://relaxng.org/ns/structure/1.0"?><?xml-model href="https://music-encoding.org/schema/dev/mei-all.rng" type="application/xml" schematypens="http://purl.oclc.org/dsdl/schematron"?><mei xmlns="http://www.music-encoding.org/ns/mei" meiversion="6.0-dev">
+   <meiHead xml:id="mt8qdgt">
+      <fileDesc xml:id="fco57f3">
+         <titleStmt xml:id="t17mam3d">
+            <title>Anos Dourados</title>
+            <respStmt>
+               <persName role="composer">Antonio Carlos Jobim</persName>
+               <persName role="lyricist">Chico Buarque</persName>
+            </respStmt>
+         <composer>Antonio Carlos Jobim</composer></titleStmt>
+         <pubStmt xml:id="p1vll6fu">
+            <availability>
+               <distributor>Copyright © www.realbook.site</distributor>
+            </availability>
+         </pubStmt>
+      </fileDesc>
+      <encodingDesc xml:id="e171gvzs">
+         <appInfo xml:id="a1mm892i">
+            <application xml:id="a1o0uryb" isodate="2026-10-08T01:46:09" version="6.1.0-682d606">
+               <name xml:id="n1iqa86y">Verovio</name>
+               <p xml:id="pft5r3e">Transcoded from MusicXML</p>
+            </application>
+         </appInfo>
+      </encodingDesc>
+   </meiHead>
+   <music>
+      <body>
+         <mdiv xml:id="b27gc4u">
+            <score xml:id="cuhox08">
+               <scoreDef xml:id="ddhizjy"><pgFoot func="first"><rend halign="center" valign="bottom">Copyright © Realbook.site</rend></pgFoot><pgHead func="first"><rend halign="center" valign="top" fontsize="150%"> </rend><rend halign="center" valign="top" fontsize="267%">Anos Dourados</rend><rend halign="center" valign="top" fontsize="150%"> </rend><rend halign="right" valign="middle" fontsize="150%">Antonio Carlos Jobim</rend></pgHead>
+                  <staffGrp xml:id="f1wv6v5n">
+                     <staffDef xml:id="P1" n="1" lines="5" ppq="60">
+                        <clef xml:id="o1cytske" shape="G" line="2"/>
+                        <keySig xml:id="p7dihvg" mode="major" sig="3s"/>
+                        <meterSig xml:id="qt9liow" count="4" unit="4"/>
+                     </staffDef>
+                  </staffGrp>
+               </scoreDef>
+               <section xml:id="e528sm4">
+                  <expansion plist="#ktpesdt #l1c93prl #m1m4am6h #l1c93prl #nb6ji9c #otfr5jn" xml:id="p3bc34t"/>
+                  <section xml:id="ktpesdt">
+                     <measure xml:id="rzvtygg" metcon="false" n="0">
+                        <mNum xml:id="a1pnervr"/>
+                        <staff xml:id="b1u9fhzv" n="1">
+                           <layer xml:id="jg365oq" n="1">
+                              <note xml:id="k1p31ur" dur.ppq="30" dur="8" oct="4" pname="a">
+                                 <accid xml:id="lpx3wzr"/>
+                              </note>
+                              <tuplet xml:id="mmppz2f" num="3" numbase="2" bracket.visible="true">
+                                 <note xml:id="neseaxr" dur.ppq="40" dur="4" oct="4" pname="g">
+                                    <accid xml:id="ovd9yo1" accid.ges="s" glyph.auth="smufl" glyph.name="accidentalSharp"/>
+                                 </note>
+                                 <note xml:id="p1m1hasc" dur.ppq="40" dur="4" oct="4" pname="e">
+                                    <accid xml:id="qhvweo9"/>
+                                 </note>
+                                 <note xml:id="rveb6l6" dur.ppq="40" dur="4" oct="4" pname="c">
+                                    <accid xml:id="sptyed8" accid.ges="s" glyph.auth="smufl" glyph.name="accidentalSharp"/>
+                                 </note>
+                              </tuplet>
+                           </layer>
+                        </staff>
+                        <tempo xml:id="ced6igl" place="above" staff="1" tstamp="1" xml:lang="it" midi.bpm="116" mm="116" mm.unit="4">
+                           <rend xml:id="dc61006" fontweight="bold">Bossa</rend>
+                           <rend xml:id="fce5x5g" glyph.auth="smufl"></rend> = 116</tempo>
+                     </measure>
+                  </section>
+                  <section xml:id="l1c93prl">
+                     <measure xml:id="tv6bfwt" left="rptstart" n="1">
+                        <staff xml:id="cejomdh" n="1">
+                           <layer xml:id="fkjplow" n="1">
+                              <note xml:id="gzohsu5" dur.ppq="30" dur="8" oct="3" pname="b">
+                                 <accid xml:id="hlng11k"/>
+                              </note>
+                              <note xml:id="i1wb3j5h" dots="1" dur.ppq="90" dur="4" oct="4" pname="c">
+                                 <accid xml:id="j1fz44wy" accid.ges="s" glyph.auth="smufl" glyph.name="accidentalSharp"/>
+                              </note>
+                              <note xml:id="nj3z5qa" dots="1" dur.ppq="90" dur="4" oct="4" pname="c">
+                                 <accid xml:id="o1ozpy9h" accid.ges="s" glyph.auth="smufl" glyph.name="accidentalSharp"/>
+                              </note>
+                              <note xml:id="pv4qs32" dur.ppq="30" dur="8" oct="3" pname="a">
+                                 <accid xml:id="q1qyoccp"/>
+                              </note>
+                           </layer>
+                        </staff>
+                        <harm xml:id="dc7m664" staff="1" tstamp="1">Amaj7</harm>
+                        <tie xml:id="kf5oii6" startid="#i1wb3j5h" endid="#nj3z5qa"/>
+                        <harm xml:id="lhawkzv" staff="1" tstamp="3">F♯m7</harm>
+                     </measure>
+                     <measure xml:id="rhi61hz" n="2">
+                        <staff xml:id="a1u7so6z" n="1">
+                           <layer xml:id="d1o4tqmu" n="1">
+                              <note xml:id="ezd0lt4" dur.ppq="30" dur="8" oct="3" pname="b">
+                                 <accid xml:id="f1whry3k"/>
+                              </note>
+                              <note xml:id="g1015ufc" dots="1" dur.ppq="90" dur="4" oct="4" pname="c">
+                                 <accid xml:id="h8rttth" accid.ges="s" glyph.auth="smufl" glyph.name="accidentalSharp"/>
+                              </note>
+                              <note xml:id="l1mf96t5" dots="1" dur.ppq="90" dur="4" oct="4" pname="c">
+                                 <accid xml:id="m19k7ybg" accid.ges="s" glyph.auth="smufl" glyph.name="accidentalSharp"/>
+                              </note>
+                              <note xml:id="n16zt4o8" dur.ppq="30" dur="8" oct="3" pname="a">
+                                 <accid xml:id="opa5djp"/>
+                              </note>
+                           </layer>
+                        </staff>
+                        <harm xml:id="b5h86sb" staff="1" tstamp="1">Bm7</harm>
+                        <tie xml:id="irlqck8" startid="#g1015ufc" endid="#l1mf96t5"/>
+                        <harm xml:id="j1oc5npg" staff="1" tstamp="3">E7(b9)</harm>
+                     </measure>
+                     <measure xml:id="p6rfquz" n="3">
+                        <staff xml:id="yaequhy" n="1">
+                           <layer xml:id="b1sj4zh4" n="1">
+                              <note xml:id="c1500akz" dur.ppq="30" dur="8" oct="3" pname="b">
+                                 <accid xml:id="dtghult"/>
+                              </note>
+                              <note xml:id="e1b434pd" dots="1" dur.ppq="90" dur="4" oct="4" pname="c">
+                                 <accid xml:id="fmp70fl" accid.ges="s" glyph.auth="smufl" glyph.name="accidentalSharp"/>
+                              </note>
+                              <note xml:id="j1r1d56x" dur.ppq="120" dur="2" oct="4" pname="c">
+                                 <accid xml:id="k1h2bpj4" accid.ges="s" glyph.auth="smufl" glyph.name="accidentalSharp"/>
+                              </note>
+                           </layer>
+                        </staff>
+                        <harm xml:id="zy2cx2e" staff="1" tstamp="1">Amaj7</harm>
+                        <tie xml:id="g1cxwux6" startid="#e1b434pd" endid="#j1r1d56x"/>
+                        <harm xml:id="h4cfin4" staff="1" tstamp="3">F♯m7</harm>
+                     </measure>
+                     <measure xml:id="l1676m34" n="4">
+                        <staff xml:id="um5qioa" n="1">
+                           <layer xml:id="x15kwhv5" n="1">
+                              <rest xml:id="y17ifbvw" dur.ppq="60" dur="4"/>
+                              <rest xml:id="zkj93qg" dur.ppq="30" dur="8"/>
+                              <note xml:id="am0boj3" dur.ppq="30" dur="8" oct="4" pname="a">
+                                 <accid xml:id="b26i5ri"/>
+                              </note>
+                              <tuplet xml:id="ecykacb" num="3" numbase="2" bracket.visible="true">
+                                 <note xml:id="f1ya9b1s" dur.ppq="40" dur="4" oct="4" pname="g">
+                                    <accid xml:id="g19s36e6" accid.ges="s" glyph.auth="smufl" glyph.name="accidentalSharp"/>
+                                 </note>
+                                 <note xml:id="h172u1xx" dur.ppq="40" dur="4" oct="4" pname="e">
+                                    <accid xml:id="ixjxvr2"/>
+                                 </note>
+                                 <note xml:id="j1hajn9w" dur.ppq="40" dur="4" oct="4" pname="c">
+                                    <accid xml:id="kq603uf" accid.ges="s" glyph.auth="smufl" glyph.name="accidentalSharp"/>
+                                 </note>
+                              </tuplet>
+                           </layer>
+                        </staff>
+                        <harm xml:id="v1d7bccn" staff="1" tstamp="1">Bm7</harm>
+                        <harm xml:id="c1xua0ys" staff="1" tstamp="3">E7(b9)</harm>
+                     </measure>
+                     <sb/><measure xml:id="lgj2rfy" n="5">
+                        <staff xml:id="u1wzgrsc" n="1">
+                           <layer xml:id="xe2pjy3" n="1">
+                              <note xml:id="y1o2515f" dur.ppq="30" dur="8" oct="3" pname="b">
+                                 <accid xml:id="zt7hf0b"/>
+                              </note>
+                              <note xml:id="a8ytpf6" dots="1" dur.ppq="90" dur="4" oct="4" pname="c">
+                                 <accid xml:id="bptw7of" accid.ges="s" glyph.auth="smufl" glyph.name="accidentalSharp"/>
+                              </note>
+                              <note xml:id="f13ua4cx" dots="1" dur.ppq="90" dur="4" oct="4" pname="c">
+                                 <accid xml:id="g1jfpkbu" accid.ges="s" glyph.auth="smufl" glyph.name="accidentalSharp"/>
+                              </note>
+                              <note xml:id="h18ixbw8" dur.ppq="30" dur="8" oct="4" pname="c">
+                                 <accid xml:id="isq6h9i" accid.ges="s" glyph.auth="smufl" glyph.name="accidentalSharp"/>
+                              </note>
+                           </layer>
+                        </staff>
+                        <harm xml:id="vic2vs0" staff="1" tstamp="1">Amaj7</harm>
+                        <tie xml:id="c3lkm5n" startid="#a8ytpf6" endid="#f13ua4cx"/>
+                        <harm xml:id="d1rtxin7" staff="1" tstamp="3">F♯m7</harm>
+                     </measure>
+                     <measure xml:id="j1i24no9" n="6">
+                        <staff xml:id="s1m58zta" n="1">
+                           <layer xml:id="v1qyq0q5" n="1">
+                              <note xml:id="wmvk8tw" dur.ppq="30" dur="8" oct="4" pname="c">
+                                 <accid xml:id="xgt0k4u" accid.ges="s" glyph.auth="smufl" glyph.name="accidentalSharp"/>
+                              </note>
+                              <note xml:id="ybnawsy" dots="1" dur.ppq="90" dur="4" oct="4" pname="d">
+                                 <accid xml:id="zxw9253"/>
+                              </note>
+                              <note xml:id="d1p5gog8" dots="1" dur.ppq="90" dur="4" oct="4" pname="d">
+                                 <accid xml:id="e1okiwmu"/>
+                              </note>
+                              <note xml:id="f7o2kk3" dur.ppq="30" dur="8" oct="4" pname="c">
+                                 <accid xml:id="g85wxb7" accid.ges="s" glyph.auth="smufl" glyph.name="accidentalSharp"/>
+                              </note>
+                           </layer>
+                        </staff>
+                        <harm xml:id="t1dra6dk" staff="1" tstamp="1">Bm7</harm>
+                        <tie xml:id="a1ljfui" startid="#ybnawsy" endid="#d1p5gog8"/>
+                        <harm xml:id="bec42le" staff="1" tstamp="3">E7(b9)</harm>
+                     </measure>
+                     <measure xml:id="hfsm1vb" n="7">
+                        <staff xml:id="q1u0vjia" n="1">
+                           <layer xml:id="t2967jj" n="1">
+                              <note xml:id="ukpzezq" dur.ppq="30" dur="8" oct="4" pname="d">
+                                 <accid xml:id="vv2kiol"/>
+                              </note>
+                              <note xml:id="w9bb2ow" dots="1" dur.ppq="90" dur="4" oct="4" pname="e">
+                                 <accid xml:id="x1iap02i"/>
+                              </note>
+                              <note xml:id="zgydne3" dur.ppq="120" dur="2" oct="4" pname="e">
+                                 <accid xml:id="a16r85ai"/>
+                              </note>
+                           </layer>
+                        </staff>
+                        <harm xml:id="r1h4kjr2" staff="1" tstamp="1">A9sus4</harm>
+                        <tie xml:id="y1tfbfdt" startid="#w9bb2ow" endid="#zgydne3"/>
+                        <tie xml:id="bl09ve2" startid="#zgydne3" endid="#pg9nx0n"/>
+                     </measure>
+                     <measure xml:id="cly2f83" n="8">
+                        <staff xml:id="l1frzmxc" n="1">
+                           <layer xml:id="o1d1yvmo" n="1">
+                              <note xml:id="pg9nx0n" dur.ppq="60" dur="4" oct="4" pname="e">
+                                 <accid xml:id="qnw5sm8"/>
+                              </note>
+                              <rest xml:id="rv03ivm" dur.ppq="30" dur="8"/>
+                              <note xml:id="s3z20bf" dur.ppq="30" dur="8" oct="5" pname="d">
+                                 <accid xml:id="t19xgagh"/>
+                              </note>
+                              <tuplet xml:id="u17mwjoy" num="3" numbase="2" bracket.visible="true">
+                                 <note xml:id="v1va0fgd" dur.ppq="40" dur="4" oct="5" pname="c">
+                                    <accid xml:id="w15wbolu" accid.ges="s" glyph.auth="smufl" glyph.name="accidentalSharp"/>
+                                 </note>
+                                 <note xml:id="xg4cxg2" dur.ppq="40" dur="4" oct="4" pname="a">
+                                    <accid xml:id="yn1m1g9"/>
+                                 </note>
+                                 <note xml:id="z1nh4q5d" dur.ppq="40" dur="4" oct="4" pname="f">
+                                    <accid xml:id="an1y1ju" accid.ges="s" glyph.auth="smufl" glyph.name="accidentalSharp"/>
+                                 </note>
+                              </tuplet>
+                           </layer>
+                        </staff>
+                        <harm xml:id="m1irjyxn" staff="1" tstamp="1">A7(b9)</harm>
+                     </measure>
+                     <sb/><measure xml:id="bvwptwq" n="9">
+                        <staff xml:id="krell5h" n="1">
+                           <layer xml:id="n1v1llao" n="1">
+                              <note xml:id="o1i6jpyg" dur.ppq="30" dur="8" oct="4" pname="e">
+                                 <accid xml:id="p14sdntg"/>
+                              </note>
+                              <note xml:id="q6gbpjk" dots="1" dur.ppq="90" dur="4" oct="4" pname="f">
+                                 <accid xml:id="rt7klhx" accid.ges="s" glyph.auth="smufl" glyph.name="accidentalSharp"/>
+                              </note>
+                              <note xml:id="t98rx3n" dots="1" dur.ppq="90" dur="4" oct="4" pname="f">
+                                 <accid xml:id="uxcpnrc" accid.ges="s" glyph.auth="smufl" glyph.name="accidentalSharp"/>
+                              </note>
+                              <note xml:id="v6xidcw" dur.ppq="30" dur="8" oct="4" pname="f">
+                                 <accid xml:id="web7xsp" accid.ges="s" glyph.auth="smufl" glyph.name="accidentalSharp"/>
+                              </note>
+                           </layer>
+                        </staff>
+                        <harm xml:id="ljqin87" staff="1" tstamp="1">Dmaj7</harm>
+                        <tie xml:id="siqf877" startid="#q6gbpjk" endid="#t98rx3n"/>
+                     </measure>
+                  </section>
+                  <ending xml:id="m1m4am6h" lendsym="angledown" n="1">
+                     <measure xml:id="x1j4czfh" n="10">
+                        <staff xml:id="gh1iyc" n="1">
+                           <layer xml:id="j1vaq3k6" n="1">
+                              
+                                 <beam><note xml:id="l1ruu6jw" dur.ppq="30" dur="8" oct="4" pname="f">
+                                    <accid xml:id="m114hur7" accid.ges="s" glyph.auth="smufl" glyph.name="accidentalSharp"/>
+                                 </note><note xml:id="n1mccdyy" dur.ppq="30" dur="8" oct="4" pname="f">
+                                    <accid xml:id="odtrysm" accid="n" accid.ges="n"/>
+                                 </note><note xml:id="r9orvlc" dur.ppq="30" dur="8" oct="4" pname="f">
+                                    <accid xml:id="s10z7y4o" accid.ges="n" glyph.auth="smufl" glyph.name="accidentalNatural"/>
+                                 </note><note xml:id="t1k43vi0" dur.ppq="30" dur="8" oct="4" pname="e">
+                                    <accid xml:id="u81p4uq"/>
+                                 </note></beam>
+                                 
+                                 
+                                 
+                              
+                              <note xml:id="vde36zn" dots="1" dur.ppq="90" dur="4" oct="4" pname="e">
+                                 <accid xml:id="w1rd3cq3"/>
+                              </note>
+                              <note xml:id="xvio5pz" dur.ppq="30" dur="8" oct="4" pname="d">
+                                 <accid xml:id="yucyh6b" accid="s" accid.ges="s"/>
+                              </note>
+                           </layer>
+                        </staff>
+                        <harm xml:id="h1obmo8p" staff="1" tstamp="1">D♯m7b5</harm>
+                        <harm xml:id="p1eczkxq" staff="1" tstamp="2">G♯7+5</harm>
+                     </measure>
+                     <sb/><measure xml:id="zqh82qh" n="11">
+                        <staff xml:id="i10noa8e" n="1">
+                           <layer xml:id="l1624t7r" n="1">
+                              <note xml:id="m3ge6vk" dur.ppq="30" dur="8" oct="4" pname="d">
+                                 <accid xml:id="n1qd4hu1" accid="s" accid.ges="s"/>
+                              </note>
+                              <note xml:id="o1fxbfvy" dur.ppq="60" dur="4" oct="4" pname="f">
+                                 <accid xml:id="ph31qc" accid.ges="s" glyph.auth="smufl" glyph.name="accidentalSharp"/>
+                              </note>
+                              <note xml:id="q1wd2ulw" dur.ppq="30" dur="8" oct="4" pname="e">
+                                 <accid xml:id="r1gn8c9c"/>
+                              </note>
+                              <note xml:id="txxpb0e" dur.ppq="120" dur="2" oct="4" pname="e">
+                                 <accid xml:id="uqsdl18"/>
+                              </note>
+                           </layer>
+                        </staff>
+                        <harm xml:id="jwc3wft" staff="1" tstamp="1">C♯m7</harm>
+                        <tie xml:id="s1m5ewy8" startid="#q1wd2ulw" endid="#txxpb0e"/>
+                     </measure>
+                     <measure xml:id="v1r0gii8" n="12">
+                        <staff xml:id="ek4y7qk" n="1">
+                           <layer xml:id="h1tbz8n8" n="1">
+                              <rest xml:id="igu8mpw" dur.ppq="60" dur="4"/>
+                              <rest xml:id="jfjym6l" dur.ppq="30" dur="8"/>
+                              <note xml:id="k7z12fd" dur.ppq="30" dur="8" oct="5" pname="c">
+                                 <accid xml:id="l1gfg5lh" accid.ges="s" glyph.auth="smufl" glyph.name="accidentalSharp"/>
+                              </note>
+                              <tuplet xml:id="o1v1oh51" num="3" numbase="2" bracket.visible="true">
+                                 <note xml:id="p1xl8egp" dur.ppq="40" dur="4" oct="5" pname="c">
+                                    <accid xml:id="q17se3bt" accid="n" accid.ges="n"/>
+                                 </note>
+                                 <note xml:id="r1e0jiri" dur.ppq="40" dur="4" oct="4" pname="g">
+                                    <accid xml:id="s1g92so9" accid.ges="s" glyph.auth="smufl" glyph.name="accidentalSharp"/>
+                                 </note>
+                                 <note xml:id="t1uh8bn2" dur.ppq="40" dur="4" oct="4" pname="e">
+                                    <accid xml:id="u1cq3qhm"/>
+                                 </note>
+                              </tuplet>
+                           </layer>
+                        </staff>
+                        <harm xml:id="f48rwzk" staff="1" tstamp="1">D♯m7</harm>
+                        <harm xml:id="m1es9wf" staff="1" tstamp="3">G♯7+5</harm>
+                     </measure>
+                     <sb/><measure xml:id="v1lo2yaq" n="13">
+                        <staff xml:id="e1e2anob" n="1">
+                           <layer xml:id="h1oyumk2" n="1">
+                              <note xml:id="i3x2ghd" dur.ppq="30" dur="8" oct="4" pname="d">
+                                 <accid xml:id="jp9r84j" accid="s" accid.ges="s"/>
+                              </note>
+                              <note xml:id="k1c51j84" dots="1" dur.ppq="90" dur="4" oct="4" pname="e">
+                                 <accid xml:id="lcjx58h"/>
+                              </note>
+                              <note xml:id="p8r67ub" dots="1" dur.ppq="90" dur="4" oct="4" pname="e">
+                                 <accid xml:id="qim1p59"/>
+                              </note>
+                              <note xml:id="ra9cgv9" dur.ppq="30" dur="8" oct="4" pname="c">
+                                 <accid xml:id="suwfo3c" accid.ges="s" glyph.auth="smufl" glyph.name="accidentalSharp"/>
+                              </note>
+                           </layer>
+                        </staff>
+                        <harm xml:id="f17fbi1b" staff="1" tstamp="1">C♯m9(maj7)</harm>
+                        <tie xml:id="m1juih5z" startid="#k1c51j84" endid="#p8r67ub"/>
+                        <harm xml:id="n1t8dfvw" staff="1" tstamp="3">C♯m7</harm>
+                     </measure>
+                     <measure xml:id="tdp9qr9" n="14">
+                        <staff xml:id="c61t8hs" n="1">
+                           <layer xml:id="fcgk4cb" n="1">
+                              <note xml:id="g1qwm45v" dots="1" dur.ppq="90" dur="4" oct="4" pname="d">
+                                 <accid xml:id="h1wcgws1" accid="s" accid.ges="s"/>
+                              </note>
+                              <note xml:id="i1ua9in4" dur.ppq="30" dur="8" oct="4" pname="f">
+                                 <accid xml:id="jrpx2kh" accid.ges="s" glyph.auth="smufl" glyph.name="accidentalSharp"/>
+                              </note>
+                              <note xml:id="m18whs6i" dur.ppq="60" dur="4" oct="4" pname="e">
+                                 <accid xml:id="n10dq54q"/>
+                              </note>
+                              <note xml:id="o1jm8zmo" dur.ppq="60" dur="4" oct="4" pname="c">
+                                 <accid xml:id="p16uidf3" accid="n" accid.ges="n"/>
+                              </note>
+                           </layer>
+                        </staff>
+                        <harm xml:id="d43yx6c" staff="1" tstamp="1">D♯m7b5</harm>
+                        <harm xml:id="k1y9ti1x" staff="1" tstamp="3">G♯7+5</harm>
+                     </measure>
+                     <sb/><measure xml:id="q1mg1n14" n="15">
+                        <staff xml:id="z1j946cq" n="1">
+                           <layer xml:id="ec6azpc" n="1">
+                              <note xml:id="f19b0u3s" dur.ppq="240" dur="1" oct="4" pname="c">
+                                 <accid xml:id="g1dwgefb" accid.ges="s" glyph.auth="smufl" glyph.name="accidentalSharp"/>
+                              </note>
+                           </layer>
+                        </staff>
+                        <harm xml:id="a4jq1f" staff="1" tstamp="1">C♯m7</harm>
+                        <harm xml:id="cobvicv" staff="1" tstamp="3">F♯7+5</harm>
+                     </measure>
+                     <measure xml:id="h17u006f" right="rptend" n="16">
+                        <staff xml:id="qnm3rnq" n="1">
+                           <layer xml:id="t14lor51" n="1">
+                              <rest xml:id="u1jcja19" dur.ppq="60" dur="4"/>
+                              <rest xml:id="v1oyha99" dur.ppq="30" dur="8"/>
+                              <note xml:id="w10b2s7m" dur.ppq="30" dur="8" oct="4" pname="a">
+                                 <accid xml:id="xp9vvgp"/>
+                              </note>
+                              <tuplet xml:id="a1knvl2u" num="3" numbase="2" bracket.visible="true">
+                                 <note xml:id="bnc14fs" dur.ppq="40" dur="4" oct="4" pname="g">
+                                    <accid xml:id="c1b1hjws" accid.ges="s" glyph.auth="smufl" glyph.name="accidentalSharp"/>
+                                 </note>
+                                 <note xml:id="d1sk5ujd" dur.ppq="40" dur="4" oct="4" pname="e">
+                                    <accid xml:id="ekqk99q"/>
+                                 </note>
+                                 <note xml:id="fiwg12w" dur.ppq="40" dur="4" oct="4" pname="c">
+                                    <accid xml:id="gf2b41" accid.ges="s" glyph.auth="smufl" glyph.name="accidentalSharp"/>
+                                 </note>
+                              </tuplet>
+                           </layer>
+                        </staff>
+                        <harm xml:id="rc3bb1w" staff="1" tstamp="1">Bm7</harm>
+                        <harm xml:id="y1reqz1s" staff="1" tstamp="3">E7(b9)</harm>
+                     </measure>
+                  </ending>
+                  <ending xml:id="nb6ji9c" lendsym="none" n="2">
+                     <sb/><measure xml:id="hhkj2rx" n="17">
+                        <staff xml:id="q1nzqkec" n="1">
+                           <layer xml:id="t1y4vd3z" n="1">
+                              <note xml:id="ufgoa2f" dots="1" dur.ppq="90" dur="4" oct="4" pname="f">
+                                 <accid xml:id="v13z50e" accid.ges="s" glyph.auth="smufl" glyph.name="accidentalSharp"/>
+                              </note>
+                              <note xml:id="wkes3t2" dur.ppq="30" dur="8" oct="4" pname="g">
+                                 <accid xml:id="x1bq4crp" accid.ges="s" glyph.auth="smufl" glyph.name="accidentalSharp"/>
+                              </note>
+                              <note xml:id="bsx6mbb" dots="1" dur.ppq="90" dur="4" oct="4" pname="g">
+                                 <accid xml:id="cervz9n" accid.ges="s" glyph.auth="smufl" glyph.name="accidentalSharp"/>
+                              </note>
+                              <note xml:id="d130wdct" dur.ppq="30" dur="8" oct="4" pname="g">
+                                 <accid xml:id="e66ojn3" accid.ges="s" glyph.auth="smufl" glyph.name="accidentalSharp"/>
+                              </note>
+                           </layer>
+                        </staff>
+                        <harm xml:id="rslfwno" staff="1" tstamp="1">C♯9sus4</harm>
+                        <tie xml:id="yzql3cr" startid="#wkes3t2" endid="#bsx6mbb"/>
+                        <harm xml:id="z6xmuw1" staff="1" tstamp="3">C♯7(b9)</harm>
+                     </measure>
+                     <measure xml:id="f8e2ti8" n="18">
+                        <staff xml:id="o1le7q02" n="1">
+                           <layer xml:id="r1hj2hyd" n="1">
+                              <note xml:id="s8oyg1u" dots="1" dur.ppq="90" dur="4" oct="4" pname="g">
+                                 <accid xml:id="t1m2zb2o" accid.ges="s" glyph.auth="smufl" glyph.name="accidentalSharp"/>
+                              </note>
+                              <note xml:id="u1kouj2a" dur.ppq="30" dur="8" oct="4" pname="a">
+                                 <accid xml:id="vheqd7y"/>
+                              </note>
+                              <note xml:id="xsgl4x0" dur.ppq="120" dur="2" oct="4" pname="a">
+                                 <accid xml:id="yfyw82u"/>
+                              </note>
+                           </layer>
+                        </staff>
+                        <harm xml:id="p1j8jwdm" staff="1" tstamp="1">F♯m7</harm>
+                        <tie xml:id="w1czqhgl" startid="#u1kouj2a" endid="#xsgl4x0"/>
+                     </measure>
+                  </ending>
+                  <section xml:id="otfr5jn">
+                     <measure xml:id="z1yj1aly" n="19">
+                        <staff xml:id="i1vxj4tw" n="1">
+                           <layer xml:id="l1ngtohf" n="1">
+                              <rest xml:id="mqbbce7" dur.ppq="60" dur="4"/>
+                              <rest xml:id="n183xhbl" dur.ppq="30" dur="8"/>
+                              <note xml:id="o1ln15zp" dur.ppq="30" dur="8" oct="5" pname="d">
+                                 <accid xml:id="pvulox2"/>
+                              </note>
+                              <tuplet xml:id="q1jxfsy1" num="3" numbase="2" bracket.visible="true">
+                                 <note xml:id="r40l3x9" dur.ppq="40" dur="4" oct="5" pname="c">
+                                    <accid xml:id="s54tcaz" accid.ges="s" glyph.auth="smufl" glyph.name="accidentalSharp"/>
+                                 </note>
+                                 <note xml:id="ta5drea" dur.ppq="40" dur="4" oct="4" pname="a">
+                                    <accid xml:id="u1r15hef"/>
+                                 </note>
+                                 <note xml:id="v1nx9c4i" dur.ppq="40" dur="4" oct="4" pname="f">
+                                    <accid xml:id="w17ghy30" accid="n" accid.ges="n"/>
+                                 </note>
+                              </tuplet>
+                           </layer>
+                        </staff>
+                        <harm xml:id="jblmx0g" staff="1" tstamp="1">F6</harm>
+                     </measure>
+                     <measure xml:id="xkbdu0t" n="20">
+                        <staff xml:id="gpcf1jh" n="1">
+                           <layer xml:id="j16va0jw" n="1">
+                              <note xml:id="khsnrn4" dur.ppq="30" dur="8" oct="4" pname="b">
+                                 <accid xml:id="lphniga"/>
+                              </note>
+                              <note xml:id="m17h9vdj" dots="1" dur.ppq="90" dur="4" oct="5" pname="c">
+                                 <accid xml:id="n1d7rm4u" accid.ges="s" glyph.auth="smufl" glyph.name="accidentalSharp"/>
+                              </note>
+                              <note xml:id="r1yeeopb" dots="1" dur.ppq="90" dur="4" oct="5" pname="c">
+                                 <accid xml:id="sghh048" accid.ges="s" glyph.auth="smufl" glyph.name="accidentalSharp"/>
+                              </note>
+                              <note xml:id="tlhr5ur" dur.ppq="30" dur="8" oct="4" pname="a">
+                                 <accid xml:id="u14hs8n7"/>
+                              </note>
+                           </layer>
+                        </staff>
+                        <harm xml:id="hj1k6b7" staff="1" tstamp="1">Amaj7</harm>
+                        <tie xml:id="o162oz0v" startid="#m17h9vdj" endid="#r1yeeopb"/>
+                        <harm xml:id="p1fyegi2" staff="1" tstamp="3">F♯m7</harm>
+                     </measure>
+                     <sb/><measure xml:id="vwxt7xw" n="21">
+                        <staff xml:id="ew39lja" n="1">
+                           <layer xml:id="h16xmdwf" n="1">
+                              <note xml:id="i10u1m3p" dur.ppq="60" dur="4" oct="4" pname="b">
+                                 <accid xml:id="joq43wj"/>
+                              </note>
+                              <note xml:id="m8xsix2" dur.ppq="60" dur="4" oct="5" pname="c">
+                                 <accid xml:id="nm1afa6" accid.ges="s" glyph.auth="smufl" glyph.name="accidentalSharp"/>
+                              </note>
+                              <note xml:id="qp83xem" dur.ppq="60" dur="4" oct="4" pname="a">
+                                 <accid xml:id="r17gwrqi"/>
+                              </note>
+                              <note xml:id="u1tbx8zx" dur.ppq="60" dur="4" oct="4" pname="b">
+                                 <accid xml:id="vmnq3hg"/>
+                              </note>
+                           </layer>
+                        </staff>
+                        <harm xml:id="f1okc0jf" staff="1" tstamp="1">B13</harm>
+                        <harm xml:id="kbisf6m" staff="1" tstamp="2">B7+5</harm>
+                        <harm xml:id="o1kneiop" staff="1" tstamp="3">E9sus4</harm>
+                        <harm xml:id="snbm77t" staff="1" tstamp="4">E7(b9)</harm>
+                     </measure>
+                     <measure xml:id="wuuhj1x" n="22">
+                        <staff xml:id="f1gbkpsv" n="1">
+                           <layer xml:id="i1n5yxft" n="1">
+                              <note xml:id="j1kw9zmn" dots="1" dur.ppq="180" dur="2" oct="5" pname="c">
+                                 <accid xml:id="k1slk1rv" accid.ges="s" glyph.auth="smufl" glyph.name="accidentalSharp"/>
+                              </note>
+                              <rest xml:id="nssukui" dur.ppq="30" dur="8"/>
+                              <note xml:id="o138b3rf" dur.ppq="30" dur="8" oct="5" pname="d">
+                                 <accid xml:id="p1h6md9i"/>
+                              </note>
+                           </layer>
+                        </staff>
+                        <harm xml:id="g1ltuj96" staff="1" tstamp="1">C♯13</harm>
+                        <harm xml:id="l5wqa7g" staff="1" tstamp="4">F♯7(b9)</harm>
+                     </measure>
+                     <sb/><measure xml:id="qmggfzn" n="23">
+                        <staff xml:id="z102onnc" n="1">
+                           <layer xml:id="cp4cu59" n="1">
+                              <note xml:id="d1e1fxn8" dur.ppq="60" dur="4" oct="4" pname="b">
+                                 <accid xml:id="eqb2pfu"/>
+                              </note>
+                              <note xml:id="h1ruu2uc" dur.ppq="60" dur="4" oct="5" pname="c">
+                                 <accid xml:id="ilg1ko5" accid.ges="s" glyph.auth="smufl" glyph.name="accidentalSharp"/>
+                              </note>
+                              <note xml:id="l16ku7fq" dur.ppq="60" dur="4" oct="4" pname="a">
+                                 <accid xml:id="melwtu6"/>
+                              </note>
+                              
+                                 <beam><note xml:id="q11xwst4" dur.ppq="30" dur="8" oct="4" pname="b">
+                                    <accid xml:id="r1fpc8xo"/>
+                                 </note><note xml:id="s185orif" dur.ppq="30" dur="8" oct="4" pname="a">
+                                    <accid xml:id="t18pz1di"/>
+                                 </note></beam>
+                                 
+                              
+                           </layer>
+                        </staff>
+                        <harm xml:id="a10z0ejo" staff="1" tstamp="1">B13</harm>
+                        <harm xml:id="few5acx" staff="1" tstamp="2">B7+5</harm>
+                        <harm xml:id="j6vad8q" staff="1" tstamp="3">E9sus4</harm>
+                        <harm xml:id="n1ssss6d" staff="1" tstamp="4">E7(b9)</harm>
+                        <tie xml:id="u14cmky2" startid="#s185orif" endid="#i1yi789n"/>
+                     </measure>
+                     <measure xml:id="vcf638j" right="end" n="24">
+                        <staff xml:id="ej1wgnp" n="1">
+                           <layer xml:id="hbzvjai" n="1">
+                              <note xml:id="i1yi789n" dur.ppq="240" dur="1" oct="4" pname="a">
+                                 <accid xml:id="j1s5z6oj"/>
+                              </note>
+                           </layer>
+                        </staff>
+                        <harm xml:id="f1kp2mtg" staff="1" tstamp="1">Amaj7</harm>
+                     </measure>
+                  </section>
+               </section>
+            </score>
+         </mdiv>
+      </body>
+   </music>
+</mei>

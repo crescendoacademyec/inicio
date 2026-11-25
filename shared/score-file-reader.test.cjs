@@ -52,7 +52,7 @@ test('tempo uses MusicXML metronome instead of private font characters',()=>{
 test('repeats and first endings survive',()=>{
  const r=xml([e('ending',{n:1},[measure([n()],{left:'rptstart',right:'rptend'})])]);assert.match(r.content,/<repeat direction="forward"/);assert.match(r.content,/<repeat direction="backward"/);assert.match(r.content,/<ending number="1" type="start"/);
 });
-for(const name of ['neume','multiRest','tupletSpan','app'])test('reports unsupported '+name,()=>assert.throws(()=>xml([measure([e(name)])]),/no es compatible|aún no es compatible/));
+for(const name of ['neume','tupletSpan','app'])test('reports unsupported '+name,()=>assert.throws(()=>xml([measure([e(name)])]),/no es compatible|aún no es compatible/));
 test('rejects invalid pitches, durations and inline keys clearly',()=>{
  assert.throws(()=>xml([measure([n('h')])]),/altura/);assert.throws(()=>xml([measure([n('c',4,{dur:9})])]),/Duración/);assert.throws(()=>xml([measure([e('keySig',{sig:'2s'}),n()])]),/dentro de una voz/);
 });
@@ -72,3 +72,9 @@ test('MEI expansion is authoritative for repeats, endings and D.S./coda',()=>{
  assert.throws(()=>xml([e('expansion',{plist:'#missing'}),measure([n()])]),/inexistente/);
  assert.throws(()=>xml([e('expansion',{plist:'#a'}),e('section',{'xml:id':'a'},[e('expansion',{plist:'#a'})])]),/compases compatibles|circulares/);
 });
+
+test('multi-measure rests expand completely and preserve MEI expansion indices',()=>{
+ const a=measure([e('multiRest',{num:4})],{'xml:id':'rest',n:1}),b=measure([n()],{'xml:id':'tune',n:5}),r=xml([a,b],{},[e('expansion',{plist:'#rest #tune #rest'})]);
+ assert.equal((r.content.match(/<measure /g)||[]).length,5);assert.equal(r.noteCount,1);assert.deepEqual(r.playbackRoute,[0,1,2,3,4,0,1,2,3]);assert.equal(r.restCount,4);
+});
+test('invalid or conflicting multi-measure rests are rejected instead of shortening a chart',()=>{assert.throws(()=>xml([measure([e('multiRest',{num:0})])]),/no válido/);assert.throws(()=>xml([measure([e('multiRest',{num:4}),n()])]),/no válido/);});

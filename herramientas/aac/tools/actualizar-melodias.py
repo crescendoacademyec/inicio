@@ -20,7 +20,23 @@ def parse(data):
  return ET.fromstring(data)
 def ast(node):
  return {'tag':local(node),'attrs':{('xml:id' if k==XML_ID else k):v for k,v in node.attrib.items()},'text':''.join(node.itertext()),'children':[ast(c) for c in node]}
-def prepare(path,previous,used):
+class MEIConverter:
+ def __init__(self): self.process=None
+ def convert(self,root): return self.request(ast(root))
+ def validate(self,root): return self.request({"validate":True,"node":ast(root)})
+ def request(self,payload):
+  if self.process is None: self.process=subprocess.Popen(['node',str(APP/'tools/convert-mei.cjs'),'--batch'],stdin=subprocess.PIPE,stdout=subprocess.PIPE,text=True)
+  self.process.stdin.write(json.dumps(payload)+'\n');self.process.stdin.flush()
+  line=self.process.stdout.readline()
+  if not line: raise ValueError('El conversor MEI terminó sin devolver una partitura')
+  result=json.loads(line)
+  if result.get('error'): raise ValueError(result['error'])
+  return result
+ def close(self):
+  if self.process:
+   self.process.stdin.close();self.process.stdout.close();self.process.wait()
+
+def prepare(path,previous,used,converter=None):
  data=path.read_bytes();root=parse(data);kind=local(root)
  if kind not in {'mei','score-partwise'}: raise ValueError('Se necesita MEI o MusicXML score-partwise')
  correct='.mei' if kind=='mei' else '.musicxml'
@@ -32,8 +48,10 @@ def prepare(path,previous,used):
    raise ValueError('Hay cambios manuales en '+generated.name+'. Conserva esa edición en correcciones/ y actualiza el catálogo antes de regenerar.')
  if old.get('sourceSHA256')!=digest(data): old={}
  if kind=='mei':
-  run=subprocess.run(['node',str(APP/'tools/convert-mei.cjs')],input=json.dumps(ast(root)),text=True,capture_output=True,check=True)
-  result=json.loads(run.stdout);canonical=result['content'];route=result.get('playbackRoute');converted=parse(canonical.encode())
+  if converter: result=converter(root)
+  else:
+   run=subprocess.run(['node',str(APP/'tools/convert-mei.cjs')],input=json.dumps(ast(root)),text=True,capture_output=True,check=True);result=json.loads(run.stdout)
+  canonical=result['content'];route=result.get('playbackRoute');converted=parse(canonical.encode())
   if route:
    identification=converted.find('identification')
    if identification is None: identification=ET.SubElement(converted,'identification')
@@ -62,7 +80,7 @@ def prepare(path,previous,used):
  notes=sum(1 for n in nodes(converted,'note') if any(local(c)=='pitch' for c in n));measures=len(nodes(converted,'measure'))
  if (not old.get('correctionFile') and notes!=source_notes) or not notes or not measures: raise ValueError('La conversión no conserva las notas de '+title)
  tempo=next((float(n.get('tempo')) for n in nodes(converted,'sound') if n.get('tempo') and 20<=float(n.get('tempo'))<=360),120)
- entry={**old,'id':identifier,'title':title,'composer':composer,'sourceFile':source,'sourceFormat':'mei' if kind=='mei' else 'musicxml','sourceSHA256':digest(data),'musicxml':'Melodías/partituras/'+identifier+'.musicxml','musicxmlSHA256':digest(canonical.encode()),'tempo':tempo,'noteCount':notes,'measureCount':measures}
+ entry={**old,'id':identifier,'title':old.get('title',title),'composer':composer,'sourceFile':source,'sourceFormat':'mei' if kind=='mei' else 'musicxml','sourceSHA256':digest(data),'musicxml':'Melodías/partituras/'+identifier+'.musicxml','musicxmlSHA256':digest(canonical.encode()),'tempo':tempo,'noteCount':notes,'measureCount':measures}
  entry.setdefault('reviewStatus','pending-musical-review')
  entry.setdefault('reviewSummary','Archivo incorporado · revisión musical pendiente.')
  entry.setdefault('sourceLabel','Partitura digital aportada por el usuario')
@@ -73,11 +91,14 @@ def main():
  parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--check',action='store_true');parser.add_argument('--folder',type=Path,default=FOLDER);args=parser.parse_args();folder=args.folder.resolve()
  catalog=folder/'catalog.json';old=json.loads(catalog.read_text()) if catalog.is_file() else {'examples':[]};previous={r['sourceFile']:r for r in old.get('examples',[])}
  files=sorted(p for p in folder.iterdir() if p.is_file() and p.suffix.lower() in {'.mei','.musicxml','.xml'});planned=[];used=set()
- for path in files:
-  try: planned.append(prepare(path,previous,used))
-  except (ValueError,ET.ParseError,subprocess.CalledProcessError) as error:
-   detail=error.stderr.strip() if isinstance(error,subprocess.CalledProcessError) else str(error);raise ValueError(path.name+': '+detail) from error
- entries=sorted((entry for entry,_ in planned),key=lambda row:unicodedata.normalize('NFKD',row['title']).casefold())
+ converter=MEIConverter()
+ try:
+  for path in files:
+   try: planned.append(prepare(path,previous,used,converter.convert))
+   except (ValueError,ET.ParseError,subprocess.CalledProcessError) as error:
+    detail=error.stderr.strip() if isinstance(error,subprocess.CalledProcessError) else str(error);raise ValueError(path.name+': '+detail) from error
+ finally: converter.close()
+ entries=sorted((entry for entry,_ in planned),key=lambda row:(unicodedata.normalize('NFKD',row['title']).casefold(),row['id']))
  result={'schema':'aac-melody-library-v1','examples':entries,'summary':{'themes':len(entries),'meiSources':sum(e['sourceFormat']=='mei' for e in entries),'musicxmlSources':sum(e['sourceFormat']=='musicxml' for e in entries)}}
  if args.check:
   if result!=old: raise ValueError('El catálogo no coincide con los originales. Ejecuta actualizar-melodias.py tras revisar los cambios.')
