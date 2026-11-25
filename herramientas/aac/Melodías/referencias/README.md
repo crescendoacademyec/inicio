@@ -20,7 +20,7 @@ Las 755 entradas contienen 117 obras presentes en ambos libros. Se conserva una 
 
 El número de página del PDF cuenta desde la portada; la numeración impresa puede ser distinta. En Berklee, página PDF = impresa + 1; en la sexta edición, página PDF = impresa − 1.
 
-Estas fotos sirven para revisar las melodías que se incorporen después. No certifican que un XML/MEI corresponda a la misma edición, tonalidad, forma o arreglo. Por eso no se vinculan automáticamente a los otros archivos digitales ni cambian sus notas, acordes o estado de revisión.
+Estas fotos sirven para revisar las melodías que se incorporen después. No certifican que un XML/MEI corresponda a la misma edición, tonalidad, forma o arreglo. AAC permite mostrarlas junto a las melodías mediante coincidencias de título, artículos y títulos alternativos. Se presentan como referencias del libro, con una advertencia sobre posibles diferencias de edición. Los títulos con compositores ambiguos requieren elección explícita; no se presentan como fuentes verificadas. Las cinco fuentes iniciales contrastadas conservan su vínculo. Se muestran todas las páginas de continuación. Esta asociación no cambia notas, acordes ni el estado de revisión.
 
 ## Regenerar y verificar
 
@@ -36,3 +36,5 @@ python3 -m unittest discover -s herramientas/aac/tests -p 'test_photo_references
 La carpeta de libros predeterminada es el Escritorio. Se comprueba la huella de ambos PDF antes de generar imágenes. El índice de entrada está en `herramientas/aac/data/realbook-reference-index.json`; sus títulos y números se contrastaron con los índices de ambos documentos y sus encabezados. Los rangos de continuación terminan antes del siguiente tema.
 
 La extracción guarda avances cada diez temas y puede reanudarse. Solo reutiliza imágenes cuya huella, edición y página coincidan con el catálogo previo. `--check` verifica la biblioteca sin necesitar los PDF ni modificar archivos. No regenera ni revisa las partituras XML/MEI.
+
+AAC tiene tres vistas independientes: **Melodía** (partitura digital reproducible), **Partitura** (foto del libro) y **Análisis** (lienzo editable). Al abrir la aplicación siempre se activa solo Melodía. Las otras vistas pueden combinarse durante la sesión. El informe `../auditoria-20261125-complemento/referencias.json` documenta el cruce realizado el 25/11/2026.

@@ -64,3 +64,13 @@
 #melodySearchResults small{font-size:12px;color:#70522f}
 @media(max-width:600px){.melody-library-picker{flex:1 1 100%}#melodySearch{flex:1;width:auto}}
 #melodyPanel #melodyGuideTones{width:auto;flex:0 0 auto;padding-inline:9px!important}
+
+/* Independent digital score, book photo and analysis views. */
+#melodyPanel .melody-comparison[hidden],#melodyPanel .melody-original[hidden],#melodyPanel .melody-output[hidden],#melodyReferencePicker[hidden]{display:none!important}
+.melody-comparison.melody-single-view{grid-template-columns:minmax(0,1fr)}
+#melodyReferencePicker{display:flex;align-items:center;gap:7px;margin:8px 0}#melodyReferencePage{min-width:0;max-width:100%;flex:1;background:#302d28;color:#eee;border:1px solid #595247;border-radius:5px;padding:6px}#melodyReferenceNotice{font-size:12px;color:#cbbd9e}
+@media print{body.aac-melody-print #melodyPanel .melody-output[hidden],body.aac-melody-print #melodyPanel .melody-comparison[hidden]{display:block!important}}
+
+.rhythmPaletteBar[hidden]{display:none!important}
+#melodyPanel{margin-top:calc(var(--aac-appbar-bottom,28px) + 12px)!important;scroll-margin-top:var(--aac-appbar-bottom,28px)}
+#melodyStatus:empty{display:none!important}

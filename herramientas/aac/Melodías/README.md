@@ -25,7 +25,7 @@ El actualizador detecta el contenido real, informa de extensiones incorrectas, c
 
 Los originales permanecen intactos. Las correcciones posteriores deben quedar documentadas en el catálogo y conservar una referencia de la edición de origen.
 
-Las fotos y las partituras digitales tienen catálogos separados. Tener una foto disponible no añade automáticamente una melodía reproducible: la biblioteca digital se actualiza mediante su catálogo. Una foto de otro libro o edición debe contrastarse antes de asociarla como fuente de un XML/MEI.
+Las fotos y las partituras digitales tienen catálogos separados. Tener una foto disponible no añade automáticamente una melodía reproducible: la biblioteca digital se actualiza mediante su catálogo. AAC puede mostrar una foto por coincidencia de título como referencia de la obra, diferenciándola de la fuente revisada de un XML/MEI. La tonalidad, la forma y el arreglo pueden variar. Los casos ambiguos requieren selección explícita.
 
 ## Revisión e interpretación
 
