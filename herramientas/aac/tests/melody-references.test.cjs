@@ -41,3 +41,10 @@ test('every matched reference in the real library resolves to existing local ima
  let matched=0;for(const entry of library){const result=resolve(entry);if(result.references.length)matched++;for(const ref of result.references)for(const p of ref.pages){assert.equal(R.safeImage(p.image),true);assert.equal(fs.existsSync(path.join(app,p.image)),true);}}
  assert.ok(matched>390);
 });
+test('startup opens the reviewed Autumn Leaves edition and saves the previous melody workspace first',async()=>{
+ const vm=require('node:vm'),source=fs.readFileSync(require.resolve('../js/melody.js'),'utf8'),body=source.slice(source.indexOf(' async function openInitialMelody()'),source.indexOf(' async function init()'));
+ const catalog=JSON.parse(fs.readFileSync(path.resolve(__dirname,'../Melodías/catalog.json'))).examples,autumn=catalog.find(e=>e.id==='autumn-leaves'),calls=[],previous={document:{melody:{id:'a-felicidade',xml:'previous'}}};
+ assert.equal(autumn.reviewStatus,'source-corrected');assert.equal(R.safeImage(autumn.sourceImage),true);
+ const c={DEFAULT_MELODY_ID:'autumn-leaves',catalog,window:{CrescendoAACMelodyBridge:{getMelody:()=>previous.document.melody,captureWorkspace:()=>previous}},drafts:{async save(state){assert.equal(state,previous);calls.push('save')}},async activateMelody(entry){assert.equal(entry,autumn);calls.push('open')},async display(){assert.fail('A different previous melody must not be the startup theme')}};
+ vm.createContext(c);vm.runInContext(body,c);await c.openInitialMelody();assert.deepEqual(calls,['save','open']);
+});
