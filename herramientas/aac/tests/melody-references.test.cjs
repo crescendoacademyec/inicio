@@ -23,7 +23,7 @@ test('reference images allow catalog subfolders and reject traversal and remote 
 test('all three view combinations remain independent and keep shared controls for analysis',()=>{
  const vm=require('node:vm'),source=fs.readFileSync(require.resolve('../js/melody.js'),'utf8'),start=source.indexOf(' function setViews('),end=source.indexOf(' launch.addEventListener(',start);
  const el=()=>({hidden:false,attrs:{},setAttribute(k,v){this.attrs[k]=v},classList:{toggle(){}}}),digital=el(),photo=el(),comparison=el(),panel=el(),workspace=el(),launch=el(),photoToggle=el(),chartToggle=el();panel.querySelector=()=>comparison;
- const palette=el(),context={document:{querySelector:()=>palette},stickyGeometry(){},panel,workspace,launch,photoToggle,chartToggle,current:{id:'song'},playing:false,stop(){},$:id=>id==='melodyDigitalView'?digital:photo};vm.createContext(context);vm.runInContext(source.slice(start,end),context);
+ const palette=el(),context={referenceOnly:null,document:{querySelector:()=>palette},stickyGeometry(){},panel,workspace,launch,photoToggle,chartToggle,current:{id:'song'},playing:false,stop(){},$:id=>id==='melodyDigitalView'?digital:photo};vm.createContext(context);vm.runInContext(source.slice(start,end),context);
  for(const score of [false,true])for(const image of [false,true])for(const chart of [false,true]){
   context.setViews(score,image,chart);assert.equal(digital.hidden,!score);assert.equal(photo.hidden,!image);assert.equal(workspace.hidden,!chart);assert.equal(panel.hidden,!(score||image||chart));assert.equal(comparison.hidden,!score&&!image);
   assert.equal(launch.attrs['aria-pressed'],String(score));assert.equal(photoToggle.attrs['aria-pressed'],String(image));assert.equal(chartToggle.attrs['aria-pressed'],String(chart));
@@ -32,7 +32,7 @@ test('all three view combinations remain independent and keep shared controls fo
 });
 test('resizing the combined views resumes playback unless the user stopped it during rendering',async()=>{
  const vm=require('node:vm'),source=fs.readFileSync(require.resolve('../js/melody.js'),'utf8'),body=source.slice(source.indexOf(' let resizeTimer='),source.indexOf(' async function init()'));
- let observer,timer,finish,resumed=0;const c={current:{},panel:{hidden:false},playing:true,playToken:0,clearTimeout(){},setTimeout(fn){timer=fn;return 1},ResizeObserver:class{constructor(fn){observer=fn}observe(){}},$:()=>({}),payload:()=>({}),display(){c.playToken++;c.playing=false;return new Promise(resolve=>{finish=resolve})},async play(){resumed++},status(){}};
+ let observer,timer,finish,resumed=0;const c={referenceOnly:null,current:{},panel:{hidden:false},playing:true,playToken:0,clearTimeout(){},setTimeout(fn){timer=fn;return 1},ResizeObserver:class{constructor(fn){observer=fn}observe(){}},$:()=>({}),payload:()=>({}),display(){c.playToken++;c.playing=false;return new Promise(resolve=>{finish=resolve})},async play(){resumed++},status(){}};
  vm.createContext(c);vm.runInContext(body,c);observer([{contentRect:{width:700}}]);const rendering=timer();finish();await rendering;assert.equal(resumed,1);
  c.playing=true;observer([{contentRect:{width:900}}]);const cancelled=timer();c.playToken++;finish();await cancelled;assert.equal(resumed,1);
 });

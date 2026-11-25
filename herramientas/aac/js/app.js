@@ -1441,6 +1441,7 @@ function bindToolbar() {
     }
   });
   els.openLibraryBtn.addEventListener("click", async () => {
+    if (window.AACUnifiedLibrary) return window.AACUnifiedLibrary.open();
     await Promise.all([refreshLibrary(), refreshStandards()]);
     els.libraryDialog.showModal();
     requestAnimationFrame(() => els.standardSearchInput?.focus());
@@ -12810,6 +12811,11 @@ function appendStandardLibraryButton(container, item, favorite = false) {
     container.appendChild(btn);
 }
 
+function closeAnalysisLibrary() {
+  els.libraryDialog.close();
+  window.dispatchEvent(new CustomEvent("aac:analysis-library-opened"));
+}
+
 async function loadFromLibrary(filename) {
   if (dirty && !confirm("Hay cambios sin guardar. ¿Cargar otro análisis?")) return;
   const res = await fetch(`/api/songs/${encodeURIComponent(filename)}`);
@@ -12824,7 +12830,7 @@ async function loadFromLibrary(filename) {
   rememberLastOpenDocument({ source: "library", filename, state: data });
   updateStandardSaveControls();
   resetHistory();
-  els.libraryDialog.close();
+  closeAnalysisLibrary();
 }
 
 async function loadStandardFromLibrary(itemOrFilename) {
@@ -12836,13 +12842,13 @@ async function loadStandardFromLibrary(itemOrFilename) {
 
   if (item.kind === "blues") {
     await loadBluesStudyFromLibrary(item.id);
-    els.libraryDialog.close();
+    closeAnalysisLibrary();
     return;
   }
 
   if (item.kind === "admin-theme") {
     await loadAdminThemeFromLibrary(filename);
-    els.libraryDialog.close();
+    closeAnalysisLibrary();
     return;
   }
 
@@ -12861,7 +12867,7 @@ async function loadStandardFromLibrary(itemOrFilename) {
     rememberLastOpenDocument({ source: "curated", filename: item.curatedFilename, state: curatedState });
     updateStandardSaveControls();
     resetHistory();
-    els.libraryDialog.close();
+    closeAnalysisLibrary();
     return;
   }
 
@@ -12895,7 +12901,7 @@ async function loadStandardFromLibrary(itemOrFilename) {
   renderAll(false);
   resetHistory();
   setDirty(true);
-  els.libraryDialog.close();
+  closeAnalysisLibrary();
 }
 
 async function saveCurrentStandardCorrection() {
@@ -13790,3 +13796,5 @@ window.CrescendoAACMelodyBridge={
     pushHistory();await applyAppState({app:'analizador-armonico-svg-pro',exportVersion:45,document:next,uiState:{selected:{page:0,measure:0},assistanceMode:'manual',analysisVisibility:'visible',currentFilename:null,currentStandardFilename:null}},true);clearCurrentStandardSource();autoAnalyzeCurrentSong(false,{confirm:false,alert:false});setDirty(true);return true;
   }
 };
+
+window.CrescendoAACLibraryBridge = {refresh: () => Promise.all([refreshLibrary(), refreshStandards()])};

@@ -38,7 +38,8 @@
  const chartToggle=document.createElement('button');chartToggle.type='button';chartToggle.className='melody-launch melody-chart-toggle';chartToggle.textContent='Análisis';chartToggle.setAttribute('aria-controls',workspace.id);chartToggle.title='Mostrar u ocultar el lienzo de análisis del tema seleccionado';
  let viewState={score:true,photo:false,chart:false};
  function setViews(score,photo,chart){
-  viewState={score,photo,chart};document.querySelector('.rhythmPaletteBar').hidden=!chart;panel.hidden=!(score||photo||(chart&&current));workspace.hidden=!chart;
+  if(referenceOnly&&(score||chart))leaveReferenceOnly();
+  viewState={score,photo,chart};globalThis.AACUnifiedLibrary?.syncViews(viewState);document.querySelector('.rhythmPaletteBar').hidden=!chart;panel.hidden=!(score||photo||(chart&&current));workspace.hidden=!chart;
   $('melodyDigitalView').hidden=!score;$('melodyPhotoView').hidden=!photo;
   panel.querySelector('.melody-comparison').hidden=!score&&!photo;
   panel.querySelector('.melody-comparison').classList.toggle('melody-single-view',!(score&&photo));
@@ -51,7 +52,7 @@
  document.querySelector('.appMenuBar').append(launch,photoToggle,chartToggle);
  for(const [button,shown]of [[launch,true],[photoToggle,false],[chartToggle,false]]){button.setAttribute('aria-expanded',String(shown));button.setAttribute('aria-pressed',String(shown));}
  for(let i=-12;i<=12;i++)$('melodyTranspose').add(new Option(i===0?'Tonalidad original':`${i>0?'+':''}${i} semitonos`,String(i)));$('melodyTranspose').value='0';
- let scoreXml='',analysisSignature='',cursorBeat=-1;let catalog=[],referenceIndex=window.AACMelodyReferences.createIndex([]),current=null,xml='',timeline=null,osmd=null,renderToken=0,localExport=false,playing=false,position=0,started=0,playToken=0,raf=0,ctx=null,cache=new Map(),nodes=new Set(),activeVisit=-1,linked=false,loopEnabled=false,activeLoop=null,schedulerTimer=0;
+ let scoreXml='',analysisSignature='',cursorBeat=-1;let catalog=[],referenceCatalog=[],referenceOnly=null,referenceSelection=null,referenceIndex=window.AACMelodyReferences.createIndex([]),current=null,xml='',timeline=null,osmd=null,renderToken=0,localExport=false,playing=false,position=0,started=0,playToken=0,raf=0,ctx=null,cache=new Map(),nodes=new Set(),activeVisit=-1,linked=false,loopEnabled=false,activeLoop=null,schedulerTimer=0;
  const librarySearch=window.AACMelodyLibrarySearch.mount({input:$('melodySearch'),list:$('melodySearchResults'),status:$('melodySearchStatus'),select:$('melodyExample')});
  const drafts=window.AACMelodyWorkspaces.createStore();let selectionToken=0,workspaceTimer=0,activationQueue=Promise.resolve();
  const fmt=n=>`${Math.floor(Math.max(0,n)/60)}:${String(Math.floor(Math.max(0,n)%60)).padStart(2,'0')}`;
@@ -61,21 +62,36 @@
  function showReferencePage(){
   const host=$('melodyOriginal'),path=$('melodyReferencePage').value;host.replaceChildren();delete host.dataset.referenceImage;
   if(!window.AACMelodyReferences.safeImage(path)){host.textContent='No hay una foto de referencia vinculada a este tema. La melodía digital y el análisis siguen disponibles.';return;}
-  host.dataset.referenceImage=path;const img=new Image();img.alt=`Partitura de referencia de ${current.title}`;img.src=path;img.style.width=(100*+$('melodySourceZoom').value)+'%';img.onerror=()=>{if(!img.isConnected)return;host.textContent='La imagen de referencia no está disponible en esta ubicación.';};host.append(img);
+  host.dataset.referenceImage=path;const img=new Image();img.alt=`Partitura de referencia de ${referenceOnly?.title||current?.title||'la obra'}`;img.src=path;img.style.width=(100*+$('melodySourceZoom').value)+'%';img.onerror=()=>{if(!img.isConnected)return;host.textContent='La imagen de referencia no está disponible en esta ubicación.';};host.append(img);
  }
  function showSource(){
-  const picker=$('melodyReferencePage'),old=picker.dataset.theme===current?.id?picker.value:'';picker.replaceChildren();picker.dataset.theme=current?.id||'';
-  const edition=catalog.find(e=>e.id===current?.id)||current,match=referenceIndex(edition),pages=[],seen=new Set();
-  if(window.AACMelodyReferences.safeImage(current?.sourceImage))pages.push({image:current.sourceImage,label:`Fuente revisada · ${current.sourceBook||current.title} · pág. ${current.printedPage||''}`});
+  const theme=referenceSelection?'reference:'+referenceSelection.id:current?.id||'',picker=$('melodyReferencePage'),old=picker.dataset.theme===theme?picker.value:'';picker.replaceChildren();picker.dataset.theme=theme;
+  const edition=catalog.find(e=>e.id===current?.id)||current,match=referenceSelection?{references:[referenceSelection],ambiguous:false}:referenceIndex(edition),pages=[],seen=new Set();
+  if(!referenceSelection&&window.AACMelodyReferences.safeImage(current?.sourceImage))pages.push({image:current.sourceImage,label:`Fuente revisada · ${current.sourceBook||current.title} · pág. ${current.printedPage||''}`});
   for(const ref of match.references)for(const page of ref.pages)if(window.AACMelodyReferences.safeImage(page.image))pages.push({image:page.image,label:`${ref.title} · ${ref.sourceFile} · pág. ${page.printedPage}`});
   if(match.ambiguous&&!current?.sourceImage)picker.add(new Option('Selecciona la referencia por título / edición',''));
   for(const page of pages){if(seen.has(page.image))continue;seen.add(page.image);picker.add(new Option(page.label,page.image));}
   if([...picker.options].some(o=>o.value===old))picker.value=old;
   $('melodyReferencePicker').hidden=pages.length<2&&!match.ambiguous;
-  $('melodyReferenceNotice').textContent=current?.sourceImage?'Fuente contrastada para esta edición.':match.ambiguous?'Hay títulos o compositores coincidentes. Selecciona la referencia y comprueba que corresponde a esta obra.':pages.length?'Referencia del libro por coincidencia de título. Puede diferir en tonalidad, forma o arreglo respecto a la melodía digital.':'No hay una coincidencia identificada en los dos libros aportados.';
+  $('melodyReferenceNotice').textContent=referenceOnly?'Foto del libro · sin melodía digital vinculada.':!referenceSelection&&current?.sourceImage?'Fuente contrastada para esta edición.':match.ambiguous?'Hay títulos o compositores coincidentes. Selecciona la referencia y comprueba que corresponde a esta obra.':pages.length?'Referencia del libro por coincidencia de título. Puede diferir en tonalidad, forma o arreglo respecto a la melodía digital.':'No hay una coincidencia identificada en los dos libros aportados.';
   showReferencePage();
  }
  $('melodyReferencePage').onchange=showReferencePage;
+ function leaveReferenceOnly(){
+  if(!referenceOnly)return;referenceOnly=null;referenceSelection=null;delete panel.dataset.referenceOnly;panel.querySelector('.melody-kicker').textContent='AAC · Melodías';
+  $('melodyTitle').textContent=current?.title||'Selecciona una melodía';
+  for(const id of ['melodyLink','melodyHarmony','melodyMidi','melodyXml','melodyPdf','melodyPng','melodySvg'])$(id).disabled=!timeline;
+  showSource();
+ }
+ async function openPhotoReference(reference){
+  const choices=window.AACSharedLibrary.melodiesForReference(catalog,reference,referenceIndex),edition=choices.find(e=>e.id===current?.id)||choices.find(e=>e.reviewStatus==='source-corrected')||choices[0];
+  if(edition){await activateMelody(edition);referenceSelection=reference;setViews(viewState.score,true,viewState.chart);showSource();return;}
+  await stashWorkspace();stop(false);referenceOnly=reference;referenceSelection=reference;panel.dataset.referenceOnly='true';panel.querySelector('.melody-kicker').textContent='AAC · Partituras';setViews(false,true,false);$('melodyTitle').textContent=reference.title;showSource();
+  for(const id of ['melodyLink','melodyHarmony','melodyMidi','melodyXml','melodyPdf','melodyPng','melodySvg'])$(id).disabled=true;
+ }
+ window.AACUnifiedLibrary=window.AACSharedLibrary.mount({dialog:$('libraryDialog'),getViews:()=>viewState,getCollections:()=>({melodies:catalog,photos:referenceCatalog}),refreshAnalysis:()=>window.CrescendoAACLibraryBridge.refresh(),onMelody:async edition=>{await activateMelody(edition);setViews(true,viewState.photo,viewState.chart);},onReference:openPhotoReference});
+ window.addEventListener('aac:analysis-library-opened',()=>{leaveReferenceOnly();setViews(false,false,true);});
+
  function payload(){return {...current,xml:scoreXml,swing:$('melodySwing').value==='swing',originalXml:current.originalXml||xml,transpose:+$('melodyTranspose').value||0,practiceStart:selectedMeasure(),loopStartMeasure:+$('melodyLoopStart').value||0,loopEndMeasure:+$('melodyLoopEnd').value||0,loopEnabled,harmonyMode:current.harmonyMode||'original',tempo:+$('melodyTempo').value||120};}
  function persist(){window.CrescendoAACMelodyBridge?.setMelody(payload());queueWorkspaceSave();}
  function queueWorkspaceSave(){if(current)drafts.save(window.CrescendoAACMelodyBridge.captureWorkspace());}
@@ -159,7 +175,7 @@
  async function activateMelodyNow(example,musicxml,token){
   if(token!==selectionToken)return;
   panel.classList.add('melody-loading');workspace.classList.add('melody-loading');panel.setAttribute('aria-busy','true');workspace.setAttribute('aria-busy','true');
-  try{delete panel.dataset.loadedMelody;stop(false);await stashWorkspace();analysisVisible=false;
+  try{delete panel.dataset.loadedMelody;stop(false);await stashWorkspace();leaveReferenceOnly();referenceSelection=null;analysisVisible=false;
   if(!musicxml){const response=await fetch(example.musicxml);if(!response.ok)throw Error('No se encontró la partitura del ejemplo.');musicxml=await response.text();}
   const value={...example,xml:musicxml,originalXml:musicxml,transpose:0,tempo:example.tempo,swing:example.swing??['c-jam-blues','autumn-leaves','all-of-me'].includes(example.id),harmonyMode:'original',linked:true};
   const draft=await drafts.load(value);if(token!==selectionToken)return;
@@ -177,7 +193,7 @@
  $('melodyXml').onclick=()=>save(xml,filename()+'.musicxml','application/vnd.recordare.musicxml+xml');$('melodyMidi').onclick=attempt(()=>save(Core.midi(timeline,{meter:Core.info(xml).meter,title:current.title}),filename()+'.mid','audio/midi'));
  $('melodyPdf').onclick=attempt(async()=>{if(localExport){status('Generando PDF…');await native('pdf');status('PDF exportado.');}else{document.body.classList.add('aac-melody-print');window.print();}});window.addEventListener('afterprint',()=>document.body.classList.remove('aac-melody-print'));
  $('melodyPng').onclick=attempt(()=>image('png'));$('melodySvg').onclick=attempt(()=>image('svg'));window.addEventListener('pagehide',()=>stop());
- window.addEventListener('aac:document-rendered',event=>{refreshChartHeading();queueWorkspaceSave();const value=event.detail.melody;if(value?.xml&&(value.xml!==scoreXml||JSON.stringify(window.CrescendoAACMelodyBridge.getAnalysis())!==analysisSignature||value.linked!==current?.linked||value.transpose!==current?.transpose||value.tempo!==current?.tempo||value.harmonyMode!==current?.harmonyMode||value.practiceStart!==current?.practiceStart||value.loopEnabled!==current?.loopEnabled||value.loopStartMeasure!==current?.loopStartMeasure||value.loopEndMeasure!==current?.loopEndMeasure||JSON.stringify(value.originalBreaks)!==JSON.stringify(current?.originalBreaks)||JSON.stringify(value.studyBreaks)!==JSON.stringify(current?.studyBreaks))){display(value,{store:false}).catch(error=>status(error.message,true));}else if(!value&&current){stop();current=null;xml='';timeline=null;chartHeading.hidden=true;setViews(false,false,true);showSource();window.AACMelodyInstruments?.setTimeline(null);$('melodyTitle').textContent='Selecciona una melodía';$('melodyScore').replaceChildren();$('melodyPage').replaceChildren();$('melodyPagePicker').hidden=true;$('melodyPage').disabled=true;for(const id of ['melodyPlay','melodyStop','melodyPrev','melodyNext','melodyLoop','melodyLoopA','melodyLoopB','melodyLink','melodyHarmony','melodyMidi','melodyXml','melodyPdf','melodyPng','melodySvg'])$(id).disabled=true;}});
+ window.addEventListener('aac:document-rendered',event=>{leaveReferenceOnly();refreshChartHeading();queueWorkspaceSave();const value=event.detail.melody;if(value?.xml&&(value.xml!==scoreXml||JSON.stringify(window.CrescendoAACMelodyBridge.getAnalysis())!==analysisSignature||value.linked!==current?.linked||value.transpose!==current?.transpose||value.tempo!==current?.tempo||value.harmonyMode!==current?.harmonyMode||value.practiceStart!==current?.practiceStart||value.loopEnabled!==current?.loopEnabled||value.loopStartMeasure!==current?.loopStartMeasure||value.loopEndMeasure!==current?.loopEndMeasure||JSON.stringify(value.originalBreaks)!==JSON.stringify(current?.originalBreaks)||JSON.stringify(value.studyBreaks)!==JSON.stringify(current?.studyBreaks))){display(value,{store:false}).catch(error=>status(error.message,true));}else if(!value&&current){stop();current=null;xml='';timeline=null;chartHeading.hidden=true;setViews(false,false,true);showSource();window.AACMelodyInstruments?.setTimeline(null);$('melodyTitle').textContent='Selecciona una melodía';$('melodyScore').replaceChildren();$('melodyPage').replaceChildren();$('melodyPagePicker').hidden=true;$('melodyPage').disabled=true;for(const id of ['melodyPlay','melodyStop','melodyPrev','melodyNext','melodyLoop','melodyLoopA','melodyLoopB','melodyLink','melodyHarmony','melodyMidi','melodyXml','melodyPdf','melodyPng','melodySvg'])$(id).disabled=true;}});
 
  $('melodySwing').onchange=attempt(()=>display({...payload(),swing:$('melodySwing').value==='swing'}));
  async function toggleScoreAnalysis(){
@@ -215,13 +231,13 @@
   }catch(error){window.AACMelodyScoreView.select(index,false);status(error.message,true);}
  };
  let resizeTimer=0,lastScoreWidth=0;
- new ResizeObserver(entries=>{const width=Math.round(entries[0].contentRect.width);if(width<200||Math.abs(width-lastScoreWidth)<3)return;lastScoreWidth=width;clearTimeout(resizeTimer);resizeTimer=setTimeout(async()=>{if(!current||panel.hidden)return;const resume=playing;try{const rendering=display(payload(),{store:false,keepPosition:true}),expected=playToken;await rendering;if(resume&&playToken===expected)await play();}catch(error){status(error.message,true);}},180);}).observe($('melodyScore'));
+ new ResizeObserver(entries=>{const width=Math.round(entries[0].contentRect.width);if(width<200||Math.abs(width-lastScoreWidth)<3)return;lastScoreWidth=width;clearTimeout(resizeTimer);resizeTimer=setTimeout(async()=>{if(!current||panel.hidden||referenceOnly)return;const resume=playing;try{const rendering=display(payload(),{store:false,keepPosition:true}),expected=playToken;await rendering;if(resume&&playToken===expected)await play();}catch(error){status(error.message,true);}},180);}).observe($('melodyScore'));
  async function openInitialMelody(){
   const existing=window.CrescendoAACMelodyBridge?.getMelody(),example=catalog.find(e=>e.id===DEFAULT_MELODY_ID)||catalog[0];
   if(example){if(existing?.xml)await drafts.save(window.CrescendoAACMelodyBridge.captureWorkspace());await activateMelody(example);}
   else if(existing?.xml)await display(existing,{store:false});
  }
- async function init(){setViews(true,false,false);try{const response=await fetch('Melodías/catalog.json?v=20261125-library-2');if(response.ok){const data=await response.json();catalog=Array.isArray(data.examples)?data.examples:[];$('melodyLibraryCount').textContent='('+catalog.length+')';librarySearch.setCatalog(catalog);for(const example of catalog)$('melodyExample').add(new Option(example.title,example.id));}}catch{}try{const response=await fetch('Melodías/referencias/catalog.json?v=20261125-views-1');if(response.ok){const data=await response.json();referenceIndex=window.AACMelodyReferences.createIndex(data.references||[],catalog);}}catch{}try{const response=await fetch('/api/aac-melody/health');if(response.ok)localExport=!!(await response.json()).nativeExport;}catch{}await openInitialMelody();}
+ async function init(){setViews(true,false,false);try{const response=await fetch('Melodías/catalog.json?v=20261125-library-2');if(response.ok){const data=await response.json();catalog=Array.isArray(data.examples)?data.examples:[];$('melodyLibraryCount').textContent='('+catalog.length+')';librarySearch.setCatalog(catalog);for(const example of catalog)$('melodyExample').add(new Option(example.title,example.id));}}catch{}try{const response=await fetch('Melodías/referencias/catalog.json?v=20261125-views-1');if(response.ok){const data=await response.json();referenceCatalog=data.references||[];referenceIndex=window.AACMelodyReferences.createIndex(referenceCatalog,catalog);window.AACUnifiedLibrary.refresh();}}catch{}try{const response=await fetch('/api/aac-melody/health');if(response.ok)localExport=!!(await response.json()).nativeExport;}catch{}await openInitialMelody();}
 
  init().catch(error=>status(error.message,true));
 })();
