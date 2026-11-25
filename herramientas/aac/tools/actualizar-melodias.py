@@ -41,7 +41,7 @@ def prepare(path,previous,used,converter=None):
  if kind not in {'mei','score-partwise'}: raise ValueError('Se necesita MEI o MusicXML score-partwise')
  correct='.mei' if kind=='mei' else '.musicxml'
  if path.suffix.lower()!=correct: raise ValueError('La extensión debe ser '+correct+' según el contenido')
- source='Melodías/'+path.name;old=previous.get(source,{})
+ source='Melodías/'+unicodedata.normalize('NFC',path.name);old=previous.get(source,{})
  if old.get('musicxml') and old.get('musicxmlSHA256'):
   generated=path.parent/'partituras'/Path(old['musicxml']).name
   if generated.is_file() and digest(generated.read_bytes())!=old['musicxmlSHA256']:
@@ -91,6 +91,16 @@ def main():
  parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--check',action='store_true');parser.add_argument('--folder',type=Path,default=FOLDER);args=parser.parse_args();folder=args.folder.resolve()
  catalog=folder/'catalog.json';old=json.loads(catalog.read_text()) if catalog.is_file() else {'examples':[]};previous={r['sourceFile']:r for r in old.get('examples',[])}
  files=sorted(p for p in folder.iterdir() if p.is_file() and p.suffix.lower() in {'.mei','.musicxml','.xml'});planned=[];used=set()
+ normalized=[]
+ for path in files:
+  target=folder/unicodedata.normalize('NFC',path.name)
+  if path.name!=target.name:
+   if target.exists():
+    if not path.samefile(target): raise ValueError('Nombres Unicode duplicados: '+path.name)
+   elif args.check: raise ValueError('Normaliza el nombre Unicode: '+path.name)
+   else: path.rename(target)
+  normalized.append(target)
+ files=normalized
  converter=MEIConverter()
  try:
   for path in files:
