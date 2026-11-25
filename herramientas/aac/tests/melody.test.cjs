@@ -5,6 +5,22 @@ const note=(step='C',duration=1,ties=[])=>el('note',{},[el('pitch',{},[el('step'
 const measure=children=>el('measure',{},[el('attributes',{},[el('divisions',{},[],'1')]),...children]);
 const bar=children=>el('barline',{},children),repeat=direction=>el('repeat',{direction}),ending=(number,type)=>el('ending',{number,type});
 function parse(...measures){class Parser{parseFromString(){return el('document',{},[el('score-partwise',{},[el('part',{},measures)])]);}}return transport.parse('',{DOMParser:Parser});}
+const graceNote=(step,attrs={})=>{const n=note(step,0);n.children=n.children.filter(c=>c.localName!=='duration');n.children.unshift(el('grace',attrs));return n;};
+test('unmeasured grace notes sound before the principal without lengthening bars or repeats',()=>{
+ const r=parse(measure([bar([repeat('forward')]),graceNote('E'),note('C',.5),note('D',.5),bar([repeat('backward')])]));
+ assert.deepEqual(r.events.map(n=>n.midi),[64,60,62,64,60,62]);
+ assert.deepEqual(r.events.map(n=>n.beat),[0,.125,.5,1,1.125,1.5]);
+ assert.equal(r.duration,1);assert.deepEqual(r.warnings,[]);assert.ok(r.events.every(n=>n.dur>0));assert.ok(core.midi(r).length>22);
+ const swung=core.swingTimeline(r,true);assert.ok(Math.abs(swung.events[2].start-1/3)<1e-8);assert.ok(Math.abs(swung.events[5].start-5/6)<1e-8);
+});
+test('grace groups honor following-time percentages and do not shift other voices',()=>{
+ const other=note('G');other.children.push(el('voice',{},[],'2'));
+ const r=parse(measure([graceNote('D',{'steal-time-following':'20'}),graceNote('E'),note('C'),el('backup',{},[el('duration',{},[],'1')]),other]));
+ assert.deepEqual(r.events.map(n=>[n.midi,n.beat,n.endBeat]),[[62,0,.1],[67,0,1],[64,.1,.2],[60,.2,1]]);
+ assert.equal(r.duration,.5);assert.deepEqual(r.warnings,[]);
+ const orphan=parse(measure([graceNote('E'),el('note',{},[el('rest'),el('duration',{},[],'1')])]));
+ assert.equal(orphan.events.length,0);assert.equal(orphan.warnings.length,1);
+});
 test('G4 moved seven semitones becomes D5, including enharmonic octave boundaries',()=>{assert.deepEqual(Object.fromEntries(Object.entries(core.spelling(74,1)).filter(([k])=>k!=='score')),{step:'D',alter:0,octave:5});for(let midi=0;midi<128;midi++)for(let key=-7;key<=7;key++){const p=core.spelling(midi,key),pc={C:0,D:2,E:4,F:5,G:7,A:9,B:11}[p.step];assert.equal(12*(p.octave+1)+pc+p.alter,midi);}});
 test('ties merge attacks, rests remain silent, final rest remains in MIDI',()=>{const r=parse(measure([note('G',2,['start'])]),measure([note('G',2,['stop']),el('note',{},[el('rest'),el('duration',{},[],'2')])]));assert.equal(r.events.length,1);assert.equal(r.events[0].endBeat,4);assert.equal(r.duration,3);const midi=core.midi(r);assert.equal(Buffer.from(midi).subarray(0,4).toString(),'MThd');assert.equal(Buffer.from(midi).readUInt32BE(18),midi.length-22);assert.deepEqual(Array.from(midi.slice(-5)),[0x87,0x40,0xff,0x2f,0]);});
 test('first and second endings follow the written route',()=>{const r=parse(measure([bar([repeat('forward')]),note('C')]),measure([bar([ending('1','start')]),note('D'),bar([ending('1','stop'),repeat('backward')])]),measure([bar([ending('2','start')]),note('E'),bar([ending('2','discontinue')])]));assert.deepEqual(r.events.map(n=>n.midi),[60,62,60,64]);assert.deepEqual(r.visits.map(v=>v.index),[0,1,0,2]);});

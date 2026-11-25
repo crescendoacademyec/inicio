@@ -62,19 +62,36 @@
         if(tag!=='note')continue;
         const chord=!!child(item,'chord'),onset=chord?last:beat;if(!chord)last=beat;
         const pitch=child(item,'pitch'),step=text(pitch,'step'),staff=text(item,'staff','1'),voice=text(item,'voice','1');
-        if(pitch && Object.hasOwn({C:0,D:2,E:4,F:5,G:7,A:9,B:11},step) && length>0) {
+        const grace=child(item,'grace');
+        if(pitch && Object.hasOwn({C:0,D:2,E:4,F:5,G:7,A:9,B:11},step) && (length>0||grace)) {
           const writtenMidi=12*(num(pitch,'octave',4)+1)+{C:0,D:2,E:4,F:5,G:7,A:9,B:11}[step]+num(pitch,'alter');
           const midi=writtenMidi+(transpose[staff]??transpose.all);
           if(midi>=0&&midi<=127) {
             const ties=children(item,'tie').length?children(item,'tie'):all(item,'tied');
-            out.notes.push({midi,writtenMidi,beat:onset,length,staff,voice,
+            out.notes.push({midi,writtenMidi,beat:onset,length,staff,voice,...(grace?{grace:true,graceChord:chord,stealFollowing:Number(attr(grace,'steal-time-following'))}:{}),
               tieStart:ties.some(t=>attr(t,'type')==='start'),tieStop:ties.some(t=>attr(t,'type')==='stop')});
           } else warnings.add('Hay notas fuera del rango MIDI reproducible.');
         }
-        if(child(item,'grace'))warnings.add('Las notas de adorno sin duración necesitan revisión de reproducción.');
         if(child(item,'unpitched'))warnings.add('La percusión sin altura no se reproduce con el piano.');
         if(!chord)beat+=length;end=Math.max(end,beat,onset+length);
       }
+      // Unmeasured ornaments borrow time from their following note, never from
+      // the bar itself. Other voices and the written duration remain unchanged.
+      const groups=new Map();
+      for(const n of out.notes.filter(n=>n.grace)){
+        const key=[n.staff,n.voice,n.beat].join(':');
+        if(!groups.has(key))groups.set(key,[]);groups.get(key).push(n);
+      }
+      for(const group of groups.values()){
+        const first=group[0],hosts=out.notes.filter(n=>!n.grace&&n.staff===first.staff&&n.voice===first.voice&&Math.abs(n.beat-first.beat)<EPS);
+        if(!hosts.length){warnings.add('Hay notas de adorno sin nota principal en el mismo compás; requieren revisión.');continue;}
+        const clusters=[];for(const n of group){if(!n.graceChord||!clusters.length)clusters.push([]);clusters.at(-1).push(n);}
+        const length=Math.min(...hosts.map(n=>n.length)),percent=first.stealFollowing;
+        const borrowed=percent>0&&percent<100?length*percent/100:Math.min(length/2,.125*clusters.length);
+        clusters.forEach((cluster,i)=>cluster.forEach(n=>{n.beat=first.beat+i*borrowed/clusters.length;n.length=borrowed/clusters.length;}));
+        for(const n of hosts){n.swingAnchorBeat=n.beat;n.beat+=borrowed;n.length-=borrowed;}
+      }
+      out.notes=out.notes.filter(n=>n.length>0);
       out.length=end||currentMeter.beats*4/currentMeter.beatType;
       return out;
     });
@@ -170,7 +187,7 @@
       if(groups){let t=0;for(const [j,group] of groups.entries()){if(t<measure.length-EPS)clicks.push({beat:beat+t,accent:j===0});t+=group*4/beatType;}}
       else for(let t=0;t<measure.length-EPS;t+=step)clicks.push({beat:beat+t,accent:t===0});
       for(const part of parts)for(const n of part.measures[index]?.notes||[])
-        notes.push({...n,part:part.id,sourceBeat:measure.sourceStart+n.beat,sourceEndBeat:measure.sourceStart+n.beat+n.length,beat:beat+n.beat,endBeat:beat+n.beat+n.length});
+        notes.push({...n,...(n.swingAnchorBeat!==undefined?{swingAnchorBeat:beat+n.swingAnchorBeat}:{}),part:part.id,sourceBeat:measure.sourceStart+n.beat,sourceEndBeat:measure.sourceStart+n.beat+n.length,beat:beat+n.beat,endBeat:beat+n.beat+n.length});
       beat+=measure.length;
       if(notes.length>500000)throw Error('La partitura expandida contiene demasiadas notas para reproducirla.');
     }
@@ -193,5 +210,5 @@
       baseTempo:tempoChanges.find(c=>c.beat===0)?.tempo||120,secondsAt,warnings:[...warnings],
       clicks:clicks.map(c=>({...c,time:secondsAt(c.beat)}))};
   }
-  return {parse,itinerary};
+  return {parse,itinerary,partMeasures};
 });

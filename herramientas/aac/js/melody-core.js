@@ -80,7 +80,7 @@
   const inverse=secondsAt=>seconds=>{let low=0,high=timeline.visits.at(-1)?.endBeat||0;for(let i=0;i<40;i++){const mid=(low+high)/2;if(secondsAt(mid)<seconds)low=mid;else high=mid;}return (low+high)/2;};
   if(!enabled)return {...timeline,writtenBeatAtTime:inverse(timeline.secondsAt)};
   // Warp each beat continuously: written offbeat 1/2 becomes 2/3. Beats and bar lengths stay fixed.
-  const straight=new Set();for(const e of timeline.events)for(const b of [e.beat,e.endBeat])if(Math.abs(b*2-Math.round(b*2))>1e-6)straight.add(Math.floor(b));
+  const straight=new Set();for(const e of timeline.events){if(e.grace||e.part==='AAC-GUIDE-TONES')continue;for(const b of [e.swingAnchorBeat??e.beat,e.endBeat])if(Math.abs(b*2-Math.round(b*2))>1e-6)straight.add(Math.floor(b));}
   const warp=b=>{const whole=Math.floor(b),f=b-whole;if(straight.has(whole))return b;return whole+(f<=.5?f*4/3:2/3+(f-.5)*2/3);},secondsAt=b=>timeline.secondsAt(warp(b));
   return {...timeline,secondsAt,duration:secondsAt(timeline.visits.at(-1)?.endBeat||0),visits:timeline.visits.map(v=>Number.isFinite(v.startBeat)?{...v,start:secondsAt(v.startBeat),end:secondsAt(v.endBeat)}:v),events:timeline.events.map(e=>({...e,beat:warp(e.beat),endBeat:warp(e.endBeat),start:secondsAt(e.beat),dur:secondsAt(e.endBeat)-secondsAt(e.beat)})),clicks:timeline.clicks.map(c=>({...c,time:secondsAt(c.beat)})),writtenBeatAtTime:seconds=>{let low=0,high=timeline.visits.at(-1)?.endBeat||0;for(let i=0;i<40;i++){const mid=(low+high)/2;if(secondsAt(mid)<seconds)low=mid;else high=mid;}return (low+high)/2;}};
  }

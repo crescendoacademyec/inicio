@@ -29,7 +29,7 @@
   const exact=[];for(const [b,type]of types){exact.push({beats:b,type,dots:0},{beats:b*1.5,type,dots:1},{beats:b*2/3,type,dots:0,tuplet:true});}exact.sort((a,b)=>b.beats-a.beats);
   const parts=[];while(beats>1e-7){let part=exact.find(p=>Math.abs(p.beats-beats)<1e-7)||exact.find(p=>!p.tuplet&&p.beats<=beats+1e-7);if(!part)part={beats,type:null,dots:0};parts.push(part);beats-=part.beats;}return parts;
  }
- function add(xml,Core){
+ function add(xml,Core,Transport=globalThis.CrescendoMusicXML){
   const doc=Core.document(xml),score=doc.documentElement,part=score.querySelector('part');if(!part)return {xml,omitted:0};
   score.querySelectorAll('part[id="AAC-GUIDE-TONES"],score-part[id="AAC-GUIDE-TONES"]').forEach(n=>n.remove());
   const make=(tag,text)=>{const n=doc.createElementNS(score.namespaceURI,tag);if(text!==undefined)n.textContent=String(text);return n;};
@@ -37,15 +37,11 @@
   const guide=make('part');guide.setAttribute('id','AAC-GUIDE-TONES');score.append(guide);const harmony=Core.harmony(xml);let divisions=1,capacity=4,fifths=0,previous=[],carried='',omitted=0;
   const sourceParts=[...score.children].filter(n=>n.localName==='part'&&n!==guide);
   const melodyBars=sourceParts.map(p=>[...p.children].filter(n=>n.localName==='measure'));
-  const partDivisions=sourceParts.map(()=>1),transposes=sourceParts.map(()=>0);
+  const performed=sourceParts.map(p=>Transport.partMeasures(p,new Set()));
   melodyBars[0].forEach((measure,index)=>{
    const d=measure.querySelector('divisions');if(d)divisions=+d.textContent;const key=measure.querySelector('fifths');if(key)fifths=+key.textContent;const time=measure.querySelector('time');if(time)capacity=time.querySelector('beats').textContent.split('+').reduce((a,b)=>a+Number(b),0)*4/+time.querySelector('beat-type').textContent;
    const notes=[];let actual=0;
-   melodyBars.forEach((bars,p)=>{let beat=0,last=0;for(const e of bars[index]?.children||[]){
-    if(e.localName==='attributes'){const d=e.querySelector('divisions');if(d)partDivisions[p]=+d.textContent;const tr=e.querySelector('transpose');if(tr)transposes[p]=+(tr.querySelector('chromatic')?.textContent||0)+12*+(tr.querySelector('octave-change')?.textContent||0);}
-    const duration=+(e.querySelector('duration')?.textContent||0)/partDivisions[p];if(e.localName==='backup')beat-=duration;if(e.localName==='forward')beat+=duration;
-    if(e.localName!=='note')continue;const onset=e.querySelector('chord')?last:beat;if(!e.querySelector('chord,grace')){last=beat;beat+=duration;}actual=Math.max(actual,beat);const midi=Core.writtenPitch(e);if(midi!==null&&duration>0)notes.push({midi:midi+transposes[p],start:onset,end:onset+duration});
-   }});
+   for(const bars of performed){const bar=bars[index];if(!bar)continue;actual=Math.max(actual,bar.length);for(const n of bar.notes)notes.push({midi:n.midi,start:n.beat,end:n.beat+n.length});}
    const length=measure.getAttribute('implicit')==='yes'?actual:Math.max(actual,capacity),chords=harmony[index]?.chords||[],events=plan([{beat:0,symbol:carried},...chords],notes,length,previous);if(chords.length)carried=chords.at(-1).symbol;
    const target=make('measure');target.setAttribute('number',measure.getAttribute('number')||index+1);if(measure.getAttribute('implicit'))target.setAttribute('implicit',measure.getAttribute('implicit'));
    const attrs=make('attributes');attrs.append(make('divisions',divisions));for(const key of measure.querySelectorAll('attributes > key,attributes > time'))attrs.append(key.cloneNode(true));const clef=make('clef');clef.append(make('sign','F'),make('line',4));if(index===0)attrs.append(clef);target.append(attrs);

@@ -1,6 +1,6 @@
 # Melodías
 
-Biblioteca oficial de AAC: **3316 entradas**, con 2479 fuentes MEI y 837 MusicXML. Reúne las fuentes distintas del lote completo de Realbook y conserva los cinco temas iniciales: C-Jam Blues, Blue Bossa, Autumn Leaves, All of Me y Footprints.
+Biblioteca oficial de AAC: **3330 entradas**, con 2490 fuentes MEI y 840 MusicXML. Reúne las fuentes distintas del lote completo de Realbook y conserva los cinco temas iniciales: C-Jam Blues, Blue Bossa, Autumn Leaves, All of Me y Footprints.
 
 ## Añadir archivos
 
@@ -37,6 +37,6 @@ La armonía original se conserva; los cambios de acordes y el análisis automát
 
 ## Lote Realbook de noviembre de 2026
 
-El informe `auditoria-20261125/INFORME.txt` documenta las 17 entradas pendientes del sitio, sus enlaces, las copias idénticas y las reparaciones. Descargas permanece intacta. Las ediciones alternativas y los cinco pilotos se conservan por separado. La lectura y reproducción se comprueban automáticamente; no se afirma una revisión editorial de cada nota.
+El informe inicial `auditoria-20261125/INFORME.txt` documenta el primer lote. El complemento `auditoria-20261125-complemento/INFORME.txt` registra los 17 archivos entregados después: 14 fuentes nuevas y 3 idénticas a fuentes existentes, con comprobación de lectura, dibujo y reproducción. Descargas permanece intacta. Las ediciones alternativas y los cinco pilotos se conservan por separado. La lectura y reproducción se comprueban automáticamente; no se afirma una revisión editorial de cada nota.
 
 Practice añade tonos guía en clave de fa sin reescribir la melodía original. Busca otra octava para evitar teclas compartidas; omite un tono si no hay posición segura. El pentagrama de práctica participa en sonido y exportaciones mientras el botón está activo.
