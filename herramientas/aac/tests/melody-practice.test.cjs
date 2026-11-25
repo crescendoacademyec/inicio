@@ -13,6 +13,20 @@ test('phrase clipping retains sustained notes at A and stops notes exactly at B'
 test('loop clock wraps at the same boundary used by the audio schedule',()=>{
  const loop={start:4,end:6};assert.equal(P.clock(8,4,-.06,loop),4);assert.equal(P.clock(8,5.5,.5,loop),4);assert.equal(P.clock(8,5.5,4.75,loop),4.25);assert.equal(P.clock(8,7,4,null),8);
 });
+test('note navigation groups simultaneous notes, skips guide tones and follows the performed route',()=>{
+ const t={events:[{part:'melody',start:0},{part:'AAC-GUIDE-TONES',start:.25},{part:'melody',start:.5},{part:'melody',start:.5},{part:'accompaniment',start:.75},{part:'melody',start:1},{part:'melody',start:2}]};
+ assert.equal(P.notePosition(t,0,1),.5);assert.equal(P.notePosition(t,.5,1),1);assert.equal(P.notePosition(t,.8,-1),.5);assert.equal(P.notePosition(t,1,-1),.5);assert.equal(P.notePosition(t,1,1),2);
+ assert.equal(P.notePosition(t,0,-1),null);assert.equal(P.notePosition(t,2,1),null);assert.equal(P.notePosition({events:[]},0,1),null);
+});
+test('melody arrow keys seek with synchronized scrolling and leave text, analysis and modified keys untouched',()=>{
+ const fs=require('node:fs'),vm=require('node:vm'),source=fs.readFileSync(require.resolve('../js/melody.js'),'utf8'),body=source.slice(source.indexOf(' function navigateMelodyNote('),source.indexOf(" document.addEventListener('keydown',navigateMelodyNote"));
+ const seeks=[],context={timeline:{events:[{start:0},{start:1},{start:2}]},panel:{hidden:false},viewState:{score:true},window:{AACMelodyPractice:P},now:()=>1,seekTo:(...args)=>seeks.push(args)};vm.createContext(context);vm.runInContext(body,context);
+ const event=(key,extra={})=>({key,target:{closest:()=>null},preventDefault(){this.prevented=true},stopImmediatePropagation(){this.stopped=true},...extra});
+ const right=event('ArrowRight');context.navigateMelodyNote(right);assert.deepEqual(seeks,[[2,false,true]]);assert.equal(right.prevented,true);assert.equal(right.stopped,true);
+ context.navigateMelodyNote(event('ArrowLeft'));assert.deepEqual(seeks.at(-1),[0,false,true]);
+ for(const extra of [{ctrlKey:true},{metaKey:true},{altKey:true},{shiftKey:true},{defaultPrevented:true},{target:{closest:()=>({})}}])context.navigateMelodyNote(event('ArrowRight',extra));
+ context.viewState.score=false;context.navigateMelodyNote(event('ArrowRight'));assert.equal(seeks.length,2);
+});
 test('lookahead schedules contiguous audio windows before each loop boundary',()=>{
  const scheduled=[],s=P.scheduler({duration:8,position:5,origin:10,loop:{start:4,end:6},schedule:(a,b,time)=>scheduled.push([a,b,time])});
  assert.deepEqual(scheduled,[[5,6,10]]);s.fill(10.3);assert.deepEqual(scheduled,[[5,6,10],[4,6,11]]);s.fill(12.5);assert.deepEqual(scheduled,[[5,6,10],[4,6,11],[4,6,13]]);

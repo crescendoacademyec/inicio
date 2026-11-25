@@ -10,10 +10,17 @@
  }
  function clip(events,start,end){return events.flatMap((event,index)=>{const from=Math.max(start,event.start),to=Math.min(end,event.start+event.dur);return to>from+1e-9?[{...event,index,start:from,dur:to-from}]:[];});}
  function clock(duration,position,elapsed,loop){const value=position+Math.max(0,elapsed);return loop?loop.start+(((value-loop.start)%(loop.end-loop.start))+(loop.end-loop.start))%(loop.end-loop.start):Math.max(0,Math.min(duration,value));}
+ function notePosition(timeline,position,direction){
+  const events=timeline?.events||[],part=events.find(e=>e.part!=='AAC-GUIDE-TONES')?.part;
+  const starts=[...new Set(events.filter(e=>e.part===part&&e.part!=='AAC-GUIDE-TONES'&&Number.isFinite(e.start)).map(e=>e.start))].sort((a,b)=>a-b);
+  if(direction===1)return starts.find(t=>t>position+1e-7)??null;
+  if(direction===-1)return starts.findLast(t=>t<position-1e-7)??null;
+  return null;
+ }
  function scheduler({duration,position,origin,loop,schedule,lookAhead=.8}){
   const end=loop?.end??duration;let next=origin+end-position,cycles=0;
   schedule(position,end,origin);
   return {fill(now){if(!loop)return;while(next<now+lookAhead){schedule(loop.start,loop.end,next);next+=loop.end-loop.start;cycles++;if(cycles>1000000)throw Error('Se alcanzó el límite de repeticiones.');}},get cycles(){return cycles;}};
  }
- return {range,clip,clock,scheduler};
+ return {range,clip,clock,notePosition,scheduler};
 });

@@ -30,7 +30,7 @@ test('transposition preserves diatonic spelling for chromatic notes and harmony'
 test('swing delays eighth offbeats and retains durations, endings and triplets',()=>{const t={secondsAt:b=>b/2,visits:[{endBeat:4}],events:[{beat:0,endBeat:.5},{beat:.5,endBeat:1}],clicks:[{beat:0},{beat:1}],duration:2};const s=core.swingTimeline(t,true);assert.ok(Math.abs(s.events[1].start-1/3)<1e-8);assert.ok(Math.abs(s.events[0].dur-1/3)<1e-8);assert.equal(s.duration,2);assert.ok(Math.abs(s.writtenBeatAtTime(1/3)-.5)<1e-7);const trip=core.swingTimeline({...t,events:[{beat:0,endBeat:2/3},{beat:2/3,endBeat:4/3},{beat:4/3,endBeat:2}]},true);assert.ok(Math.abs(trip.events[1].dur-1/3)<1e-8);});
 test('score and instruments receive the identical audible frame at each swung note',()=>{
  const t=core.swingTimeline(parse(measure([note('G',.5),note('C',.5),note('D',1)])),true);
- const source=fs.readFileSync(require.resolve('../js/melody.js'),'utf8'),body=source.slice(source.indexOf(' function update(){'),source.indexOf(' async function loadPiano'));
+ const source=fs.readFileSync(require.resolve('../js/melody.js'),'utf8'),body=source.slice(source.indexOf(' function update('),source.indexOf(' function practiceRange('));
  let time=0,scoreFrame,instrumentFrame;
  const c={Core:core,window:{AACMelodyInstruments:{update(t,v,p,f){instrumentFrame=f}},AACMelodyScoreView:{update(f){scoreFrame=f}}},playing:false,activeLoop:null,timeline:t,now:()=>time,$:()=>({dataset:{}}),fmt:String};
  vm.createContext(c);vm.runInContext(body,c);
