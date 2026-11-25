@@ -170,7 +170,7 @@
   if(token!==selectionToken)return;
   await display(window.CrescendoAACMelodyBridge.getMelody(),{store:false});await drafts.save(window.CrescendoAACMelodyBridge.captureWorkspace());
   try{localStorage.setItem('aac:last-melody-id',current.id);}catch{}
-  status(draft?'Tema recuperado.':'');panel.dataset.loadedMelody=current.id;
+  status('');panel.dataset.loadedMelody=current.id;
   }catch(error){$('melodyExample').value=current?.id||'';librarySearch.sync(current?.title||'');throw error;}finally{panel.classList.remove('melody-loading');workspace.classList.remove('melody-loading');panel.removeAttribute('aria-busy');workspace.removeAttribute('aria-busy');}
  }
  $('melodyExample').onchange=attempt(async()=>{const example=catalog.find(row=>row.id===$('melodyExample').value);if(example){status('Abriendo el tema y su análisis…');await activateMelody(example);}});
