@@ -67,3 +67,9 @@ test('AAC does not join equal pitches through a noncontiguous D.S. jump',()=>{
  const r=parse(measure([note('C')]),measure([control('segno','S'),note('G',1,['stop'])]),measure([note('G',1,['start']),control('dalsegno','S')]));
  assert.equal(r.events.filter(n=>n.midi===67).length,4);
 });
+test('one analysis button links on first click and hides on the second without changing melody source',async()=>{
+ const source=fs.readFileSync(require.resolve('../js/melody.js'),'utf8'),body=source.slice(source.indexOf(' async function toggleScoreAnalysis()'),source.indexOf(" $('melodyLink').onclick=attempt(toggleScoreAnalysis)")),renders=[];
+ const c={current:{title:'Autumn Leaves',linked:true,harmonyMode:'original',originalXml:'original notes'},analysisVisible:false,scoreXml:'source notes',Core:{annotate(){}},window:{CrescendoAACMelodyBridge:{getDocumentInfo:()=>({title:'Autumn Leaves'}),getAnalysis:()=>[]},AACMelodyWorkspaces:{matches:()=>true}},payload:()=>({...c.current,xml:c.scoreXml}),async display(value,options){c.current=value;renders.push({shown:c.analysisVisible,value,options});}};
+ vm.createContext(c);vm.runInContext(body,c);await c.toggleScoreAnalysis();assert.equal(renders[0].shown,true);assert.equal(renders[0].value.harmonyMode,'study');assert.equal(renders[0].options.keepPosition,true);await c.toggleScoreAnalysis();assert.equal(renders[1].shown,false);assert.equal(c.current.originalXml,'original notes');assert.equal(c.scoreXml,'source notes');
+ c.window.AACMelodyWorkspaces.matches=()=>false;await assert.rejects(c.toggleScoreAnalysis(),/otro tema/);assert.equal(c.analysisVisible,false);
+});
