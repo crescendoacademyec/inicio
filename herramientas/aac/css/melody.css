@@ -48,20 +48,7 @@
 .melody-comparison.melody-without-source{grid-template-columns:minmax(0,1fr)}
 .melody-without-source .melody-original{display:none}
 
-#melodyExample{width:clamp(145px,16vw,215px)}
 
-/* Search stays compact; only the matching titles are rendered in the popup. */
-.melody-library-picker{display:flex;align-items:center;gap:6px;position:relative;min-width:0}
-#melodySearch{width:clamp(180px,20vw,280px);min-width:0}
-.melody-library-popup{position:absolute;top:calc(100% + 6px);left:0;width:min(380px,calc(100vw - 40px));background:#fffaf1;border:1px solid #c9b394;border-radius:8px;box-shadow:0 8px 24px #0003;z-index:45;overflow:hidden}
-.melody-library-popup[hidden],#melodyExample[hidden]{display:none!important}
-#melodySearchStatus{font-size:12px;margin:0;padding:10px;border-bottom:1px solid #e4d7c3;color:#70522f}
-#melodySearchResults{max-height:min(360px,50dvh);overflow:auto;overscroll-behavior:contain}
-#melodySearchResults [role=option]{padding:9px 12px;cursor:pointer;border-bottom:1px solid #eee4d5}
-#melodySearchResults [role=option]:hover,#melodySearchResults [aria-selected=true]{background:#f4dfb1}
-#melodySearchResults strong,#melodySearchResults small{display:block;line-height:1.4}
-#melodySearchResults small{font-size:12px;color:#70522f}
-@media(max-width:600px){.melody-library-picker{flex:1 1 100%}#melodySearch{flex:1;width:auto}}
 #melodyPanel #melodyGuideTones{width:auto;flex:0 0 auto;padding-inline:9px!important}
 
 /* Independent digital score, book photo and analysis views. */
@@ -84,3 +71,5 @@ body.webFullMode .library-collections button[aria-pressed=true]{background:var(-
 @media(max-width:600px){.sharedLibraryResults{grid-template-columns:1fr}.library-collections{flex-wrap:wrap}}
 
 .sharedLibraryResults .libraryItem span{white-space:normal;line-height:1.4}
+
+#melodyPanel .melody-transport :is(#melodyLink,#melodyHarmony){height:32px;padding:5px 8px;font-size:11px;white-space:nowrap;flex:0 0 auto;box-sizing:border-box}
