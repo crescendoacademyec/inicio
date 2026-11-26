@@ -48,7 +48,6 @@
 .melody-comparison.melody-without-source{grid-template-columns:minmax(0,1fr)}
 .melody-without-source .melody-original{display:none}
 
-
 #melodyPanel #melodyGuideTones{width:auto;flex:0 0 auto;padding-inline:9px!important}
 
 /* Independent digital score, book photo and analysis views. */
@@ -66,10 +65,14 @@
 body.webFullMode .library-collections button[aria-pressed=true]{background:var(--aac-gold);color:#211b10;border-color:var(--aac-gold)}
 #libraryDialog .libraryDialogBody[hidden],.libraryDigitalBody[hidden]{display:none!important}
 .libraryDigitalBody{height:min(70vh,660px);min-height:260px;display:flex}.libraryDigitalBody>.librarySection{flex:1}
-.sharedLibraryResults{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));align-content:start;gap:8px}.sharedLibraryResults .libraryItem{width:100%;margin:0;min-width:0;text-align:left;white-space:normal;overflow:hidden}
+.sharedLibraryResults{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));grid-auto-rows:max-content;align-content:start;gap:8px}
+.sharedLibraryCard{display:flex;flex-direction:column;min-width:0}
+#libraryDialog .sharedLibraryResults .libraryItem{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;width:100%;height:auto;min-height:76px;margin:0;padding:12px;box-sizing:border-box;min-width:0;text-align:center;white-space:normal;line-height:1.4;flex:1}
+.sharedLibraryResults .libraryItem strong{max-width:100%;overflow-wrap:anywhere}
+.sharedLibraryCard .libraryDeleteBtn{align-self:center;margin-top:4px;padding:4px 10px}
 #melodyPanel[data-reference-only=true] :is(.melody-transport,.melody-library-picker,#melodyLink,#melodyHarmony){display:none!important}
 @media(max-width:600px){.sharedLibraryResults{grid-template-columns:1fr}.library-collections{flex-wrap:wrap}}
 
 .sharedLibraryResults .libraryItem span{white-space:normal;line-height:1.4}
 
-#melodyPanel .melody-transport :is(#melodyLink,#melodyHarmony){height:32px;padding:5px 8px;font-size:11px;white-space:nowrap;flex:0 0 auto;box-sizing:border-box}
+#melodyPanel .melody-transport #melodyLink{height:32px;padding:5px 8px;font-size:11px;white-space:nowrap;flex:0 0 auto;box-sizing:border-box}

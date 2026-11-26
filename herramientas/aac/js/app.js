@@ -13797,4 +13797,9 @@ window.CrescendoAACMelodyBridge={
   }
 };
 
-window.CrescendoAACLibraryBridge = {refresh: () => Promise.all([refreshLibrary(), refreshStandards()])};
+window.CrescendoAACLibraryBridge = {
+  refresh: () => Promise.all([refreshLibrary(), refreshStandards()]),
+  entries: () => window.AACSharedLibrary.analysisEntries(savedLibraryIndex, standardsIndex, currentFilename, currentStandardFilename),
+  open: item => item.analysisKind === 'library' ? loadFromLibrary(item.filename) : loadStandardFromLibrary(item),
+  remove: item => item.analysisKind === 'library' ? deleteLibrarySong(item) : Promise.resolve()
+};
