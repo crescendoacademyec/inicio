@@ -1,15 +1,22 @@
 /* Optional practice part. Source melody is never rewritten. */
 (function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.AACGuideTones=api;})(typeof globalThis==='object'?globalThis:this,function(){
  'use strict';const mod=n=>(n%12+12)%12;
- function tones(symbol,useFifth=false){
-  const m=String(symbol||'').replace(/[♭]/g,'b').replace(/[♯]/g,'#').match(/^([A-G])([b#]{0,2})([^/]*)/);if(!m)return [];
+ function chordInfo(symbol){
+  const m=String(symbol||'').replace(/[♭]/g,'b').replace(/[♯]/g,'#').match(/^([A-G])([b#]{0,2})([^/]*)/);if(!m)return null;
   const pc=mod({C:0,D:2,E:4,F:5,G:7,A:9,B:11}[m[1]]+(m[2].includes('b')?-m[2].length:m[2].length)),q=m[3].replace(/[△Δ∆]/g,'maj7').replace(/^[−–-]/,'m').replace(/ø/,'m7b5').replace(/^°|^o(?=7|$)/g,'dim');
   const minor=/^(m(?!aj)|min|dim)/.test(q),suspended=/sus/.test(q),third=/sus2/.test(q)?2:suspended?5:minor?3:4;
   // Never invent an unwritten seventh: triads use their fifth and sixth chords
   // use their sixth. Suspensions retain the second/fourth in place of a third.
   const extension=q.replace(/add\s*\(?\s*(?:2|4|9|11|13)\)?/g,''),hasSeventh=/7|9|11|13/.test(extension);
   const fifth=/dim|b5/.test(q)?6:/aug|\+|#5/.test(q)?8:7,companion=hasSeventh?(/dim(?!.*maj)/.test(q)?9:/maj|M(?:7|9|11|13)/.test(q)?11:10):/6/.test(extension)?9:fifth;
-  return [mod(pc+third),mod(pc+(useFifth?fifth:companion))];
+  return {step:m[1],pc,third,thirdDegree:/sus2/.test(q)?2:suspended?4:3,fifth,companion,companionDegree:hasSeventh?7:/6/.test(extension)?6:5};
+ }
+ function tones(symbol,useFifth=false){const chord=chordInfo(symbol);return chord?[mod(chord.pc+chord.third),mod(chord.pc+(useFifth?chord.fifth:chord.companion))]:[];}
+ function spelling(midi,symbol){
+  const chord=chordInfo(symbol);if(!chord)return null;
+  const pc=mod(midi),degree=pc===mod(chord.pc+chord.third)?chord.thirdDegree:pc===mod(chord.pc+chord.companion)?chord.companionDegree:pc===mod(chord.pc+chord.fifth)?5:null;if(!degree)return null;
+  const letters='CDEFGAB',natural={C:0,D:2,E:4,F:5,G:7,A:9,B:11},step=letters[(letters.indexOf(chord.step)+degree-1)%7],alter=mod(pc-natural[step]+6)-6;
+  return {step,alter,octave:(midi-natural[step]-alter)/12-1};
  }
  function safe(midi,melody){return melody.every(n=>{const d=Math.abs(midi-n);return d!==0&&d!==1&&d!==13;});}
  function choose(pcs,melody,previous=[],register=melody,alternatives=[]){
@@ -30,16 +37,19 @@
   let best=null,bestCost=Infinity;
   for(const [variant,pitches]of [pcs,...alternatives].entries()){
    const candidates=pitches.map(candidatesFor);
-   function combine(index,notes){if(index===candidates.length){const sorted=[...notes].sort((a,b)=>a-b),value=cost(sorted)+(variant?12:0);if(value<bestCost){best=sorted;bestCost=value;}return;}for(const n of candidates[index])if(!notes.includes(n))combine(index+1,[...notes,n]);}
+   function combine(index,notes){if(index===candidates.length){const sorted=[...notes].sort((a,b)=>a-b),value=cost(sorted)+(variant?36:0);if(value<bestCost){best=sorted;bestCost=value;}return;}for(const n of candidates[index])if(!notes.includes(n))combine(index+1,[...notes,n]);}
    combine(0,[]);
   }return best||[];
  }
  function plan(chords,notes,length,previous=[]){
   chords=[...chords].sort((a,b)=>a.beat-b.beat);
-  const boundaries=[...new Set([0,length,...chords.map(c=>c.beat),...notes.flatMap(n=>[n.start,n.end])])].filter(b=>b>=0&&b<=length).sort((a,b)=>a-b),segments=[];
+  const changes=[];
+  for(const chord of chords){if(chord.beat<0||chord.beat>=length)continue;if(changes.at(-1)?.beat===chord.beat)changes.pop();changes.push(chord);}
+  chords=changes.filter((chord,index)=>!index||chord.symbol!==changes[index-1].symbol);
+  const boundaries=[...new Set([0,length,...chords.map(c=>c.beat)])].sort((a,b)=>a-b),segments=[];
   for(let i=0;i<boundaries.length-1;i++){
-   const start=boundaries[i],end=boundaries[i+1],chord=chords.filter(c=>c.beat<=start+1e-8).at(-1),chordEnd=chords.find(c=>c.beat>start+1e-8)?.beat??length,register=notes.filter(n=>n.start<chordEnd-1e-8&&n.end>(chord?.beat??0)+1e-8).map(n=>n.midi),melody=notes.filter(n=>n.start<end-1e-8&&n.end>start+1e-8).map(n=>n.midi),pcs=tones(chord?.symbol),fifth=tones(chord?.symbol,true),pitches=choose(pcs,melody,previous,register,JSON.stringify(pcs)===JSON.stringify(fifth)?[]:[fifth]);
-   const last=segments.at(-1);if(last&&JSON.stringify(last.pitches)===JSON.stringify(pitches))last.end=end;else segments.push({start,end,pitches,omitted:pcs.length-pitches.length});if(pitches.length)previous=pitches;
+   const start=boundaries[i],end=boundaries[i+1],chord=chords.filter(c=>c.beat<=start+1e-8).at(-1),melody=notes.filter(n=>n.start<end-1e-8&&n.end>start+1e-8).map(n=>n.midi),pcs=tones(chord?.symbol),fifth=tones(chord?.symbol,true),pitches=choose(pcs,melody,previous,melody,JSON.stringify(pcs)===JSON.stringify(fifth)?[]:[fifth]);
+   segments.push({start,end,pitches,symbol:chord?.symbol||'',omitted:pcs.length-pitches.length});if(pitches.length)previous=pitches;
   }return segments;
  }
  function durations(beats){
@@ -66,7 +76,7 @@
    for(const segment of events){
     omitted+=segment.omitted;const pitches=segment.pitches.length?segment.pitches:[null],chunks=durations(segment.end-segment.start);
     chunks.forEach((chunk,ci)=>pitches.forEach((midi,i)=>{
-     const n=make('note');if(i)n.append(make('chord'));if(midi===null)n.append(make('rest'));else{const sp=Core.spelling(midi,fifths),pitch=make('pitch');pitch.append(make('step',sp.step),make('alter',sp.alter),make('octave',sp.octave));n.append(pitch);}
+     const n=make('note');if(i)n.append(make('chord'));if(midi===null)n.append(make('rest'));else{const sp=spelling(midi,segment.symbol)||Core.spelling(midi,fifths),pitch=make('pitch');pitch.append(make('step',sp.step),make('alter',sp.alter),make('octave',sp.octave));n.append(pitch);}
      n.append(make('duration',Math.round(chunk.beats*divisions)));
      const ties=midi===null?[]:[...(ci>0?['stop']:[]),...(ci<chunks.length-1?['start']:[])];for(const type of ties){const tie=make('tie');tie.setAttribute('type',type);n.append(tie);}
      n.append(make('voice',1));if(chunk.type)n.append(make('type',chunk.type));if(chunk.dots)n.append(make('dot'));
@@ -77,5 +87,5 @@
    for(const b of measure.querySelectorAll(':scope > barline'))target.append(b.cloneNode(true));guide.append(target);
   });return {xml:new XMLSerializer().serializeToString(doc),omitted};
  }
- return {tones,safe,choose,plan,durations,add};
+ return {tones,spelling,safe,choose,plan,durations,add};
 });

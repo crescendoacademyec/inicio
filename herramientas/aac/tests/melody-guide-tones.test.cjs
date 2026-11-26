@@ -16,3 +16,18 @@ test('a written fifth replaces a distant seventh when the melody would force a t
 });
 
 test('sustained guide tones are held and unusual durations split into tied legal figures',()=>{const segments=G.plan([{beat:0,symbol:'Cmaj7'}],[{start:0,end:1,midi:76},{start:1,end:4,midi:78}],4);assert.equal(segments.length,1);assert.deepEqual(G.durations(7).map(p=>p.beats),[6,1]);for(const value of [4,3,2.5,1.5,2/3,1/3])assert.ok(Math.abs(G.durations(value).reduce((a,p)=>a+p.beats,0)-value)<1e-7);});
+test('one chord lasts the entire 4/4 bar despite melody attacks, rests and collisions later in the bar',()=>{
+ const notes=[{midi:74,start:0,end:1},{midi:63,start:1,end:2},{midi:65,start:2.5,end:3},{midi:67,start:3,end:4}],segments=G.plan([{beat:0,symbol:''},{beat:0,symbol:'Ebmaj7'},{beat:2,symbol:'Ebmaj7'}],notes,4,[62,69]);
+ assert.equal(segments.length,1);assert.equal(segments[0].start,0);assert.equal(segments[0].end,4);assert.equal(segments[0].pitches.length,2);assert.ok(segments[0].pitches.every(n=>G.safe(n,notes.map(n=>n.midi))));assert.deepEqual(G.durations(4),[{beats:4,type:'whole',dots:0}]);
+});
+test('real harmony changes split guide durations while other meters retain their full bar length',()=>{
+ const notes=[{midi:74,start:0,end:4}],segments=G.plan([{beat:0,symbol:'Dm7'},{beat:2,symbol:'G7'}],notes,4);
+ assert.deepEqual(segments.map(s=>[s.start,s.end,s.symbol]),[[0,2,'Dm7'],[2,4,'G7']]);assert.deepEqual(G.durations(2),[{beats:2,type:'half',dots:0}]);
+ const three=G.plan([{beat:0,symbol:'Gm7'}],[],3);assert.equal(three.length,1);assert.equal(three[0].end,3);assert.deepEqual(G.durations(3),[{beats:3,type:'half',dots:1}]);
+});
+test('D7 prioritizes F-sharp and C over an easier fifth and spells both by chord degree',()=>{
+ const notes=[72,69,72,70].map((midi,i)=>({midi,start:i,end:i+1})),segments=G.plan([{beat:0,symbol:'D7'}],notes,4,[55,58]);
+ assert.equal(segments.length,1);assert.deepEqual(segments[0].pitches.map(n=>n%12).sort((a,b)=>a-b),[0,6]);assert.ok(segments[0].pitches.every(n=>G.safe(n,notes.map(n=>n.midi))));
+ assert.deepEqual(G.spelling(54,'D7'),{step:'F',alter:1,octave:3});assert.deepEqual(G.spelling(60,'D7'),{step:'C',alter:0,octave:4});
+ assert.deepEqual(G.spelling(61,'A7'),{step:'C',alter:1,octave:4});assert.deepEqual(G.spelling(58,'F#7'),{step:'A',alter:1,octave:3});assert.deepEqual(G.spelling(57,'Cdim7'),{step:'B',alter:-2,octave:3});assert.deepEqual(G.spelling(58,'Ebmaj7'),{step:'B',alter:-1,octave:3});
+});
