@@ -136,10 +136,11 @@
  window.AACMelodyMeasureSelected=index=>{if(!timeline)return;const visit=timeline.visits.find(v=>v.index===index);if(visit){seekTo(visit.start,false,true);persist();}};
  function changeLoop(){if(!timeline)return;const resume=playing,value=now();stop(false);position=value;loopUI();persist();if(resume)play();}
  const soundBank=()=> $('melodyInstrumentView')?.value==='guitar'?'acoustic_guitar_nylon':'acoustic_grand_piano';
+ const soundFiles={acoustic_grand_piano:'assets/acoustic_grand_piano.js',acoustic_guitar_nylon:'assets/acoustic_guitar_nylon.js'};
  const bankLoads=new Map();
  async function loadInstrument(bank){
   if(window.MIDI?.Soundfont?.[bank])return;
-  if(!bankLoads.has(bank))bankLoads.set(bank,new Promise((resolve,reject)=>{const script=document.createElement('script');script.src='assets/'+bank+'.js';script.onload=()=>{if(window.MIDI?.Soundfont?.[bank])resolve();else reject(Error('No se pudo leer el sonido del instrumento.'));};script.onerror=()=>reject(Error('No se encontró el sonido local del instrumento.'));document.head.append(script);}).catch(error=>{bankLoads.delete(bank);throw error;}));
+  if(!bankLoads.has(bank))bankLoads.set(bank,new Promise((resolve,reject)=>{const script=document.createElement('script');script.src=soundFiles[bank];script.onload=()=>{if(window.MIDI?.Soundfont?.[bank])resolve();else reject(Error('No se pudo leer el sonido del instrumento.'));};script.onerror=()=>reject(Error('No se encontró el sonido local del instrumento.'));document.head.append(script);}).catch(error=>{bankLoads.delete(bank);throw error;}));
   await bankLoads.get(bank);
  }
  async function sample(midi,bank=soundBank()){
