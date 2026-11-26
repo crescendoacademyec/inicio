@@ -1074,6 +1074,7 @@
       if (!system.name || system.name === from.name) changes.name = to.name;
       system.instrumentId = changes.instrumentId; system.initialClefId = to.clef;
       delete system.transpose; delete system.transposeDiatonic;
+      delete system.tabVisible;
       system.partId = createSystemId();
       system.keySignature = transposedInstrumentKey(system.keySignature || state.keySignature, from, to);
       system.measures.forEach(measure => { if (measure.keySignature) measure.keySignature = transposedInstrumentKey(measure.keySignature, from, to); });
