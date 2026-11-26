@@ -38,6 +38,11 @@ test('restoring an empty legacy guitar bass companion repairs its piano identity
  for(const update of [s=>{s[1].partId='real-guitar-part';},s=>{s[1].name='Mi guitarra';},s=>{s[1].measures[0].entries.push({id:'note',diatonicStep:0});},s=>{s.push({instrumentId:'violin'});}]){const saved=structuredClone(original);update(saved);const before=JSON.stringify(saved);assert.equal(I.repairLegacyPianoStaff(saved),false);assert.equal(JSON.stringify(saved),before);}
 });
 
+test('legacy piano repair also accepts a bass companion containing only rests and retains its notation',()=>{
+ const systems=[{instrumentId:'piano',partId:'piano-part',name:'Piano',initialClefId:'clef-g',measures:[{entries:[]}]},{instrumentId:'guitar',partId:'legacy-guitar',name:'Guitarra',initialClefId:'clef-f',tabVisible:true,measures:[{entries:[{id:'rest',type:'rest',ticks:1920,explicitRest:true}]}]}],notation=JSON.stringify(systems[1].measures);
+ assert.equal(I.repairLegacyPianoStaff(systems),true);assert.equal(systems[1].instrumentId,'piano');assert.equal(systems[1].tabVisible,false);assert.equal(JSON.stringify(systems[1].measures),notation);
+});
+
 test('embedded exports initiate their download in the parent document with an isolated object URL',()=>{
  const fs=require('node:fs'),vm=require('node:vm'),calls=[],anchor={click:()=>calls.push('download'),remove:()=>calls.push('remove')},parent={location:{origin:'https://example.org'},URL:{createObjectURL:blob=>{calls.push(blob);return 'blob:score';},revokeObjectURL:url=>calls.push(url)},document:{createElement:tag=>{assert.equal(tag,'a');return anchor;},body:{append:node=>assert.equal(node,anchor)}}},window={location:{origin:'https://example.org',search:'?workspace=metronome'},parent,setTimeout:fn=>fn()};const c={window,URL,URLSearchParams};vm.createContext(c);vm.runInContext(fs.readFileSync(require.resolve('../src/score-editor-workspace.js'),'utf8'),c);const blob={data:'midi'};window.JMLScoreWorkspace.download(blob,'Solo.mid');assert.equal(anchor.download,'Solo.mid');assert.equal(anchor.href,'blob:score');assert.deepEqual(calls,[blob,'download','remove','blob:score']);
 });

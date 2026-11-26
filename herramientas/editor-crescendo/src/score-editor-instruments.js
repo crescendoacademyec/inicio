@@ -42,11 +42,11 @@
  function soundingMidi(midi,id,transpose){return Number(midi)+(Number.isFinite(transpose)?transpose:instruments[normalize(id)].transpose);}
  function fromProgram(program){return Object.keys(instruments).find(id=>instruments[id].program===Number(program))||'piano';}
  function repairLegacyPianoStaff(systems){
-  // Old instrument changes detached the treble staff from its empty, hidden
+  // Old instrument changes detached the treble staff from its silent, hidden
   // bass companion. Explicitly created/imported parts have their own part IDs.
   if(systems?.length!==2)return false;
   const [treble,bass]=systems,old=instruments[bass.instrumentId];
-  if(treble.instrumentId!=='piano'||treble.initialClefId!=='clef-g'||bass.initialClefId!=='clef-f'||bass.instrumentId==='piano'||bass.partId!==`legacy-${bass.instrumentId}`||!old||bass.name&&bass.name!==old.name||bass.measures?.some(m=>m.entries?.length))return false;
+  if(treble.instrumentId!=='piano'||treble.initialClefId!=='clef-g'||bass.initialClefId!=='clef-f'||bass.instrumentId==='piano'||bass.partId!==`legacy-${bass.instrumentId}`||!old||bass.name&&bass.name!==old.name||bass.measures?.some(m=>m.entries?.some(entry=>entry.type!=='rest')))return false;
   bass.instrumentId='piano';bass.partId=treble.partId;bass.name=treble.name||instruments.piano.name;bass.tabVisible=false;
   delete bass.transpose;delete bass.transposeDiatonic;
   if(treble.keySignature)bass.keySignature={...treble.keySignature};else delete bass.keySignature;
