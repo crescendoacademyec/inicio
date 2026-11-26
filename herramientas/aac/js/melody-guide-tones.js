@@ -1,26 +1,44 @@
 /* Optional practice part. Source melody is never rewritten. */
 (function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.AACGuideTones=api;})(typeof globalThis==='object'?globalThis:this,function(){
  'use strict';const mod=n=>(n%12+12)%12;
- function tones(symbol){
+ function tones(symbol,useFifth=false){
   const m=String(symbol||'').replace(/[♭]/g,'b').replace(/[♯]/g,'#').match(/^([A-G])([b#]{0,2})([^/]*)/);if(!m)return [];
-  const pc=mod({C:0,D:2,E:4,F:5,G:7,A:9,B:11}[m[1]]+(m[2].includes('b')?-m[2].length:m[2].length)),q=m[3].replace(/[△Δ∆]/g,'maj').replace(/^[−–-]/,'m').replace(/ø/,'m7b5').replace(/^°|^o(?=7|$)/g,'dim');
-  const noThird=/sus|no3|5$/.test(q)&&!/[b#]5/.test(q);
-  const minor=/^(m(?!aj)|min|dim)/.test(q),third=minor?3:4,result=noThird?[]:[mod(pc+third)];
-  if(/7|9|11|13/.test(q))result.push(mod(pc+(/dim7/.test(q)?9:/maj|M7/.test(q)?11:10)));
-  return result;
+  const pc=mod({C:0,D:2,E:4,F:5,G:7,A:9,B:11}[m[1]]+(m[2].includes('b')?-m[2].length:m[2].length)),q=m[3].replace(/[△Δ∆]/g,'maj7').replace(/^[−–-]/,'m').replace(/ø/,'m7b5').replace(/^°|^o(?=7|$)/g,'dim');
+  const minor=/^(m(?!aj)|min|dim)/.test(q),suspended=/sus/.test(q),third=/sus2/.test(q)?2:suspended?5:minor?3:4;
+  // Never invent an unwritten seventh: triads use their fifth and sixth chords
+  // use their sixth. Suspensions retain the second/fourth in place of a third.
+  const extension=q.replace(/add\s*\(?\s*(?:2|4|9|11|13)\)?/g,''),hasSeventh=/7|9|11|13/.test(extension);
+  const fifth=/dim|b5/.test(q)?6:/aug|\+|#5/.test(q)?8:7,companion=hasSeventh?(/dim(?!.*maj)/.test(q)?9:/maj|M(?:7|9|11|13)/.test(q)?11:10):/6/.test(extension)?9:fifth;
+  return [mod(pc+third),mod(pc+(useFifth?fifth:companion))];
  }
  function safe(midi,melody){return melody.every(n=>{const d=Math.abs(midi-n);return d!==0&&d!==1&&d!==13;});}
- function choose(pcs,melody,previous=[]){
-  const chosen=[];
-  pcs.forEach((pc,i)=>{const candidates=[];for(let n=36;n<=59;n++)if(mod(n)===pc&&safe(n,melody)&&!chosen.includes(n))candidates.push(n);
-   candidates.sort((a,b)=>Math.abs(a-(previous[i]??48))-Math.abs(b-(previous[i]??48))||a-b);if(candidates.length)chosen.push(candidates[0]);
-  });return chosen.sort((a,b)=>a-b);
+ function choose(pcs,melody,previous=[],register=melody,alternatives=[]){
+  if(!pcs.length)return [];
+  function candidatesFor(pc){let notes=[];for(let n=21;n<=108;n++)if(mod(n)===pc&&safe(n,melody))notes.push(n);
+   // Dense imported passages can block every consonant octave. Keep the chord
+   // tones without ever sharing a physical key with the melody.
+   if(!notes.length)for(let n=21;n<=108;n++)if(mod(n)===pc&&!melody.includes(n))notes.push(n);
+   if(!notes.length)throw Error('No hay una octava libre para los tonos guía de este pasaje.');return notes;
+  }
+  // C3–B3 is the home register. Neighbouring octaves are available for collisions
+  // or low melodies, without chasing the right hand into many ledger lines.
+  const ceiling=melody.length?Math.min(...melody):Infinity,target=register.length?Math.min(59,Math.min(...register)-5):59,prior=[...previous].sort((a,b)=>a-b);
+  const cost=notes=>{const top=notes.at(-1),span=top-notes[0],movement=prior.length?notes.reduce((sum,n,i)=>sum+Math.abs(n-(prior[i]??n)),0):0;
+   const outsideRegister=notes.reduce((sum,n)=>sum+(n<48?48-n:n>59?n-59:0),0);
+   return Math.max(0,top-ceiling+1)*100+Math.max(0,span-12)*100+outsideRegister*12+Math.abs(top-target)*3+movement*.8+span*.1;
+  };
+  let best=null,bestCost=Infinity;
+  for(const [variant,pitches]of [pcs,...alternatives].entries()){
+   const candidates=pitches.map(candidatesFor);
+   function combine(index,notes){if(index===candidates.length){const sorted=[...notes].sort((a,b)=>a-b),value=cost(sorted)+(variant?12:0);if(value<bestCost){best=sorted;bestCost=value;}return;}for(const n of candidates[index])if(!notes.includes(n))combine(index+1,[...notes,n]);}
+   combine(0,[]);
+  }return best||[];
  }
  function plan(chords,notes,length,previous=[]){
   chords=[...chords].sort((a,b)=>a.beat-b.beat);
   const boundaries=[...new Set([0,length,...chords.map(c=>c.beat),...notes.flatMap(n=>[n.start,n.end])])].filter(b=>b>=0&&b<=length).sort((a,b)=>a-b),segments=[];
   for(let i=0;i<boundaries.length-1;i++){
-   const start=boundaries[i],end=boundaries[i+1],chord=chords.filter(c=>c.beat<=start+1e-8).at(-1),melody=notes.filter(n=>n.start<end-1e-8&&n.end>start+1e-8).map(n=>n.midi),pcs=tones(chord?.symbol),pitches=choose(pcs,melody,previous);
+   const start=boundaries[i],end=boundaries[i+1],chord=chords.filter(c=>c.beat<=start+1e-8).at(-1),chordEnd=chords.find(c=>c.beat>start+1e-8)?.beat??length,register=notes.filter(n=>n.start<chordEnd-1e-8&&n.end>(chord?.beat??0)+1e-8).map(n=>n.midi),melody=notes.filter(n=>n.start<end-1e-8&&n.end>start+1e-8).map(n=>n.midi),pcs=tones(chord?.symbol),fifth=tones(chord?.symbol,true),pitches=choose(pcs,melody,previous,register,JSON.stringify(pcs)===JSON.stringify(fifth)?[]:[fifth]);
    const last=segments.at(-1);if(last&&JSON.stringify(last.pitches)===JSON.stringify(pitches))last.end=end;else segments.push({start,end,pitches,omitted:pcs.length-pitches.length});if(pitches.length)previous=pitches;
   }return segments;
  }

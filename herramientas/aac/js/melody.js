@@ -135,8 +135,19 @@
  document.addEventListener('keydown',navigateMelodyNote,true);
  window.AACMelodyMeasureSelected=index=>{if(!timeline)return;const visit=timeline.visits.find(v=>v.index===index);if(visit){seekTo(visit.start,false,true);persist();}};
  function changeLoop(){if(!timeline)return;const resume=playing,value=now();stop(false);position=value;loopUI();persist();if(resume)play();}
- async function loadPiano(){if(window.MIDI?.Soundfont?.acoustic_grand_piano)return;await new Promise((resolve,reject)=>{const script=document.createElement('script');script.src='assets/acoustic_grand_piano.js';script.onload=resolve;script.onerror=()=>reject(Error('No se encontró el piano de la biblioteca.'));document.head.append(script);});}
- async function sample(midi){if(cache.has(midi))return cache.get(midi);const names=['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'],map=window.MIDI?.Soundfont?.acoustic_grand_piano||{},name=names[midi%12]+(Math.floor(midi/12)-1),data=map[name];if(!data)throw Error('No está disponible la muestra de piano para esta nota.');const raw=atob(data.split(',')[1]),bytes=Uint8Array.from(raw,c=>c.charCodeAt(0));const promise=ctx.decodeAudioData(bytes.buffer);cache.set(midi,promise);return promise;}
+ const soundBank=()=> $('melodyInstrumentView')?.value==='guitar'?'acoustic_guitar_nylon':'acoustic_grand_piano';
+ const bankLoads=new Map();
+ async function loadInstrument(bank){
+  if(window.MIDI?.Soundfont?.[bank])return;
+  if(!bankLoads.has(bank))bankLoads.set(bank,new Promise((resolve,reject)=>{const script=document.createElement('script');script.src='assets/'+bank+'.js';script.onload=()=>{if(window.MIDI?.Soundfont?.[bank])resolve();else reject(Error('No se pudo leer el sonido del instrumento.'));};script.onerror=()=>reject(Error('No se encontró el sonido local del instrumento.'));document.head.append(script);}).catch(error=>{bankLoads.delete(bank);throw error;}));
+  await bankLoads.get(bank);
+ }
+ async function sample(midi,bank=soundBank()){
+  const key=bank+':'+midi;if(cache.has(key))return cache.get(key);
+  const names=['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'],map=window.MIDI?.Soundfont?.[bank]||{},name=names[midi%12]+(Math.floor(midi/12)-1),data=map[name];
+  if(!data)throw Error('No está disponible la muestra del instrumento para esta nota.');
+  const raw=atob(data.split(',')[1]),bytes=Uint8Array.from(raw,c=>c.charCodeAt(0)),promise=ctx.decodeAudioData(bytes.buffer).catch(error=>{cache.delete(key);throw error;});cache.set(key,promise);return promise;
+ }
  function scheduleWindow(from,to,origin,buffers){
   for(const event of window.AACMelodyPractice.clip(timeline.events,from,to)){
    const source=ctx.createBufferSource(),gain=ctx.createGain(),at=origin+event.start-from,end=at+event.dur;source.buffer=buffers.get(event.midi);source.connect(gain);gain.connect(ctx.destination);gain.gain.setValueAtTime(.65,at);gain.gain.setValueAtTime(.65,Math.max(at,end-.02));gain.gain.linearRampToValueAtTime(0,end);source.start(at);source.stop(end+.001);nodes.add(source);source.onended=()=>{nodes.delete(source);source.disconnect();gain.disconnect();};
@@ -149,13 +160,13 @@
   const token=++playToken;
   try{
    activeLoop=loopEnabled?practiceRange():null;if(activeLoop&&(position<activeLoop.start||position>=activeLoop.end))position=activeLoop.start;
-   ctx=ctx||new (window.AudioContext||window.webkitAudioContext)();await ctx.resume();status('Preparando piano local…');await loadPiano();
-   const interval=activeLoop||{start:position,end:timeline.duration},pitches=[...new Set(window.AACMelodyPractice.clip(timeline.events,interval.start,interval.end).map(n=>n.midi))],buffers=new Map(await Promise.all(pitches.map(async midi=>[midi,await sample(midi)])));
-   if(token!==playToken)return;playing=true;started=ctx.currentTime+.06;
+   const bank=soundBank();ctx=ctx||new (window.AudioContext||window.webkitAudioContext)();await ctx.resume();await loadInstrument(bank);
+   const interval=activeLoop||{start:position,end:timeline.duration},pitches=[...new Set(window.AACMelodyPractice.clip(timeline.events,interval.start,interval.end).map(n=>n.midi))],buffers=new Map(await Promise.all(pitches.map(async midi=>[midi,await sample(midi,bank)])));
+   if(token!==playToken)return;if(bank!==soundBank())return play();playing=true;started=ctx.currentTime+.06;
    const scheduler=window.AACMelodyPractice.scheduler({duration:timeline.duration,position,origin:started,loop:activeLoop,lookAhead:1.5,schedule:(from,to,at)=>scheduleWindow(from,to,at,buffers)});
    schedulerTimer=setInterval(()=>{if(playing)scheduler.fill(ctx.currentTime);},100);playbackButton(true);status(activeLoop?`Bucle activo · compases ${$('melodyLoopStart').selectedOptions[0].textContent} a ${$('melodyLoopEnd').selectedOptions[0].textContent}.`:'Reproduciendo la melodía de esta partitura.');
    const tick=()=>{if(!playing)return;scheduler.fill(ctx.currentTime);update();if(!activeLoop&&now()>=timeline.duration){stop();return;}raf=requestAnimationFrame(tick);};tick();
-  }catch(error){stop(false);status(error.message,true);}
+  }catch(error){if(token!==playToken)return;stop(false);status(error.message,true);}
  }
  async function native(format){const response=await fetch('/api/aac-melody/export',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({musicxml:xml,format})});if(!response.ok){const error=await response.json().catch(()=>({}));throw Error(error.error||'No se pudo exportar. Inicia el puente local del piloto.');}save(await response.blob(),filename()+'.'+format,format==='pdf'?'application/pdf':'application/octet-stream');}
  async function image(format){const svg=$('melodyScore').querySelectorAll('svg')[+$('melodyPage').value||0];if(!svg)throw Error('No hay una página renderizada.');const clone=svg.cloneNode(true);clone.setAttribute('xmlns','http://www.w3.org/2000/svg');clone.querySelectorAll('.aac-note-cursor,.aac-measure-target,.aac-chord-target').forEach(n=>n.remove());const data=new XMLSerializer().serializeToString(clone);if(format==='svg'){save(data,filename()+` - página ${+$('melodyPage').value+1}.svg`,'image/svg+xml');return;}const url=URL.createObjectURL(new Blob([data],{type:'image/svg+xml'}));try{const img=new Image();await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=()=>reject(Error('No se pudo convertir la página a PNG.'));img.src=url;});const canvas=document.createElement('canvas');canvas.width=img.naturalWidth*2;canvas.height=img.naturalHeight*2;const c=canvas.getContext('2d');c.fillStyle='white';c.fillRect(0,0,canvas.width,canvas.height);c.drawImage(img,0,0,canvas.width,canvas.height);const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));if(!blob)throw Error('No se pudo generar la imagen.');save(blob,filename()+` - página ${+$('melodyPage').value+1}.png`,'image/png');}finally{URL.revokeObjectURL(url);}}
@@ -168,6 +179,7 @@
  $('melodyLoopB').onclick=()=>{$('melodyLoopEnd').value=String(selectedMeasure());if(+$('melodyLoopStart').value>+$('melodyLoopEnd').value)$('melodyLoopStart').value=$('melodyLoopEnd').value;changeLoop();};
  $('melodyLoopStart').onchange=()=>{if(+$('melodyLoopEnd').value<+$('melodyLoopStart').value)$('melodyLoopEnd').value=$('melodyLoopStart').value;changeLoop();};$('melodyLoopEnd').onchange=()=>{if(+$('melodyLoopStart').value>+$('melodyLoopEnd').value)$('melodyLoopStart').value=$('melodyLoopEnd').value;changeLoop();};
  $('melodyMetro').onchange=()=>{if(playing){position=now();stop(false);play();}};
+ $('melodyInstrumentView').addEventListener('change',()=>{if(playing){position=now();stop(false);play();}});
  for(const id of ['melodyTempo','melodyTranspose'])$(id).onchange=attempt(async()=>{if(!current)return;const transpose=+$('melodyTranspose').value,bpm=+$('melodyTempo').value;const delta=transpose-(current.transpose||0),base=current.linked?Core.annotate(scoreXml,window.CrescendoAACMelodyBridge.getAnalysis(),false):scoreXml,next=Core.edit(base,{transpose:delta,bpm});await display({...payload(),xml:next,transpose,tempo:bpm,linked:delta===0&&current.linked,swing:$('melodySwing').value==='swing'});if(delta)status('Partitura transportada. El análisis anterior queda separado; carga la armonía transportada y vuelve a analizar para vincularla.');});
  function activateMelody(example,musicxml){const token=++selectionToken;activationQueue=activationQueue.catch(()=>{}).then(()=>activateMelodyNow(example,musicxml,token));return activationQueue;}
  async function activateMelodyNow(example,musicxml,token){
