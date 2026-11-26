@@ -803,6 +803,7 @@
         system.initialClefId = defaultInitialClefForSystem(system, index);
       }
     });
+    InstrumentSounds.repairLegacyPianoStaff(state.systems);
   }
 
   function ensureAllSystemsMeasure(index) {
@@ -1055,11 +1056,15 @@
   }
 
   function changeScoreInstrument(index, changes, options = {}) {
-    if(window.JMLScoreWorkspace?.singleInstrument && changes.instrumentId && options.group!==false){
-      saveHistory();const count=scoreSystems().length,partId=createSystemId();
-      for(let i=0;i<count;i++)changeScoreInstrument(i,{...changes},{history:false,group:false,render:false});
-      state.systems.forEach((system,i)=>{system.partId=partId;if(changes.instrumentId==='piano')system.initialClefId=i?'clef-f':'clef-g';});
-      setActiveSystemIndex(index);invalidateLayoutCache();render();return;
+    if(changes.instrumentId && options.group!==false){
+      const systems=scoreSystems(),source=systems[index];if(!source)return;
+      const related=systems.map((system,i)=>({system,index:i})).filter(({system,index:i})=>window.JMLScoreWorkspace?.singleInstrument||i===index||source.partId&&system.partId===source.partId);
+      if(related.length>1){
+        if(options.history!==false)saveHistory();const partId=createSystemId();
+        for(const target of related)changeScoreInstrument(target.index,{...changes},{history:false,group:false,render:false});
+        related.forEach(({system},i)=>{system.partId=partId;if(changes.instrumentId==='piano')system.initialClefId=i?'clef-f':'clef-g';});
+        setActiveSystemIndex(index);invalidateLayoutCache();if(options.render!==false)render();return;
+      }
     }
     if(options.history!==false)saveHistory();
     if (changes.instrumentId) stopMidiPlayback();

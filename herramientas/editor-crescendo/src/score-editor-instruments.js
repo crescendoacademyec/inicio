@@ -41,6 +41,18 @@
  }
  function soundingMidi(midi,id,transpose){return Number(midi)+(Number.isFinite(transpose)?transpose:instruments[normalize(id)].transpose);}
  function fromProgram(program){return Object.keys(instruments).find(id=>instruments[id].program===Number(program))||'piano';}
+ function repairLegacyPianoStaff(systems){
+  // Old instrument changes detached the treble staff from its empty, hidden
+  // bass companion. Explicitly created/imported parts have their own part IDs.
+  if(systems?.length!==2)return false;
+  const [treble,bass]=systems,old=instruments[bass.instrumentId];
+  if(treble.instrumentId!=='piano'||treble.initialClefId!=='clef-g'||bass.initialClefId!=='clef-f'||bass.instrumentId==='piano'||bass.partId!==`legacy-${bass.instrumentId}`||!old||bass.name&&bass.name!==old.name||bass.measures?.some(m=>m.entries?.length))return false;
+  bass.instrumentId='piano';bass.partId=treble.partId;bass.name=treble.name||instruments.piano.name;bass.tabVisible=false;
+  delete bass.transpose;delete bass.transposeDiatonic;
+  if(treble.keySignature)bass.keySignature={...treble.keySignature};else delete bass.keySignature;
+  bass.measures?.forEach((measure,index)=>{const key=treble.measures?.[index]?.keySignature;if(key)measure.keySignature={...key};else delete measure.keySignature;});
+  return true;
+ }
  function audible(system,systems){return !system.muted&&(!systems.some(s=>s.solo)||!!system.solo);}
  function normalizePan(value){const n=Number(value);return Number.isFinite(n)?Math.max(-1,Math.min(1,n)):0;}
  function createChannel(context){
@@ -60,5 +72,5 @@
    recalibrate(){for(const output of outputs)output?.recalibrate?.();}
   };result.setMix=current=>outputs.forEach((output,index)=>{const system=current[index];if(system){output?.setVolume?.(audible(system,current)?Math.max(0,Math.min(100,Number(system.volume??80)))/100:0);output?.setPan?.(normalizePan(system.pan));}});result.setMix(systems);return result;
  }
- const api={instruments,normalize,readPreference,remember,createLoader,soundingMidi,fromProgram,ensemble,audible,normalizePan,createChannel};if(typeof module!=='undefined')module.exports=api;else root.JMLScoreInstruments=api;
+ const api={instruments,normalize,readPreference,remember,createLoader,soundingMidi,fromProgram,repairLegacyPianoStaff,ensemble,audible,normalizePan,createChannel};if(typeof module!=='undefined')module.exports=api;else root.JMLScoreInstruments=api;
 })(typeof window==='undefined'?globalThis:window);
