@@ -54,6 +54,16 @@
   return true;
  }
  function audible(system,systems){return !system.muted&&(!systems.some(s=>s.solo)||!!system.solo);}
+ function hasLegacyEmptyTabCompanion(systems,tabPairs,software,annotations=[]){
+  // Recognize only the old editor's duplicated two-staff guitar export.
+  // Empty parts from other notation programs and annotated staves stay intact.
+  return /Jaramillo Music Lab - Cuaderno de estudio/.test(software||'') && systems.length===2 &&
+   systems.every(s=>s.initialClefId==='clef-g') && tabPairs.length===2 &&
+   tabPairs.some(p=>p.staff===3&&p.of===1) && tabPairs.some(p=>p.staff===4&&p.of===2) &&
+   systems[0].measures.some(m=>m.entries.some(e=>e.type==='note')) &&
+   systems[1].measures.every(m=>m.entries.every(e=>e.type==='rest'&&!e.lyrics?.length)) &&
+   !annotations.some(a=>a.staff===2);
+ }
  function normalizePan(value){const n=Number(value);return Number.isFinite(n)?Math.max(-1,Math.min(1,n)):0;}
  function createChannel(context){
   const gain=context.createGain(),pan=context.createStereoPanner();
@@ -72,5 +82,5 @@
    recalibrate(){for(const output of outputs)output?.recalibrate?.();}
   };result.setMix=current=>outputs.forEach((output,index)=>{const system=current[index];if(system){output?.setVolume?.(audible(system,current)?Math.max(0,Math.min(100,Number(system.volume??80)))/100:0);output?.setPan?.(normalizePan(system.pan));}});result.setMix(systems);return result;
  }
- const api={instruments,normalize,readPreference,remember,createLoader,soundingMidi,fromProgram,repairLegacyPianoStaff,ensemble,audible,normalizePan,createChannel};if(typeof module!=='undefined')module.exports=api;else root.JMLScoreInstruments=api;
+ const api={instruments,normalize,readPreference,remember,createLoader,soundingMidi,fromProgram,repairLegacyPianoStaff,hasLegacyEmptyTabCompanion,ensemble,audible,normalizePan,createChannel};if(typeof module!=='undefined')module.exports=api;else root.JMLScoreInstruments=api;
 })(typeof window==='undefined'?globalThis:window);

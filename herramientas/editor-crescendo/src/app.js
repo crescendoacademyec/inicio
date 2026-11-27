@@ -513,8 +513,10 @@
 
   const pitchMap = Clefs.PITCH_MAP;
 
-  function createDefaultSystems(measureCount = 8) {
+  function createDefaultSystems(measureCount = 8, instrumentId = window.JMLScoreWorkspace?.singleInstrument ? 'piano' : InstrumentSounds.readPreference()) {
+    const sound = InstrumentSounds.instruments[InstrumentSounds.normalize(instrumentId)];
     const trebleMeasures = createInitialMeasures(measureCount);
+    if (instrumentId !== 'piano') return [{ id:createSystemId(),kind:'staff',instrumentId,initialClefId:sound.clef,measures:trebleMeasures }];
     const bassMeasures = createInitialMeasures(measureCount);
     return [
       { id: createSystemId(), kind: "staff", initialClefId: "clef-g", measures: trebleMeasures },
@@ -1058,6 +1060,13 @@
   function changeScoreInstrument(index, changes, options = {}) {
     if(changes.instrumentId && options.group!==false){
       const systems=scoreSystems(),source=systems[index];if(!source)return;
+      const companion=systems[1];
+      if(changes.instrumentId!=='piano' && index===0 && systems.length===2 && source.partId===`legacy-${source.instrumentId}` && companion.partId===source.partId && source.initialClefId==='clef-g' && companion.initialClefId==='clef-f' && companion.measures.every(m=>m.entries.every(e=>e.type==='rest'&&!e.lyrics?.length)) && ![...state.marks,...(state.textItems||[])].some(item=>item.systemIndex===1)){
+        if(options.history!==false)saveHistory();
+        const before=[...systems];systems.splice(1,1);
+        Arrangement.remapReferences(state,before,systems);
+        return changeScoreInstrument(0,changes,{...options,history:false});
+      }
       const related=systems.map((system,i)=>({system,index:i})).filter(({system,index:i})=>window.JMLScoreWorkspace?.singleInstrument||i===index||source.partId&&system.partId===source.partId);
       if(related.length>1){
         if(options.history!==false)saveHistory();const partId=createSystemId();
@@ -8284,7 +8293,7 @@
     state.pendingTupletRatio = null;
     state.keySignature = null;
     state.measureWidthOverrides = [];
-    state.systems = createDefaultSystems();
+    state.systems = createDefaultSystems(8, state.playbackInstrument);
     state.measures = state.systems[0].measures;
     state.activeSystemIndex = 0;
     state.marks = [];
@@ -10811,8 +10820,8 @@
     }
     if (!partEl) throw new Error("El archivo no contiene ninguna parte con notas.");
     const partId = partEl.getAttribute("id") || "P1";
-    let duplicateTabStaves=new Set();
-    try{const map=JSON.parse(doc.querySelector('miscellaneous-field[name="crescendo:tab-staves"]')?.textContent||'{}');duplicateTabStaves=new Set((map[partId]||[]).filter(item=>Number.isInteger(item.staff)&&Number.isInteger(item.of)&&item.staff>item.of&&partEl.querySelector(`clef[number="${item.staff}"] > sign`)?.textContent==='TAB').map(item=>item.staff));}catch{}
+    let duplicateTabStaves=new Set(), tabPairs=[];
+    try{const map=JSON.parse(doc.querySelector('miscellaneous-field[name="crescendo:tab-staves"]')?.textContent||'{}');tabPairs=(map[partId]||[]).filter(item=>Number.isInteger(item.staff)&&Number.isInteger(item.of)&&item.staff>item.of&&partEl.querySelector(`clef[number="${item.staff}"] > sign`)?.textContent==='TAB');duplicateTabStaves=new Set(tabPairs.map(item=>item.staff));}catch{}
     const definition = [...doc.querySelectorAll("part-list > score-part")].find(node => node.getAttribute("id") === partId);
     const program = Number(definition?.querySelector("midi-program")?.textContent || 1);
     const midiVolume = Number(definition?.querySelector("midi-instrument > volume")?.textContent ?? 80);
@@ -11153,6 +11162,8 @@
         }
       });
     });
+
+    if (['guitar','requinto','bass','ukulele'].includes(instrumentId) && InstrumentSounds.hasLegacyEmptyTabCompanion(systemsData,tabPairs,doc.querySelector('encoding > software')?.textContent,[...scoreMarksOut,...textItemsOut])) systemsData.pop();
 
     return {
       title,
